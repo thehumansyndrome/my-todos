@@ -184,8 +184,20 @@ let tF='all',dF='all',rF='all',habF='all',weekOffset=0;
 
 const PROJECT='projet001';
 const STORAGE_KEY='td_v4_'+PROJECT;
-function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){}}
-function load(){try{const d=localStorage.getItem(STORAGE_KEY);if(d){const p=JSON.parse(d);state={todos:p.todos||[],decisions:p.decisions||[],reminders:p.reminders||[],habits:p.habits||[],habitLogs:p.habitLogs||{}};}}catch(e){}}
+function save(){
+  try{
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+    console.log('[TODO] Saved to',STORAGE_KEY,'todos:',state.todos.length);
+  }catch(e){console.error('[TODO] Save failed:',e);}
+}
+function load(){
+  try{
+    const d=localStorage.getItem(STORAGE_KEY);
+    console.log('[TODO] Loading from',STORAGE_KEY,'found:',d?'YES':'NO');
+    if(d){const p=JSON.parse(d);state={todos:p.todos||[],decisions:p.decisions||[],reminders:p.reminders||[],habits:p.habits||[],habitLogs:p.habitLogs||{}};}
+  }catch(e){console.error('[TODO] Load failed:',e);}
+}
+load();
 
 const PROJECT_LABEL=PROJECT;
 if(PROJECT_LABEL){
