@@ -792,13 +792,34 @@ let S={todos:[],decisions:[],reminders:[],habits:[],habitLogs:{},categories:[]};
 let AL=[];
 let wOff=0, tF='all', dF='all', rF='all', hF='all';
 
+function ensureState(){
+  // Guarantee every key always exists — defensive against partial/missing data
+  if(!S.todos) S.todos=[];
+  if(!S.decisions) S.decisions=[];
+  if(!S.reminders) S.reminders=[];
+  if(!S.habits) S.habits=[];
+  if(!S.habitLogs) S.habitLogs={};
+  if(!S.categories || !Array.isArray(S.categories)) S.categories=[];
+  if(!S.categories.length) S.categories=JSON.parse(JSON.stringify(DEFAULT_CATS));
+}
+
 function save(){try{localStorage.setItem(SK,JSON.stringify(S));}catch(e){}}
 function saveAL(){try{localStorage.setItem(AK,JSON.stringify(AL.slice(-200)));}catch(e){}}
 function load(){
-  try{const d=localStorage.getItem(SK);if(d){const p=JSON.parse(d);S={todos:p.todos||[],decisions:p.decisions||[],reminders:p.reminders||[],habits:p.habits||[],habitLogs:p.habitLogs||{},categories:p.categories||[]};}}catch(e){}
+  try{
+    const d=localStorage.getItem(SK);
+    if(d){
+      const p=JSON.parse(d);
+      S={
+        todos:p.todos||[],decisions:p.decisions||[],
+        reminders:p.reminders||[],habits:p.habits||[],
+        habitLogs:p.habitLogs||{},
+        categories:Array.isArray(p.categories)?p.categories:[]
+      };
+    }
+  }catch(e){}
   try{const a=localStorage.getItem(AK);if(a)AL=JSON.parse(a);}catch(e){}
-  // Seed defaults if no categories yet
-  if(!S.categories.length) S.categories = JSON.parse(JSON.stringify(DEFAULT_CATS));
+  ensureState();
 }
 load();
 
@@ -1187,8 +1208,16 @@ async function drivePull(){
     if(!r.ok)throw new Error('HTTP '+r.status);
     const d=await r.json();
     if(!d.todos||!d.decisions)throw new Error('Format invalide');
-    S={todos:d.todos,decisions:d.decisions,reminders:d.reminders||[],habits:d.habits||[],habitLogs:d.habitLogs||{}};
-    save();renderAll();
+    S={
+      todos:d.todos,
+      decisions:d.decisions,
+      reminders:d.reminders||[],
+      habits:d.habits||[],
+      habitLogs:d.habitLogs||{},
+      categories:(d.categories&&d.categories.length)?d.categories:S.categories&&S.categories.length?S.categories:[]
+    };
+    ensureState();
+    save();renderCatSelects();renderAll();
     const t=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
     setDS(true,'Chargé ✓ — '+t);
     toast('✓ Données Drive chargées — '+t);
@@ -1634,8 +1663,14 @@ async function pollOnce(){
     if(!dr.ok) throw new Error('HTTP '+dr.status);
     const d = await dr.json();
     if(!d.todos || !d.decisions) throw new Error('Format invalide');
-    S = {todos:d.todos, decisions:d.decisions, reminders:d.reminders||[], habits:d.habits||[], habitLogs:d.habitLogs||{}};
+    S = {
+      todos:d.todos, decisions:d.decisions, reminders:d.reminders||[],
+      habits:d.habits||[], habitLogs:d.habitLogs||{},
+      categories:Array.isArray(d.categories)&&d.categories.length?d.categories:[]
+    };
+    ensureState();
     save();
+    renderCatSelects();
     renderAll();
     const t = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
     setDS(true, 'Sync auto ✓ — '+t);
