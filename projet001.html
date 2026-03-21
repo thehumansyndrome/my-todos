@@ -257,7 +257,22 @@ body{
 }
 .del:hover{color:var(--red);}
 
-/* ── EDIT BTN ── */
+/* ── LIVE BADGE ── */
+.live-badge{
+  display:none;align-items:center;gap:5px;
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  color:var(--green);padding:3px 8px;
+  border:1px solid var(--green);border-radius:2px;
+  background:var(--green-bg);
+}
+.live-badge.on{display:flex;}
+.live-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--green);
+  animation:livepulse 2s ease-in-out infinite;
+}
+@keyframes livepulse{0%,100%{opacity:1}50%{opacity:.3}}
+
 .edit-btn{
   font-size:11px;color:var(--text3);
   background:none;border:none;cursor:pointer;
@@ -549,6 +564,7 @@ body{
     <button class="hbtn orange" onclick="saveAndToast()">Save</button>
     <button class="hbtn green" onclick="openImp()">Import</button>
     <button class="hbtn" id="btn-refresh" onclick="drivePull()" style="display:none" title="Charger depuis Drive">↻ Refresh</button>
+    <span class="live-badge" id="live-badge"><span class="live-dot"></span>Live</span>
     <button class="hbtn" onclick="switchTab('log');setTimeout(()=>document.getElementById('drive-anchor').scrollIntoView({behavior:'smooth'}),120)">
       <span class="gdot" id="gdot"></span>Drive
     </button>
@@ -677,6 +693,19 @@ body{
           <button class="lbtn primary" id="btn-push" onclick="drivePush()" disabled>⬆ Sauver</button>
           <button class="lbtn" id="btn-pull" onclick="drivePull()" disabled>⬇ Charger</button>
           <button class="lbtn danger" id="btn-disc" onclick="driveDisc()" style="display:none">Déconnecter</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text3);">Auto-sync</span>
+          <select id="poll-interval" onchange="setPollInterval(this.value)"
+            style="font-family:var(--mono);font-size:11px;padding:3px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text2);cursor:pointer;">
+            <option value="0">Désactivé</option>
+            <option value="10">10 s</option>
+            <option value="30" selected>30 s</option>
+            <option value="60">1 min</option>
+            <option value="120">2 min</option>
+            <option value="300">5 min</option>
+          </select>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text3);" id="poll-next"></span>
         </div>
         <div class="drive-st"><span class="dsdot" id="dsdot"></span><span id="dstxt">Non connecté</span></div>
       </div>
@@ -925,9 +954,9 @@ function loadGIS(cb){if(window.google&&window.google.accounts){cb();return;}cons
 function driveAuth(){
   const cid=document.getElementById('drive-cid').value.trim();if(!cid){toast('⚠ Entre ton Client ID');return;}
   drCfg.clientId=cid;saveDriveConf();setDS(null,'Connexion…');
-  loadGIS(()=>{try{const cl=google.accounts.oauth2.initTokenClient({client_id:cid,scope:'https://www.googleapis.com/auth/drive.file',callback:(r)=>{if(r.error){setDS(false,'Erreur: '+r.error);toast('❌ '+r.error);return;}drTok=r.access_token;drFid=null;setDS(true,'Connecté ✓');updateDriveUI();toast('✓ Drive connecté');logA('drive','Connecté à Google Drive');}});cl.requestAccessToken();}catch(e){setDS(false,'Erreur: '+e.message);toast('❌ '+e.message);}});
+  loadGIS(()=>{try{const cl=google.accounts.oauth2.initTokenClient({client_id:cid,scope:'https://www.googleapis.com/auth/drive.file',callback:(r)=>{if(r.error){setDS(false,'Erreur: '+r.error);toast('❌ '+r.error);return;}drTok=r.access_token;drFid=null;setDS(true,'Connecté ✓');updateDriveUI();toast('✓ Drive connecté');logA('drive','Connecté à Google Drive');if(pollSecs>0)startPolling();}});cl.requestAccessToken();}catch(e){setDS(false,'Erreur: '+e.message);toast('❌ '+e.message);}});
 }
-function driveDisc(){drTok=null;drFid=null;setDS(null,'Déconnecté');updateDriveUI();toast('Drive déconnecté');}
+function driveDisc(){drTok=null;drFid=null;lastModifiedKnown=null;stopPolling();setDS(null,'Déconnecté');updateDriveUI();toast('Drive déconnecté');}
 
 async function drFindOrCreate(){
   if(drFid)return drFid;
@@ -952,8 +981,25 @@ async function drivePush(){
 }
 async function drivePull(){
   if(!drTok){toast('⚠ Connecte-toi');return;}
-  setDS(true,'Chargement…');toast('⬇ Lecture…',3000);
-  try{const id=await drFindOrCreate();const r=await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`,{headers:{Authorization:'Bearer '+drTok}});if(!r.ok)throw new Error('HTTP '+r.status);const d=await r.json();if(!d.todos||!d.decisions)throw new Error('Format invalide');S={todos:d.todos,decisions:d.decisions,reminders:d.reminders||[],habits:d.habits||[],habitLogs:d.habitLogs||{}};save();renderAll();const t=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});setDS(true,'Chargé ✓ — '+t);toast('✓ Données Drive chargées — '+t);logA('drive','Pull ← '+drCfg.filename);}
+  setDS(true,'Chargement…');
+  try{
+    const id=await drFindOrCreate();
+    // Get modifiedTime alongside data
+    const mr=await fetch(`https://www.googleapis.com/drive/v3/files/${id}?fields=modifiedTime`,{headers:{Authorization:'Bearer '+drTok}});
+    if(mr.ok){ const mm=await mr.json(); lastModifiedKnown=mm.modifiedTime||null; }
+    const r=await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`,{headers:{Authorization:'Bearer '+drTok}});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    if(!d.todos||!d.decisions)throw new Error('Format invalide');
+    S={todos:d.todos,decisions:d.decisions,reminders:d.reminders||[],habits:d.habits||[],habitLogs:d.habitLogs||{}};
+    save();renderAll();
+    const t=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    setDS(true,'Chargé ✓ — '+t);
+    toast('✓ Données Drive chargées — '+t);
+    logA('drive','Pull ← '+drCfg.filename);
+    // Start polling after successful pull
+    if(pollSecs > 0) startPolling();
+  }
   catch(e){setDS(false,'Erreur: '+e.message);toast('❌ '+e.message);}
 }
 
@@ -1299,6 +1345,121 @@ function renderHabits(){
     <div class="stat"><div class="stat-n" style="${bad>0?'color:var(--red)':''}">${bad}</div><div class="stat-l">To fix</div></div>
     <div class="stat"><div class="stat-n">${best}</div><div class="stat-l">Best streak</div></div>`;
 }
+
+/* ══ DRIVE POLLING ══ */
+let pollTimer = null;
+let pollSecs = 30;
+let pollCountdown = 0;
+let pollCountTimer = null;
+let lastModifiedKnown = null;  // Drive file modifiedTime last seen
+
+function setPollInterval(v){
+  pollSecs = parseInt(v);
+  localStorage.setItem('td_poll_'+P, v);
+  stopPolling();
+  if(pollSecs > 0 && drTok) startPolling();
+}
+
+function startPolling(){
+  stopPolling();
+  if(!drTok || pollSecs <= 0) return;
+  document.getElementById('live-badge').classList.add('on');
+  scheduleNextPoll();
+}
+
+function stopPolling(){
+  clearTimeout(pollTimer);
+  clearInterval(pollCountTimer);
+  pollTimer = null;
+  document.getElementById('live-badge').classList.remove('on');
+  document.getElementById('poll-next').textContent = '';
+}
+
+function scheduleNextPoll(){
+  pollCountdown = pollSecs;
+  updatePollCountdown();
+  clearInterval(pollCountTimer);
+  pollCountTimer = setInterval(()=>{
+    pollCountdown--;
+    updatePollCountdown();
+    if(pollCountdown <= 0){ clearInterval(pollCountTimer); }
+  }, 1000);
+  pollTimer = setTimeout(()=>{ pollOnce(); }, pollSecs * 1000);
+}
+
+function updatePollCountdown(){
+  const el = document.getElementById('poll-next');
+  if(el && pollCountdown > 0) el.textContent = 'Prochain sync dans ' + pollCountdown + 's';
+}
+
+async function pollOnce(){
+  if(!drTok) return;
+  // Pause if tab hidden
+  if(document.visibilityState === 'hidden'){
+    pollTimer = setTimeout(()=>pollOnce(), 5000);
+    return;
+  }
+  try {
+    // Check modifiedTime without downloading full file
+    const fid = await drFindOrCreate();
+    const r = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${fid}?fields=modifiedTime`,
+      { headers:{ Authorization:'Bearer '+drTok } }
+    );
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const meta = await r.json();
+    const remoteTs = meta.modifiedTime;
+    if(lastModifiedKnown && remoteTs === lastModifiedKnown){
+      // No change — reschedule silently
+      scheduleNextPoll();
+      return;
+    }
+    // New version detected — pull
+    lastModifiedKnown = remoteTs;
+    if(lastModifiedKnown === null){
+      // First poll — just record, don't pull (auto-pull already done at load)
+      scheduleNextPoll();
+      return;
+    }
+    const dr = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${fid}?alt=media`,
+      { headers:{ Authorization:'Bearer '+drTok } }
+    );
+    if(!dr.ok) throw new Error('HTTP '+dr.status);
+    const d = await dr.json();
+    if(!d.todos || !d.decisions) throw new Error('Format invalide');
+    S = {todos:d.todos, decisions:d.decisions, reminders:d.reminders||[], habits:d.habits||[], habitLogs:d.habitLogs||{}};
+    save();
+    renderAll();
+    const t = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    setDS(true, 'Sync auto ✓ — '+t);
+    toast('↻ Sync Drive — '+t);
+    logA('drive','Auto-sync polling ← '+drCfg.filename);
+  } catch(e){
+    // Silent fail on poll — don't disturb the user
+    console.warn('[poll] erreur:', e.message);
+  }
+  scheduleNextPoll();
+}
+
+// Restore poll interval from localStorage
+(function loadPollPref(){
+  const v = localStorage.getItem('td_poll_'+P);
+  if(v !== null){
+    pollSecs = parseInt(v);
+    const sel = document.getElementById('poll-interval');
+    if(sel) sel.value = v;
+  }
+})();
+
+// Pause polling when tab goes to background, resume when visible again
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible' && drTok && pollSecs > 0){
+    // Immediately poll on tab focus, then resume schedule
+    clearTimeout(pollTimer);
+    pollOnce();
+  }
+});
 
 /* ══ INIT ══ */
 renderAll();
