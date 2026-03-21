@@ -561,7 +561,10 @@ body{
     <span class="wordmark">todos</span>
     <span class="proj-tag">projet001</span>
     <div class="hspace"></div>
-    <button class="hbtn orange" onclick="saveAndToast()">Save</button>
+    <button class="hbtn" id="save-status-btn" onclick="forcePush()" title="Forcer la sync Drive">
+      <span id="save-dot" style="width:6px;height:6px;border-radius:50%;background:var(--text3);transition:background .3s;flex-shrink:0;"></span>
+      <span id="save-label">Sync</span>
+    </button>
     <button class="hbtn green" onclick="openImp()">Import</button>
     <button class="hbtn" id="btn-refresh" onclick="drivePull()" style="display:none" title="Charger depuis Drive">↻ Refresh</button>
     <span class="live-badge" id="live-badge"><span class="live-dot"></span>Live</span>
@@ -589,11 +592,7 @@ body{
     <div class="stats" id="todo-stats"></div>
     <div class="add-row">
       <input class="main-in" type="text" id="todo-in" placeholder="Nouvelle tâche…" onkeydown="if(event.key==='Enter')addTodo()">
-      <select id="todo-cat">
-        <option value="perso">Personal</option>
-        <option value="work">Work</option>
-        <option value="projet">Project</option>
-      </select>
+      <select id="todo-cat"></select>
       <select id="todo-pri">
         <option value="p1">P1</option>
         <option value="p2">P2</option>
@@ -711,6 +710,24 @@ body{
       </div>
     </div>
 
+    <!-- Categories -->
+    <div class="log-block">
+      <div class="log-head"><h3>🏷 Catégories de tâches</h3></div>
+      <div class="log-body">
+        <div id="cat-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;"></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+          <input type="text" id="cat-new-name" placeholder="Nouvelle catégorie…"
+            style="font-family:var(--sans);font-size:13px;padding:6px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;flex:1;min-width:140px;"
+            onkeydown="if(event.key==='Enter')addCategory()"
+            onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--line)'">
+          <input type="color" id="cat-new-color" value="#E0E7FF"
+            style="width:32px;height:32px;padding:2px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);cursor:pointer;">
+          <button class="lbtn success" onclick="addCategory()">+ Ajouter</button>
+        </div>
+        <p style="font-size:11px;color:var(--text3);margin-top:8px;">Les tâches existantes gardent leur catégorie si vous la supprimez.</p>
+      </div>
+    </div>
+
     <!-- Export/Import -->
     <div class="log-block">
       <div class="log-head"><h3>Export / Import</h3></div>
@@ -763,18 +780,134 @@ const P='projet001';
 const SK='td_v4_'+P, AK='td_act_'+P, TK='td_theme_'+P, DK='td_drive_'+P;
 const TABS=['todos','decisions','reminders','habits','log'];
 
+/* ══ DEFAULT CATEGORIES ══ */
+const DEFAULT_CATS = [
+  { id:'perso',  label:'Personal', color:'#FCE7F3', textColor:'#9D174D' },
+  { id:'work',   label:'Work',     color:'#EDE9FE', textColor:'#5B21B6' },
+  { id:'projet', label:'Project',  color:'#DCFCE7', textColor:'#14532D' },
+];
+
 /* ══ STATE ══ */
-let S={todos:[],decisions:[],reminders:[],habits:[],habitLogs:{}};
+let S={todos:[],decisions:[],reminders:[],habits:[],habitLogs:{},categories:[]};
 let AL=[];
 let wOff=0, tF='all', dF='all', rF='all', hF='all';
 
 function save(){try{localStorage.setItem(SK,JSON.stringify(S));}catch(e){}}
 function saveAL(){try{localStorage.setItem(AK,JSON.stringify(AL.slice(-200)));}catch(e){}}
 function load(){
-  try{const d=localStorage.getItem(SK);if(d){const p=JSON.parse(d);S={todos:p.todos||[],decisions:p.decisions||[],reminders:p.reminders||[],habits:p.habits||[],habitLogs:p.habitLogs||{}};}}catch(e){}
+  try{const d=localStorage.getItem(SK);if(d){const p=JSON.parse(d);S={todos:p.todos||[],decisions:p.decisions||[],reminders:p.reminders||[],habits:p.habits||[],habitLogs:p.habitLogs||{},categories:p.categories||[]};}}catch(e){}
   try{const a=localStorage.getItem(AK);if(a)AL=JSON.parse(a);}catch(e){}
+  // Seed defaults if no categories yet
+  if(!S.categories.length) S.categories = JSON.parse(JSON.stringify(DEFAULT_CATS));
 }
 load();
+
+/* ══ CATEGORY HELPERS ══ */
+function getCategories(){ return S.categories; }
+function getCatById(id){ return S.categories.find(c=>c.id===id) || {id,label:id,color:'#E5E7EB',textColor:'#374151'}; }
+
+// Generate a readable text color from a background hex
+function autoTextColor(hex){
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return (r*0.299+g*0.587+b*0.114) > 150 ? '#1a1917' : '#ffffff';
+}
+
+// Populate a <select> element with current categories
+function populateCatSelect(selectId, selectedVal){
+  const sel = document.getElementById(selectId);
+  if(!sel) return;
+  const prev = selectedVal || sel.value;
+  sel.innerHTML = S.categories.map(c =>
+    `<option value="${c.id}"${c.id===prev?' selected':''}>${c.label}</option>`
+  ).join('');
+}
+
+function renderCatSelects(){
+  populateCatSelect('todo-cat');
+}
+
+/* ══ CATEGORY MANAGEMENT ══ */
+function addCategory(){
+  const nameEl = document.getElementById('cat-new-name');
+  const colorEl = document.getElementById('cat-new-color');
+  const name = nameEl.value.trim();
+  if(!name){ toast('⚠ Entre un nom'); return; }
+  if(S.categories.find(c=>c.label.toLowerCase()===name.toLowerCase())){ toast('⚠ Catégorie déjà existante'); return; }
+  const color = colorEl.value;
+  const textColor = autoTextColor(color);
+  const id = 'cat_' + uid();
+  S.categories.push({ id, label:name, color, textColor });
+  nameEl.value=''; colorEl.value='#E0E7FF';
+  save();
+  renderCatSelects();
+  renderCatManager();
+  renderTodos();
+  logA('todo', 'Catégorie ajoutée: "'+name+'"');
+  toast('✓ Catégorie "'+name+'" ajoutée');
+}
+
+function renameCategory(id){
+  const inp = document.getElementById('cat-rename-'+id);
+  const newName = inp ? inp.value.trim() : '';
+  if(!newName){ toast('⚠ Nom vide'); return; }
+  const cat = S.categories.find(c=>c.id===id);
+  if(!cat) return;
+  const old = cat.label;
+  cat.label = newName;
+  autoSave(); renderCatSelects(); renderCatManager(); renderTodos();
+  logA('todo', 'Catégorie renommée: "'+old+'" → "'+newName+'"');
+  toast('✓ Renommé');
+}
+
+function recolorCategory(id, color){
+  const cat = S.categories.find(c=>c.id===id);
+  if(!cat) return;
+  cat.color = color;
+  cat.textColor = autoTextColor(color);
+  autoSave(); renderCatManager(); renderTodos();
+}
+
+function deleteCategory(id){
+  const cat = S.categories.find(c=>c.id===id);
+  if(!cat) return;
+  const used = S.todos.filter(t=>t.cat===id).length;
+  const msg = used > 0
+    ? `Supprimer "${cat.label}" ? ${used} tâche(s) garderont cette catégorie (affichée en gris).`
+    : `Supprimer "${cat.label}" ?`;
+  if(!confirm(msg)) return;
+  S.categories = S.categories.filter(c=>c.id!==id);
+  autoSave(); renderCatSelects(); renderCatManager(); renderTodos();
+  logA('todo', 'Catégorie supprimée: "'+cat.label+'"');
+  toast('✓ Catégorie supprimée');
+}
+
+function moveCat(id, dir){
+  const i = S.categories.findIndex(c=>c.id===id);
+  const ni = i+dir;
+  if(ni<0||ni>=S.categories.length) return;
+  [S.categories[i],S.categories[ni]]=[S.categories[ni],S.categories[i]];
+  autoSave(); renderCatManager(); renderCatSelects(); renderTodos();
+}
+
+function renderCatManager(){
+  const el = document.getElementById('cat-list');
+  if(!el) return;
+  if(!S.categories.length){ el.innerHTML='<div class="empty">Aucune catégorie</div>'; return; }
+  el.innerHTML = S.categories.map((c,idx)=>`
+    <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--card);">
+      <input type="color" value="${c.color}" oninput="recolorCategory('${c.id}',this.value)"
+        style="width:26px;height:26px;padding:1px;border:1px solid var(--line);border-radius:3px;cursor:pointer;flex-shrink:0;">
+      <span style="display:inline-block;font-family:var(--mono);font-size:9px;font-weight:500;padding:1px 6px;border-radius:2px;letter-spacing:.04em;text-transform:uppercase;background:${c.color};color:${c.textColor};flex-shrink:0;">${esc(c.label)}</span>
+      <input type="text" id="cat-rename-${c.id}" value="${esc(c.label)}"
+        style="font-family:var(--sans);font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;flex:1;min-width:80px;"
+        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--line)'"
+        onkeydown="if(event.key==='Enter')renameCategory('${c.id}')">
+      <button class="lbtn" onclick="renameCategory('${c.id}')" style="padding:4px 8px;font-size:10px;">✓</button>
+      <button class="lbtn" onclick="moveCat('${c.id}',-1)" style="padding:4px 7px;" ${idx===0?'disabled':''}>↑</button>
+      <button class="lbtn" onclick="moveCat('${c.id}',1)" style="padding:4px 7px;" ${idx===S.categories.length-1?'disabled':''}>↓</button>
+      <button class="lbtn danger" onclick="deleteCategory('${c.id}')" style="padding:4px 8px;font-size:10px;">×</button>
+    </div>`).join('');
+}
 
 /* ══ HELPERS ══ */
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,5);}
@@ -825,7 +958,7 @@ function restoreItem(undoId){
   }
   undoStack = undoStack.filter(x=>x.undoId!==undoId);
   saveUndo();
-  save();
+  autoSave();
   renderAll();
   logA(tag, '↩ Restauré: "' + (snapshot.text||snapshot.name||'') + '"');
   toast('↩ Restauré : "' + (snapshot.text||snapshot.name||'').slice(0,40) + '"');
@@ -875,7 +1008,7 @@ function switchTab(t){
   document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',TABS[i]===t));
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.getElementById('tab-'+t).classList.add('active');
-  if(t==='log'){renderLog();renderAL();loadDriveConf();}
+  if(t==='log'){renderLog();renderAL();loadDriveConf();renderCatManager();}
   if(t==='habits')renderHabits();
 }
 
@@ -887,16 +1020,77 @@ function applyTheme(dark){
 function toggleTheme(){const d=document.documentElement.getAttribute('data-theme')==='dark';applyTheme(!d);localStorage.setItem(TK,!d?'dark':'light');}
 (()=>{const s=localStorage.getItem(TK);applyTheme(s?s==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches);})();
 
-/* ══ SAVE / EXPORT / IMPORT ══ */
-function saveAndToast(){
-  save();
+/* ══ AUTO-SAVE & SYNC ══
+   Every data mutation calls autoSave() instead of save() directly.
+   autoSave() = immediate localStorage write + debounced Drive push (2s).
+   The header button becomes a status indicator, not a required action.
+══════════════════════════════════════════════════════════════════════ */
+let autoSaveTimer = null;
+const DEBOUNCE_MS = 2000;
+
+function autoSave(){
+  save();               // immediate localStorage
+  setSaveStatus('pending');
+  clearTimeout(autoSaveTimer);
   if(drTok){
-    drivePush().then(()=>{}).catch(()=>{});
+    autoSaveTimer = setTimeout(()=>{ silentPush(); }, DEBOUNCE_MS);
   } else {
-    // Show toast with Drive connect prompt
-    showDrivePrompt();
+    setSaveStatus('local');
   }
 }
+
+// Forced push from button click — immediate, no debounce
+function forcePush(){
+  clearTimeout(autoSaveTimer);
+  save();
+  if(drTok){ silentPush(); }
+  else { showDrivePrompt(); }
+}
+
+// Silent push — no toast on success, only on error
+async function silentPush(){
+  if(!drTok){ setSaveStatus('local'); return; }
+  setSaveStatus('syncing');
+  try{
+    const id=await drFindOrCreate();
+    const r=await fetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`,{
+      method:'PATCH',
+      headers:{Authorization:'Bearer '+drTok,'Content-Type':'application/json'},
+      body:JSON.stringify(S,null,2)
+    });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    setSaveStatus('ok');
+    logA('drive','Auto-sync → '+drCfg.filename);
+    // Update Drive status panel
+    const t=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    setDS(true,'Sauvegardé ✓ — '+t);
+  } catch(e){
+    setSaveStatus('error');
+    setDS(false,'Erreur: '+e.message);
+    toastAction('⚠ Drive sync échoué','Réessayer',()=>forcePush());
+  }
+}
+
+// Status indicator states
+const STATUS = {
+  local:   { color:'var(--text3)',  label:'Local',   title:'Sauvegardé localement · Drive non connecté' },
+  pending: { color:'var(--amber)',  label:'...',     title:'En attente de sync Drive' },
+  syncing: { color:'var(--blue)',   label:'Sync',    title:'Sync Drive en cours…' },
+  ok:      { color:'var(--green)',  label:'Sync ✓',  title:'Synchronisé avec Drive' },
+  error:   { color:'var(--red)',    label:'Erreur',  title:'Erreur Drive — cliquer pour réessayer' },
+};
+function setSaveStatus(state){
+  const s = STATUS[state] || STATUS.local;
+  const dot = document.getElementById('save-dot');
+  const lbl = document.getElementById('save-label');
+  const btn = document.getElementById('save-status-btn');
+  if(dot){ dot.style.background = s.color; }
+  if(lbl){ lbl.textContent = s.label; }
+  if(btn){ btn.title = s.title; }
+}
+
+// Keep backward compat — saveAndToast now just triggers forcePush
+function saveAndToast(){ forcePush(); }
 
 function showDrivePrompt(){
   // If no client ID configured at all → redirect to setup
@@ -926,11 +1120,14 @@ function openImp(){document.getElementById('imp-area').value='';document.getElem
 function closeImp(){document.getElementById('imp-modal').classList.remove('open');}
 function confirmImp(){
   try{const d=JSON.parse(document.getElementById('imp-area').value);
-    if(d.todos&&d.decisions){S={todos:d.todos,decisions:d.decisions,reminders:d.reminders||[],habits:d.habits||[],habitLogs:d.habitLogs||{}};save();renderAll();closeImp();toast('✓ Import réussi');logA('drive','Données importées');}
+    if(d.todos&&d.decisions){
+      S={todos:d.todos,decisions:d.decisions,reminders:d.reminders||[],habits:d.habits||[],habitLogs:d.habitLogs||{},
+         categories:d.categories&&d.categories.length?d.categories:JSON.parse(JSON.stringify(DEFAULT_CATS))};
+      save();renderCatSelects();renderAll();closeImp();toast('✓ Import réussi');logA('drive','Données importées');}
     else toast('❌ Format invalide');}
   catch(e){toast('❌ JSON invalide');}
 }
-function clearAll(){if(!confirm('Tout effacer ?'))return;S={todos:[],decisions:[],reminders:[],habits:[],habitLogs:{}};save();renderAll();renderLog();toast('Données effacées');logA('drive','Tout effacé');}
+function clearAll(){if(!confirm('Tout effacer ?'))return;S={todos:[],decisions:[],reminders:[],habits:[],habitLogs:{},categories:JSON.parse(JSON.stringify(DEFAULT_CATS))};save();renderCatSelects();renderAll();renderLog();toast('Données effacées');logA('drive','Tout effacé');}
 function renderAll(){renderTodos();renderDecisions();renderReminders();renderHabits();}
 document.getElementById('imp-modal').addEventListener('click',function(e){if(e.target===this)closeImp();});
 
@@ -954,9 +1151,9 @@ function loadGIS(cb){if(window.google&&window.google.accounts){cb();return;}cons
 function driveAuth(){
   const cid=document.getElementById('drive-cid').value.trim();if(!cid){toast('⚠ Entre ton Client ID');return;}
   drCfg.clientId=cid;saveDriveConf();setDS(null,'Connexion…');
-  loadGIS(()=>{try{const cl=google.accounts.oauth2.initTokenClient({client_id:cid,scope:'https://www.googleapis.com/auth/drive.file',callback:(r)=>{if(r.error){setDS(false,'Erreur: '+r.error);toast('❌ '+r.error);return;}drTok=r.access_token;drFid=null;setDS(true,'Connecté ✓');updateDriveUI();toast('✓ Drive connecté');logA('drive','Connecté à Google Drive');if(pollSecs>0)startPolling();}});cl.requestAccessToken();}catch(e){setDS(false,'Erreur: '+e.message);toast('❌ '+e.message);}});
+  loadGIS(()=>{try{const cl=google.accounts.oauth2.initTokenClient({client_id:cid,scope:'https://www.googleapis.com/auth/drive.file',callback:(r)=>{if(r.error){setDS(false,'Erreur: '+r.error);toast('❌ '+r.error);return;}drTok=r.access_token;drFid=null;setDS(true,'Connecté ✓');setSaveStatus('ok');updateDriveUI();toast('✓ Drive connecté');logA('drive','Connecté à Google Drive');if(pollSecs>0)startPolling();}});cl.requestAccessToken();}catch(e){setDS(false,'Erreur: '+e.message);toast('❌ '+e.message);}});
 }
-function driveDisc(){drTok=null;drFid=null;lastModifiedKnown=null;stopPolling();setDS(null,'Déconnecté');updateDriveUI();toast('Drive déconnecté');}
+function driveDisc(){drTok=null;drFid=null;lastModifiedKnown=null;stopPolling();setDS(null,'Déconnecté');setSaveStatus('local');updateDriveUI();toast('Drive déconnecté');}
 
 async function drFindOrCreate(){
   if(drFid)return drFid;
@@ -974,10 +1171,9 @@ async function drFindOrCreate(){
 }
 async function drivePush(){
   if(!drTok){toast('⚠ Connecte-toi');return;}
-  save();
-  setDS(true,'Envoi…');
-  try{const id=await drFindOrCreate();const r=await fetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`,{method:'PATCH',headers:{Authorization:'Bearer '+drTok,'Content-Type':'application/json'},body:JSON.stringify(S,null,2)});if(!r.ok)throw new Error('HTTP '+r.status);const t=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});setDS(true,'Sauvegardé ✓ — '+t);toast('✓ Sauvegardé · Drive sync '+t);logA('drive','Push → '+drCfg.filename);}
-  catch(e){setDS(false,'Erreur: '+e.message);toast('⚠ Local OK · Drive: '+e.message);}
+  save(); setSaveStatus('syncing'); setDS(true,'Envoi…');
+  try{const id=await drFindOrCreate();const r=await fetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`,{method:'PATCH',headers:{Authorization:'Bearer '+drTok,'Content-Type':'application/json'},body:JSON.stringify(S,null,2)});if(!r.ok)throw new Error('HTTP '+r.status);const t=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});setSaveStatus('ok');setDS(true,'Sauvegardé ✓ — '+t);toast('✓ Sauvegardé · Drive sync '+t);logA('drive','Push → '+drCfg.filename);}
+  catch(e){setSaveStatus('error');setDS(false,'Erreur: '+e.message);toast('⚠ Local OK · Drive: '+e.message);}
 }
 async function drivePull(){
   if(!drTok){toast('⚠ Connecte-toi');return;}
@@ -1033,7 +1229,7 @@ function closeEdit(id){
 function addTodo(){
   const v=document.getElementById('todo-in').value.trim();if(!v)return;
   const t={id:uid(),text:v,cat:document.getElementById('todo-cat').value,pri:document.getElementById('todo-pri').value,done:false,ts:Date.now()};
-  S.todos.push(t);document.getElementById('todo-in').value='';save();renderTodos();logA('todo','Ajouté: "'+v+'"');
+  S.todos.push(t);document.getElementById('todo-in').value='';autoSave();renderTodos();logA('todo','Ajouté: "'+v+'"');
 }
 function saveTodo(id){
   const t=S.todos.find(x=>x.id===id);if(!t)return;
@@ -1042,28 +1238,41 @@ function saveTodo(id){
   t.text=txt;
   t.cat=document.getElementById('ec-'+id).value;
   t.pri=document.getElementById('ep-'+id).value;
-  save();closeEdit(id);renderTodos();logA('todo','Modifié: "'+txt+'"');
+  autoSave();closeEdit(id);renderTodos();logA('todo','Modifié: "'+txt+'"');
 }
-function toggleTodo(id){const t=S.todos.find(x=>x.id===id);if(t){t.done=!t.done;save();renderTodos();logA('todo',(t.done?'✓ ':'↩ ')+'"'+t.text+'"');}}
+function toggleTodo(id){const t=S.todos.find(x=>x.id===id);if(t){t.done=!t.done;autoSave();renderTodos();logA('todo',(t.done?'✓ ':'↩ ')+'"'+t.text+'"');}}
 function delTodo(id){
   const t=S.todos.find(x=>x.id===id);
   if(!t) return;
   S.todos=S.todos.filter(x=>x.id!==id);
-  save();renderTodos();
+  autoSave();renderTodos();
   const undoId=pushUndo('todo',t.text,t);
   logA('todo','Supprimé: "'+t.text+'"', undoId);
 }
 function renderTodos(){
-  const fk=['all','work','perso','projet','p1','p2','p3','done'];
-  const fl={all:'All',work:'Work',perso:'Personal',projet:'Project',p1:'P1',p2:'P2',p3:'P3',done:'Done'};
-  document.getElementById('todo-filters').innerHTML=fk.map(f=>`<button class="fb${tF===f?' on':''}" onclick="tF='${f}';renderTodos()">${fl[f]}</button>`).join('');
+  // ── Build dynamic category filter keys ──
+  const catKeys = S.categories.map(c=>c.id);
+  const fkeys=['all',...catKeys,'p1','p2','p3','done'];
+  const fl={all:'All',p1:'P1',p2:'P2',p3:'P3',done:'Done'};
+  S.categories.forEach(c=>{ fl[c.id]=c.label; });
+  document.getElementById('todo-filters').innerHTML=fkeys.map(f=>`<button class="fb${tF===f?' on':''}" onclick="tF='${f}';renderTodos()">${fl[f]||f}</button>`).join('');
+
   let items=S.todos;
-  if(tF==='done')items=items.filter(x=>x.done);
-  else if(tF!=='all'){if(['work','perso','projet'].includes(tF))items=items.filter(x=>x.cat===tF&&!x.done);else items=items.filter(x=>x.pri===tF&&!x.done);}
+  if(tF==='done') items=items.filter(x=>x.done);
+  else if(tF!=='all'){
+    if(catKeys.includes(tF)) items=items.filter(x=>x.cat===tF&&!x.done);
+    else items=items.filter(x=>x.pri===tF&&!x.done);
+  }
   items=[...items].sort((a,b)=>(!a.done&&b.done)?-1:(a.done&&!b.done)?1:0);
-  const cl={work:'cwork',perso:'cperso',projet:'cprojet'},pl={p1:'p1',p2:'p2',p3:'p3'},cn={work:'Work',perso:'Personal',projet:'Project'};
+
+  const pl={p1:'p1',p2:'p2',p3:'p3'};
   const el=document.getElementById('todo-list');
-  el.innerHTML=items.length?items.map(t=>`
+
+  el.innerHTML=items.length?items.map(t=>{
+    const cat = getCatById(t.cat);
+    const catBadge = `<span style="font-family:var(--mono);font-size:9px;font-weight:500;padding:1px 5px;border-radius:2px;letter-spacing:.04em;text-transform:uppercase;background:${cat.color};color:${cat.textColor};">${esc(cat.label)}</span>`;
+    const catOptions = S.categories.map(c=>`<option value="${c.id}"${t.cat===c.id?' selected':''}>${c.label}</option>`).join('');
+    return `
     <div class="item${t.done?' done':''}" draggable="true" data-id="${t.id}">
       <div class="dh"><span></span><span></span><span></span></div>
       <div class="reorder-btns">
@@ -1075,17 +1284,13 @@ function renderTodos(){
         <div class="item-text">${esc(t.text)}</div>
         <div class="item-meta">
           <span class="tag ${pl[t.pri]}">${t.pri.toUpperCase()}</span>
-          <span class="tag ${cl[t.cat]}">${cn[t.cat]}</span>
+          ${catBadge}
           <span class="meta-date">${fd(t.ts)}</span>
         </div>
         <div class="edit-form" id="ef-${t.id}" data-id="${t.id}">
           <div class="edit-row">
             <input class="edit-in" id="et-${t.id}" type="text" value="${esc(t.text)}" onkeydown="if(event.key==='Enter')saveTodo('${t.id}');if(event.key==='Escape')closeEdit('${t.id}')">
-            <select class="edit-in sm" id="ec-${t.id}">
-              <option value="perso"${t.cat==='perso'?' selected':''}>Personal</option>
-              <option value="work"${t.cat==='work'?' selected':''}>Work</option>
-              <option value="projet"${t.cat==='projet'?' selected':''}>Project</option>
-            </select>
+            <select class="edit-in sm" id="ec-${t.id}">${catOptions}</select>
             <select class="edit-in sm" id="ep-${t.id}">
               <option value="p1"${t.pri==='p1'?' selected':''}>P1</option>
               <option value="p2"${t.pri==='p2'?' selected':''}>P2</option>
@@ -1100,7 +1305,8 @@ function renderTodos(){
       </div>
       <button class="edit-btn" onclick="openEdit('${t.id}')" title="Modifier">✎</button>
       <button class="del" onclick="delTodo('${t.id}')">×</button>
-    </div>`).join(''):`<div class="empty">Aucune tâche</div>`;
+    </div>`}).join(''):`<div class="empty">Aucune tâche</div>`;
+
   setupDrag(el,'todos',renderTodos);
   const total=S.todos.length,done=S.todos.filter(x=>x.done).length,p1=S.todos.filter(x=>x.pri==='p1'&&!x.done).length;
   document.getElementById('todo-stats').innerHTML=`
@@ -1114,7 +1320,7 @@ function renderTodos(){
 function addDecision(){
   const v=document.getElementById('dec-in').value.trim();if(!v)return;
   const d={id:uid(),text:v,status:document.getElementById('dec-st').value,reason:document.getElementById('dec-reason').value.trim(),ts:Date.now()};
-  S.decisions.push(d);document.getElementById('dec-in').value='';document.getElementById('dec-reason').value='';save();renderDecisions();logA('decision','Ajouté: "'+v+'"');
+  S.decisions.push(d);document.getElementById('dec-in').value='';document.getElementById('dec-reason').value='';autoSave();renderDecisions();logA('decision','Ajouté: "'+v+'"');
 }
 function saveDecision(id){
   const d=S.decisions.find(x=>x.id===id);if(!d)return;
@@ -1122,17 +1328,17 @@ function saveDecision(id){
   d.text=txt;
   d.reason=document.getElementById('edr-'+id).value.trim();
   d.status=document.getElementById('eds-'+id).value;
-  save();closeEdit(id);renderDecisions();logA('decision','Modifié: "'+txt+'"');
+  autoSave();closeEdit(id);renderDecisions();logA('decision','Modifié: "'+txt+'"');
 }
 function delDecision(id){
   const d=S.decisions.find(x=>x.id===id);
   if(!d) return;
   S.decisions=S.decisions.filter(x=>x.id!==id);
-  save();renderDecisions();
+  autoSave();renderDecisions();
   const undoId=pushUndo('decision',d.text,d);
   logA('decision','Supprimé: "'+d.text+'"', undoId);
 }
-function setDecSt(id,s){const d=S.decisions.find(x=>x.id===id);if(d){d.status=s;save();renderDecisions();logA('decision','"'+d.text+'" → '+s);}}
+function setDecSt(id,s){const d=S.decisions.find(x=>x.id===id);if(d){d.status=s;autoSave();renderDecisions();logA('decision','"'+d.text+'" → '+s);}}
 function renderDecisions(){
   const fk=['all','pending','done','rejected'],fl={all:'All',pending:'Pending',done:'Made',rejected:'Rejected'};
   document.getElementById('dec-filters').innerHTML=fk.map(f=>`<button class="fb${dF===f?' on':''}" onclick="dF='${f}';renderDecisions()">${fl[f]}</button>`).join('');
@@ -1191,7 +1397,7 @@ function renderDecisions(){
 function addReminder(){
   const v=document.getElementById('rem-in').value.trim();if(!v)return;
   const r={id:uid(),text:v,date:document.getElementById('rem-date').value||null,recur:document.getElementById('rem-recur').value,done:false,ts:Date.now()};
-  S.reminders.push(r);document.getElementById('rem-in').value='';document.getElementById('rem-date').value='';save();renderReminders();logA('reminder','Ajouté: "'+v+'"');
+  S.reminders.push(r);document.getElementById('rem-in').value='';document.getElementById('rem-date').value='';autoSave();renderReminders();logA('reminder','Ajouté: "'+v+'"');
 }
 function saveReminder(id){
   const r=S.reminders.find(x=>x.id===id);if(!r)return;
@@ -1199,19 +1405,19 @@ function saveReminder(id){
   r.text=txt;
   r.date=document.getElementById('erd-'+id).value||null;
   r.recur=document.getElementById('err-'+id).value;
-  save();closeEdit(id);renderReminders();logA('reminder','Modifié: "'+txt+'"');
+  autoSave();closeEdit(id);renderReminders();logA('reminder','Modifié: "'+txt+'"');
 }
 function toggleRem(id){
   const r=S.reminders.find(x=>x.id===id);if(!r)return;
   if(r.recur!=='none'&&!r.done){const b=r.date?new Date(r.date+'T00:00:00'):new Date();if(r.recur==='daily')b.setDate(b.getDate()+1);else if(r.recur==='weekly')b.setDate(b.getDate()+7);else if(r.recur==='monthly')b.setMonth(b.getMonth()+1);r.date=b.toISOString().slice(0,10);}
   else r.done=!r.done;
-  save();renderReminders();logA('reminder',(r.done?'✓ ':'↩ ')+'"'+r.text+'"');
+  autoSave();renderReminders();logA('reminder',(r.done?'✓ ':'↩ ')+'"'+r.text+'"');
 }
 function delRem(id){
   const r=S.reminders.find(x=>x.id===id);
   if(!r) return;
   S.reminders=S.reminders.filter(x=>x.id!==id);
-  save();renderReminders();
+  autoSave();renderReminders();
   const undoId=pushUndo('reminder',r.text,r);
   logA('reminder','Supprimé: "'+r.text+'"', undoId);
 }
@@ -1278,22 +1484,22 @@ const DAYS=['Su','Mo','Tu','We','Th','Fr','Sa'];
 function addHabit(){
   const v=document.getElementById('hab-in').value.trim();if(!v)return;
   const h={id:uid(),name:v,cat:document.getElementById('hab-cat').value,freq:document.getElementById('hab-freq').value,typo:'neutral',laws:{signal:'',envie:'',reponse:'',recompense:''},ts:Date.now()};
-  S.habits.push(h);document.getElementById('hab-in').value='';save();renderHabits();logA('habit','Ajouté: "'+v+'"');
+  S.habits.push(h);document.getElementById('hab-in').value='';autoSave();renderHabits();logA('habit','Ajouté: "'+v+'"');
 }
 function delHabit(id){
   const h=S.habits.find(x=>x.id===id);if(!h)return;
   const logs={};Object.keys(S.habitLogs).forEach(k=>{if(k.startsWith(id+':'))logs[k]=S.habitLogs[k];});
   S.habits=S.habits.filter(x=>x.id!==id);
   Object.keys(S.habitLogs).forEach(k=>{if(k.startsWith(id+':'))delete S.habitLogs[k];});
-  save();renderHabits();
+  autoSave();renderHabits();
   const undoId=pushUndo('habit',h.name,{...h,_logs:logs});
   logA('habit','Supprimé: "'+h.name+'"',undoId);
 }
-function toggleLog(hid,ds){const k=hid+':'+ds,h=S.habits.find(x=>x.id===hid);if(S.habitLogs[k]){delete S.habitLogs[k];if(h)logA('habit','☐ "'+h.name+'" ('+ds+')');}else{S.habitLogs[k]={ts:Date.now()};if(h)logA('habit','☑ "'+h.name+'" ('+ds+')');}save();renderHabits();}
+function toggleLog(hid,ds){const k=hid+':'+ds,h=S.habits.find(x=>x.id===hid);if(S.habitLogs[k]){delete S.habitLogs[k];if(h)logA('habit','☐ "'+h.name+'" ('+ds+')');}else{S.habitLogs[k]={ts:Date.now()};if(h)logA('habit','☑ "'+h.name+'" ('+ds+')');}autoSave();renderHabits();}
 function isLogged(hid,ds){return!!S.habitLogs[hid+':'+ds];}
 function toggleLaws(id){const el=document.getElementById('lp-'+id);el.classList.toggle('open');const h=S.habits.find(x=>x.id===id);const n=h&&h.laws?[h.laws.signal,h.laws.envie,h.laws.reponse,h.laws.recompense].filter(Boolean).length:0;document.getElementById('lb-'+id).textContent=el.classList.contains('open')?'▲ Masquer':('▼ 4 lois'+(n>0?' ('+n+'/4)':''));}
 function saveLaw(hid,f,v){const h=S.habits.find(x=>x.id===hid);if(!h)return;if(!h.laws)h.laws={};h.laws[f]=v;save();}
-function setTypo(hid,t){const h=S.habits.find(x=>x.id===hid);if(!h)return;h.typo=t;save();renderHabits();logA('habit','"'+h.name+'" → '+t);}
+function setTypo(hid,t){const h=S.habits.find(x=>x.id===hid);if(!h)return;h.typo=t;autoSave();renderHabits();logA('habit','"'+h.name+'" → '+t);}
 function calcStreak(h){let s=0;const td=today();for(let i=0;i<90;i++){const d=new Date(td);d.setDate(d.getDate()-i);if(h.freq==='weekly'&&d.getDay()!==1&&i>0)continue;if(isLogged(h.id,isoDate(d)))s++;else if(i>0)break;}return s;}
 function getWeekDates(){const b=today();b.setDate(b.getDate()+wOff*7);const m=new Date(b);const dw=m.getDay();m.setDate(m.getDate()-(dw===0?6:dw-1));return Array.from({length:7},(_,i)=>{const d=new Date(m);d.setDate(d.getDate()+i);return d;});}
 function shiftW(n){wOff+=n;renderHabits();}
@@ -1462,6 +1668,7 @@ document.addEventListener('visibilitychange', ()=>{
 });
 
 /* ══ INIT ══ */
+renderCatSelects();
 renderAll();
 loadDriveConf();
 
