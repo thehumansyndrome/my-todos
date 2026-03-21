@@ -1151,9 +1151,9 @@ function loadGIS(cb){if(window.google&&window.google.accounts){cb();return;}cons
 function driveAuth(){
   const cid=document.getElementById('drive-cid').value.trim();if(!cid){toast('⚠ Entre ton Client ID');return;}
   drCfg.clientId=cid;saveDriveConf();setDS(null,'Connexion…');
-  loadGIS(()=>{try{const cl=google.accounts.oauth2.initTokenClient({client_id:cid,scope:'https://www.googleapis.com/auth/drive.file',callback:(r)=>{if(r.error){setDS(false,'Erreur: '+r.error);toast('❌ '+r.error);return;}drTok=r.access_token;drFid=null;setDS(true,'Connecté ✓');setSaveStatus('ok');updateDriveUI();toast('✓ Drive connecté');logA('drive','Connecté à Google Drive');if(pollSecs>0)startPolling();}});cl.requestAccessToken();}catch(e){setDS(false,'Erreur: '+e.message);toast('❌ '+e.message);}});
+  loadGIS(()=>{try{const cl=google.accounts.oauth2.initTokenClient({client_id:cid,scope:'https://www.googleapis.com/auth/drive.file',callback:(r)=>{if(r.error){setDS(false,'Erreur: '+r.error);toast('❌ '+r.error);return;}drTok=r.access_token;drFid=null;setDS(true,'Connecté ✓');setSaveStatus('ok');updateDriveUI();sessionStorage.setItem('td_tok_'+P,r.access_token);toast('✓ Drive connecté');logA('drive','Connecté à Google Drive');if(pollSecs>0)startPolling();}});cl.requestAccessToken();}catch(e){setDS(false,'Erreur: '+e.message);toast('❌ '+e.message);}});
 }
-function driveDisc(){drTok=null;drFid=null;lastModifiedKnown=null;stopPolling();setDS(null,'Déconnecté');setSaveStatus('local');updateDriveUI();toast('Drive déconnecté');}
+function driveDisc(){drTok=null;drFid=null;lastModifiedKnown=null;stopPolling();sessionStorage.removeItem('td_tok_'+P);setDS(null,'Déconnecté');setSaveStatus('local');updateDriveUI();toast('Drive déconnecté');}
 
 async function drFindOrCreate(){
   if(drFid)return drFid;
@@ -1672,7 +1672,9 @@ renderCatSelects();
 renderAll();
 loadDriveConf();
 
-// Auto-connect + pull on load if Client ID is configured
+// Auto-connect on load — NO popup (popup requires user gesture).
+// Strategy: if a token was already obtained this session (stored in sessionStorage),
+// reuse it. Otherwise show a gentle "Connect" prompt in the status area.
 (function autoConnect(){
   try {
     const saved = localStorage.getItem(DK);
@@ -1680,44 +1682,29 @@ loadDriveConf();
     const cfg = JSON.parse(saved);
     if(!cfg.clientId || cfg.clientId.length < 10) return;
 
-    // Show connecting indicator
-    setDS(null, 'Connexion automatique…');
-    toast('☁ Connexion Drive…', 5000);
-
-    loadGIS(()=>{
-      try {
-        const cl = google.accounts.oauth2.initTokenClient({
-          client_id: cfg.clientId,
-          scope: 'https://www.googleapis.com/auth/drive.file',
-          prompt: '',          // silent — no popup if already authorized
-          callback: (r) => {
-            if(r.error){
-              // Silent fail — start with local data, show gentle warning
-              setDS(false, 'Drive non connecté — données locales');
-              toastAction('☁ Drive non connecté', 'Connecter', ()=>driveAuth());
-              return;
-            }
-            drTok = r.access_token;
-            drFid = null;
-            drCfg = cfg;
-            setDS(true, 'Connecté ✓ — chargement…');
-            updateDriveUI();
-            // Auto-pull
-            drivePull().then(()=>{
-              logA('drive','Auto-pull au chargement');
-            }).catch(e=>{
-              setDS(false, 'Erreur pull: '+e.message);
-              toastAction('⚠ Drive connecté mais pull échoué', 'Réessayer', ()=>drivePull());
-            });
-          }
+    // Check if we have a session token (set after manual auth)
+    const sessionToken = sessionStorage.getItem('td_tok_' + P);
+    if(sessionToken){
+      drTok = sessionToken;
+      drFid = null;
+      drCfg = cfg;
+      setDS(true, 'Connecté ✓ — chargement…');
+      updateDriveUI();
+      setSaveStatus('syncing');
+      drivePull()
+        .then(()=>{ logA('drive','Auto-pull au chargement'); setSaveStatus('ok'); })
+        .catch(e=>{
+          // Token probably expired — clear it, ask user to reconnect
+          sessionStorage.removeItem('td_tok_' + P);
+          drTok = null; updateDriveUI(); setSaveStatus('local');
+          setDS(false, 'Session expirée');
+          toastAction('☁ Session Drive expirée', 'Reconnecter', ()=>driveAuth());
         });
-        // requestAccessToken with prompt:'' attempts silent auth
-        // If user hasn't approved yet it will show popup — acceptable
-        cl.requestAccessToken({prompt:''});
-      } catch(e){
-        setDS(false, 'Erreur auto-connect');
-      }
-    });
+    } else {
+      // Client ID configured but no session — show connect prompt
+      setDS(null, 'Drive configuré — non connecté');
+      toastAction('☁ Drive non connecté', 'Connecter', ()=>driveAuth());
+    }
   } catch(e) { /* silent fail */ }
 })();
 </script>
