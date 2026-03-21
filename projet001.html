@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Todos · Decisions · Reminders · Habits</title>
+<title>Todos — projet001</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono&display=swap');
 :root{
@@ -179,24 +179,18 @@ h1{font-size:18px;font-weight:600;margin-bottom:1.25rem;color:var(--text)}
 </div>
 
 <script>
+const PROJECT_NAME="projet001";
 let state={todos:[],decisions:[],reminders:[],habits:[],habitLogs:{}};
 let tF='all',dF='all',rF='all',habF='all',weekOffset=0;
 
 const _path=window.location.pathname;
-const _file=_path.substring(_path.lastIndexOf('/')+1).replace('.html','').replace('.htm','')||'default';
-const PROJECT=new URLSearchParams(window.location.search).get('project')||_file;
-const STORAGE_KEY='td_v4_'+PROJECT;
+const _file=_path.substring(_path.lastIndexOf('/')+1).replace(/\.html?$/,'')||'default';
+const PROJECT='projet001';
 
-function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){}}
-function load(){
-  try{
-    const d=localStorage.getItem(STORAGE_KEY);
-    if(d){const p=JSON.parse(d);state={todos:p.todos||[],decisions:p.decisions||[],reminders:p.reminders||[],habits:p.habits||[],habitLogs:p.habitLogs||{}};}
-  }catch(e){}
-}
-load();
+function save(){}
+function load(){}
 
-const PROJECT_LABEL=PROJECT==='default'?'':PROJECT;
+const PROJECT_LABEL='projet001';
 if(PROJECT_LABEL){
   document.getElementById('app-title').innerHTML=
     'Todos · Decisions · Reminders · Habits <span style="font-size:12px;font-weight:400;padding:2px 10px;border-radius:20px;background:#E6F1FB;color:#185FA5;margin-left:6px;vertical-align:middle">'+PROJECT_LABEL+'</span>';
