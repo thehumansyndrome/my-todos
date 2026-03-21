@@ -548,6 +548,7 @@ body{
     <div class="hspace"></div>
     <button class="hbtn orange" onclick="saveAndToast()">Save</button>
     <button class="hbtn green" onclick="openImp()">Import</button>
+    <button class="hbtn" id="btn-refresh" onclick="drivePull()" style="display:none" title="Charger depuis Drive">↻ Refresh</button>
     <button class="hbtn" onclick="switchTab('log');setTimeout(()=>document.getElementById('drive-anchor').scrollIntoView({behavior:'smooth'}),120)">
       <span class="gdot" id="gdot"></span>Drive
     </button>
@@ -757,17 +758,88 @@ function today(){const d=new Date();d.setHours(0,0,0,0);return d;}
 let tT;
 function toast(m,d=2400){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(tT);tT=setTimeout(()=>t.classList.remove('show'),d);}
 
+/* ══ UNDO STACK ══ */
+// Each entry: { id, undoId, tag, label, snapshot }
+// snapshot = the deleted item (todo/decision/reminder/habit)
+// undoId links the AL entry to its undo snapshot
+let undoStack = [];
+const UNDO_KEY = 'td_undo_' + P;
+
+function saveUndo(){try{localStorage.setItem(UNDO_KEY,JSON.stringify(undoStack.slice(-20)));}catch(e){}}
+function loadUndo(){try{const u=localStorage.getItem(UNDO_KEY);if(u)undoStack=JSON.parse(u);}catch(e){}}
+loadUndo();
+
+function pushUndo(tag, label, snapshot){
+  const undoId = uid();
+  undoStack.push({undoId, tag, label, snapshot, ts: Date.now()});
+  if(undoStack.length > 20) undoStack.shift();
+  saveUndo();
+  return undoId;
+}
+
+function restoreItem(undoId){
+  const entry = undoStack.find(x=>x.undoId===undoId);
+  if(!entry){ toast('⚠ Impossible de restaurer'); return; }
+  const {tag, snapshot} = entry;
+  if(tag==='todo'){
+    if(!S.todos.find(x=>x.id===snapshot.id)) S.todos.push(snapshot);
+  } else if(tag==='decision'){
+    if(!S.decisions.find(x=>x.id===snapshot.id)) S.decisions.push(snapshot);
+  } else if(tag==='reminder'){
+    if(!S.reminders.find(x=>x.id===snapshot.id)) S.reminders.push(snapshot);
+  } else if(tag==='habit'){
+    if(!S.habits.find(x=>x.id===snapshot.id)){
+      const {_logs, ...habit} = snapshot;
+      S.habits.push(habit);
+      if(_logs) Object.assign(S.habitLogs, _logs);
+    }
+  }
+  undoStack = undoStack.filter(x=>x.undoId!==undoId);
+  saveUndo();
+  save();
+  renderAll();
+  logA(tag, '↩ Restauré: "' + (snapshot.text||snapshot.name||'') + '"');
+  toast('↩ Restauré : "' + (snapshot.text||snapshot.name||'').slice(0,40) + '"');
+}
+
 /* ══ ACTIVITY LOG ══ */
-function logA(tag,msg){AL.push({ts:Date.now(),tag,msg});saveAL();if(document.getElementById('tab-log').classList.contains('active'))renderAL();}
+function logA(tag, msg, undoId){
+  AL.push({ts:Date.now(), tag, msg, undoId: undoId||null});
+  saveAL();
+  if(document.getElementById('tab-log').classList.contains('active')) renderAL();
+}
 function renderAL(){
   const el=document.getElementById('act-list');
   const e=[...AL].reverse().slice(0,100);
   if(!e.length){el.innerHTML='<div class="empty">Aucune activité</div>';return;}
   const tc={todo:'at-todo',decision:'at-decision',reminder:'at-reminder',habit:'at-habit',drive:'at-drive'};
-  el.innerHTML=e.map(x=>`<div class="act-item"><span class="act-time">${fd(x.ts)} ${new Date(x.ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span><span class="act-tag ${tc[x.tag]||''}">${x.tag}</span><span class="act-msg">${esc(x.msg)}</span></div>`).join('');
+  // Check which undoIds are still available
+  const availableUndos = new Set(undoStack.map(x=>x.undoId));
+  el.innerHTML=e.map(x=>{
+    const undoBtn = x.undoId && availableUndos.has(x.undoId)
+      ? `<button onclick="restoreItem('${x.undoId}')" style="margin-left:6px;font-family:var(--mono);font-size:9px;padding:1px 6px;border-radius:2px;border:1px solid var(--line2);background:var(--bg2);color:var(--text2);cursor:pointer;" title="Restaurer">↩</button>`
+      : '';
+    return `<div class="act-item"><span class="act-time">${fd(x.ts)} ${new Date(x.ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span><span class="act-tag ${tc[x.tag]||''}">${x.tag}</span><span class="act-msg">${esc(x.msg)}${undoBtn}</span></div>`;
+  }).join('');
 }
 function copyActLog(){const t=AL.map(x=>`[${fd(x.ts)} ${new Date(x.ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}] [${x.tag}] ${x.msg}`).join('\n');navigator.clipboard.writeText(t).then(()=>toast('Log copié')).catch(()=>toast('Copie manuelle'));}
 function clearActLog(){if(!confirm('Vider le journal ?'))return;AL=[];saveAL();renderAL();toast('Journal vidé');}
+
+/* Ctrl+Z / Cmd+Z global undo — restores last deleted item */
+document.addEventListener('keydown', e=>{
+  if((e.ctrlKey||e.metaKey) && e.key==='z' && !e.shiftKey){
+    // Only if focus is not inside a text input
+    const tag = document.activeElement && document.activeElement.tagName;
+    if(tag==='INPUT'||tag==='TEXTAREA') return;
+    e.preventDefault();
+    if(undoStack.length){
+      const last = undoStack[undoStack.length-1];
+      restoreItem(last.undoId);
+    } else {
+      toast('Rien à restaurer');
+    }
+  }
+});
 
 /* ══ TABS ══ */
 function switchTab(t){
@@ -787,7 +859,37 @@ function toggleTheme(){const d=document.documentElement.getAttribute('data-theme
 (()=>{const s=localStorage.getItem(TK);applyTheme(s?s==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches);})();
 
 /* ══ SAVE / EXPORT / IMPORT ══ */
-function saveAndToast(){save();toast('✓ Sauvegardé');}
+function saveAndToast(){
+  save();
+  if(drTok){
+    drivePush().then(()=>{}).catch(()=>{});
+  } else {
+    // Show toast with Drive connect prompt
+    showDrivePrompt();
+  }
+}
+
+function showDrivePrompt(){
+  // If no client ID configured at all → redirect to setup
+  const hasCid = drCfg.clientId && drCfg.clientId.length > 10;
+  if(!hasCid){
+    toastAction('✓ Local · ☁ Drive non configuré', 'Configurer', ()=>{ switchTab('log'); setTimeout(()=>document.getElementById('drive-anchor').scrollIntoView({behavior:'smooth'}),120); });
+  } else {
+    toastAction('✓ Local · ☁ Drive non connecté', 'Connecter', ()=>driveAuth());
+  }
+}
+
+// Toast with optional action button
+let toastActT;
+function toastAction(msg, btnLabel, btnFn){
+  const t=document.getElementById('toast');
+  t.innerHTML=btnLabel
+    ? `${msg} <button onclick="(${btnFn.toString()})()" style="margin-left:8px;font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:3px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.15);color:inherit;cursor:pointer;">${btnLabel}</button>`
+    : msg;
+  t.classList.add('show');
+  clearTimeout(toastActT);
+  toastActT=setTimeout(()=>{t.classList.remove('show');t.innerHTML='';},4000);
+}
 function renderLog(){document.getElementById('log-area').value=JSON.stringify(S,null,2);}
 function exportLog(){const t=JSON.stringify(S,null,2);document.getElementById('log-area').value=t;navigator.clipboard.writeText(t).then(()=>toast('✓ JSON copié')).catch(()=>toast('Copie manuelle'));}
 function dlExport(){const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=`${P}_${isoDate(new Date())}.json`;a.click();URL.revokeObjectURL(u);toast('✓ Téléchargé');logA('drive','Export téléchargé');}
@@ -809,7 +911,15 @@ let drTok=null,drFid=null,drCfg={clientId:'',filename:'projet001.json'};
 function saveDriveConf(){drCfg.clientId=document.getElementById('drive-cid').value.trim();drCfg.filename=document.getElementById('drive-fn').value.trim()||'projet001.json';localStorage.setItem(DK,JSON.stringify(drCfg));}
 function loadDriveConf(){try{const s=localStorage.getItem(DK);if(s){const c=JSON.parse(s);drCfg=c;document.getElementById('drive-cid').value=c.clientId||'';document.getElementById('drive-fn').value=c.filename||'projet001.json';}}catch(e){}updateDriveUI();}
 function setDS(ok,msg){const d=document.getElementById('dsdot'),h=document.getElementById('gdot');d.className='dsdot'+(ok===true?' ok':ok===false?' err':'');h.className='gdot'+(ok===true?' on':'');document.getElementById('dstxt').textContent=msg;}
-function updateDriveUI(){const c=!!drTok;document.getElementById('btn-push').disabled=!c;document.getElementById('btn-pull').disabled=!c;document.getElementById('btn-auth').style.display=c?'none':'';document.getElementById('btn-disc').style.display=c?'':'none';}
+function updateDriveUI(){
+  const c=!!drTok;
+  document.getElementById('btn-push').disabled=!c;
+  document.getElementById('btn-pull').disabled=!c;
+  document.getElementById('btn-auth').style.display=c?'none':'';
+  document.getElementById('btn-disc').style.display=c?'':'none';
+  const r=document.getElementById('btn-refresh');
+  if(r)r.style.display=c?'':'none';
+}
 
 function loadGIS(cb){if(window.google&&window.google.accounts){cb();return;}const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';s.onload=cb;document.head.appendChild(s);}
 function driveAuth(){
@@ -835,14 +945,15 @@ async function drFindOrCreate(){
 }
 async function drivePush(){
   if(!drTok){toast('⚠ Connecte-toi');return;}
-  setDS(true,'Envoi…');toast('⬆ Envoi…',3000);
-  try{const id=await drFindOrCreate();const r=await fetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`,{method:'PATCH',headers:{Authorization:'Bearer '+drTok,'Content-Type':'application/json'},body:JSON.stringify(S,null,2)});if(!r.ok)throw new Error('HTTP '+r.status);setDS(true,'Sauvegardé ✓ — '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}));toast('✓ Sauvegardé sur Drive');logA('drive','Push → '+drCfg.filename);}
-  catch(e){setDS(false,'Erreur: '+e.message);toast('❌ '+e.message);}
+  save();
+  setDS(true,'Envoi…');
+  try{const id=await drFindOrCreate();const r=await fetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`,{method:'PATCH',headers:{Authorization:'Bearer '+drTok,'Content-Type':'application/json'},body:JSON.stringify(S,null,2)});if(!r.ok)throw new Error('HTTP '+r.status);const t=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});setDS(true,'Sauvegardé ✓ — '+t);toast('✓ Sauvegardé · Drive sync '+t);logA('drive','Push → '+drCfg.filename);}
+  catch(e){setDS(false,'Erreur: '+e.message);toast('⚠ Local OK · Drive: '+e.message);}
 }
 async function drivePull(){
   if(!drTok){toast('⚠ Connecte-toi');return;}
   setDS(true,'Chargement…');toast('⬇ Lecture…',3000);
-  try{const id=await drFindOrCreate();const r=await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`,{headers:{Authorization:'Bearer '+drTok}});if(!r.ok)throw new Error('HTTP '+r.status);const d=await r.json();if(!d.todos||!d.decisions)throw new Error('Format invalide');if(!confirm('Charger depuis Drive ? Remplace les données locales.'))return setDS(true,'Connecté ✓');S={todos:d.todos,decisions:d.decisions,reminders:d.reminders||[],habits:d.habits||[],habitLogs:d.habitLogs||{}};save();renderAll();setDS(true,'Chargé ✓ — '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}));toast('✓ Chargé depuis Drive');logA('drive','Pull ← '+drCfg.filename);}
+  try{const id=await drFindOrCreate();const r=await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`,{headers:{Authorization:'Bearer '+drTok}});if(!r.ok)throw new Error('HTTP '+r.status);const d=await r.json();if(!d.todos||!d.decisions)throw new Error('Format invalide');S={todos:d.todos,decisions:d.decisions,reminders:d.reminders||[],habits:d.habits||[],habitLogs:d.habitLogs||{}};save();renderAll();const t=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});setDS(true,'Chargé ✓ — '+t);toast('✓ Données Drive chargées — '+t);logA('drive','Pull ← '+drCfg.filename);}
   catch(e){setDS(false,'Erreur: '+e.message);toast('❌ '+e.message);}
 }
 
@@ -888,7 +999,14 @@ function saveTodo(id){
   save();closeEdit(id);renderTodos();logA('todo','Modifié: "'+txt+'"');
 }
 function toggleTodo(id){const t=S.todos.find(x=>x.id===id);if(t){t.done=!t.done;save();renderTodos();logA('todo',(t.done?'✓ ':'↩ ')+'"'+t.text+'"');}}
-function delTodo(id){const t=S.todos.find(x=>x.id===id);S.todos=S.todos.filter(x=>x.id!==id);save();renderTodos();if(t)logA('todo','Supprimé: "'+t.text+'"');}
+function delTodo(id){
+  const t=S.todos.find(x=>x.id===id);
+  if(!t) return;
+  S.todos=S.todos.filter(x=>x.id!==id);
+  save();renderTodos();
+  const undoId=pushUndo('todo',t.text,t);
+  logA('todo','Supprimé: "'+t.text+'"', undoId);
+}
 function renderTodos(){
   const fk=['all','work','perso','projet','p1','p2','p3','done'];
   const fl={all:'All',work:'Work',perso:'Personal',projet:'Project',p1:'P1',p2:'P2',p3:'P3',done:'Done'};
@@ -960,7 +1078,14 @@ function saveDecision(id){
   d.status=document.getElementById('eds-'+id).value;
   save();closeEdit(id);renderDecisions();logA('decision','Modifié: "'+txt+'"');
 }
-function delDecision(id){const d=S.decisions.find(x=>x.id===id);S.decisions=S.decisions.filter(x=>x.id!==id);save();renderDecisions();if(d)logA('decision','Supprimé: "'+d.text+'"');}
+function delDecision(id){
+  const d=S.decisions.find(x=>x.id===id);
+  if(!d) return;
+  S.decisions=S.decisions.filter(x=>x.id!==id);
+  save();renderDecisions();
+  const undoId=pushUndo('decision',d.text,d);
+  logA('decision','Supprimé: "'+d.text+'"', undoId);
+}
 function setDecSt(id,s){const d=S.decisions.find(x=>x.id===id);if(d){d.status=s;save();renderDecisions();logA('decision','"'+d.text+'" → '+s);}}
 function renderDecisions(){
   const fk=['all','pending','done','rejected'],fl={all:'All',pending:'Pending',done:'Made',rejected:'Rejected'};
@@ -1036,7 +1161,14 @@ function toggleRem(id){
   else r.done=!r.done;
   save();renderReminders();logA('reminder',(r.done?'✓ ':'↩ ')+'"'+r.text+'"');
 }
-function delRem(id){const r=S.reminders.find(x=>x.id===id);S.reminders=S.reminders.filter(x=>x.id!==id);save();renderReminders();if(r)logA('reminder','Supprimé: "'+r.text+'"');}
+function delRem(id){
+  const r=S.reminders.find(x=>x.id===id);
+  if(!r) return;
+  S.reminders=S.reminders.filter(x=>x.id!==id);
+  save();renderReminders();
+  const undoId=pushUndo('reminder',r.text,r);
+  logA('reminder','Supprimé: "'+r.text+'"', undoId);
+}
 function remSt(r){if(r.done)return'done';if(!r.date)return'upcoming';const td=today(),d=new Date(r.date+'T00:00:00'),diff=Math.round((d-td)/86400000);if(diff<0)return'overdue';if(diff===0)return'today';if(diff<=7)return'soon';return'upcoming';}
 const rSL={overdue:'Overdue',today:'Today',soon:'This week',upcoming:'Upcoming',done:'Done'};
 const rRL={none:'',daily:'Daily',weekly:'Weekly',monthly:'Monthly'};
@@ -1102,7 +1234,15 @@ function addHabit(){
   const h={id:uid(),name:v,cat:document.getElementById('hab-cat').value,freq:document.getElementById('hab-freq').value,typo:'neutral',laws:{signal:'',envie:'',reponse:'',recompense:''},ts:Date.now()};
   S.habits.push(h);document.getElementById('hab-in').value='';save();renderHabits();logA('habit','Ajouté: "'+v+'"');
 }
-function delHabit(id){const h=S.habits.find(x=>x.id===id);S.habits=S.habits.filter(x=>x.id!==id);Object.keys(S.habitLogs).forEach(k=>{if(k.startsWith(id+':'))delete S.habitLogs[k];});save();renderHabits();if(h)logA('habit','Supprimé: "'+h.name+'"');}
+function delHabit(id){
+  const h=S.habits.find(x=>x.id===id);if(!h)return;
+  const logs={};Object.keys(S.habitLogs).forEach(k=>{if(k.startsWith(id+':'))logs[k]=S.habitLogs[k];});
+  S.habits=S.habits.filter(x=>x.id!==id);
+  Object.keys(S.habitLogs).forEach(k=>{if(k.startsWith(id+':'))delete S.habitLogs[k];});
+  save();renderHabits();
+  const undoId=pushUndo('habit',h.name,{...h,_logs:logs});
+  logA('habit','Supprimé: "'+h.name+'"',undoId);
+}
 function toggleLog(hid,ds){const k=hid+':'+ds,h=S.habits.find(x=>x.id===hid);if(S.habitLogs[k]){delete S.habitLogs[k];if(h)logA('habit','☐ "'+h.name+'" ('+ds+')');}else{S.habitLogs[k]={ts:Date.now()};if(h)logA('habit','☑ "'+h.name+'" ('+ds+')');}save();renderHabits();}
 function isLogged(hid,ds){return!!S.habitLogs[hid+':'+ds];}
 function toggleLaws(id){const el=document.getElementById('lp-'+id);el.classList.toggle('open');const h=S.habits.find(x=>x.id===id);const n=h&&h.laws?[h.laws.signal,h.laws.envie,h.laws.reponse,h.laws.recompense].filter(Boolean).length:0;document.getElementById('lb-'+id).textContent=el.classList.contains('open')?'▲ Masquer':('▼ 4 lois'+(n>0?' ('+n+'/4)':''));}
@@ -1163,6 +1303,55 @@ function renderHabits(){
 /* ══ INIT ══ */
 renderAll();
 loadDriveConf();
+
+// Auto-connect + pull on load if Client ID is configured
+(function autoConnect(){
+  try {
+    const saved = localStorage.getItem(DK);
+    if(!saved) return;
+    const cfg = JSON.parse(saved);
+    if(!cfg.clientId || cfg.clientId.length < 10) return;
+
+    // Show connecting indicator
+    setDS(null, 'Connexion automatique…');
+    toast('☁ Connexion Drive…', 5000);
+
+    loadGIS(()=>{
+      try {
+        const cl = google.accounts.oauth2.initTokenClient({
+          client_id: cfg.clientId,
+          scope: 'https://www.googleapis.com/auth/drive.file',
+          prompt: '',          // silent — no popup if already authorized
+          callback: (r) => {
+            if(r.error){
+              // Silent fail — start with local data, show gentle warning
+              setDS(false, 'Drive non connecté — données locales');
+              toastAction('☁ Drive non connecté', 'Connecter', ()=>driveAuth());
+              return;
+            }
+            drTok = r.access_token;
+            drFid = null;
+            drCfg = cfg;
+            setDS(true, 'Connecté ✓ — chargement…');
+            updateDriveUI();
+            // Auto-pull
+            drivePull().then(()=>{
+              logA('drive','Auto-pull au chargement');
+            }).catch(e=>{
+              setDS(false, 'Erreur pull: '+e.message);
+              toastAction('⚠ Drive connecté mais pull échoué', 'Réessayer', ()=>drivePull());
+            });
+          }
+        });
+        // requestAccessToken with prompt:'' attempts silent auth
+        // If user hasn't approved yet it will show popup — acceptable
+        cl.requestAccessToken({prompt:''});
+      } catch(e){
+        setDS(false, 'Erreur auto-connect');
+      }
+    });
+  } catch(e) { /* silent fail */ }
+})();
 </script>
 </body>
 </html>
