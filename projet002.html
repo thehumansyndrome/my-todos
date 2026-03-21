@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Todos · Decisions · Reminders · Habits</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono&display=swap');
+:root{
+  --bg:#fff;--bg2:#f5f5f3;--bg3:#ebebea;
+  --text:#1a1a1a;--text2:#6b6b68;--text3:#9b9b97;
+  --border:rgba(0,0,0,0.12);--border2:rgba(0,0,0,0.22);
+  --radius:8px;--font:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#1c1c1a;--bg2:#252523;--bg3:#2e2e2b;--text:#e8e8e4;--text2:#9b9b97;--text3:#6b6b68;--border:rgba(255,255,255,0.1);--border2:rgba(255,255,255,0.2);}
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);font-size:15px;color:var(--text);background:var(--bg);min-height:100vh}
+.app{max-width:760px;margin:0 auto;padding:2rem 1rem}
+h1{font-size:18px;font-weight:600;margin-bottom:1.25rem;color:var(--text)}
+.tabs{display:flex;gap:2px;margin-bottom:1.5rem;border-bottom:0.5px solid var(--border);overflow-x:auto}
+.tab{padding:8px 14px;border:none;background:none;cursor:pointer;font-size:13px;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;font-family:var(--font);white-space:nowrap}
+.tab.active{color:var(--text);border-bottom-color:var(--text);font-weight:500}
+.tab:hover:not(.active){color:var(--text)}
+.section{display:none}.section.active{display:block}
+.input-row{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+.input-row input,.input-row select{flex:1;min-width:100px;height:36px;padding:0 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;outline:none}
+.input-row input:focus,.input-row select:focus{border-color:var(--text)}
+.input-row select{flex:0 0 auto;min-width:90px}
+.input-row button{height:36px;padding:0 14px;border:0.5px solid var(--border2);border-radius:var(--radius);background:none;cursor:pointer;font-size:13px;color:var(--text);font-family:var(--font);white-space:nowrap}
+.input-row button:hover{background:var(--bg2)}
+.filter-row{display:flex;gap:6px;margin-bottom:1rem;flex-wrap:wrap}
+.filter-btn{padding:3px 11px;border:0.5px solid var(--border);border-radius:20px;background:none;cursor:pointer;font-size:12px;color:var(--text2);font-family:var(--font)}
+.filter-btn.active{background:var(--bg2);color:var(--text);border-color:var(--border2)}
+.item-list{display:flex;flex-direction:column;gap:6px}
+.item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg)}
+.item:hover{border-color:var(--border2)}
+.item.done .item-text{text-decoration:line-through;color:var(--text3)}
+.item-check{width:15px;height:15px;margin-top:3px;cursor:pointer;flex-shrink:0}
+.item-body{flex:1;min-width:0}
+.item-text{font-size:14px;line-height:1.4;word-break:break-word}
+.item-meta{font-size:11px;color:var(--text3);margin-top:4px}
+.badge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:11px;margin-right:4px}
+.bp1{background:#FAECE7;color:#993C1D}.bp2{background:#FAEEDA;color:#854F0B}.bp3{background:#EAF3DE;color:#3B6D11}
+.bwork{background:#E6F1FB;color:#185FA5}.bperso{background:#EEEDFE;color:#534AB7}.bprojet{background:#E1F5EE;color:#0F6E56}
+.boverdue{background:#FCEBEB;color:#A32D2D}.btoday{background:#FAEEDA;color:#854F0B}.bsoon{background:#EAF3DE;color:#3B6D11}
+.bupcoming{background:#E6F1FB;color:#185FA5}.bdoner{background:#F1EFE8;color:#5F5E5A}
+.del-btn{background:none;border:none;cursor:pointer;font-size:17px;color:var(--text3);padding:0 2px;line-height:1;flex-shrink:0}
+.del-btn:hover{color:var(--text)}
+.empty{text-align:center;color:var(--text3);font-size:13px;padding:2rem 0;border:0.5px dashed var(--border);border-radius:var(--radius)}
+.log-area{width:100%;min-height:130px;padding:10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg2);color:var(--text);font-family:var(--mono);font-size:12px;resize:vertical;outline:none}
+.actions-row{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+.actions-row button{height:32px;padding:0 12px;border:0.5px solid var(--border2);border-radius:var(--radius);background:none;cursor:pointer;font-size:12px;color:var(--text);font-family:var(--font)}
+.actions-row button:hover{background:var(--bg2)}
+.dec-reason{font-size:12px;color:var(--text2);margin-top:2px;font-style:italic}
+.stats-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:1.25rem}
+.stat{background:var(--bg2);border-radius:var(--radius);padding:10px 12px;text-align:center}
+.stat-n{font-size:20px;font-weight:500}
+.stat-l{font-size:11px;color:var(--text2);margin-top:2px}
+.dsel{font-size:11px;padding:2px 6px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:var(--font)}
+.rem-overdue{border-color:#E24B4A!important}
+.rem-today{border-color:#BA7517!important}
+.habit-card{border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg);margin-bottom:8px}
+.habit-header{display:flex;align-items:center;gap:8px;padding:10px 12px}
+.habit-name{flex:1;font-size:14px;font-weight:500}
+.habit-streak{font-size:12px;padding:2px 8px;border-radius:10px;background:#EAF3DE;color:#3B6D11;white-space:nowrap}
+.habit-streak.s0{background:var(--bg2);color:var(--text3)}
+.habit-dots{display:flex;gap:5px;padding:4px 12px 12px;flex-wrap:wrap}
+.dot{width:32px;height:38px;border-radius:6px;border:0.5px solid var(--border);background:var(--bg2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1px;transition:background .1s;user-select:none}
+.dot.done{background:#EAF3DE;border-color:#97C459}
+.dot.today{border:1.5px solid var(--text2)}
+.dot.future{opacity:0.35;cursor:default;pointer-events:none}
+.dot-num{font-size:11px;font-weight:500;color:var(--text)}
+.dot.done .dot-num{color:#3B6D11}
+.dot-day{font-size:9px;color:var(--text3)}
+.dot.done .dot-day{color:#3B6D11}
+.hcat{font-size:11px;padding:1px 7px;border-radius:10px;background:#F1EFE8;color:#5F5E5A}
+.week-nav{display:flex;align-items:center;gap:8px;margin-bottom:1rem}
+.week-nav button{height:30px;padding:0 10px;border:0.5px solid var(--border);border-radius:var(--radius);background:none;cursor:pointer;font-size:12px;color:var(--text);font-family:var(--font)}
+.week-nav button:hover{background:var(--bg2)}
+.week-label{font-size:13px;color:var(--text2);flex:1;text-align:center}
+.habit-laws{border-top:0.5px solid var(--border);padding:12px 12px 14px;display:none}
+.habit-laws.open{display:block}
+.laws-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.law-block{background:var(--bg2);border-radius:var(--radius);padding:8px 10px}
+.law-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.law-label.signal{color:#534AB7}.law-label.envie{color:#993C1D}.law-label.reponse{color:#0F6E56}.law-label.recompense{color:#854F0B}
+.law-desc{font-size:10px;color:var(--text3);margin-bottom:5px;line-height:1.4}
+.law-input{width:100%;border:0.5px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;padding:5px 8px;outline:none;resize:none;min-height:40px;line-height:1.4}
+.law-input:focus{border-color:var(--border2)}
+.laws-toggle{background:none;border:none;cursor:pointer;font-size:11px;color:var(--text3);font-family:var(--font);padding:0;margin-left:2px;line-height:1}
+.laws-toggle:hover{color:var(--text)}
+.typo-btn{height:24px;padding:0 10px;border:0.5px solid var(--border);border-radius:20px;background:none;cursor:pointer;font-size:11px;font-family:var(--font);color:var(--text2);transition:all .12s;white-space:nowrap}
+.typo-btn:hover{border-color:var(--border2)}
+.typo-btn.good{background:#EAF3DE;border-color:#97C459;color:#3B6D11;font-weight:500}
+.typo-btn.neutral{background:#F1EFE8;border-color:#B4B2A9;color:#5F5E5A;font-weight:500}
+.typo-btn.bad{background:#FCEBEB;border-color:#F09595;color:#A32D2D;font-weight:500}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1 id="app-title">Todos · Decisions · Reminders · Habits</h1>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('todos')">Todos</button>
+    <button class="tab" onclick="switchTab('decisions')">Decisions</button>
+    <button class="tab" onclick="switchTab('reminders')">Reminders</button>
+    <button class="tab" onclick="switchTab('habits')">Habits</button>
+    <button class="tab" onclick="switchTab('log')">Log / Export</button>
+  </div>
+
+  <div id="tab-todos" class="section active">
+    <div class="stats-row" id="todo-stats"></div>
+    <div class="input-row">
+      <input type="text" id="todo-input" placeholder="New task..." onkeydown="if(event.key==='Enter')addTodo()">
+      <select id="todo-cat"><option value="work">Work</option><option value="perso">Personal</option><option value="projet">Project</option></select>
+      <select id="todo-pri"><option value="p1">P1</option><option value="p2">P2</option><option value="p3">P3</option></select>
+      <button onclick="addTodo()">+ Add</button>
+    </div>
+    <div class="filter-row" id="todo-filters"></div>
+    <div class="item-list" id="todo-list"></div>
+  </div>
+
+  <div id="tab-decisions" class="section">
+    <div class="stats-row" id="dec-stats"></div>
+    <div class="input-row">
+      <input type="text" id="dec-input" placeholder="Decision to make..." onkeydown="if(event.key==='Enter')addDecision()">
+      <select id="dec-status"><option value="pending">Pending</option><option value="done">Made</option><option value="rejected">Rejected</option></select>
+      <button onclick="addDecision()">+ Add</button>
+    </div>
+    <div class="input-row" style="margin-top:-4px">
+      <input type="text" id="dec-reason" placeholder="Reason / context (optional)">
+    </div>
+    <div class="filter-row" id="dec-filters"></div>
+    <div class="item-list" id="dec-list"></div>
+  </div>
+
+  <div id="tab-reminders" class="section">
+    <div class="stats-row" id="rem-stats"></div>
+    <div class="input-row">
+      <input type="text" id="rem-input" placeholder="New reminder..." onkeydown="if(event.key==='Enter')addReminder()">
+      <input type="date" id="rem-date" style="flex:0 0 auto;min-width:140px">
+      <select id="rem-recur"><option value="none">Once</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select>
+      <button onclick="addReminder()">+ Add</button>
+    </div>
+    <div class="filter-row" id="rem-filters"></div>
+    <div class="item-list" id="rem-list"></div>
+  </div>
+
+  <div id="tab-habits" class="section">
+    <div class="stats-row" id="hab-stats"></div>
+    <div class="input-row">
+      <input type="text" id="hab-input" placeholder="New habit..." onkeydown="if(event.key==='Enter')addHabit()">
+      <select id="hab-cat"><option value="sante">Health</option><option value="sport">Sport</option><option value="mental">Mental</option><option value="travail">Work</option><option value="perso">Personal</option></select>
+      <select id="hab-freq"><option value="daily">Daily</option><option value="weekly">Weekly</option></select>
+      <button onclick="addHabit()">+ Add</button>
+    </div>
+    <div class="filter-row" id="hab-filters"></div>
+    <div class="week-nav">
+      <button onclick="shiftWeek(-1)">&#8592; Prev</button>
+      <span class="week-label" id="week-label"></span>
+      <button onclick="shiftWeek(1)">Next &#8594;</button>
+      <button onclick="goToday()">Today</button>
+    </div>
+    <div class="filter-row" id="hab-filters"></div>
+    <div id="hab-list"></div>
+  </div>
+
+  <div id="tab-log" class="section">
+    <p style="font-size:13px;color:var(--text2);margin-bottom:12px">Export to save your data, or paste a previous export to import.</p>
+    <div class="actions-row">
+      <button onclick="exportLog()">Export (copy)</button>
+      <button onclick="importLog()">Import</button>
+      <button onclick="clearAll()">Clear all</button>
+    </div>
+    <textarea class="log-area" id="log-area" placeholder="Paste a JSON export here to import."></textarea>
+    <p style="font-size:11px;color:var(--text3);margin-top:6px">Data stored in localStorage — export regularly to avoid loss.</p>
+  </div>
+</div>
+
+<script>
+let state={todos:[],decisions:[],reminders:[],habits:[],habitLogs:{}};
+let tF='all',dF='all',rF='all',habF='all',weekOffset=0;
+
+const PROJECT=new URLSearchParams(window.location.search).get('project')||'default';
+const STORAGE_KEY='td_v4_'+PROJECT;
+
+function save(){try{sessionStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){}}
+function load(){
+  try{
+    const d=sessionStorage.getItem(STORAGE_KEY);
+    if(d){const p=JSON.parse(d);state={todos:p.todos||[],decisions:p.decisions||[],reminders:p.reminders||[],habits:p.habits||[],habitLogs:p.habitLogs||{}};}
+  }catch(e){}
+}
+load();
+
+const PROJECT_LABEL=PROJECT==='default'?'':PROJECT;
+if(PROJECT_LABEL){
+  document.getElementById('app-title').innerHTML=
+    'Todos · Decisions · Reminders · Habits <span style="font-size:12px;font-weight:400;padding:2px 10px;border-radius:20px;background:#E6F1FB;color:#185FA5;margin-left:6px;vertical-align:middle">'+PROJECT_LABEL+'</span>';
+}
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,5)}
+function fd(ts){return new Date(ts).toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'2-digit'})}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function isoDate(d){return d.toISOString().slice(0,10)}
+function today(){const d=new Date();d.setHours(0,0,0,0);return d}
+
+const TABS=['todos','decisions','reminders','habits','log'];
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',TABS[i]===t));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  if(t==='log')renderLog();
+  if(t==='habits')renderHabits();
+}
+
+/* TODOS */
+function addTodo(){
+  const v=document.getElementById('todo-input').value.trim();if(!v)return;
+  state.todos.push({id:uid(),text:v,cat:document.getElementById('todo-cat').value,pri:document.getElementById('todo-pri').value,done:false,ts:Date.now()});
+  document.getElementById('todo-input').value='';save();renderTodos();
+}
+function toggleTodo(id){const t=state.todos.find(x=>x.id===id);if(t){t.done=!t.done;save();renderTodos();}}
+function delTodo(id){state.todos=state.todos.filter(x=>x.id!==id);save();renderTodos();}
+function renderTodos(){
+  const fkeys=['all','work','perso','projet','p1','p2','p3','done'];
+  const fl={all:'All',work:'Work',perso:'Personal',projet:'Project',p1:'P1',p2:'P2',p3:'P3',done:'Done'};
+  document.getElementById('todo-filters').innerHTML=fkeys.map(f=>`<button class="filter-btn${tF===f?' active':''}" onclick="tF='${f}';renderTodos()">${fl[f]}</button>`).join('');
+  let items=state.todos;
+  if(tF==='done')items=items.filter(x=>x.done);
+  else if(tF!=='all'){if(['work','perso','projet'].includes(tF))items=items.filter(x=>x.cat===tF&&!x.done);else items=items.filter(x=>x.pri===tF&&!x.done);}
+  items=[...items].sort((a,b)=>{if(!a.done&&b.done)return-1;if(a.done&&!b.done)return 1;return a.pri.localeCompare(b.pri)||a.ts-b.ts});
+  const cl={work:'bwork',perso:'bperso',projet:'bprojet'},pl={p1:'bp1',p2:'bp2',p3:'bp3'},cln={work:'Work',perso:'Personal',projet:'Project'};
+  document.getElementById('todo-list').innerHTML=items.length?items.map(t=>`
+    <div class="item${t.done?' done':''}">
+      <input type="checkbox" class="item-check" ${t.done?'checked':''} onchange="toggleTodo('${t.id}')">
+      <div class="item-body">
+        <div class="item-text">${esc(t.text)}</div>
+        <div class="item-meta"><span class="badge ${pl[t.pri]}">${t.pri.toUpperCase()}</span><span class="badge ${cl[t.cat]}">${cln[t.cat]}</span>${fd(t.ts)}</div>
+      </div>
+      <button class="del-btn" onclick="delTodo('${t.id}')">×</button>
+    </div>`).join(''):`<div class="empty">No tasks yet</div>`;
+  const total=state.todos.length,done=state.todos.filter(x=>x.done).length,p1=state.todos.filter(x=>x.pri==='p1'&&!x.done).length;
+  document.getElementById('todo-stats').innerHTML=`
+    <div class="stat"><div class="stat-n">${total}</div><div class="stat-l">Total</div></div>
+    <div class="stat"><div class="stat-n">${total-done}</div><div class="stat-l">Active</div></div>
+    <div class="stat"><div class="stat-n">${done}</div><div class="stat-l">Done</div></div>
+    <div class="stat"><div class="stat-n">${p1}</div><div class="stat-l">P1 active</div></div>`;
+}
+
+/* DECISIONS */
+function addDecision(){
+  const v=document.getElementById('dec-input').value.trim();if(!v)return;
+  state.decisions.push({id:uid(),text:v,status:document.getElementById('dec-status').value,reason:document.getElementById('dec-reason').value.trim(),ts:Date.now()});
+  document.getElementById('dec-input').value='';document.getElementById('dec-reason').value='';save();renderDecisions();
+}
+function delDecision(id){state.decisions=state.decisions.filter(x=>x.id!==id);save();renderDecisions();}
+function setDecStatus(id,s){const d=state.decisions.find(x=>x.id===id);if(d){d.status=s;save();renderDecisions();}}
+function renderDecisions(){
+  const fkeys=['all','pending','done','rejected'];
+  const fl={all:'All',pending:'Pending',done:'Made',rejected:'Rejected'};
+  document.getElementById('dec-filters').innerHTML=fkeys.map(f=>`<button class="filter-btn${dF===f?' active':''}" onclick="dF='${f}';renderDecisions()">${fl[f]}</button>`).join('');
+  let items=state.decisions;
+  if(dF!=='all')items=items.filter(x=>x.status===dF);
+  items=[...items].sort((a,b)=>b.ts-a.ts);
+  document.getElementById('dec-list').innerHTML=items.length?items.map(d=>`
+    <div class="item">
+      <div class="item-body">
+        <div class="item-text">${esc(d.text)}</div>
+        ${d.reason?`<div class="dec-reason">${esc(d.reason)}</div>`:''}
+        <div class="item-meta" style="margin-top:5px">
+          <select class="dsel" onchange="setDecStatus('${d.id}',this.value)">
+            <option value="pending"${d.status==='pending'?' selected':''}>Pending</option>
+            <option value="done"${d.status==='done'?' selected':''}>Made</option>
+            <option value="rejected"${d.status==='rejected'?' selected':''}>Rejected</option>
+          </select>
+          <span style="margin-left:8px">${fd(d.ts)}</span>
+        </div>
+      </div>
+      <button class="del-btn" onclick="delDecision('${d.id}')">×</button>
+    </div>`).join(''):`<div class="empty">No decisions yet</div>`;
+  const tot=state.decisions.length,pend=state.decisions.filter(x=>x.status==='pending').length,done=state.decisions.filter(x=>x.status==='done').length,rej=state.decisions.filter(x=>x.status==='rejected').length;
+  document.getElementById('dec-stats').innerHTML=`
+    <div class="stat"><div class="stat-n">${tot}</div><div class="stat-l">Total</div></div>
+    <div class="stat"><div class="stat-n">${pend}</div><div class="stat-l">Pending</div></div>
+    <div class="stat"><div class="stat-n">${done}</div><div class="stat-l">Made</div></div>
+    <div class="stat"><div class="stat-n">${rej}</div><div class="stat-l">Rejected</div></div>`;
+}
+
+/* REMINDERS */
+function addReminder(){
+  const v=document.getElementById('rem-input').value.trim();if(!v)return;
+  state.reminders.push({id:uid(),text:v,date:document.getElementById('rem-date').value||null,recur:document.getElementById('rem-recur').value,done:false,ts:Date.now()});
+  document.getElementById('rem-input').value='';document.getElementById('rem-date').value='';save();renderReminders();
+}
+function toggleReminder(id){
+  const r=state.reminders.find(x=>x.id===id);if(!r)return;
+  if(r.recur!=='none'&&!r.done){
+    const b=r.date?new Date(r.date+'T00:00:00'):new Date();
+    if(r.recur==='daily')b.setDate(b.getDate()+1);
+    else if(r.recur==='weekly')b.setDate(b.getDate()+7);
+    else if(r.recur==='monthly')b.setMonth(b.getMonth()+1);
+    r.date=b.toISOString().slice(0,10);
+  }else{r.done=!r.done;}
+  save();renderReminders();
+}
+function delReminder(id){state.reminders=state.reminders.filter(x=>x.id!==id);save();renderReminders();}
+function remStatus(r){
+  if(r.done)return'done';if(!r.date)return'upcoming';
+  const td=today();const d=new Date(r.date+'T00:00:00');const diff=Math.round((d-td)/86400000);
+  if(diff<0)return'overdue';if(diff===0)return'today';if(diff<=7)return'soon';return'upcoming';
+}
+const rSL={overdue:'Overdue',today:'Today',soon:'This week',upcoming:'Upcoming',done:'Done'};
+const rRL={none:'',daily:'Daily',weekly:'Weekly',monthly:'Monthly'};
+function renderReminders(){
+  const fkeys=['all','overdue','today','soon','upcoming','done'];
+  const fl={all:'All',overdue:'Overdue',today:'Today',soon:'This week',upcoming:'Upcoming',done:'Done'};
+  document.getElementById('rem-filters').innerHTML=fkeys.map(f=>`<button class="filter-btn${rF===f?' active':''}" onclick="rF='${f}';renderReminders()">${fl[f]}</button>`).join('');
+  let items=state.reminders.map(r=>({...r,_s:remStatus(r)}));
+  if(rF!=='all')items=items.filter(x=>x._s===rF);
+  const ord={overdue:0,today:1,soon:2,upcoming:3,done:4};
+  items.sort((a,b)=>{const d=ord[a._s]-ord[b._s];if(d)return d;if(a.date&&b.date)return a.date.localeCompare(b.date);return a.ts-b.ts});
+  const bc={overdue:'boverdue',today:'btoday',soon:'bsoon',upcoming:'bupcoming',done:'bdoner'};
+  document.getElementById('rem-list').innerHTML=items.length?items.map(r=>`
+    <div class="item${r._s==='overdue'?' rem-overdue':r._s==='today'?' rem-today':''}${r.done?' done':''}">
+      <input type="checkbox" class="item-check" ${r.done?'checked':''} onchange="toggleReminder('${r.id}')">
+      <div class="item-body">
+        <div class="item-text">${esc(r.text)}</div>
+        <div class="item-meta" style="margin-top:4px">
+          <span class="badge ${bc[r._s]}">${rSL[r._s]}</span>
+          ${r.date?`<span style="margin-right:5px">${r.date.split('-').reverse().join('/')}</span>`:''}
+          ${r.recur!=='none'?`<span class="badge" style="background:var(--bg2);color:var(--text2)">${rRL[r.recur]}</span>`:''}
+        </div>
+      </div>
+      <button class="del-btn" onclick="delReminder('${r.id}')">×</button>
+    </div>`).join(''):`<div class="empty">No reminders yet</div>`;
+  const tot=state.reminders.length,ov=state.reminders.filter(r=>remStatus(r)==='overdue').length,td=state.reminders.filter(r=>remStatus(r)==='today').length,dn=state.reminders.filter(r=>r.done).length;
+  document.getElementById('rem-stats').innerHTML=`
+    <div class="stat"><div class="stat-n">${tot}</div><div class="stat-l">Total</div></div>
+    <div class="stat"><div class="stat-n" style="${ov?'color:#E24B4A':''}">${ov}</div><div class="stat-l">Overdue</div></div>
+    <div class="stat"><div class="stat-n" style="${td?'color:#BA7517':''}">${td}</div><div class="stat-l">Today</div></div>
+    <div class="stat"><div class="stat-n">${dn}</div><div class="stat-l">Done</div></div>`;
+}
+
+/* HABITS */
+const HAB_CATS={sante:'Health',sport:'Sport',mental:'Mental',travail:'Work',perso:'Personal'};
+const DAYS_FR=['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+function addHabit(){
+  const v=document.getElementById('hab-input').value.trim();if(!v)return;
+  state.habits.push({id:uid(),name:v,cat:document.getElementById('hab-cat').value,freq:document.getElementById('hab-freq').value,typo:'neutral',laws:{signal:'',envie:'',reponse:'',recompense:''},ts:Date.now()});
+  document.getElementById('hab-input').value='';save();renderHabits();
+}
+function delHabit(id){
+  state.habits=state.habits.filter(x=>x.id!==id);
+  Object.keys(state.habitLogs).forEach(k=>{if(k.startsWith(id+':'))delete state.habitLogs[k];});
+  save();renderHabits();
+}
+function toggleLog(habitId,dateStr){
+  const k=habitId+':'+dateStr;
+  if(state.habitLogs[k])delete state.habitLogs[k];else state.habitLogs[k]={ts:Date.now()};
+  save();renderHabits();
+}
+function isLogged(habitId,dateStr){return!!state.habitLogs[habitId+':'+dateStr]}
+function toggleLaws(id){
+  const el=document.getElementById('laws-'+id);
+  el.classList.toggle('open');
+  const btn=document.getElementById('laws-btn-'+id);
+  btn.textContent=el.classList.contains('open')?'▲ Hide':'▼ 4 laws';
+}
+function saveLaw(habitId,field,val){
+  const h=state.habits.find(x=>x.id===habitId);
+  if(!h)return;
+  if(!h.laws)h.laws={signal:'',envie:'',reponse:'',recompense:''};
+  h.laws[field]=val;save();
+}
+function setTypo(habitId,typo){
+  const h=state.habits.find(x=>x.id===habitId);
+  if(!h)return;
+  h.typo=typo;save();renderHabits();
+}
+
+function calcStreak(h){
+  let streak=0;const td=today();
+  for(let i=0;i<90;i++){
+    const d=new Date(td);d.setDate(d.getDate()-i);
+    if(h.freq==='weekly'&&d.getDay()!==1&&i>0)continue;
+    if(isLogged(h.id,isoDate(d)))streak++;
+    else if(i>0)break;
+  }
+  return streak;
+}
+
+function getWeekDates(){
+  const base=today();base.setDate(base.getDate()+weekOffset*7);
+  const monday=new Date(base);const dow=monday.getDay();
+  monday.setDate(monday.getDate()-(dow===0?6:dow-1));
+  return Array.from({length:7},(_,i)=>{const d=new Date(monday);d.setDate(d.getDate()+i);return d});
+}
+function shiftWeek(n){weekOffset+=n;renderHabits();}
+function goToday(){weekOffset=0;renderHabits();}
+
+function renderHabits(){
+  const dates=getWeekDates();
+  const todayStr=isoDate(today());
+  const fmt=d=>d.toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit'});
+  document.getElementById('week-label').textContent=`Week of ${fmt(dates[0])} – ${fmt(dates[6])}`;
+
+  const fkeys=['all','good','neutral','bad'];
+  const fl={all:'All',good:'+ Good',neutral:'~ Neutral',bad:'− To fix'};
+  document.getElementById('hab-filters').innerHTML=fkeys.map(f=>`<button class="filter-btn${habF===f?' active':''}" onclick="habF='${f}';renderHabits()">${fl[f]}</button>`).join('');
+
+  const visibleHabits=habF==='all'?state.habits:state.habits.filter(h=>(h.typo||'neutral')===habF);
+
+  if(!state.habits.length){
+    document.getElementById('hab-list').innerHTML=`<div class="empty">No habits yet — add one above</div>`;
+  }else if(!visibleHabits.length){
+    document.getElementById('hab-list').innerHTML=`<div class="empty">No habits in this category</div>`;
+  }else{
+    document.getElementById('hab-list').innerHTML=visibleHabits.map(h=>{
+      const streak=calcStreak(h);
+      const laws=h.laws||{signal:'',envie:'',reponse:'',recompense:''};
+      const lawsFilled=[laws.signal,laws.envie,laws.reponse,laws.recompense].filter(Boolean).length;
+      const typo=h.typo||'neutral';
+      const typoLabel={good:'+ Good',neutral:'~ Neutral',bad:'− Bad'};
+      const dots=dates.map(d=>{
+        const ds=isoDate(d);
+        const logged=isLogged(h.id,ds);
+        const isToday=ds===todayStr;
+        const isFuture=ds>todayStr;
+        return `<div class="dot${logged?' done':''}${isToday?' today':''}${isFuture?' future':''}"
+          ${isFuture?'':'onclick="toggleLog(\''+h.id+'\',\''+ds+'\')"'}>
+          <span class="dot-num">${d.getDate()}</span>
+          <span class="dot-day">${DAYS_FR[d.getDay()]}</span>
+        </div>`;
+      }).join('');
+      const typoBar=`<div style="display:flex;gap:4px;padding:0 12px 10px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:11px;color:var(--text3);margin-right:2px">Type:</span>
+        <button class="typo-btn${typo==='good'?' good':''}" onclick="setTypo('${h.id}','good')">${typoLabel.good}</button>
+        <button class="typo-btn${typo==='neutral'?' neutral':''}" onclick="setTypo('${h.id}','neutral')">${typoLabel.neutral}</button>
+        <button class="typo-btn${typo==='bad'?' bad':''}" onclick="setTypo('${h.id}','bad')">${typoLabel.bad}</button>
+      </div>`;
+      const lawsPanel=`
+        <div class="habit-laws" id="laws-${h.id}">
+          <div class="laws-grid">
+            <div class="law-block">
+              <div class="law-label signal">&#128161; Cue</div>
+              <div class="law-desc">What triggers this habit?</div>
+              <textarea class="law-input" placeholder="e.g. right after morning coffee..." onchange="saveLaw('${h.id}','signal',this.value)">${esc(laws.signal)}</textarea>
+            </div>
+            <div class="law-block">
+              <div class="law-label envie">&#128293; Craving</div>
+              <div class="law-desc">What do you really want to get?</div>
+              <textarea class="law-input" placeholder="e.g. feel energised and sharp..." onchange="saveLaw('${h.id}','envie',this.value)">${esc(laws.envie)}</textarea>
+            </div>
+            <div class="law-block">
+              <div class="law-label reponse">&#9889; Response</div>
+              <div class="law-desc">The concrete action — make it tiny.</div>
+              <textarea class="law-input" placeholder="e.g. 10 push-ups, no more..." onchange="saveLaw('${h.id}','reponse',this.value)">${esc(laws.reponse)}</textarea>
+            </div>
+            <div class="law-block">
+              <div class="law-label recompense">&#127942; Reward</div>
+              <div class="law-desc">How do you reward yourself immediately?</div>
+              <textarea class="law-input" placeholder="e.g. check the box, special coffee..." onchange="saveLaw('${h.id}','recompense',this.value)">${esc(laws.recompense)}</textarea>
+            </div>
+          </div>
+        </div>`;
+      const borderAccent=typo==='bad'?'border-color:#F09595':typo==='good'?'border-color:#97C459':'';
+      return `<div class="habit-card" style="${borderAccent}">
+        <div class="habit-header">
+          <div class="habit-name">${esc(h.name)}</div>
+          <span class="hcat">${HAB_CATS[h.cat]||h.cat}</span>
+          <span style="font-size:11px;color:var(--text3);margin:0 2px">${h.freq==='daily'?'Daily':'Weekly'}</span>
+          <span class="habit-streak${streak===0?' s0':''}">&#x1F525; ${streak}d</span>
+          <button class="laws-toggle" id="laws-btn-${h.id}" onclick="toggleLaws('${h.id}')">▼ 4 laws${lawsFilled>0?' ('+lawsFilled+'/4)':''}</button>
+          <button class="del-btn" onclick="delHabit('${h.id}')">×</button>
+        </div>
+        ${typoBar}
+        <div class="habit-dots">${dots}</div>
+        ${lawsPanel}
+      </div>`;
+    }).join('');
+  }
+
+  const total=state.habits.length;
+  const doneToday=state.habits.filter(h=>isLogged(h.id,todayStr)).length;
+  const best=total?Math.max(...state.habits.map(h=>calcStreak(h))):0;
+  const bad=state.habits.filter(h=>(h.typo||'neutral')==='bad').length;
+  document.getElementById('hab-stats').innerHTML=`
+    <div class="stat"><div class="stat-n">${total}</div><div class="stat-l">Habits</div></div>
+    <div class="stat"><div class="stat-n">${doneToday}/${total}</div><div class="stat-l">Done today</div></div>
+    <div class="stat"><div class="stat-n" style="${bad>0?'color:#A32D2D':''}">${bad}</div><div class="stat-l">To fix</div></div>
+    <div class="stat"><div class="stat-n">${best}</div><div class="stat-l">Best streak</div></div>`;
+}
+
+/* LOG */
+function renderLog(){document.getElementById('log-area').value=JSON.stringify(state,null,2);}
+function exportLog(){
+  const txt=JSON.stringify(state,null,2);
+  document.getElementById('log-area').value=txt;
+  try{navigator.clipboard.writeText(txt).then(()=>alert('Copied to clipboard!')).catch(()=>alert('Select the text in the box and copy manually.'))}catch(e){alert('Select the text in the box and copy manually.')}
+}
+function importLog(){
+  try{
+    const d=JSON.parse(document.getElementById('log-area').value);
+    if(d.todos&&d.decisions){
+      state={todos:d.todos,decisions:d.decisions,reminders:d.reminders||[],habits:d.habits||[],habitLogs:d.habitLogs||{}};
+      save();renderTodos();renderDecisions();renderReminders();renderHabits();alert('Import successful!');
+    }else alert('Invalid format — make sure you paste a valid export.');
+  }catch(e){alert('Invalid JSON. Please check the content.');}
+}
+function clearAll(){
+  if(confirm('Clear everything? This cannot be undone.')){
+    state={todos:[],decisions:[],reminders:[],habits:[],habitLogs:{}};
+    save();renderTodos();renderDecisions();renderReminders();renderHabits();renderLog();
+  }
+}
+
+renderTodos();renderDecisions();renderReminders();renderHabits();
+</script>
+</body>
+</html>
