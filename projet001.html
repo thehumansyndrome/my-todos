@@ -837,6 +837,7 @@ function autoTextColor(hex){
 function populateCatSelect(selectId, selectedVal){
   const sel = document.getElementById(selectId);
   if(!sel) return;
+  if(!S.categories || !Array.isArray(S.categories)) ensureState();
   const prev = selectedVal || sel.value;
   sel.innerHTML = S.categories.map(c =>
     `<option value="${c.id}"${c.id===prev?' selected':''}>${c.label}</option>`
@@ -913,6 +914,7 @@ function moveCat(id, dir){
 function renderCatManager(){
   const el = document.getElementById('cat-list');
   if(!el) return;
+  if(!S.categories || !Array.isArray(S.categories)) ensureState();
   if(!S.categories.length){ el.innerHTML='<div class="empty">Aucune catégorie</div>'; return; }
   el.innerHTML = S.categories.map((c,idx)=>`
     <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--card);">
@@ -1279,6 +1281,8 @@ function delTodo(id){
   logA('todo','Supprimé: "'+t.text+'"', undoId);
 }
 function renderTodos(){
+  // ── Guard: ensure categories always valid ──
+  if(!S.categories || !Array.isArray(S.categories)) ensureState();
   // ── Build dynamic category filter keys ──
   const catKeys = S.categories.map(c=>c.id);
   const fkeys=['all',...catKeys,'p1','p2','p3','done'];
@@ -1729,11 +1733,12 @@ loadDriveConf();
       drivePull()
         .then(()=>{ logA('drive','Auto-pull au chargement'); setSaveStatus('ok'); })
         .catch(e=>{
-          // Token probably expired — clear it, ask user to reconnect
+          // Token expired or invalid — clear session, let user reconnect manually
           sessionStorage.removeItem('td_tok_' + P);
           drTok = null; updateDriveUI(); setSaveStatus('local');
-          setDS(false, 'Session expirée');
-          toastAction('☁ Session Drive expirée', 'Reconnecter', ()=>driveAuth());
+          setDS(false, 'Session expirée — reconnexion nécessaire');
+          toastAction('☁ Session expirée', 'Reconnecter', ()=>driveAuth());
+          // Note: driveAuth() will only fire on user click of the toast button
         });
     } else {
       // Client ID configured but no session — show connect prompt
