@@ -182,13 +182,15 @@ h1{font-size:18px;font-weight:600;margin-bottom:1.25rem;color:var(--text)}
 let state={todos:[],decisions:[],reminders:[],habits:[],habitLogs:{}};
 let tF='all',dF='all',rF='all',habF='all',weekOffset=0;
 
-const PROJECT=new URLSearchParams(window.location.search).get('project')||'default';
+const _path=window.location.pathname;
+const _file=_path.substring(_path.lastIndexOf('/')+1).replace('.html','').replace('.htm','')||'default';
+const PROJECT=new URLSearchParams(window.location.search).get('project')||_file;
 const STORAGE_KEY='td_v4_'+PROJECT;
 
-function save(){try{sessionStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){}}
+function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){}}
 function load(){
   try{
-    const d=sessionStorage.getItem(STORAGE_KEY);
+    const d=localStorage.getItem(STORAGE_KEY);
     if(d){const p=JSON.parse(d);state={todos:p.todos||[],decisions:p.decisions||[],reminders:p.reminders||[],habits:p.habits||[],habitLogs:p.habitLogs||{}};}
   }catch(e){}
 }
