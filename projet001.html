@@ -35,15 +35,15 @@
   --r2: 6px;
 }
 [data-theme="dark"] {
-  --bg:       #0F0F0E;
-  --bg2:      #171715;
-  --bg3:      #1F1E1C;
-  --card:     #171715;
-  --line:     #252420;
-  --line2:    #2E2D29;
-  --text:     #F0EDE8;
-  --text2:    #8C8880;
-  --text3:    #504D48;
+  --bg:       #2D2D2A;
+  --bg2:      #333330;
+  --bg3:      #3A3A36;
+  --card:     #313130;
+  --line:     #3D3D39;
+  --line2:    #4A4A45;
+  --text:     #ECECEC;
+  --text2:    #A8A49E;
+  --text3:    #6B6760;
   --accent:   #F97316;
   --accent2:  #2A1F0A;
   --blue:     #60A5FA;
@@ -256,6 +256,50 @@ body{
   transition:color .1s;margin-top:1px;
 }
 .del:hover{color:var(--red);}
+
+/* ── EDIT BTN ── */
+.edit-btn{
+  font-size:11px;color:var(--text3);
+  background:none;border:none;cursor:pointer;
+  flex-shrink:0;padding:0 3px;line-height:1;
+  transition:color .1s;margin-top:1px;
+  opacity:0;
+}
+.item:hover .edit-btn{opacity:1;}
+.edit-btn:hover{color:var(--accent);}
+
+/* ── INLINE EDIT FORM ── */
+.edit-form{
+  display:none;flex-direction:column;gap:6px;
+  padding:8px 0 4px;
+}
+.edit-form.open{display:flex;}
+.edit-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.edit-in{
+  font-family:var(--sans);font-size:13px;
+  padding:5px 8px;
+  border:1px solid var(--line2);border-radius:var(--r);
+  background:var(--bg);color:var(--text);
+  outline:none;flex:1;min-width:120px;
+  transition:border-color .12s;
+}
+.edit-in:focus{border-color:var(--accent);background:var(--card);}
+.edit-in.sm{font-size:12px;flex:none;}
+.eact{display:flex;gap:5px;}
+.save-btn{
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  padding:4px 10px;border-radius:var(--r);
+  background:var(--text);color:var(--bg);
+  border:none;cursor:pointer;transition:opacity .1s;letter-spacing:.02em;
+}
+.save-btn:hover{opacity:.8;}
+.cancel-btn{
+  font-family:var(--mono);font-size:10px;
+  padding:4px 10px;border-radius:var(--r);
+  background:none;border:1px solid var(--line);
+  color:var(--text3);cursor:pointer;transition:all .1s;
+}
+.cancel-btn:hover{border-color:var(--line2);color:var(--text2);}
 
 /* ── BADGES ── */
 .tag{
@@ -815,11 +859,33 @@ function setupDrag(el,key,renderFn){
 function moveItem(key,id,dir,renderFn){
   const arr=S[key];const i=arr.findIndex(x=>x.id===id);if(i===-1)return;const ni=i+dir;if(ni<0||ni>=arr.length)return;[arr[i],arr[ni]]=[arr[ni],arr[i]];save();renderFn();}
 
+/* ══ INLINE EDIT HELPERS ══ */
+function openEdit(id){
+  document.querySelectorAll('.edit-form.open').forEach(f=>{
+    if(f.id!=='ef-'+id)closeEdit(f.dataset.id);
+  });
+  document.getElementById('ef-'+id).classList.add('open');
+  document.getElementById('ef-'+id).querySelector('.edit-in').focus();
+}
+function closeEdit(id){
+  const f=document.getElementById('ef-'+id);
+  if(f)f.classList.remove('open');
+}
+
 /* ══ TODOS ══ */
 function addTodo(){
   const v=document.getElementById('todo-in').value.trim();if(!v)return;
   const t={id:uid(),text:v,cat:document.getElementById('todo-cat').value,pri:document.getElementById('todo-pri').value,done:false,ts:Date.now()};
   S.todos.push(t);document.getElementById('todo-in').value='';save();renderTodos();logA('todo','Ajouté: "'+v+'"');
+}
+function saveTodo(id){
+  const t=S.todos.find(x=>x.id===id);if(!t)return;
+  const txt=document.getElementById('et-'+id).value.trim();
+  if(!txt)return;
+  t.text=txt;
+  t.cat=document.getElementById('ec-'+id).value;
+  t.pri=document.getElementById('ep-'+id).value;
+  save();closeEdit(id);renderTodos();logA('todo','Modifié: "'+txt+'"');
 }
 function toggleTodo(id){const t=S.todos.find(x=>x.id===id);if(t){t.done=!t.done;save();renderTodos();logA('todo',(t.done?'✓ ':'↩ ')+'"'+t.text+'"');}}
 function delTodo(id){const t=S.todos.find(x=>x.id===id);S.todos=S.todos.filter(x=>x.id!==id);save();renderTodos();if(t)logA('todo','Supprimé: "'+t.text+'"');}
@@ -848,7 +914,27 @@ function renderTodos(){
           <span class="tag ${cl[t.cat]}">${cn[t.cat]}</span>
           <span class="meta-date">${fd(t.ts)}</span>
         </div>
+        <div class="edit-form" id="ef-${t.id}" data-id="${t.id}">
+          <div class="edit-row">
+            <input class="edit-in" id="et-${t.id}" type="text" value="${esc(t.text)}" onkeydown="if(event.key==='Enter')saveTodo('${t.id}');if(event.key==='Escape')closeEdit('${t.id}')">
+            <select class="edit-in sm" id="ec-${t.id}">
+              <option value="perso"${t.cat==='perso'?' selected':''}>Personal</option>
+              <option value="work"${t.cat==='work'?' selected':''}>Work</option>
+              <option value="projet"${t.cat==='projet'?' selected':''}>Project</option>
+            </select>
+            <select class="edit-in sm" id="ep-${t.id}">
+              <option value="p1"${t.pri==='p1'?' selected':''}>P1</option>
+              <option value="p2"${t.pri==='p2'?' selected':''}>P2</option>
+              <option value="p3"${t.pri==='p3'?' selected':''}>P3</option>
+            </select>
+          </div>
+          <div class="eact">
+            <button class="save-btn" onclick="saveTodo('${t.id}')">Enregistrer</button>
+            <button class="cancel-btn" onclick="closeEdit('${t.id}')">Annuler</button>
+          </div>
+        </div>
       </div>
+      <button class="edit-btn" onclick="openEdit('${t.id}')" title="Modifier">✎</button>
       <button class="del" onclick="delTodo('${t.id}')">×</button>
     </div>`).join(''):`<div class="empty">Aucune tâche</div>`;
   setupDrag(el,'todos',renderTodos);
@@ -865,6 +951,14 @@ function addDecision(){
   const v=document.getElementById('dec-in').value.trim();if(!v)return;
   const d={id:uid(),text:v,status:document.getElementById('dec-st').value,reason:document.getElementById('dec-reason').value.trim(),ts:Date.now()};
   S.decisions.push(d);document.getElementById('dec-in').value='';document.getElementById('dec-reason').value='';save();renderDecisions();logA('decision','Ajouté: "'+v+'"');
+}
+function saveDecision(id){
+  const d=S.decisions.find(x=>x.id===id);if(!d)return;
+  const txt=document.getElementById('edt-'+id).value.trim();if(!txt)return;
+  d.text=txt;
+  d.reason=document.getElementById('edr-'+id).value.trim();
+  d.status=document.getElementById('eds-'+id).value;
+  save();closeEdit(id);renderDecisions();logA('decision','Modifié: "'+txt+'"');
 }
 function delDecision(id){const d=S.decisions.find(x=>x.id===id);S.decisions=S.decisions.filter(x=>x.id!==id);save();renderDecisions();if(d)logA('decision','Supprimé: "'+d.text+'"');}
 function setDecSt(id,s){const d=S.decisions.find(x=>x.id===id);if(d){d.status=s;save();renderDecisions();logA('decision','"'+d.text+'" → '+s);}}
@@ -892,7 +986,25 @@ function renderDecisions(){
           </select>
           <span class="meta-date">${fd(d.ts)}</span>
         </div>
+        <div class="edit-form" id="ef-${d.id}" data-id="${d.id}">
+          <div class="edit-row">
+            <input class="edit-in" id="edt-${d.id}" type="text" value="${esc(d.text)}" onkeydown="if(event.key==='Escape')closeEdit('${d.id}')">
+          </div>
+          <div class="edit-row">
+            <input class="edit-in" id="edr-${d.id}" type="text" value="${esc(d.reason||'')}" placeholder="Raison / contexte…">
+            <select class="edit-in sm" id="eds-${d.id}">
+              <option value="pending"${d.status==='pending'?' selected':''}>Pending</option>
+              <option value="done"${d.status==='done'?' selected':''}>Made</option>
+              <option value="rejected"${d.status==='rejected'?' selected':''}>Rejected</option>
+            </select>
+          </div>
+          <div class="eact">
+            <button class="save-btn" onclick="saveDecision('${d.id}')">Enregistrer</button>
+            <button class="cancel-btn" onclick="closeEdit('${d.id}')">Annuler</button>
+          </div>
+        </div>
       </div>
+      <button class="edit-btn" onclick="openEdit('${d.id}')" title="Modifier">✎</button>
       <button class="del" onclick="delDecision('${d.id}')">×</button>
     </div>`).join(''):`<div class="empty">Aucune décision</div>`;
   setupDrag(el,'decisions',renderDecisions);
@@ -909,6 +1021,14 @@ function addReminder(){
   const v=document.getElementById('rem-in').value.trim();if(!v)return;
   const r={id:uid(),text:v,date:document.getElementById('rem-date').value||null,recur:document.getElementById('rem-recur').value,done:false,ts:Date.now()};
   S.reminders.push(r);document.getElementById('rem-in').value='';document.getElementById('rem-date').value='';save();renderReminders();logA('reminder','Ajouté: "'+v+'"');
+}
+function saveReminder(id){
+  const r=S.reminders.find(x=>x.id===id);if(!r)return;
+  const txt=document.getElementById('ert-'+id).value.trim();if(!txt)return;
+  r.text=txt;
+  r.date=document.getElementById('erd-'+id).value||null;
+  r.recur=document.getElementById('err-'+id).value;
+  save();closeEdit(id);renderReminders();logA('reminder','Modifié: "'+txt+'"');
 }
 function toggleRem(id){
   const r=S.reminders.find(x=>x.id===id);if(!r)return;
@@ -943,7 +1063,26 @@ function renderReminders(){
           ${r.date?`<span class="meta-date">${r.date.split('-').reverse().join('/')}</span>`:''}
           ${r.recur!=='none'?`<span class="tag" style="background:var(--bg2);color:var(--text3)">${rRL[r.recur]}</span>`:''}
         </div>
+        <div class="edit-form" id="ef-${r.id}" data-id="${r.id}">
+          <div class="edit-row">
+            <input class="edit-in" id="ert-${r.id}" type="text" value="${esc(r.text)}" onkeydown="if(event.key==='Escape')closeEdit('${r.id}')">
+          </div>
+          <div class="edit-row">
+            <input class="edit-in sm" id="erd-${r.id}" type="date" value="${r.date||''}">
+            <select class="edit-in sm" id="err-${r.id}">
+              <option value="none"${r.recur==='none'?' selected':''}>Once</option>
+              <option value="daily"${r.recur==='daily'?' selected':''}>Daily</option>
+              <option value="weekly"${r.recur==='weekly'?' selected':''}>Weekly</option>
+              <option value="monthly"${r.recur==='monthly'?' selected':''}>Monthly</option>
+            </select>
+          </div>
+          <div class="eact">
+            <button class="save-btn" onclick="saveReminder('${r.id}')">Enregistrer</button>
+            <button class="cancel-btn" onclick="closeEdit('${r.id}')">Annuler</button>
+          </div>
+        </div>
       </div>
+      <button class="edit-btn" onclick="openEdit('${r.id}')" title="Modifier">✎</button>
       <button class="del" onclick="delRem('${r.id}')">×</button>
     </div>`).join(''):`<div class="empty">Aucun rappel</div>`;
   setupDrag(el,'reminders',renderReminders);
