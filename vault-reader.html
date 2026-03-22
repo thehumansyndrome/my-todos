@@ -434,7 +434,23 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
         <button class="fnav-btn" id="fnav-prev" onclick="navFile(-1)">← Prev</button>
         <span class="fnav-title" id="fnav-title"></span>
         <span class="fnav-count" id="fnav-count"></span>
+        <button class="fnav-btn" id="fnav-edit" onclick="toggleEditMode()" title="Basculer lecture / édition">✎</button>
         <button class="fnav-btn" id="fnav-next" onclick="navFile(1)">Next →</button>
+      </div>
+
+      <!-- Inline edit panel (replaces reader-content when editing) -->
+      <div class="journal-wrap" id="edit-wrap">
+        <div class="journal-toolbar">
+          <span id="edit-title" style="font-family:var(--mono);font-size:10px;color:var(--text2);"></span>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+            <div class="save-st"><span class="sdot" id="edit-dot"></span><span id="edit-txt">—</span></div>
+            <button class="lbtn" onclick="toggleEditMode()">✓ Fermer l'édition</button>
+          </div>
+        </div>
+        <div class="journal-split">
+          <textarea class="journal-edit" id="edit-area" placeholder="…" oninput="onEditInput()"></textarea>
+          <div class="journal-preview md" id="edit-preview"></div>
+        </div>
       </div>
 
       <!-- Content -->
@@ -896,10 +912,16 @@ function initFolderArrows(){
 
 /* ══ FILE OPENING ══ */
 async function openFile(id, name, siblings, idx){
-  // Auto-route notes.md to the notes editor
-  if(name.toLowerCase() === 'notes.md'){
-    openVaultNotes();
-    return;
+  // If switching files while in edit mode → flush and close edit
+  if(editMode){
+    clearTimeout(editTimer);
+    await flushEdit();
+    editMode = false;
+    document.getElementById('reader-content').style.display = '';
+    document.getElementById('edit-wrap').classList.remove('open');
+    const btn = document.getElementById('fnav-edit');
+    if(btn){ btn.style.color=''; btn.style.fontWeight=''; }
+    editFileId = null;
   }
   closeSidebar();
   currentFile = {id, name, siblings, idx};
@@ -954,6 +976,10 @@ function renderFile(md){
   if(currentFile) updateSearchIndex(currentFile.id, currentFile.name, md);
   document.getElementById('reader-content').scrollTop = 0;
   savePosition();
+  // Auto-edit mode for notes.md
+  if(currentFile && shouldAutoEdit(currentFile.name) && !editMode){
+    setTimeout(()=>toggleEditMode(), 50);
+  }
 }
 
 function navFile(dir){
@@ -1125,6 +1151,84 @@ async function importDscpaFolder(){
     st.textContent = '❌ Erreur : '+e.message;
     toast('❌ '+e.message);
   }
+}
+
+/* ══ INLINE EDIT MODE ══ */
+let editMode = false;
+let editTimer = null;
+let editFileId = null;
+
+function toggleEditMode(){
+  if(!currentFile){ toast('⚠ Ouvre un fichier d\'abord'); return; }
+  editMode = !editMode;
+  const btn = document.getElementById('fnav-edit');
+  const reader = document.getElementById('reader-content');
+  const editWrap = document.getElementById('edit-wrap');
+
+  if(editMode){
+    // Switch to edit mode
+    const md = contentCache[currentFile.id] || '';
+    editFileId = currentFile.id;
+    document.getElementById('edit-title').textContent = '✎ ' + currentFile.name;
+    document.getElementById('edit-area').value = md;
+    document.getElementById('edit-preview').innerHTML = '<div class="md">'+renderMD(md)+'</div>';
+    setEditSt('idle', drTok ? 'Prêt' : 'Local');
+    reader.style.display = 'none';
+    editWrap.classList.add('open');
+    btn.style.color = 'var(--accent)';
+    btn.style.fontWeight = '500';
+    document.getElementById('edit-area').focus();
+  } else {
+    // Back to read mode — save first
+    if(editMode === false && editFileId){
+      flushEdit();
+    }
+    reader.style.display = '';
+    editWrap.classList.remove('open');
+    btn.style.color = '';
+    btn.style.fontWeight = '';
+    editFileId = null;
+  }
+}
+
+function setEditSt(col, txt){
+  const colors = {ok:'var(--green)', pending:'var(--amber)', error:'var(--red)', idle:'var(--text3)'};
+  document.getElementById('edit-dot').style.background = colors[col] || colors.idle;
+  document.getElementById('edit-txt').textContent = txt;
+}
+
+function onEditInput(){
+  const txt = document.getElementById('edit-area').value;
+  document.getElementById('edit-preview').innerHTML = '<div class="md">'+renderMD(txt)+'</div>';
+  // Update memory cache immediately
+  if(editFileId) contentCache[editFileId] = txt;
+  setEditSt('pending', '...');
+  clearTimeout(editTimer);
+  editTimer = setTimeout(()=>flushEdit(), 2000);
+}
+
+async function flushEdit(){
+  if(!editFileId) return;
+  const txt = document.getElementById('edit-area').value;
+  contentCache[editFileId] = txt;
+  // Update IDB cache
+  cacheFile(editFileId, currentFile?.name||'', currentVaultId||'', txt).catch(()=>{});
+
+  if(!drTok){ setEditSt('idle','Local'); return; }
+  setEditSt('pending','Sauvegarde…');
+  try{
+    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${editFileId}?uploadType=media`,{
+      method:'PATCH',
+      headers:{Authorization:'Bearer '+drTok,'Content-Type':'text/markdown'},
+      body: txt
+    });
+    setEditSt('ok', new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}));
+  }catch(e){ setEditSt('error','Erreur: '+e.message); }
+}
+
+// Auto-detect notes.md → open directly in edit mode
+function shouldAutoEdit(name){
+  return /^notes\.md$/i.test(name);
 }
 
 /* ══ VAULT NOTES ══ */
