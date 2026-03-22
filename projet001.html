@@ -565,6 +565,7 @@ body{
       <span id="save-dot" style="width:6px;height:6px;border-radius:50%;background:var(--text3);transition:background .3s;flex-shrink:0;"></span>
       <span id="save-label">Sync</span>
     </button>
+    <button class="hbtn" id="undo-btn" onclick="undoLast()" title="Annuler la dernière suppression" style="display:none">↩ Undo</button>
     <button class="hbtn green" onclick="openImp()">Import</button>
     <button class="hbtn" id="btn-refresh" onclick="drivePull()" style="display:none" title="Charger depuis Drive">↻ Refresh</button>
     <span class="live-badge" id="live-badge"><span class="live-dot"></span>Live</span>
@@ -959,6 +960,7 @@ function pushUndo(tag, label, snapshot){
   undoStack.push({undoId, tag, label, snapshot, ts: Date.now()});
   if(undoStack.length > 20) undoStack.shift();
   saveUndo();
+  updateUndoBtn();
   return undoId;
 }
 
@@ -981,13 +983,35 @@ function restoreItem(undoId){
   }
   undoStack = undoStack.filter(x=>x.undoId!==undoId);
   saveUndo();
+  updateUndoBtn();
   autoSave();
   renderAll();
   logA(tag, '↩ Restauré: "' + (snapshot.text||snapshot.name||'') + '"');
   toast('↩ Restauré : "' + (snapshot.text||snapshot.name||'').slice(0,40) + '"');
 }
 
-/* ══ ACTIVITY LOG ══ */
+// Quick undo — restores last deleted item from the stack
+function undoLast(){
+  if(!undoStack.length){ toast('Rien à annuler'); return; }
+  const last = undoStack[undoStack.length - 1];
+  restoreItem(last.undoId);
+}
+
+// Show/hide undo button based on stack state
+function updateUndoBtn(){
+  const btn = document.getElementById('undo-btn');
+  if(!btn) return;
+  if(undoStack.length > 0){
+    const last = undoStack[undoStack.length - 1];
+    const label = (last.label || '').slice(0, 20);
+    btn.style.display = '';
+    btn.title = `Annuler : "${label}"`;
+    btn.textContent = '↩ Undo';
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
 function logA(tag, msg, undoId){
   AL.push({ts:Date.now(), tag, msg, undoId: undoId||null});
   saveAL();
@@ -1710,6 +1734,7 @@ document.addEventListener('visibilitychange', ()=>{
 renderCatSelects();
 renderAll();
 loadDriveConf();
+updateUndoBtn();
 
 // Auto-connect on load — NO popup (popup requires user gesture).
 // Strategy: if a token was already obtained this session (stored in sessionStorage),
