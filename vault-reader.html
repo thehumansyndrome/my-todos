@@ -969,33 +969,63 @@ async function openFile(id, name, siblings, idx){
 
   const content = document.getElementById('reader-content');
 
-  // 1. Memory cache (fastest)
-  if(contentCache[id]){ renderFile(contentCache[id]); return; }
+  // Stale-while-revalidate:
+  // Show cached content immediately (fast), then check Drive for fresher version
+  let hasCache = false;
 
-  // 2. IDB offline cache
-  try{
-    const cached = await getCachedFile(id);
-    if(cached){ contentCache[id]=cached; renderFile(cached); return; }
-  }catch(e){}
+  // 1. Memory cache (instant)
+  if(contentCache[id]){
+    renderFile(contentCache[id]);
+    hasCache = true;
+  } else {
+    // 2. IDB offline cache
+    try{
+      const cached = await getCachedFile(id);
+      if(cached){
+        contentCache[id] = cached;
+        renderFile(cached);
+        hasCache = true;
+      }
+    }catch(e){}
+  }
 
-  // 3. Drive (online only)
+  // 3. Drive — always fetch when online to catch remote edits
   if(!drTok){
-    content.innerHTML=`<div class="reader-empty">
-      <div class="big" style="font-size:24px">○</div>
-      <div style="color:var(--amber)">Mode offline</div>
-      <div style="margin-top:6px;font-size:11px;color:var(--text3)">Ce fichier n'est pas encore en cache.<br>Connecte-toi à Drive pour le charger.</div>
-    </div>`;
+    if(!hasCache){
+      content.innerHTML=`<div class="reader-empty">
+        <div class="big" style="font-size:24px">○</div>
+        <div style="color:var(--amber)">Mode offline</div>
+        <div style="margin-top:6px;font-size:11px;color:var(--text3)">Ce fichier n'est pas encore en cache.<br>Connecte-toi à Drive pour le charger.</div>
+      </div>`;
+    }
     return;
   }
-  content.innerHTML = '<div class="reader-empty"><div>Chargement…</div></div>';
+
+  if(!hasCache){
+    content.innerHTML = '<div class="reader-empty"><div>Chargement…</div></div>';
+  }
+
   try{
+    // Check modifiedTime first (lightweight — avoids downloading unchanged files)
+    if(hasCache){
+      const meta = await drFetch(`files/${id}?fields=modifiedTime`);
+      const cached = await idbGet(IDB_FILES_STORE, id);
+      const cachedTs = cached ? cached.ts : 0;
+      const remoteTs = new Date(meta.modifiedTime).getTime();
+      // If Drive version is newer than our cache, fetch fresh content
+      if(remoteTs <= cachedTs) return; // cache is up to date
+    }
+    // Fetch fresh content
     const md = await drFetchRaw(`files/${id}?alt=media`);
     contentCache[id] = md;
-    // Auto-save to IDB for offline use
     cacheFile(id, name, currentVaultId, md).catch(()=>{});
+    // Only re-render if content actually changed (avoid flicker)
     renderFile(md);
   }catch(e){
-    content.innerHTML = `<div class="reader-empty"><div>Erreur : ${e.message}</div></div>`;
+    if(!hasCache){
+      content.innerHTML = `<div class="reader-empty"><div>Erreur : ${e.message}</div></div>`;
+    }
+    // Silently ignore if we already showed cached content
   }
 }
 
