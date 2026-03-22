@@ -392,17 +392,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 
     <!-- ── READER ── -->
     <div class="reader-wrap" id="reader-wrap">
-      <!-- TOC overlay backdrop -->
-      <div class="toc-overlay" id="toc-overlay" onclick="toggleTOC()"></div>
-
-      <!-- TOC panel -->
-      <div class="toc-panel" id="toc-panel">
-        <div class="toc-head">
-          <span>Table des matières</span>
-          <button class="icon-btn" onclick="toggleTOC()" style="width:36px;height:36px;font-size:14px;flex-shrink:0;" title="Fermer">✕</button>
-        </div>
-        <div class="toc-list" id="toc-list"></div>
-      </div>
 
       <!-- File nav bar -->
       <div class="file-nav" id="file-nav" style="display:none">
@@ -435,6 +424,16 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
       </div>
     </div>
   </div>
+</div>
+
+<!-- TOC panel + overlay — outside .app to avoid overflow:hidden trap on reader-wrap -->
+<div class="toc-overlay" id="toc-overlay" onclick="toggleTOC()"></div>
+<div class="toc-panel" id="toc-panel">
+  <div class="toc-head">
+    <span>Table des matières</span>
+    <button class="icon-btn" onclick="toggleTOC()" style="width:36px;height:36px;font-size:14px;flex-shrink:0;" title="Fermer">✕</button>
+  </div>
+  <div class="toc-list" id="toc-list"></div>
 </div>
 
 <!-- ── SETTINGS MODAL ── -->
@@ -1504,7 +1503,17 @@ async function cacheCurrentVault(){
 
 /* ══ INIT ══ */
 loadCfg();
-loadCachedFileIds().catch(()=>{}); // pre-load cached IDs for dot display
+loadCachedFileIds().catch(()=>{});
+
+// Fix: move TOC panel + overlay to document.body to escape any overflow:hidden ancestor.
+// position:fixed is broken inside overflow:hidden containers on mobile Safari/Chrome.
+// We do this unconditionally — body is always the safe container for fixed elements.
+(function fixTOCPosition(){
+  const panel = document.getElementById('toc-panel');
+  const overlay = document.getElementById('toc-overlay');
+  if(panel && panel.parentElement !== document.body) document.body.appendChild(panel);
+  if(overlay && overlay.parentElement !== document.body) document.body.appendChild(overlay);
+})();
 
 // Keyboard shortcuts
 document.addEventListener('keydown', e=>{
