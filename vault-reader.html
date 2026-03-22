@@ -373,6 +373,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 /* hljs dark override */
 [data-theme="dark"] #hljs-light{display:none;}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
 <div class="app">
@@ -389,6 +390,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
     <div class="hspace"></div>
     <button class="hbtn" id="toc-btn" onclick="toggleTOC()" title="Table des matières">§ TOC</button>
     <button class="hbtn amber" id="journal-btn" onclick="toggleJournal()">✎ Journal</button>
+    <button class="hbtn" onclick="openUploadPanel()" title="Importer un vault DSCPA vers Drive">⬆ Vault</button>
     <span class="mode-badge" id="mode-badge"></span>
     <button class="hbtn" onclick="openSettings()"><span class="gdot" id="gdot"></span> Drive</button>
     <button class="hbtn" id="theme-btn" onclick="toggleTheme()">☀︎</button>
@@ -407,6 +409,17 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
       </div>
       <!-- Category tabs -->
       <div class="cat-tabs" id="cat-tabs" style="display:none;"></div>
+      <!-- Notes quick-access -->
+      <div id="notes-bar" style="display:none;padding:6px 8px;border-bottom:1px solid var(--line);background:var(--bg);">
+        <button onclick="openVaultNotes()" style="
+          width:100%;font-family:var(--mono);font-size:10px;font-weight:500;
+          padding:5px 10px;border-radius:var(--r);border:1px solid var(--amber);
+          background:var(--amber-bg);color:var(--amber);cursor:pointer;
+          display:flex;align-items:center;gap:6px;justify-content:center;
+          transition:opacity .1s;">
+          ✏ Notes du vault
+        </button>
+      </div>
       <div class="file-tree" id="file-tree">
         <div class="sidebar-empty">Connecte-toi à Drive<br>puis choisis un vault</div>
       </div>
@@ -445,6 +458,21 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
           <div class="journal-preview md" id="journal-preview"></div>
         </div>
       </div>
+
+      <!-- Notes editor — shown when notes.md is open or via "Notes du vault" -->
+      <div class="journal-wrap" id="notes-wrap">
+        <div class="journal-toolbar">
+          <span id="notes-title">✏ Notes</span>
+          <div style="display:flex;gap:6px;margin-left:auto;align-items:center;">
+            <div class="save-st"><span class="sdot" id="ndot"></span><span id="ntxt">—</span></div>
+            <button class="lbtn" onclick="closeNotes()">Fermer</button>
+          </div>
+        </div>
+        <div class="journal-split">
+          <textarea class="journal-edit" id="notes-edit" placeholder="Tes notes…" oninput="onNotesInput()"></textarea>
+          <div class="journal-preview md" id="notes-preview"></div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -460,6 +488,59 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
              justify-content:center;flex-shrink:0;transition:background .1s;">✕</button>
   </div>
   <div class="toc-list" id="toc-list"></div>
+</div>
+
+<!-- ── UPLOAD VAULT MODAL ── -->
+<div class="overlay" id="upload-overlay">
+  <div class="modal">
+    <div class="modal-title">⬆ Importer un vault DSCPA vers Drive</div>
+
+    <div class="modal-section">
+      <label>1. Fichier ZIP du vault</label>
+      <div id="drop-zone" style="
+        border:2px dashed var(--line2);border-radius:var(--r2);
+        padding:24px 16px;text-align:center;cursor:pointer;
+        transition:all .15s;background:var(--bg);
+      "
+        onclick="document.getElementById('zip-input').click()"
+        ondragover="event.preventDefault();this.style.borderColor='var(--accent)';this.style.background='var(--blue-bg)'"
+        ondragleave="this.style.borderColor='var(--line2)';this.style.background='var(--bg)'"
+        ondrop="handleZipDrop(event)">
+        <div style="font-size:24px;margin-bottom:8px;opacity:.5">📦</div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--text2);">Glisse le ZIP ici ou clique pour sélectionner</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;" id="zip-filename">Fichier DSCPA généré par Claude</div>
+      </div>
+      <input type="file" id="zip-input" accept=".zip" style="display:none" onchange="handleZipSelect(this)">
+    </div>
+
+    <div class="modal-section">
+      <label>2. Catégorie de destination</label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;" id="cat-pills"></div>
+      <div style="display:flex;gap:6px;">
+        <input class="modal-in" type="text" id="upload-cat" placeholder="Ex: _learning, _music, _work…" style="flex:1">
+        <div style="font-size:11px;color:var(--text3);align-self:center;white-space:nowrap;">ou nouvelle</div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px;">Le vault sera créé dans <code style="font-size:10px;">{racine}/{catégorie}/{nom-vault}/</code></div>
+    </div>
+
+    <div class="modal-section">
+      <label>3. Nom du vault sur Drive (optionnel)</label>
+      <input class="modal-in" type="text" id="upload-name" placeholder="Détecté depuis le ZIP automatiquement">
+    </div>
+
+    <!-- Progress -->
+    <div id="upload-progress" style="display:none;margin-bottom:12px;">
+      <div style="height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin-bottom:6px;">
+        <div id="upload-bar" style="height:100%;background:var(--accent);width:0%;transition:width .2s;"></div>
+      </div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text2);" id="upload-status">Préparation…</div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="lbtn" onclick="closeUploadPanel()">Annuler</button>
+      <button class="lbtn primary" onclick="startUpload()" id="btn-start-upload">⬆ Envoyer vers Drive</button>
+    </div>
+  </div>
 </div>
 
 <!-- ── SETTINGS MODAL ── -->
@@ -815,6 +896,11 @@ function initFolderArrows(){
 
 /* ══ FILE OPENING ══ */
 async function openFile(id, name, siblings, idx){
+  // Auto-route notes.md to the notes editor
+  if(name.toLowerCase() === 'notes.md'){
+    openVaultNotes();
+    return;
+  }
   closeSidebar();
   currentFile = {id, name, siblings, idx};
 
@@ -865,10 +951,9 @@ function renderFile(md){
   const html = renderMD(md);
   document.getElementById('reader-content').innerHTML = `<div class="md">${html}</div>`;
   buildTOC(html);
-  // Update search index
   if(currentFile) updateSearchIndex(currentFile.id, currentFile.name, md);
-  // Scroll top
   document.getElementById('reader-content').scrollTop = 0;
+  savePosition();
 }
 
 function navFile(dir){
@@ -955,6 +1040,7 @@ async function switchVault(vaultId){
         fileCache[vault.folderId] = {tree: cached.tree, files: cached.files};
         buildFileTree(cached.tree);
         initFolderArrows();
+        document.getElementById('notes-bar').style.display='';
         const age = Math.round((Date.now()-cached.ts)/60000);
         toast(`○ Offline — cache de il y a ${age < 60 ? age+'min' : Math.round(age/60)+'h'}`);
       } else {
@@ -971,6 +1057,8 @@ async function switchVault(vaultId){
     cacheVaultTree(vaultId, data.tree, data.files).catch(()=>{});
     buildFileTree(data.tree);
     initFolderArrows();
+    // Show notes bar
+    document.getElementById('notes-bar').style.display='';
     toast(`✓ "${vault.name}" chargé`);
   }catch(e){ toast('❌ Erreur : '+e.message); }
 }
@@ -1037,6 +1125,155 @@ async function importDscpaFolder(){
     st.textContent = '❌ Erreur : '+e.message;
     toast('❌ '+e.message);
   }
+}
+
+/* ══ VAULT NOTES ══ */
+// notes.md template — pre-filled structure
+const NOTES_TEMPLATE = (vaultName) => `# Notes — ${vaultName}
+
+## 💡 Idées & insights
+<!-- Tes découvertes, aha-moments, points importants -->
+
+
+## ❓ Questions ouvertes
+<!-- Ce que tu ne comprends pas encore, ce que tu veux approfondir -->
+
+
+## 🔗 Connexions
+<!-- Liens avec d'autres sujets, vaults ou connaissances -->
+
+
+## ✅ Actions & prochaines étapes
+<!-- Ce que tu vas faire concrètement -->
+- [ ] 
+
+## 📅 Journal rapide
+<!-- Entrées datées au fil du temps -->
+### ${new Date().toLocaleDateString('fr-FR', {day:'2-digit',month:'long',year:'numeric'})}
+
+`;
+
+let notesFileId = null;
+let notesDirty = false;
+let notesTimer = null;
+let notesVaultId = null; // which vault these notes belong to
+
+function setNSt(col, txt){
+  const colors={ok:'var(--green)',pending:'var(--amber)',error:'var(--red)',idle:'var(--text3)'};
+  document.getElementById('ndot').style.background = colors[col]||colors.idle;
+  document.getElementById('ntxt').textContent = txt;
+}
+
+async function openVaultNotes(){
+  if(!currentVaultId){ toast('⚠ Sélectionne un vault d\'abord'); return; }
+  if(!drTok){ toast('⚠ Connecte-toi à Drive d\'abord'); return; }
+  closeSidebar();
+
+  // If already open for this vault, just show it
+  if(notesVaultId === currentVaultId && document.getElementById('notes-wrap').classList.contains('open')){
+    return;
+  }
+
+  notesVaultId = currentVaultId;
+  const vault = cfg.vaults.find(v=>v.id===currentVaultId);
+  const vaultName = vault ? vault.name : 'Vault';
+
+  document.getElementById('notes-title').textContent = `✏ Notes — ${vaultName}`;
+  document.getElementById('notes-edit').value = '';
+  document.getElementById('notes-preview').innerHTML = '';
+  document.getElementById('notes-wrap').classList.add('open');
+  setNSt('pending','Chargement…');
+
+  // Look for notes.md in the vault folder (03_pratique/ or root)
+  notesFileId = null;
+  try{
+    const folderId = vault.folderId;
+    // Search notes.md in the vault and its subfolders
+    const q = encodeURIComponent(`name='notes.md' and '${folderId}' in parents and trashed=false`);
+    let r = await drFetch(`files?q=${q}&fields=files(id,name)&pageSize=5`);
+
+    if(!r.files?.length){
+      // Try in 03_pratique subfolder
+      const q2 = encodeURIComponent(`name='03_pratique' and '${folderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+      const r2 = await drFetch(`files?q=${q2}&fields=files(id)&pageSize=5`);
+      if(r2.files?.length){
+        const pratFolderId = r2.files[0].id;
+        const q3 = encodeURIComponent(`name='notes.md' and '${pratFolderId}' in parents and trashed=false`);
+        const r3 = await drFetch(`files?q=${q3}&fields=files(id)&pageSize=5`);
+        if(r3.files?.length) notesFileId = r3.files[0].id;
+      }
+    } else {
+      notesFileId = r.files[0].id;
+    }
+
+    if(notesFileId){
+      // Load existing notes
+      const content = await drFetchRaw(`files/${notesFileId}?alt=media`);
+      document.getElementById('notes-edit').value = content;
+      document.getElementById('notes-preview').innerHTML = '<div class="md">'+renderMD(content)+'</div>';
+      setNSt('ok','Chargé');
+    } else {
+      // Create notes.md with template
+      const template = NOTES_TEMPLATE(vaultName);
+      document.getElementById('notes-edit').value = template;
+      document.getElementById('notes-preview').innerHTML = '<div class="md">'+renderMD(template)+'</div>';
+      setNSt('idle','Nouveau — non sauvegardé');
+      notesDirty = true;
+    }
+  }catch(e){ setNSt('error','Erreur: '+e.message); }
+}
+
+function closeNotes(){
+  document.getElementById('notes-wrap').classList.remove('open');
+  if(notesDirty) saveNotes(); // auto-save on close
+}
+
+function onNotesInput(){
+  const txt = document.getElementById('notes-edit').value;
+  document.getElementById('notes-preview').innerHTML = '<div class="md">'+renderMD(txt)+'</div>';
+  notesDirty = true;
+  setNSt('pending','...');
+  clearTimeout(notesTimer);
+  notesTimer = setTimeout(()=>saveNotes(), 2000);
+}
+
+async function saveNotes(){
+  if(!drTok){ setNSt('error','Non connecté'); return; }
+  if(!notesVaultId){ return; }
+  const vault = cfg.vaults.find(v=>v.id===notesVaultId);
+  if(!vault){ return; }
+  const txt = document.getElementById('notes-edit').value;
+  setNSt('pending','Sauvegarde…');
+
+  try{
+    if(!notesFileId){
+      // Find or create 03_pratique folder, then create notes.md
+      const q2 = encodeURIComponent(`name='03_pratique' and '${vault.folderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+      const r2 = await drFetch(`files?q=${q2}&fields=files(id)&pageSize=5`);
+      const parentId = r2.files?.length ? r2.files[0].id : vault.folderId;
+
+      const bd='---NT'+Date.now();
+      const meta=JSON.stringify({name:'notes.md',mimeType:'text/markdown',parents:[parentId]});
+      const mp=`--${bd}\r\nContent-Type: application/json\r\n\r\n${meta}\r\n--${bd}\r\nContent-Type: text/markdown\r\n\r\n${txt}\r\n--${bd}--`;
+      const cr=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{
+        method:'POST',
+        headers:{Authorization:'Bearer '+drTok,'Content-Type':`multipart/related; boundary="${bd}"`},
+        body:mp
+      });
+      const cd=await cr.json(); notesFileId=cd.id;
+    } else {
+      // Update existing
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${notesFileId}?uploadType=media`,{
+        method:'PATCH',
+        headers:{Authorization:'Bearer '+drTok,'Content-Type':'text/markdown'},
+        body:txt
+      });
+    }
+    notesDirty=false;
+    // Invalidate content cache so next read gets fresh content
+    if(notesFileId) delete contentCache[notesFileId];
+    setNSt('ok', new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}));
+  }catch(e){ setNSt('error','Erreur: '+e.message); }
 }
 
 /* ══ UPLOAD VAULT DSCPA VERS DRIVE ══ */
@@ -1273,11 +1510,12 @@ function driveAuth(){
         scope:'https://www.googleapis.com/auth/drive',
         callback:(r)=>{
           if(r.error){setAuthSt(false,'Erreur: '+r.error);toast('❌ '+r.error);return;}
-          drTok=r.access_token;
+          drTok=r.access_token;drFid=null;
           sessionStorage.setItem('vr_tok',r.access_token);
           setAuthSt(true,'Connecté ✓'); updateDriveUI();
           setMode(true);
           toast('✓ Drive connecté');
+          restorePosition().catch(()=>{});
         }
       });
       cl.requestAccessToken();
@@ -1294,6 +1532,8 @@ function driveDisc(){drTok=null;sessionStorage.removeItem('vr_tok');setAuthSt(nu
     const tok=sessionStorage.getItem('vr_tok');
     if(tok){
       drTok=tok;setAuthSt(true,'Connecté ✓');updateDriveUI();setMode(true);
+      // Restore last open vault + file
+      restorePosition().catch(()=>{});
     } else {
       setAuthSt(null,'Drive configuré');
       setMode(false); // Start in offline mode
@@ -1527,7 +1767,309 @@ async function cacheCurrentVault(){
   toast(`✓ ${done} fichier(s) mis en cache — vault disponible offline`);
 }
 
-/* ══ INIT ══ */
+/* ══ CLAUDE DIRECT UPLOAD ══
+   Called by Claude via Chrome extension after generating a DSCPA vault.
+   Usage: window.claudeUpload(vaultName, category, files)
+   files = [{ path: "00_carte-mentale/mindmap.md", content: "# ..." }, ...]
+══════════════════════════════════════════════════════════════════ */
+window.claudeUpload = async function(vaultName, category, files){
+  if(!drTok){ return {ok:false, error:'Drive non connecté — connecte-toi d\'abord'}; }
+  if(!vaultName || !category || !files?.length) return {ok:false, error:'Paramètres manquants'};
+
+  const log = [];
+  const rootName = cfg.rootFolder || 'dscpa';
+
+  try{
+    // 1. Find dscpa root
+    if(!cfg.dscpaFolderId){
+      const q = encodeURIComponent(`name='${rootName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+      const r = await drFetch(`files?q=${q}&fields=files(id)&pageSize=5`);
+      if(!r.files?.length) return {ok:false, error:`Dossier "${rootName}" introuvable`};
+      cfg.dscpaFolderId = r.files[0].id; saveCfg();
+    }
+
+    // 2. Find/create category + vault folders
+    const catId = await findOrCreateFolder(category, cfg.dscpaFolderId);
+    const vaultFolderId = await findOrCreateFolder(vaultName, catId);
+    log.push(`📁 ${rootName}/${category}/${vaultName}`);
+
+    // 3. Build subfolder map
+    const folderMap = {'': vaultFolderId};
+    const subfolders = [...new Set(
+      files.map(f => f.path.split('/').slice(0,-1).join('/')).filter(Boolean)
+    )].sort();
+    for(const sub of subfolders){
+      const parts = sub.split('/');
+      const parentPath = parts.slice(0,-1).join('/');
+      const name = parts[parts.length-1];
+      folderMap[sub] = await findOrCreateFolder(name, folderMap[parentPath]||vaultFolderId);
+      log.push(`📁 ${sub}/`);
+    }
+
+    // 4. Upload each file
+    for(const file of files){
+      const parts = file.path.split('/');
+      const filename = parts[parts.length-1];
+      const parentPath = parts.slice(0,-1).join('/');
+      const parentId = folderMap[parentPath] || vaultFolderId;
+
+      const bd = '---CU'+Date.now();
+      const meta = JSON.stringify({name:filename, mimeType:'text/markdown', parents:[parentId]});
+      const mp = `--${bd}\r\nContent-Type: application/json\r\n\r\n${meta}\r\n--${bd}\r\nContent-Type: text/markdown\r\n\r\n${file.content}\r\n--${bd}--`;
+      const r = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{
+        method:'POST',
+        headers:{Authorization:'Bearer '+drTok,'Content-Type':`multipart/related; boundary="${bd}"`},
+        body: mp
+      });
+      if(!r.ok){ const e=await r.json(); throw new Error(`${filename}: ${e.error?.message||r.status}`); }
+      log.push(`✓ ${file.path}`);
+    }
+
+    // 5. Register vault if new
+    if(!cfg.vaults.find(v=>v.folderId===vaultFolderId)){
+      cfg.vaults.push({id:'v_'+Date.now(), name:vaultName, folderId:vaultFolderId,
+        category, folderName:`${rootName}/${category}/${vaultName}`});
+      saveCfg(); rebuildVaultSelect();
+    }
+
+    toast(`✓ "${vaultName}" déposé dans Drive (${files.length} fichiers)`);
+    return {ok:true, vaultFolderId, filesUploaded:files.length, log};
+
+  }catch(e){
+    toast('❌ Upload: '+e.message);
+    return {ok:false, error:e.message, log};
+  }
+};
+let uploadZipFile = null;
+
+function openUploadPanel(){
+  if(!drTok){ toast('⚠ Connecte-toi à Drive d\'abord'); return; }
+  uploadZipFile = null;
+  document.getElementById('zip-filename').textContent = 'Fichier DSCPA généré par Claude';
+  document.getElementById('upload-name').value = '';
+  document.getElementById('upload-cat').value = '';
+  document.getElementById('upload-progress').style.display = 'none';
+  document.getElementById('upload-bar').style.width = '0%';
+  document.getElementById('btn-start-upload').disabled = false;
+  // Populate category pills from existing vaults
+  const cats = getCategories();
+  const pills = document.getElementById('cat-pills');
+  if(pills){
+    pills.innerHTML = cats.map(c=>`
+      <button class="cat-tab" onclick="document.getElementById('upload-cat').value='${esc(c)}'"
+        style="cursor:pointer;">${esc(c.replace(/^_/,''))}</button>`
+    ).join('');
+  }
+  document.getElementById('upload-overlay').classList.add('open');
+}
+function closeUploadPanel(){
+  document.getElementById('upload-overlay').classList.remove('open');
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  const o = document.getElementById('upload-overlay');
+  if(o) o.addEventListener('click', function(e){ if(e.target===this) closeUploadPanel(); });
+});
+
+function handleZipDrop(e){
+  e.preventDefault();
+  document.getElementById('drop-zone').style.borderColor='var(--line2)';
+  document.getElementById('drop-zone').style.background='var(--bg)';
+  const file = e.dataTransfer.files[0];
+  if(file && file.name.endsWith('.zip')) setZipFile(file);
+  else toast('⚠ Sélectionne un fichier .zip');
+}
+function handleZipSelect(input){
+  if(input.files[0]) setZipFile(input.files[0]);
+}
+function setZipFile(file){
+  uploadZipFile = file;
+  document.getElementById('zip-filename').textContent = '✓ ' + file.name;
+  document.getElementById('drop-zone').style.borderColor = 'var(--green)';
+  // Auto-detect vault name from filename: "sujet-obsidian.zip" → "sujet"
+  const slug = file.name.replace(/-obsidian\.zip$/i,'').replace(/\.zip$/i,'');
+  if(!document.getElementById('upload-name').value)
+    document.getElementById('upload-name').value = slug;
+}
+
+async function startUpload(){
+  if(!uploadZipFile){ toast('⚠ Sélectionne un fichier ZIP'); return; }
+  if(!drTok){ toast('⚠ Non connecté à Drive'); return; }
+  const cat = document.getElementById('upload-cat').value.trim();
+  if(!cat){ toast('⚠ Précise une catégorie'); document.getElementById('upload-cat').focus(); return; }
+  const vaultName = document.getElementById('upload-name').value.trim() || uploadZipFile.name.replace(/\.zip$/i,'');
+
+  const btn = document.getElementById('btn-start-upload');
+  btn.disabled = true;
+  const progress = document.getElementById('upload-progress');
+  const bar = document.getElementById('upload-bar');
+  const status = document.getElementById('upload-status');
+  progress.style.display = 'block';
+
+  try{
+    // 1. Parse ZIP
+    status.textContent = 'Lecture du ZIP…';
+    bar.style.width = '5%';
+    const zip = await JSZip.loadAsync(uploadZipFile);
+    const files = Object.entries(zip.files).filter(([,f])=>!f.dir);
+    if(!files.length) throw new Error('ZIP vide ou invalide');
+
+    // 2. Ensure root folder (dscpa)
+    status.textContent = 'Localisation du dossier racine…';
+    bar.style.width = '10%';
+    const rootName = cfg.rootFolder || 'dscpa';
+    if(!cfg.dscpaFolderId){
+      const q = encodeURIComponent(`name='${rootName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+      const r = await drFetch(`files?q=${q}&fields=files(id,name)&pageSize=5`);
+      if(!r.files||!r.files.length) throw new Error(`Dossier "${rootName}" introuvable sur Drive`);
+      cfg.dscpaFolderId = r.files[0].id;
+      saveCfg();
+    }
+
+    // 3. Find/create category folder
+    status.textContent = `Création de la catégorie "${cat}"…`;
+    bar.style.width = '15%';
+    const catId = await findOrCreateFolder(cat, cfg.dscpaFolderId);
+
+    // 4. Find/create vault folder
+    status.textContent = `Création du vault "${vaultName}"…`;
+    bar.style.width = '20%';
+    const vaultFolderId = await findOrCreateFolder(vaultName, catId);
+
+    // 5. Build subfolder map from ZIP structure
+    // ZIP structure: slug/dossier/fichier.md or slug/fichier.md
+    // We need to create subfolders and upload files
+    const folderCache = { '': vaultFolderId }; // path → Drive folder id
+    status.textContent = 'Création des sous-dossiers…';
+    bar.style.width = '25%';
+
+    // Collect unique subfolder paths
+    const subfolders = new Set();
+    for(const [path] of files){
+      const parts = path.split('/');
+      // Skip first part (slug root folder)
+      const relParts = parts.slice(1, -1); // intermediate dirs
+      for(let i=0; i<relParts.length; i++){
+        if(relParts[i]) subfolders.add(relParts.slice(0,i+1).join('/'));
+      }
+    }
+
+    // Create each subfolder on Drive
+    for(const sub of [...subfolders].sort()){
+      const parts = sub.split('/');
+      const parentPath = parts.slice(0,-1).join('/');
+      const name = parts[parts.length-1];
+      const parentId = folderCache[parentPath] || vaultFolderId;
+      folderCache[sub] = await findOrCreateFolder(name, parentId);
+    }
+
+    // 6. Upload each file
+    let done=0;
+    for(const [path, zipEntry] of files){
+      if(zipEntry.dir) continue;
+      const parts = path.split('/').slice(1); // remove slug prefix
+      const filename = parts[parts.length-1];
+      const parentPath = parts.slice(0,-1).join('/');
+      const parentId = folderCache[parentPath] || vaultFolderId;
+
+      // Skip hidden files
+      if(filename.startsWith('.')) { done++; continue; }
+
+      const content = await zipEntry.async('string');
+      done++;
+      const pct = 25 + Math.round((done/files.length)*70);
+      bar.style.width = pct+'%';
+      status.textContent = `Upload ${done}/${files.length} — ${filename}`;
+
+      // Upload to Drive
+      const bd = '---VR'+Date.now();
+      const meta = JSON.stringify({name:filename, mimeType:'text/markdown', parents:[parentId]});
+      const mp = `--${bd}\r\nContent-Type: application/json\r\n\r\n${meta}\r\n--${bd}\r\nContent-Type: text/markdown\r\n\r\n${content}\r\n--${bd}--`;
+      const r = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{
+        method:'POST',
+        headers:{Authorization:'Bearer '+drTok, 'Content-Type':`multipart/related; boundary="${bd}"`},
+        body: mp
+      });
+      if(!r.ok){ const e=await r.json(); throw new Error(e.error?.message||'HTTP '+r.status); }
+    }
+
+    // 7. Register vault in cfg if not already there
+    bar.style.width = '100%';
+    status.textContent = '✓ Upload terminé !';
+
+    const existingVault = cfg.vaults.find(v=>v.folderId===vaultFolderId);
+    if(!existingVault){
+      const id = 'v_'+Date.now();
+      cfg.vaults.push({id, name:vaultName, folderId:vaultFolderId, category:cat,
+        folderName:`${rootName} / ${cat} / ${vaultName}`});
+      saveCfg();
+      rebuildVaultSelect();
+    }
+
+    toast(`✓ "${vaultName}" uploadé dans ${rootName}/${cat} — ${done} fichiers`);
+    setTimeout(()=>closeUploadPanel(), 1500);
+
+  }catch(e){
+    status.textContent = '❌ Erreur : '+e.message;
+    bar.style.background = 'var(--red)';
+    btn.disabled = false;
+    toast('❌ '+e.message);
+  }
+}
+/* ══ LAST POSITION — persist & restore ══ */
+const POS_KEY = 'vr_pos';
+
+function savePosition(){
+  if(!currentVaultId || !currentFile) return;
+  try{
+    localStorage.setItem(POS_KEY, JSON.stringify({
+      vaultId: currentVaultId,
+      fileId: currentFile.id,
+      fileName: currentFile.name,
+      scroll: document.getElementById('reader-content').scrollTop
+    }));
+  }catch(e){}
+}
+
+async function restorePosition(){
+  try{
+    const s = localStorage.getItem(POS_KEY);
+    if(!s) return;
+    const pos = JSON.parse(s);
+    if(!pos.vaultId || !pos.fileId) return;
+
+    // Check vault still exists in cfg
+    const vault = cfg.vaults.find(v=>v.id===pos.vaultId);
+    if(!vault) return;
+
+    // Select vault in dropdown
+    const sel = document.getElementById('vault-select');
+    if(sel){
+      sel.value = pos.vaultId;
+      // Make sure the option exists (might be in a filtered category)
+      if(sel.value !== pos.vaultId){
+        setCat('all');
+        sel.value = pos.vaultId;
+      }
+    }
+
+    // Load vault tree
+    await switchVault(pos.vaultId);
+
+    // Open the last file
+    const vaultData = fileCache[vault.folderId];
+    if(vaultData){
+      const file = vaultData.files.find(f=>f.id===pos.fileId);
+      if(file){
+        await openFile(file.id, file.name, file.siblings, file.idx);
+        // Restore scroll after render
+        setTimeout(()=>{
+          document.getElementById('reader-content').scrollTop = pos.scroll || 0;
+        }, 150);
+      }
+    }
+  }catch(e){ /* silent — fresh start on any error */ }
+}
+
 loadCfg();
 loadCachedFileIds().catch(()=>{});
 
@@ -1554,6 +2096,13 @@ document.getElementById('toc-overlay').addEventListener('touchend', function(e){
   e.preventDefault();
   toggleTOC();
 }, {passive:false});
+
+// Save scroll position on scroll (debounced)
+let scrollSaveTimer = null;
+document.getElementById('reader-content').addEventListener('scroll', ()=>{
+  clearTimeout(scrollSaveTimer);
+  scrollSaveTimer = setTimeout(savePosition, 400);
+}, {passive:true});
 let touchX0=null;
 document.getElementById('reader-content').addEventListener('touchstart',e=>{touchX0=e.touches[0].clientX;},{passive:true});
 document.getElementById('reader-content').addEventListener('touchend',e=>{
