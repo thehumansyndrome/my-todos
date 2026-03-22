@@ -541,6 +541,8 @@ let journalDirty = false;
 let journalTimer = null;
 let tocOpen = false;
 let journalOpen = false;
+let offlineMode = false;
+let cachedFileIds = new Set(); // must be declared here — used in buildFileTree
 
 /* ══ CFG PERSISTENCE ══ */
 function saveCfg(){
@@ -1368,8 +1370,7 @@ async function getCachedTree(vaultId){
   return await idbGet(IDB_TREE_STORE, vaultId);
 }
 
-// Track cached file IDs in memory for fast dot rendering
-let cachedFileIds = new Set();
+// Track cached file IDs in memory for fast dot rendering — declared in STATE block above
 
 async function loadCachedFileIds(){
   try{
@@ -1379,8 +1380,6 @@ async function loadCachedFileIds(){
 }
 
 /* ══ ONLINE/OFFLINE MODE ══ */
-let offlineMode = false;
-
 function setMode(online){
   offlineMode = !online;
   const badge = document.getElementById('mode-badge');
