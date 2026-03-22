@@ -414,6 +414,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
     <button class="hbtn" onclick="openUploadPanel()" title="Importer un vault DSCPA vers Drive">⬆ Vault</button>
     <span class="mode-badge" id="mode-badge"></span>
     <button class="hbtn" onclick="openSettings()"><span class="gdot" id="gdot"></span> Drive</button>
+    <button class="hbtn" onclick="downloadApp()" title="Télécharger vault-reader.html">⬇ HTML</button>
     <button class="hbtn" id="theme-btn" onclick="toggleTheme()">☀︎</button>
   </div>
 
@@ -487,21 +488,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
         <div class="journal-split">
           <textarea class="journal-edit" id="journal-edit" placeholder="Écris ici…" oninput="onJournalInput()"></textarea>
           <div class="journal-preview md" id="journal-preview"></div>
-        </div>
-      </div>
-
-      <!-- Notes editor — shown when notes.md is open or via "Notes du vault" -->
-      <div class="journal-wrap" id="notes-wrap">
-        <div class="journal-toolbar">
-          <span id="notes-title">✏ Notes</span>
-          <div style="display:flex;gap:6px;margin-left:auto;align-items:center;">
-            <div class="save-st"><span class="sdot" id="ndot"></span><span id="ntxt">—</span></div>
-            <button class="lbtn" onclick="closeNotes()">Fermer</button>
-          </div>
-        </div>
-        <div class="journal-split">
-          <textarea class="journal-edit" id="notes-edit" placeholder="Tes notes…" oninput="onNotesInput()"></textarea>
-          <div class="journal-preview md" id="notes-preview"></div>
         </div>
       </div>
     </div>
@@ -1259,7 +1245,6 @@ async function flushEdit(){
 function shouldAutoEdit(name){ return /^notes\.md$/i.test(name); }
 
 /* ══ VAULT NOTES ══ */
-// notes.md template — pre-filled structure
 const NOTES_TEMPLATE = (vaultName) => `# Notes — ${vaultName}
 
 ## 💡 Idées & insights
@@ -1275,136 +1260,77 @@ const NOTES_TEMPLATE = (vaultName) => `# Notes — ${vaultName}
 
 
 ## ✅ Actions & prochaines étapes
-<!-- Ce que tu vas faire concrètement -->
 - [ ] 
 
 ## 📅 Journal rapide
-<!-- Entrées datées au fil du temps -->
-### ${new Date().toLocaleDateString('fr-FR', {day:'2-digit',month:'long',year:'numeric'})}
+### ${new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})}
 
 `;
 
-let notesFileId = null;
-let notesDirty = false;
-let notesTimer = null;
-let notesVaultId = null; // which vault these notes belong to
-
-function setNSt(col, txt){
-  const colors={ok:'var(--green)',pending:'var(--amber)',error:'var(--red)',idle:'var(--text3)'};
-  document.getElementById('ndot').style.background = colors[col]||colors.idle;
-  document.getElementById('ntxt').textContent = txt;
-}
-
 async function openVaultNotes(){
   if(!currentVaultId){ toast('⚠ Sélectionne un vault d\'abord'); return; }
-  if(!drTok){ toast('⚠ Connecte-toi à Drive d\'abord'); return; }
   closeSidebar();
+  const vault = cfg.vaults.find(v=>v.id===currentVaultId);
+  if(!vault) return;
 
-  // If already open for this vault, just show it
-  if(notesVaultId === currentVaultId && document.getElementById('notes-wrap').classList.contains('open')){
-    return;
+  // If notes.md already in tree, just open it normally (triggers auto-edit)
+  const vaultData = fileCache[vault.folderId];
+  if(vaultData){
+    const notesFile = vaultData.files.find(f=>f.name.toLowerCase()==='notes.md');
+    if(notesFile){
+      await openFile(notesFile.id, notesFile.name, notesFile.siblings, notesFile.idx);
+      return;
+    }
   }
 
-  notesVaultId = currentVaultId;
-  const vault = cfg.vaults.find(v=>v.id===currentVaultId);
-  const vaultName = vault ? vault.name : 'Vault';
+  // Not in tree — load from Drive or create with template
+  if(!drTok){ toast('⚠ Connecte-toi à Drive pour accéder aux notes'); return; }
 
-  document.getElementById('notes-title').textContent = `✏ Notes — ${vaultName}`;
-  document.getElementById('notes-edit').value = '';
-  document.getElementById('notes-preview').innerHTML = '';
-  document.getElementById('notes-wrap').classList.add('open');
-  setNSt('pending','Chargement…');
-
-  // Look for notes.md in the vault folder (03_pratique/ or root)
-  notesFileId = null;
+  toast('Chargement des notes…', 3000);
   try{
-    const folderId = vault.folderId;
-    // Search notes.md in the vault and its subfolders
-    const q = encodeURIComponent(`name='notes.md' and '${folderId}' in parents and trashed=false`);
-    let r = await drFetch(`files?q=${q}&fields=files(id,name)&pageSize=5`);
-
-    if(!r.files?.length){
-      // Try in 03_pratique subfolder
-      const q2 = encodeURIComponent(`name='03_pratique' and '${folderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`);
-      const r2 = await drFetch(`files?q=${q2}&fields=files(id)&pageSize=5`);
-      if(r2.files?.length){
-        const pratFolderId = r2.files[0].id;
-        const q3 = encodeURIComponent(`name='notes.md' and '${pratFolderId}' in parents and trashed=false`);
-        const r3 = await drFetch(`files?q=${q3}&fields=files(id)&pageSize=5`);
-        if(r3.files?.length) notesFileId = r3.files[0].id;
-      }
+    // Search notes.md in vault root then 03_pratique
+    let notesId = null;
+    const q1 = encodeURIComponent(`name='notes.md' and '${vault.folderId}' in parents and trashed=false`);
+    const r1 = await drFetch(`files?q=${q1}&fields=files(id,name)&pageSize=5`);
+    if(r1.files?.length){
+      notesId = r1.files[0].id;
     } else {
-      notesFileId = r.files[0].id;
-    }
-
-    if(notesFileId){
-      // Load existing notes
-      const content = await drFetchRaw(`files/${notesFileId}?alt=media`);
-      document.getElementById('notes-edit').value = content;
-      document.getElementById('notes-preview').innerHTML = '<div class="md">'+renderMD(content)+'</div>';
-      setNSt('ok','Chargé');
-    } else {
-      // Create notes.md with template
-      const template = NOTES_TEMPLATE(vaultName);
-      document.getElementById('notes-edit').value = template;
-      document.getElementById('notes-preview').innerHTML = '<div class="md">'+renderMD(template)+'</div>';
-      setNSt('idle','Nouveau — non sauvegardé');
-      notesDirty = true;
-    }
-  }catch(e){ setNSt('error','Erreur: '+e.message); }
-}
-
-function closeNotes(){
-  document.getElementById('notes-wrap').classList.remove('open');
-  if(notesDirty) saveNotes(); // auto-save on close
-}
-
-function onNotesInput(){
-  const txt = document.getElementById('notes-edit').value;
-  document.getElementById('notes-preview').innerHTML = '<div class="md">'+renderMD(txt)+'</div>';
-  notesDirty = true;
-  setNSt('pending','...');
-  clearTimeout(notesTimer);
-  notesTimer = setTimeout(()=>saveNotes(), 2000);
-}
-
-async function saveNotes(){
-  if(!drTok){ setNSt('error','Non connecté'); return; }
-  if(!notesVaultId){ return; }
-  const vault = cfg.vaults.find(v=>v.id===notesVaultId);
-  if(!vault){ return; }
-  const txt = document.getElementById('notes-edit').value;
-  setNSt('pending','Sauvegarde…');
-
-  try{
-    if(!notesFileId){
-      // Find or create 03_pratique folder, then create notes.md
       const q2 = encodeURIComponent(`name='03_pratique' and '${vault.folderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`);
       const r2 = await drFetch(`files?q=${q2}&fields=files(id)&pageSize=5`);
-      const parentId = r2.files?.length ? r2.files[0].id : vault.folderId;
-
-      const bd='---NT'+Date.now();
-      const meta=JSON.stringify({name:'notes.md',mimeType:'text/markdown',parents:[parentId]});
-      const mp=`--${bd}\r\nContent-Type: application/json\r\n\r\n${meta}\r\n--${bd}\r\nContent-Type: text/markdown\r\n\r\n${txt}\r\n--${bd}--`;
-      const cr=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{
-        method:'POST',
-        headers:{Authorization:'Bearer '+drTok,'Content-Type':`multipart/related; boundary="${bd}"`},
-        body:mp
-      });
-      const cd=await cr.json(); notesFileId=cd.id;
-    } else {
-      // Update existing
-      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${notesFileId}?uploadType=media`,{
-        method:'PATCH',
-        headers:{Authorization:'Bearer '+drTok,'Content-Type':'text/markdown'},
-        body:txt
-      });
+      if(r2.files?.length){
+        const q3 = encodeURIComponent(`name='notes.md' and '${r2.files[0].id}' in parents and trashed=false`);
+        const r3 = await drFetch(`files?q=${q3}&fields=files(id)&pageSize=5`);
+        if(r3.files?.length) notesId = r3.files[0].id;
+      }
     }
-    notesDirty=false;
-    // Invalidate content cache so next read gets fresh content
-    if(notesFileId) delete contentCache[notesFileId];
-    setNSt('ok', new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}));
-  }catch(e){ setNSt('error','Erreur: '+e.message); }
+
+    let content;
+    if(notesId){
+      content = await drFetchRaw(`files/${notesId}?alt=media`);
+    } else {
+      content = NOTES_TEMPLATE(vault.name);
+      notesId = 'new_notes_' + vault.id; // temp id until saved
+    }
+
+    // Inject as a virtual file and open in edit mode
+    contentCache[notesId] = content;
+    currentFile = {id: notesId, name:'notes.md', siblings:[], idx:0};
+
+    // Show file nav
+    document.getElementById('file-nav').style.display = 'flex';
+    document.getElementById('fnav-title').textContent = 'notes';
+    document.getElementById('fnav-count').textContent = '';
+    document.getElementById('fnav-prev').disabled = true;
+    document.getElementById('fnav-next').disabled = true;
+
+    // Render then immediately switch to edit mode
+    renderFile(content);
+    if(!editMode) toggleEditMode();
+
+    // Wire save to Drive
+    editFileId = notesId;
+    savePosition();
+  }catch(e){ toast('❌ '+e.message); }
 }
 
 /* ══ UPLOAD VAULT DSCPA VERS DRIVE ══ */
@@ -2146,6 +2072,14 @@ async function startUpload(){
     toast('❌ '+e.message);
   }
 }
+/* ══ DOWNLOAD APP ══ */
+function downloadApp(){
+  const a = document.createElement('a');
+  a.href = window.location.href.split('?')[0];
+  a.download = 'vault-reader.html';
+  a.click();
+}
+
 /* ══ LAST POSITION — persist & restore ══ */
 const POS_KEY = 'vr_pos';
 
