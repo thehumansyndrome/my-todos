@@ -2299,9 +2299,19 @@ async function pollCfgOnce(){
 }
 
 // Hook saveCfg to trigger auto-push when connected
+// On tab focus — invalidate memory cache of current file so next open rechecks Drive
 document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible'&&drTok&&cfgPollSecs>0){
-    clearTimeout(cfgPollTimer); pollCfgOnce();
+  if(document.visibilityState==='visible' && drTok){
+    // Config sync
+    if(cfgPollSecs>0){ clearTimeout(cfgPollTimer); pollCfgOnce(); }
+    // Invalidate memory + IDB cache of current file → force Drive re-fetch
+    if(currentFile && contentCache[currentFile.id]){
+      delete contentCache[currentFile.id];
+      // Also clear IDB timestamp so modifiedTime check forces a download
+      idbDel(IDB_FILES_STORE, currentFile.id).catch(()=>{});
+      // Silently reload current file
+      openFile(currentFile.id, currentFile.name, currentFile.siblings, currentFile.idx);
+    }
   }
 });
 
