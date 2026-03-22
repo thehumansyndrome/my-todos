@@ -565,6 +565,27 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
   <div class="modal">
     <div class="modal-title">⚙ Configuration</div>
 
+    <!-- Sync configuration -->
+    <div class="modal-section">
+      <label>Sync configuration (multi-appareils)</label>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Sauvegarde la liste de tes vaults dans <code style="font-size:10px;">vault-reader.json</code> sur Drive. Retrouve ta config sur tous tes appareils.</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+        <button class="lbtn primary" onclick="pushConfig()" id="btn-cfg-push">⬆ Sauver config</button>
+        <button class="lbtn" onclick="pullConfig()" id="btn-cfg-pull">⬇ Charger config</button>
+        <span style="font-family:var(--mono);font-size:10px;" id="cfg-sync-st">—</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-family:var(--mono);font-size:10px;color:var(--text3);">Auto-sync</span>
+        <select id="cfg-poll-interval" onchange="setCfgPollInterval(this.value)" style="font-family:var(--mono);font-size:11px;padding:3px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text2);cursor:pointer;">
+          <option value="0">Désactivé</option>
+          <option value="30" selected>30 s</option>
+          <option value="60">1 min</option>
+          <option value="300">5 min</option>
+        </select>
+        <span style="font-family:var(--mono);font-size:10px;color:var(--text3);" id="cfg-poll-next"></span>
+      </div>
+    </div>
+
     <!-- Drive auth -->
     <div class="modal-section">
       <label>Google Drive — Client ID OAuth</label>
@@ -673,6 +694,7 @@ function saveCfg(){
   cfg.journalFile = document.getElementById('cfg-journal').value.trim() || 'journal.md';
   cfg.rootFolder = (document.getElementById('cfg-root').value.trim() || 'dscpa');
   try{ localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); }catch(e){}
+  cfgAutoSave(); // push to Drive when connected
 }
 function loadCfg(){
   try{
@@ -683,6 +705,13 @@ function loadCfg(){
   document.getElementById('cfg-journal').value = cfg.journalFile || 'journal.md';
   const rootEl = document.getElementById('cfg-root');
   if(rootEl) rootEl.value = cfg.rootFolder || 'dscpa';
+  // Restore poll interval
+  const pv = localStorage.getItem(CFG_POLL_KEY);
+  if(pv !== null){
+    cfgPollSecs = parseInt(pv);
+    const sel = document.getElementById('cfg-poll-interval');
+    if(sel) sel.value = pv;
+  }
   rebuildVaultSelect();
 }
 
@@ -1573,13 +1602,14 @@ function driveAuth(){
           setMode(true);
           toast('✓ Drive connecté');
           restorePosition().catch(()=>{});
+          pullConfig().then(()=>startCfgPolling()).catch(()=>startCfgPolling());
         }
       });
       cl.requestAccessToken();
     }catch(e){setAuthSt(false,'Erreur: '+e.message);toast('❌ '+e.message);}
   });
 }
-function driveDisc(){drTok=null;sessionStorage.removeItem('vr_tok');setAuthSt(null,'Déconnecté');updateDriveUI();setMode(false);toast('Drive déconnecté');}
+function driveDisc(){drTok=null;sessionStorage.removeItem('vr_tok');setAuthSt(null,'Déconnecté');updateDriveUI();setMode(false);stopCfgPolling();toast('Drive déconnecté');}
 
 /* ── Auto-connect from session token ── */
 (function autoConnect(){
@@ -1589,8 +1619,8 @@ function driveDisc(){drTok=null;sessionStorage.removeItem('vr_tok');setAuthSt(nu
     const tok=sessionStorage.getItem('vr_tok');
     if(tok){
       drTok=tok;setAuthSt(true,'Connecté ✓');updateDriveUI();setMode(true);
-      // Restore last open vault + file
       restorePosition().catch(()=>{});
+      startCfgPolling();
     } else {
       setAuthSt(null,'Drive configuré');
       setMode(false); // Start in offline mode
@@ -2072,6 +2102,179 @@ async function startUpload(){
     toast('❌ '+e.message);
   }
 }
+/* ══ CONFIG SYNC — vault-reader.json on Drive ══
+   Saves/loads cfg (vaults list, categories, settings) to Drive.
+   Same pattern as projet001: debounce push, polling pull, session token.
+══════════════════════════════════════════════════════════════════ */
+const CFG_SYNC_FILE = 'vault-reader.json';
+const CFG_POLL_KEY  = 'vr_poll';
+let cfgSyncFileId = null;
+let cfgLastModified = null;
+let cfgPollTimer = null;
+let cfgPollSecs = 30;
+let cfgPollCountdown = 0;
+let cfgPollCountTimer = null;
+let cfgAutoSaveTimer = null;
+
+function setCfgSt(col, msg){
+  const colors = {ok:'var(--green)', pending:'var(--amber)', error:'var(--red)', idle:'var(--text3)'};
+  const el = document.getElementById('cfg-sync-st');
+  if(el){ el.style.color = colors[col]||colors.idle; el.textContent = msg; }
+}
+
+// Called whenever cfg changes — debounced push to Drive
+function cfgAutoSave(){
+  clearTimeout(cfgAutoSaveTimer);
+  if(!drTok){ return; }
+  cfgAutoSaveTimer = setTimeout(()=>pushConfig(true), 2000);
+}
+
+async function findCfgFile(){
+  if(cfgSyncFileId) return cfgSyncFileId;
+  const q = encodeURIComponent(`name='${CFG_SYNC_FILE}' and trashed=false`);
+  const r = await drFetch(`files?q=${q}&fields=files(id,modifiedTime)&pageSize=5`);
+  if(r.files?.length){
+    cfgSyncFileId = r.files[0].id;
+    cfgLastModified = r.files[0].modifiedTime;
+  }
+  return cfgSyncFileId;
+}
+
+async function pushConfig(silent=false){
+  if(!drTok){ if(!silent) toast('⚠ Connecte-toi à Drive'); return; }
+  if(!silent) setCfgSt('pending','Sauvegarde…');
+  try{
+    // Payload: only sync-relevant parts of cfg (not clientId for security)
+    const payload = {
+      vaults: cfg.vaults,
+      rootFolder: cfg.rootFolder,
+      journalFile: cfg.journalFile,
+      _savedAt: new Date().toISOString()
+    };
+    const body = JSON.stringify(payload, null, 2);
+    const id = await findCfgFile();
+    if(id){
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`,{
+        method:'PATCH',
+        headers:{Authorization:'Bearer '+drTok,'Content-Type':'application/json'},
+        body
+      });
+    } else {
+      // Create
+      const bd = '---VRC';
+      const meta = JSON.stringify({name:CFG_SYNC_FILE, mimeType:'application/json'});
+      const mp = `--${bd}\r\nContent-Type: application/json\r\n\r\n${meta}\r\n--${bd}\r\nContent-Type: application/json\r\n\r\n${body}\r\n--${bd}--`;
+      const cr = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,modifiedTime',{
+        method:'POST',
+        headers:{Authorization:'Bearer '+drTok,'Content-Type':`multipart/related; boundary="${bd}"`},
+        body: mp
+      });
+      const cd = await cr.json();
+      cfgSyncFileId = cd.id;
+      cfgLastModified = cd.modifiedTime;
+    }
+    const t = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    setCfgSt('ok', silent ? `Sync ✓ ${t}` : `Sauvegardé ✓ ${t}`);
+    if(!silent) toast('✓ Configuration sauvegardée sur Drive');
+  }catch(e){
+    setCfgSt('error','Erreur: '+e.message);
+    if(!silent) toast('❌ '+e.message);
+  }
+}
+
+async function pullConfig(){
+  if(!drTok){ toast('⚠ Connecte-toi à Drive'); return; }
+  setCfgSt('pending','Chargement…');
+  try{
+    const id = await findCfgFile();
+    if(!id){ setCfgSt('idle','Aucune config sur Drive'); return; }
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`,{
+      headers:{Authorization:'Bearer '+drTok}
+    });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const remote = await r.json();
+    // Merge — keep local clientId, overwrite vaults + settings
+    if(remote.vaults) cfg.vaults = remote.vaults;
+    if(remote.rootFolder) cfg.rootFolder = remote.rootFolder;
+    if(remote.journalFile) cfg.journalFile = remote.journalFile;
+    // Persist locally
+    try{ localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); }catch(e){}
+    // Refresh UI
+    document.getElementById('cfg-root').value = cfg.rootFolder||'dscpa';
+    document.getElementById('cfg-journal').value = cfg.journalFile||'journal.md';
+    rebuildVaultSelect();
+    const t = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    setCfgSt('ok',`Chargé ✓ ${t}`);
+    toast(`✓ Config chargée — ${cfg.vaults.length} vault(s)`);
+    if(cfgPollSecs>0) startCfgPolling();
+  }catch(e){
+    setCfgSt('error','Erreur: '+e.message);
+    toast('❌ '+e.message);
+  }
+}
+
+/* Polling — check modifiedTime, pull only if changed */
+function setCfgPollInterval(v){
+  cfgPollSecs = parseInt(v);
+  try{ localStorage.setItem(CFG_POLL_KEY, v); }catch(e){}
+  stopCfgPolling();
+  if(cfgPollSecs>0 && drTok) startCfgPolling();
+}
+function startCfgPolling(){
+  stopCfgPolling();
+  if(!drTok||cfgPollSecs<=0) return;
+  scheduleCfgPoll();
+}
+function stopCfgPolling(){
+  clearTimeout(cfgPollTimer); clearInterval(cfgPollCountTimer);
+  cfgPollTimer=null;
+  const el=document.getElementById('cfg-poll-next');
+  if(el) el.textContent='';
+}
+function scheduleCfgPoll(){
+  cfgPollCountdown = cfgPollSecs;
+  clearInterval(cfgPollCountTimer);
+  cfgPollCountTimer = setInterval(()=>{
+    cfgPollCountdown--;
+    const el=document.getElementById('cfg-poll-next');
+    if(el&&cfgPollCountdown>0) el.textContent='Sync dans '+cfgPollCountdown+'s';
+    if(cfgPollCountdown<=0) clearInterval(cfgPollCountTimer);
+  },1000);
+  cfgPollTimer = setTimeout(()=>pollCfgOnce(), cfgPollSecs*1000);
+}
+async function pollCfgOnce(){
+  if(!drTok) return;
+  if(document.visibilityState==='hidden'){ cfgPollTimer=setTimeout(()=>pollCfgOnce(),5000); return; }
+  try{
+    const id = await findCfgFile();
+    if(!id){ scheduleCfgPoll(); return; }
+    const r = await drFetch(`files/${id}?fields=modifiedTime`);
+    if(cfgLastModified && r.modifiedTime===cfgLastModified){ scheduleCfgPoll(); return; }
+    cfgLastModified = r.modifiedTime;
+    // Changed — pull silently
+    const data = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`,{
+      headers:{Authorization:'Bearer '+drTok}
+    });
+    const remote = await data.json();
+    if(remote.vaults) cfg.vaults = remote.vaults;
+    if(remote.rootFolder) cfg.rootFolder = remote.rootFolder;
+    if(remote.journalFile) cfg.journalFile = remote.journalFile;
+    try{ localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); }catch(e){}
+    rebuildVaultSelect();
+    const t = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    setCfgSt('ok',`Sync auto ✓ ${t}`);
+    toast(`↻ Config synchronisée — ${cfg.vaults.length} vault(s)`);
+  }catch(e){ console.warn('[cfg-poll]',e.message); }
+  scheduleCfgPoll();
+}
+
+// Hook saveCfg to trigger auto-push when connected
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'&&drTok&&cfgPollSecs>0){
+    clearTimeout(cfgPollTimer); pollCfgOnce();
+  }
+});
+
 /* ══ DOWNLOAD APP ══ */
 function downloadApp(){
   const a = document.createElement('a');
