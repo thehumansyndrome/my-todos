@@ -460,6 +460,13 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
       <input class="modal-in" type="text" id="cfg-journal" value="journal.md" oninput="saveCfg()" placeholder="journal.md">
     </div>
 
+    <!-- Root folder -->
+    <div class="modal-section">
+      <label>Dossier racine Drive (pour l'import en masse)</label>
+      <input class="modal-in" type="text" id="cfg-root" value="dscpa" oninput="saveCfg()" placeholder="dscpa">
+      <div style="font-size:11px;color:var(--text3);margin-top:4px;">Structure attendue : <code style="font-size:10px;">racine / catégorie / vault / fichiers.md</code></div>
+    </div>
+
     <div class="modal-footer">
       <button class="lbtn" onclick="closeSettings()">Fermer</button>
     </div>
@@ -481,8 +488,9 @@ const TK = 'vr_theme';
 let cfg = {
   clientId: '',
   journalFile: 'journal.md',
-  dscpaFolderId: null,    // id of the root dscpa folder on Drive
-  vaults: []              // [{ id, name, folderId, category, folderName }]
+  rootFolder: 'dscpa',
+  dscpaFolderId: null,
+  vaults: []
 };
 let drTok = null;
 let currentVaultId = null;
@@ -500,6 +508,7 @@ let journalOpen = false;
 function saveCfg(){
   cfg.clientId = document.getElementById('cfg-cid').value.trim();
   cfg.journalFile = document.getElementById('cfg-journal').value.trim() || 'journal.md';
+  cfg.rootFolder = (document.getElementById('cfg-root').value.trim() || 'dscpa');
   try{ localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); }catch(e){}
 }
 function loadCfg(){
@@ -509,6 +518,8 @@ function loadCfg(){
   }catch(e){}
   document.getElementById('cfg-cid').value = cfg.clientId || '';
   document.getElementById('cfg-journal').value = cfg.journalFile || 'journal.md';
+  const rootEl = document.getElementById('cfg-root');
+  if(rootEl) rootEl.value = cfg.rootFolder || 'dscpa';
   rebuildVaultSelect();
 }
 
@@ -867,21 +878,22 @@ async function refreshVault(){
 /* ══ IMPORT EN MASSE DEPUIS DSCPA ══ */
 async function importDscpaFolder(){
   if(!drTok){ toast('⚠ Connecte-toi à Drive d\'abord'); return; }
+  const rootName = cfg.rootFolder || 'dscpa';
   const st = document.getElementById('import-status');
-  st.textContent = 'Recherche de dscpa…';
+  st.textContent = `Recherche de "${rootName}"…`;
 
   try{
-    // Find dscpa root folder
-    const q = encodeURIComponent(`name='dscpa' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+    // Find root folder
+    const q = encodeURIComponent(`name='${rootName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
     const r = await drFetch(`files?q=${q}&fields=files(id,name)&pageSize=5`);
-    if(!r.files||!r.files.length){ st.textContent='❌ Dossier "dscpa" introuvable'; return; }
-    const dscpaId = r.files[0].id;
-    cfg.dscpaFolderId = dscpaId;
+    if(!r.files||!r.files.length){ st.textContent=`❌ Dossier "${rootName}" introuvable`; return; }
+    const rootId = r.files[0].id;
+    cfg.dscpaFolderId = rootId;
 
     st.textContent = 'Scan des catégories…';
 
-    // List category folders inside dscpa
-    const q2 = encodeURIComponent(`'${dscpaId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+    // List category folders
+    const q2 = encodeURIComponent(`'${rootId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`);
     const r2 = await drFetch(`files?q=${q2}&fields=files(id,name)&orderBy=name&pageSize=50`);
     const catFolders = r2.files||[];
 
@@ -890,7 +902,6 @@ async function importDscpaFolder(){
 
     for(const cat of catFolders){
       st.textContent = `Scan ${cat.name}…`;
-      // List vault folders inside each category
       const q3 = encodeURIComponent(`'${cat.id}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`);
       const r3 = await drFetch(`files?q=${q3}&fields=files(id,name)&orderBy=name&pageSize=50`);
       const vaultFolders = r3.files||[];
@@ -903,7 +914,7 @@ async function importDscpaFolder(){
           name: vault.name,
           folderId: vault.id,
           category: cat.name,
-          folderName: `dscpa / ${cat.name} / ${vault.name}`
+          folderName: `${rootName} / ${cat.name} / ${vault.name}`
         });
         existingFolderIds.add(vault.id);
         added++;
@@ -912,7 +923,7 @@ async function importDscpaFolder(){
 
     saveCfg();
     rebuildVaultSelect();
-    st.textContent = `✓ ${added} vault(s) ajouté(s)${skipped?' · '+skipped+' ignoré(s) (déjà présents)':''}`;
+    st.textContent = `✓ ${added} vault(s) ajouté(s)${skipped?' · '+skipped+' ignoré(s)':''}`;
     toast(`✓ Import terminé — ${added} vault(s) ajouté(s)`);
   }catch(e){
     st.textContent = '❌ Erreur : '+e.message;
@@ -925,18 +936,16 @@ async function importDscpaFolder(){
 // uploadVaultZip(zipFile, vaultName, categoryName)
 async function uploadVaultZip(zipFile, vaultName, categoryName){
   if(!drTok){ toast('⚠ Connecte-toi à Drive'); return; }
+  const rootName = cfg.rootFolder || 'dscpa';
   if(!cfg.dscpaFolderId){
-    // Find dscpa folder first
-    const q = encodeURIComponent(`name='dscpa' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+    const q = encodeURIComponent(`name='${rootName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
     const r = await drFetch(`files?q=${q}&fields=files(id,name)&pageSize=5`);
-    if(!r.files||!r.files.length){ toast('❌ Dossier "dscpa" introuvable — crée-le d\'abord'); return; }
+    if(!r.files||!r.files.length){ toast(`❌ Dossier "${rootName}" introuvable`); return; }
     cfg.dscpaFolderId = r.files[0].id;
   }
-  // Find or create category folder
   const catId = await findOrCreateFolder(categoryName, cfg.dscpaFolderId);
-  // Create vault folder
   const vaultId = await findOrCreateFolder(vaultName, catId);
-  toast(`✓ Dossier "${vaultName}" créé dans dscpa/${categoryName}`);
+  toast(`✓ Dossier "${vaultName}" créé dans ${rootName}/${categoryName}`);
   return vaultId;
 }
 
