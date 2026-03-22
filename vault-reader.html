@@ -132,7 +132,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
   padding:5px 12px 5px 24px;cursor:pointer;
   font-size:12px;color:var(--text2);
   border-left:2px solid transparent;
-  transition:all .1s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  transition:all .1s;overflow:hidden;text-overflow:ellipsis;
+  display:flex;align-items:center;gap:4px;
 }
 .file-item:hover{background:var(--bg2);color:var(--text);}
 .file-item.active{
@@ -331,6 +332,21 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .cat-tab:hover{border-color:var(--line2);color:var(--text2);}
 .cat-tab.active{background:var(--text);color:var(--bg);border-color:var(--text);}
 
+/* Offline mode badge */
+.mode-badge{
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  padding:3px 8px;border-radius:2px;letter-spacing:.04em;
+  display:none;flex-shrink:0;
+}
+.mode-badge.online{ display:flex;background:var(--green-bg);color:var(--green);border:1px solid var(--green); }
+.mode-badge.offline{ display:flex;background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber); }
+
+/* Cached file dot in sidebar */
+.file-item .cache-dot{
+  width:5px;height:5px;border-radius:50%;background:var(--green);
+  display:inline-block;margin-left:5px;flex-shrink:0;vertical-align:middle;opacity:.7;
+}
+
 /* hljs dark override */
 [data-theme="dark"] #hljs-light{display:none;}
 </style>
@@ -350,6 +366,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
     <div class="hspace"></div>
     <button class="hbtn" id="toc-btn" onclick="toggleTOC()" title="Table des matières">§ TOC</button>
     <button class="hbtn amber" id="journal-btn" onclick="toggleJournal()">✎ Journal</button>
+    <span class="mode-badge" id="mode-badge"></span>
     <button class="hbtn" onclick="openSettings()"><span class="gdot" id="gdot"></span> Drive</button>
     <button class="hbtn" id="theme-btn" onclick="toggleTheme()">☀︎</button>
   </div>
@@ -363,6 +380,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
         </select>
         <button class="icon-btn" onclick="openSettings()" title="Gérer les vaults">⚙</button>
         <button class="icon-btn" onclick="refreshVault()" title="Actualiser" id="refresh-btn">↻</button>
+        <button class="icon-btn" onclick="cacheCurrentVault()" title="Mettre en cache pour offline" id="cache-btn" style="display:none">⬇</button>
       </div>
       <!-- Category tabs -->
       <div class="cat-tabs" id="cat-tabs" style="display:none;"></div>
@@ -727,10 +745,12 @@ function buildFileTree(tree){
   el.innerHTML = tree.map(group=>{
     const isRoot = group.label === '/';
     const label = isRoot ? 'Racine' : group.label;
-    const files = group.files.map(f=>`
-      <div class="file-item" data-id="${f.id}" onclick="openFile('${f.id}','${esc(f.name)}',${JSON.stringify(group.files).replace(/"/g,'&quot;')},${group.files.indexOf(f)})">
-        ${f.name.replace(/\.md$/i,'')}
-      </div>`).join('');
+    const files = group.files.map(f=>{
+      const dot = cachedFileIds.has(f.id) ? '<span class="cache-dot" title="En cache offline"></span>' : '';
+      return `<div class="file-item" data-id="${f.id}" onclick="openFile('${f.id}','${esc(f.name)}',${JSON.stringify(group.files).replace(/"/g,'&quot;')},${group.files.indexOf(f)})">
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;">${f.name.replace(/\.md$/i,'')}</span>${dot}
+      </div>`;
+    }).join('');
     return `<div class="folder-group">
       <div class="folder-label" onclick="toggleFolder(this)">
         <span class="folder-arrow">▶</span> ${label}
@@ -761,12 +781,10 @@ async function openFile(id, name, siblings, idx){
   closeSidebar();
   currentFile = {id, name, siblings, idx};
 
-  // Update active state in sidebar
   document.querySelectorAll('.file-item').forEach(el=>el.classList.remove('active'));
   const active = document.querySelector(`.file-item[data-id="${id}"]`);
   if(active){ active.classList.add('active'); active.scrollIntoView({block:'nearest'}); }
 
-  // Show file nav
   const nav = document.getElementById('file-nav');
   nav.style.display = 'flex';
   document.getElementById('fnav-title').textContent = name.replace(/\.md$/i,'');
@@ -774,20 +792,35 @@ async function openFile(id, name, siblings, idx){
   document.getElementById('fnav-prev').disabled = idx===0;
   document.getElementById('fnav-next').disabled = idx===siblings.length-1;
 
-  // Load content
   const content = document.getElementById('reader-content');
-  if(contentCache[id]){
-    renderFile(contentCache[id]);
-  } else {
-    content.innerHTML = '<div class="reader-empty"><div>Chargement…</div></div>';
-    if(!drTok){ content.innerHTML='<div class="reader-empty"><div>Non connecté à Drive</div></div>'; return; }
-    try{
-      const md = await drFetchRaw(`files/${id}?alt=media`);
-      contentCache[id] = md;
-      renderFile(md);
-    }catch(e){
-      content.innerHTML = `<div class="reader-empty"><div>Erreur : ${e.message}</div></div>`;
-    }
+
+  // 1. Memory cache (fastest)
+  if(contentCache[id]){ renderFile(contentCache[id]); return; }
+
+  // 2. IDB offline cache
+  try{
+    const cached = await getCachedFile(id);
+    if(cached){ contentCache[id]=cached; renderFile(cached); return; }
+  }catch(e){}
+
+  // 3. Drive (online only)
+  if(!drTok){
+    content.innerHTML=`<div class="reader-empty">
+      <div class="big" style="font-size:24px">○</div>
+      <div style="color:var(--amber)">Mode offline</div>
+      <div style="margin-top:6px;font-size:11px;color:var(--text3)">Ce fichier n'est pas encore en cache.<br>Connecte-toi à Drive pour le charger.</div>
+    </div>`;
+    return;
+  }
+  content.innerHTML = '<div class="reader-empty"><div>Chargement…</div></div>';
+  try{
+    const md = await drFetchRaw(`files/${id}?alt=media`);
+    contentCache[id] = md;
+    // Auto-save to IDB for offline use
+    cacheFile(id, name, currentVaultId, md).catch(()=>{});
+    renderFile(md);
+  }catch(e){
+    content.innerHTML = `<div class="reader-empty"><div>Erreur : ${e.message}</div></div>`;
   }
 }
 
@@ -870,10 +903,35 @@ async function switchVault(vaultId){
   currentVaultId = vaultId;
   const vault = cfg.vaults.find(v=>v.id===vaultId);
   if(!vault) return;
-  if(!drTok){ toast('⚠ Connecte-toi à Drive d\'abord'); return; }
+
+  // Show cache button when online
+  const cacheBtn = document.getElementById('cache-btn');
+  if(cacheBtn) cacheBtn.style.display = drTok ? '' : 'none';
+
   document.getElementById('file-tree').innerHTML = '<div class="sidebar-empty">Chargement…</div>';
+
+  if(!drTok){
+    // Offline — try IDB tree cache
+    try{
+      const cached = await getCachedTree(vaultId);
+      if(cached){
+        fileCache[vault.folderId] = {tree: cached.tree, files: cached.files};
+        buildFileTree(cached.tree);
+        initFolderArrows();
+        const age = Math.round((Date.now()-cached.ts)/60000);
+        toast(`○ Offline — cache de il y a ${age < 60 ? age+'min' : Math.round(age/60)+'h'}`);
+      } else {
+        document.getElementById('file-tree').innerHTML =
+          '<div class="sidebar-empty" style="color:var(--amber)">Vault non disponible offline.<br>Connecte-toi à Drive<br>puis clique ⬇ pour le mettre en cache.</div>';
+      }
+    }catch(e){ document.getElementById('file-tree').innerHTML='<div class="sidebar-empty">Erreur cache</div>'; }
+    return;
+  }
+
   try{
     const data = await loadVaultTree(vault.folderId);
+    // Auto-save tree to IDB for offline
+    cacheVaultTree(vaultId, data.tree, data.files).catch(()=>{});
     buildFileTree(data.tree);
     initFolderArrows();
     toast(`✓ "${vault.name}" chargé`);
@@ -1180,6 +1238,7 @@ function driveAuth(){
           drTok=r.access_token;
           sessionStorage.setItem('vr_tok',r.access_token);
           setAuthSt(true,'Connecté ✓'); updateDriveUI();
+          setMode(true);
           toast('✓ Drive connecté');
         }
       });
@@ -1187,7 +1246,7 @@ function driveAuth(){
     }catch(e){setAuthSt(false,'Erreur: '+e.message);toast('❌ '+e.message);}
   });
 }
-function driveDisc(){drTok=null;sessionStorage.removeItem('vr_tok');setAuthSt(null,'Déconnecté');updateDriveUI();toast('Drive déconnecté');}
+function driveDisc(){drTok=null;sessionStorage.removeItem('vr_tok');setAuthSt(null,'Déconnecté');updateDriveUI();setMode(false);toast('Drive déconnecté');}
 
 /* ── Auto-connect from session token ── */
 (function autoConnect(){
@@ -1196,19 +1255,165 @@ function driveDisc(){drTok=null;sessionStorage.removeItem('vr_tok');setAuthSt(nu
     const c=JSON.parse(s);if(!c.clientId||c.clientId.length<10)return;
     const tok=sessionStorage.getItem('vr_tok');
     if(tok){
-      drTok=tok;setAuthSt(true,'Connecté ✓');updateDriveUI();
+      drTok=tok;setAuthSt(true,'Connecté ✓');updateDriveUI();setMode(true);
     } else {
-      // Don't auto-popup — just show connect prompt
       setAuthSt(null,'Drive configuré');
+      setMode(false); // Start in offline mode
     }
-  }catch(e){}
+  }catch(e){ setMode(false); }
 })();
 
 /* ══ HELPERS ══ */
 function esc(s){ const d=document.createElement('div');d.textContent=s;return d.innerHTML; }
 
+/* ══ INDEXEDDB OFFLINE CACHE ══ */
+const IDB_NAME = 'vault-reader-cache';
+const IDB_VER  = 1;
+const IDB_FILES_STORE  = 'files';   // { id, name, vaultId, md, ts }
+const IDB_TREE_STORE   = 'trees';   // { vaultId, tree, files, ts }
+let idb = null;
+
+function openIDB(){
+  return new Promise((res, rej)=>{
+    if(idb){ res(idb); return; }
+    const req = indexedDB.open(IDB_NAME, IDB_VER);
+    req.onupgradeneeded = e=>{
+      const db = e.target.result;
+      if(!db.objectStoreNames.contains(IDB_FILES_STORE))
+        db.createObjectStore(IDB_FILES_STORE, {keyPath:'id'});
+      if(!db.objectStoreNames.contains(IDB_TREE_STORE))
+        db.createObjectStore(IDB_TREE_STORE, {keyPath:'vaultId'});
+    };
+    req.onsuccess = e=>{ idb=e.target.result; res(idb); };
+    req.onerror = ()=>rej(req.error);
+  });
+}
+
+async function idbPut(store, obj){
+  const db = await openIDB();
+  return new Promise((res,rej)=>{
+    const tx = db.transaction(store,'readwrite');
+    tx.objectStore(store).put(obj);
+    tx.oncomplete = ()=>res();
+    tx.onerror = ()=>rej(tx.error);
+  });
+}
+
+async function idbGet(store, key){
+  const db = await openIDB();
+  return new Promise((res,rej)=>{
+    const tx = db.transaction(store,'readonly');
+    const req = tx.objectStore(store).get(key);
+    req.onsuccess = ()=>res(req.result||null);
+    req.onerror = ()=>rej(req.error);
+  });
+}
+
+async function idbGetAll(store){
+  const db = await openIDB();
+  return new Promise((res,rej)=>{
+    const tx = db.transaction(store,'readonly');
+    const req = tx.objectStore(store).getAll();
+    req.onsuccess = ()=>res(req.result||[]);
+    req.onerror = ()=>rej(req.error);
+  });
+}
+
+async function idbDel(store, key){
+  const db = await openIDB();
+  return new Promise((res,rej)=>{
+    const tx = db.transaction(store,'readwrite');
+    tx.objectStore(store).delete(key);
+    tx.oncomplete = ()=>res();
+    tx.onerror = ()=>rej(tx.error);
+  });
+}
+
+// Save file content to IDB
+async function cacheFile(id, name, vaultId, md){
+  await idbPut(IDB_FILES_STORE, {id, name, vaultId, md, ts: Date.now()});
+  cachedFileIds.add(id);
+  // Update dot in sidebar
+  const dot = document.querySelector(`.file-item[data-id="${id}"] .cache-dot`);
+  if(!dot){
+    const item = document.querySelector(`.file-item[data-id="${id}"]`);
+    if(item){ const d=document.createElement('span');d.className='cache-dot';item.appendChild(d); }
+  }
+}
+
+// Load file from IDB
+async function getCachedFile(id){
+  const r = await idbGet(IDB_FILES_STORE, id);
+  return r ? r.md : null;
+}
+
+// Save vault tree to IDB
+async function cacheVaultTree(vaultId, tree, files){
+  await idbPut(IDB_TREE_STORE, {vaultId, tree, files, ts: Date.now()});
+}
+
+// Load vault tree from IDB
+async function getCachedTree(vaultId){
+  return await idbGet(IDB_TREE_STORE, vaultId);
+}
+
+// Track cached file IDs in memory for fast dot rendering
+let cachedFileIds = new Set();
+
+async function loadCachedFileIds(){
+  try{
+    const all = await idbGetAll(IDB_FILES_STORE);
+    cachedFileIds = new Set(all.map(f=>f.id));
+  }catch(e){}
+}
+
+/* ══ ONLINE/OFFLINE MODE ══ */
+let offlineMode = false;
+
+function setMode(online){
+  offlineMode = !online;
+  const badge = document.getElementById('mode-badge');
+  badge.className = 'mode-badge ' + (online ? 'online' : 'offline');
+  badge.textContent = online ? '● En ligne' : '○ Offline';
+  // Show/hide cache button
+  const cacheBtn = document.getElementById('cache-btn');
+  if(cacheBtn) cacheBtn.style.display = online && currentVaultId ? '' : 'none';
+}
+
+/* ══ CACHE ENTIRE VAULT ══ */
+async function cacheCurrentVault(){
+  if(!drTok || !currentVaultId){ toast('⚠ Connecte-toi et sélectionne un vault'); return; }
+  const vault = cfg.vaults.find(v=>v.id===currentVaultId);
+  if(!vault) return;
+  const cached = fileCache[vault.folderId];
+  if(!cached){ toast('⚠ Charge le vault d\'abord'); return; }
+
+  const all = cached.files;
+  const uncached = all.filter(f=>!cachedFileIds.has(f.id));
+  if(!uncached.length){ toast('✓ Vault déjà entièrement en cache'); return; }
+
+  toast(`⬇ Mise en cache… 0/${uncached.length}`, 30000);
+  let done = 0;
+  for(const f of uncached){
+    try{
+      const md = contentCache[f.id] || await drFetchRaw(`files/${f.id}?alt=media`);
+      contentCache[f.id] = md;
+      await cacheFile(f.id, f.name, currentVaultId, md);
+      done++;
+      if(done % 3 === 0) toast(`⬇ Mise en cache… ${done}/${uncached.length}`, 30000);
+    }catch(e){ console.warn('cache error', f.name, e); }
+  }
+  // Also save the tree
+  await cacheVaultTree(currentVaultId, cached.tree, cached.files);
+  // Redraw dots
+  buildFileTree(cached.tree);
+  initFolderArrows();
+  toast(`✓ ${done} fichier(s) mis en cache — vault disponible offline`);
+}
+
 /* ══ INIT ══ */
 loadCfg();
+loadCachedFileIds().catch(()=>{}); // pre-load cached IDs for dot display
 
 // Keyboard shortcuts
 document.addEventListener('keydown', e=>{
