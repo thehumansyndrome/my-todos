@@ -146,31 +146,53 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .reader-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;}
 
 /* TOC panel */
+/* TOC panel — fixed drawer from right, bulletproof on mobile */
 .toc-panel{
-  position:fixed;top:var(--header-h);right:0;width:240px;
-  height:calc(100vh - var(--header-h));
-  background:var(--card);border-left:1px solid var(--line);
-  z-index:80;transform:translateX(100%);transition:transform .2s;
-  display:flex;flex-direction:column;overflow:hidden;
+  position:fixed;
+  top:0;right:0;
+  width:280px;
+  height:100%;
+  background:var(--card);
+  border-left:1px solid var(--line);
+  z-index:200;
+  transform:translateX(100%);
+  transition:transform .25s ease;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  /* iOS safe area */
+  padding-top:env(safe-area-inset-top);
 }
 .toc-panel.open{transform:translateX(0);}
-/* Overlay backdrop for TOC on mobile */
+@media(max-width:400px){
+  .toc-panel{ width:100%; border-left:none; }
+}
+/* Overlay backdrop */
 .toc-overlay{
-  display:none;position:fixed;inset:0;z-index:79;
-  background:rgba(0,0,0,.3);
+  display:none;
+  position:fixed;inset:0;
+  z-index:199;
+  background:rgba(0,0,0,.4);
+  -webkit-tap-highlight-color:transparent;
 }
 .toc-overlay.open{display:block;}
-.toc-head{padding:10px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;}
-.toc-head span{font-family:var(--mono);font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);}
-.toc-list{flex:1;overflow-y:auto;padding:6px 0;}
-.toc-item{
-  padding:4px 12px;cursor:pointer;font-size:12px;color:var(--text2);
-  transition:all .1s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  border-left:2px solid transparent;
+.toc-head{
+  padding:12px 14px;
+  border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+  min-height:48px;
 }
-.toc-item:hover{background:var(--bg2);color:var(--text);}
-.toc-item.h2{padding-left:20px;}
-.toc-item.h3{padding-left:28px;font-size:11px;}
+.toc-head span{font-family:var(--mono);font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);}
+.toc-list{flex:1;overflow-y:auto;padding:6px 0;-webkit-overflow-scrolling:touch;}
+.toc-item{
+  padding:10px 14px;cursor:pointer;font-size:13px;color:var(--text2);
+  transition:all .1s;overflow:hidden;text-overflow:ellipsis;
+  border-left:2px solid transparent;white-space:nowrap;
+  min-height:40px;display:flex;align-items:center;
+}
+.toc-item:hover,.toc-item:active{background:var(--bg2);color:var(--text);}
+.toc-item.h2{padding-left:24px;font-size:12px;}
+.toc-item.h3{padding-left:34px;font-size:11px;color:var(--text3);}
 .toc-item.active{color:var(--accent);border-left-color:var(--accent);}
 
 /* File nav bar */
@@ -302,6 +324,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
   .search-wrap{display:none;}
   .journal-split{flex-direction:column;}
   .journal-edit{border-right:none;border-bottom:1px solid var(--line);}
+  #toc-btn{display:none !important;}
 }
 
 .fb-item{
@@ -431,7 +454,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 <div class="toc-panel" id="toc-panel">
   <div class="toc-head">
     <span>Table des matières</span>
-    <button class="icon-btn" onclick="toggleTOC()" style="width:36px;height:36px;font-size:14px;flex-shrink:0;" title="Fermer">✕</button>
+    <button onclick="toggleTOC()" title="Fermer"
+      style="min-width:44px;min-height:44px;border:none;background:var(--bg2);border-radius:var(--r);
+             color:var(--text2);font-size:16px;cursor:pointer;display:flex;align-items:center;
+             justify-content:center;flex-shrink:0;transition:background .1s;">✕</button>
   </div>
   <div class="toc-list" id="toc-list"></div>
 </div>
@@ -1523,7 +1549,11 @@ document.addEventListener('keydown', e=>{
   if(e.key==='ArrowRight' && e.altKey){ e.preventDefault(); navFile(1); }
 });
 
-// Swipe navigation on mobile
+// TOC overlay — also handle touchend for iOS (prevents ghost click)
+document.getElementById('toc-overlay').addEventListener('touchend', function(e){
+  e.preventDefault();
+  toggleTOC();
+}, {passive:false});
 let touchX0=null;
 document.getElementById('reader-content').addEventListener('touchstart',e=>{touchX0=e.touches[0].clientX;},{passive:true});
 document.getElementById('reader-content').addEventListener('touchend',e=>{
