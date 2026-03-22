@@ -482,6 +482,16 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
       <div style="margin-top:6px;" id="pick-status"></div>
     </div>
 
+    <!-- Cache offline -->
+    <div class="modal-section">
+      <label>Cache offline</label>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <button class="lbtn primary" onclick="cacheAllVaults()" id="btn-cache-all">⬇ Tout mettre en cache</button>
+        <button class="lbtn danger" onclick="clearAllCache()" id="btn-clear-cache">🗑 Vider le cache</button>
+      </div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:8px;" id="cache-stats-display">—</div>
+    </div>
+
     <!-- Journal file -->
     <div class="modal-section">
       <label>Fichier journal (dans Drive root)</label>
@@ -1172,6 +1182,7 @@ function removeVault(id){
 /* ══ SETTINGS MODAL ══ */
 function openSettings(){
   renderVaultList();
+  refreshCacheStats().catch(()=>{});
   document.getElementById('settings-overlay').classList.add('open');
 }
 function closeSettings(){
@@ -1380,7 +1391,88 @@ function setMode(online){
   if(cacheBtn) cacheBtn.style.display = online && currentVaultId ? '' : 'none';
 }
 
-/* ══ CACHE ENTIRE VAULT ══ */
+/* ══ CACHE ALL VAULTS ══ */
+async function cacheAllVaults(){
+  if(!drTok){ toast('⚠ Connecte-toi à Drive d\'abord'); closeSettings(); return; }
+  const vaults = cfg.vaults;
+  if(!vaults.length){ toast('⚠ Aucun vault configuré'); return; }
+
+  const btn = document.getElementById('btn-cache-all');
+  if(btn){ btn.disabled=true; btn.textContent='⬇ En cours…'; }
+  closeSettings();
+
+  let totalFiles=0, totalDone=0, totalErrors=0;
+
+  for(const vault of vaults){
+    // Load tree if not in memory
+    if(!fileCache[vault.folderId]){
+      try{
+        toast(`⬇ Chargement ${vault.name}…`, 5000);
+        const data = await loadVaultTree(vault.folderId);
+        await cacheVaultTree(vault.id, data.tree, data.files);
+      }catch(e){ totalErrors++; continue; }
+    }
+    const cached = fileCache[vault.folderId];
+    if(!cached) continue;
+    const files = cached.files || [];
+    const toCache = files.filter(f => !cachedFileIds.has(f.id));
+    totalFiles += toCache.length;
+
+    for(const f of toCache){
+      try{
+        const md = contentCache[f.id] || await drFetchRaw(`files/${f.id}?alt=media`);
+        contentCache[f.id] = md;
+        await cacheFile(f.id, f.name, vault.id, md);
+        totalDone++;
+        if(totalDone % 5 === 0 || totalDone === totalFiles)
+          toast(`⬇ ${totalDone}/${totalFiles} fichiers… (${vault.name})`, 10000);
+      }catch(e){ totalErrors++; }
+    }
+  }
+
+  if(btn){ btn.disabled=false; btn.textContent='⬇ Tout mettre en cache'; }
+  await refreshCacheStats();
+  // Redraw current vault with dots
+  if(currentVaultId){
+    const vault = cfg.vaults.find(v=>v.id===currentVaultId);
+    if(vault && fileCache[vault.folderId]){
+      buildFileTree(fileCache[vault.folderId].tree);
+      initFolderArrows();
+    }
+  }
+  toast(`✓ Cache terminé — ${totalDone} fichiers${totalErrors?' · '+totalErrors+' erreur(s)':''}`);
+}
+
+async function clearAllCache(){
+  if(!confirm('Vider tout le cache offline ?')) return;
+  const db = await openIDB();
+  await new Promise((res,rej)=>{
+    const tx = db.transaction([IDB_FILES_STORE, IDB_TREE_STORE],'readwrite');
+    tx.objectStore(IDB_FILES_STORE).clear();
+    tx.objectStore(IDB_TREE_STORE).clear();
+    tx.oncomplete = ()=>res();
+    tx.onerror = ()=>rej(tx.error);
+  });
+  cachedFileIds.clear();
+  // Remove dots from sidebar
+  document.querySelectorAll('.cache-dot').forEach(d=>d.remove());
+  await refreshCacheStats();
+  toast('🗑 Cache vidé');
+}
+
+async function refreshCacheStats(){
+  try{
+    const est = await navigator.storage.estimate();
+    const allFiles = await idbGetAll(IDB_FILES_STORE);
+    const allTrees = await idbGetAll(IDB_TREE_STORE);
+    const totalBytes = allFiles.reduce((s,f)=>s+(f.md?f.md.length:0),0);
+    const usedMB = (totalBytes/1024/1024).toFixed(2);
+    const quotaMB = Math.round(est.quota/1024/1024);
+    const el = document.getElementById('cache-stats-display');
+    if(el) el.textContent =
+      `${allFiles.length} fichiers · ${usedMB} MB utilisés · quota ${quotaMB} MB disponibles · ${allTrees.length} vault(s) en cache`;
+  }catch(e){}
+}
 async function cacheCurrentVault(){
   if(!drTok || !currentVaultId){ toast('⚠ Connecte-toi et sélectionne un vault'); return; }
   const vault = cfg.vaults.find(v=>v.id===currentVaultId);
