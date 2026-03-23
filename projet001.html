@@ -628,6 +628,27 @@ body{
 .ch-dp-day{font-size:11px;padding:3px 7px;border-radius:var(--r);border:1px solid var(--line2);background:var(--bg);color:var(--text2);cursor:pointer;font-family:var(--mono);}
 .ch-dp-day.on{background:var(--blue-bg);color:var(--blue);border-color:var(--blue);font-weight:500;}
 
+/* ── COURSES ── */
+.courses-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 0;border-bottom:1px solid var(--line);
+}
+.courses-item:first-child{border-top:1px solid var(--line);}
+.courses-item.bought{opacity:.4;}
+.courses-item.bought .courses-text{text-decoration:line-through;}
+.courses-check{
+  width:15px;height:15px;flex-shrink:0;
+  cursor:pointer;accent-color:var(--accent);
+}
+.courses-text{flex:1;font-size:13px;color:var(--text);}
+.courses-clear{
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  padding:4px 10px;border-radius:var(--r);
+  border:1px solid var(--line2);background:var(--bg);color:var(--text3);
+  cursor:pointer;transition:all .12s;
+}
+.courses-clear:hover{background:var(--red-bg);color:var(--red);border-color:var(--red);}
+
 /* ── DONE SECTION ── */
 .done-section{margin-top:20px;}
 .done-section-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;cursor:pointer;user-select:none;}
@@ -670,6 +691,7 @@ body{
     <button class="tab" onclick="switchTab('reminders')">Reminders</button>
     <button class="tab" onclick="switchTab('habits')">Habits</button>
     <button class="tab" onclick="switchTab('challenges')">Challenges</button>
+    <button class="tab" onclick="switchTab('courses')">Courses</button>
     <button class="tab" onclick="switchTab('log')">Log</button>
   </div>
 </div>
@@ -795,6 +817,19 @@ body{
     <div id="ch-list"></div>
   </div>
 
+  <!-- ══ COURSES ══ -->
+  <div id="tab-courses" class="section">
+    <div class="stats" id="courses-stats"></div>
+    <div class="add-row">
+      <input class="main-in" type="text" id="courses-in" placeholder="Ajouter un article…" onkeydown="if(event.key==='Enter')addCourse()">
+      <button class="add-btn" onclick="addCourse()">+ Add</button>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+      <button class="courses-clear" onclick="clearBought()">✓ Supprimer les achetés</button>
+    </div>
+    <div class="list" id="courses-list"></div>
+  </div>
+
   <!-- ══ LOG ══ -->
   <div id="tab-log" class="section">
 
@@ -903,7 +938,7 @@ body{
 /* ══ CONSTANTS ══ */
 const P='projet001';
 const SK='td_v4_'+P, AK='td_act_'+P, TK='td_theme_'+P, DK='td_drive_'+P;
-const TABS=['todos','decisions','reminders','habits','challenges','log'];
+const TABS=['todos','decisions','reminders','habits','challenges','courses','log'];
 
 /* ══ DEFAULT CATEGORIES ══ */
 const DEFAULT_CATS = [
@@ -913,7 +948,7 @@ const DEFAULT_CATS = [
 ];
 
 /* ══ STATE ══ */
-let S={todos:[],decisions:[],reminders:[],habits:[],habitLogs:{},categories:[],challenges:[]};
+let S={todos:[],decisions:[],reminders:[],habits:[],habitLogs:{},categories:[],challenges:[],courses:[]};
 let AL=[];
 let wOff=0, tF='all', dF='all', rF='all', hF='all', chF='all';
 
@@ -927,6 +962,7 @@ function ensureState(){
   if(!S.categories || !Array.isArray(S.categories)) S.categories=[];
   if(!S.categories.length) S.categories=JSON.parse(JSON.stringify(DEFAULT_CATS));
   if(!S.challenges) S.challenges=[];
+  if(!S.courses) S.courses=[];
   // Migrate existing decisions — add new fields if missing
   S.decisions.forEach(d=>{
     if(!d.options) d.options=[];
@@ -947,7 +983,7 @@ function load(){
       S={
         todos:p.todos||[],decisions:p.decisions||[],
         reminders:p.reminders||[],habits:p.habits||[],
-        habitLogs:p.habitLogs||{},challenges:p.challenges||[],
+        habitLogs:p.habitLogs||{},challenges:p.challenges||[],courses:p.courses||[],
         categories:Array.isArray(p.categories)?p.categories:[]
       };
     }
@@ -1311,7 +1347,7 @@ function confirmImp(){
   catch(e){toast('❌ JSON invalide');}
 }
 function clearAll(){if(!confirm('Tout effacer ?'))return;S={todos:[],decisions:[],reminders:[],habits:[],habitLogs:{},challenges:[],categories:JSON.parse(JSON.stringify(DEFAULT_CATS))};save();renderCatSelects();renderAll();renderLog();toast('Données effacées');logA('drive','Tout effacé');}
-function renderAll(){renderTodos();renderDecisions();renderReminders();renderHabits();renderChallenges();}
+function renderAll(){renderTodos();renderDecisions();renderReminders();renderHabits();renderChallenges();renderCourses();}
 document.getElementById('imp-modal').addEventListener('click',function(e){if(e.target===this)closeImp();});
 
 /* ══ GOOGLE DRIVE ══ */
@@ -2272,8 +2308,49 @@ function renderChStats(){
     <div class="stat"><div class="stat-n">${pct}%</div><div class="stat-l">Taux</div></div>`;
 }
 
+/* ══ COURSES ══ */
+function addCourse(){
+  const inp=document.getElementById('courses-in');
+  const txt=inp.value.trim();if(!txt)return;
+  S.courses.push({id:uid(),text:txt,bought:false,ts:Date.now()});
+  inp.value='';autoSave();renderCourses();
+}
+
+function toggleCourse(id){
+  const c=S.courses.find(x=>x.id===id);if(!c)return;
+  c.bought=!c.bought;autoSave();renderCourses();
+}
+
+function delCourse(id){
+  S.courses=S.courses.filter(x=>x.id!==id);
+  autoSave();renderCourses();
+}
+
+function clearBought(){
+  S.courses=S.courses.filter(x=>!x.bought);
+  autoSave();renderCourses();toast('✓ Articles achetés supprimés');
+}
+
+function renderCourses(){
+  const total=S.courses.length;
+  const bought=S.courses.filter(x=>x.bought).length;
+  const remaining=total-bought;
+  document.getElementById('courses-stats').innerHTML=`
+    <div class="stat"><div class="stat-n">${total}</div><div class="stat-l">Total</div></div>
+    <div class="stat"><div class="stat-n">${remaining}</div><div class="stat-l">Restants</div></div>
+    <div class="stat"><div class="stat-n">${bought}</div><div class="stat-l">Achetés</div></div>`;
+  const el=document.getElementById('courses-list');
+  if(!total){el.innerHTML='<div class="empty">Liste vide</div>';return;}
+  const sorted=[...S.courses].sort((a,b)=>a.bought-b.bought||a.ts-b.ts);
+  el.innerHTML=sorted.map(c=>`
+    <div class="courses-item${c.bought?' bought':''}">
+      <input type="checkbox" class="courses-check" ${c.bought?'checked':''} onchange="toggleCourse('${c.id}')">
+      <span class="courses-text">${esc(c.text)}</span>
+      <button class="del" onclick="delCourse('${c.id}')" title="Supprimer">×</button>
+    </div>`).join('');
+}
+
 renderAll();
-loadDriveConf();
 updateUndoBtn();
 
 // Auto-connect on load — NO popup (popup requires user gesture).
