@@ -337,6 +337,28 @@ body{
 
 /* ── DECISIONS ── */
 .dec-reason{font-size:12px;color:var(--text2);margin-top:3px;font-style:italic;}
+/* Decision detail panel */
+.dec-panel{display:none;margin-top:10px;border-top:1px solid var(--line);padding-top:10px;}
+.dec-panel.open{display:block;}
+.dec-field{margin-bottom:10px;}
+.dec-field:last-child{margin-bottom:0;}
+.dec-field-label{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:5px;}
+.dec-opts{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:4px;}
+.dec-opt{font-size:12px;padding:3px 10px;border-radius:20px;border:1px solid var(--line2);color:var(--text2);background:var(--bg2);cursor:pointer;transition:all .12s;}
+.dec-opt:hover{border-color:var(--purple);color:var(--purple);}
+.dec-opt.chosen{background:var(--green-bg);color:var(--green);border-color:var(--green);font-weight:500;}
+.dec-opt-add{font-size:12px;padding:3px 10px;border-radius:20px;border:1px dashed var(--line2);color:var(--text3);background:transparent;cursor:pointer;transition:all .12s;}
+.dec-opt-add:hover{border-color:var(--purple);color:var(--purple);}
+.dec-ta{width:100%;font-family:var(--sans);font-size:12px;padding:6px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);resize:none;outline:none;line-height:1.4;}
+.dec-ta:focus{border-color:var(--accent);}
+.dec-ta::placeholder{color:var(--text3);}
+.dec-review-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.dec-review-date{font-family:var(--sans);font-size:12px;padding:5px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;width:140px;}
+.dec-review-date:focus{border-color:var(--accent);}
+.dec-review-q{flex:1;min-width:160px;font-family:var(--sans);font-size:12px;padding:5px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;}
+.dec-review-q:focus{border-color:var(--accent);}
+.dec-toggle{font-size:11px;font-family:var(--mono);color:var(--text3);background:transparent;border:none;cursor:pointer;padding:2px 0;margin-top:4px;display:flex;align-items:center;gap:4px;}
+.dec-toggle:hover{color:var(--purple);}
 .dsel{
   font-family:var(--mono);font-size:10px;
   padding:2px 6px;border:1px solid var(--line);
@@ -802,6 +824,14 @@ function ensureState(){
   if(!S.habitLogs) S.habitLogs={};
   if(!S.categories || !Array.isArray(S.categories)) S.categories=[];
   if(!S.categories.length) S.categories=JSON.parse(JSON.stringify(DEFAULT_CATS));
+  // Migrate existing decisions — add new fields if missing
+  S.decisions.forEach(d=>{
+    if(!d.options) d.options=[];
+    if(d.criteria===undefined) d.criteria='';
+    if(d.risks===undefined) d.risks='';
+    if(!d.review) d.review={date:'',question:''};
+    if(d.outcome===undefined) d.outcome='';
+  });
 }
 
 function save(){try{localStorage.setItem(SK,JSON.stringify(S));}catch(e){}}
@@ -1376,7 +1406,8 @@ function renderTodos(){
 /* ══ DECISIONS ══ */
 function addDecision(){
   const v=document.getElementById('dec-in').value.trim();if(!v)return;
-  const d={id:uid(),text:v,status:document.getElementById('dec-st').value,reason:document.getElementById('dec-reason').value.trim(),ts:Date.now()};
+  const d={id:uid(),text:v,status:document.getElementById('dec-st').value,reason:document.getElementById('dec-reason').value.trim(),
+    options:[],criteria:'',risks:'',review:{date:'',question:''},outcome:'',ts:Date.now()};
   S.decisions.push(d);document.getElementById('dec-in').value='';document.getElementById('dec-reason').value='';autoSave();renderDecisions();logA('decision','Ajouté: "'+v+'"');
 }
 function saveDecision(id){
@@ -1386,6 +1417,46 @@ function saveDecision(id){
   d.reason=document.getElementById('edr-'+id).value.trim();
   d.status=document.getElementById('eds-'+id).value;
   autoSave();closeEdit(id);renderDecisions();logA('decision','Modifié: "'+txt+'"');
+}
+function toggleDecPanel(id){
+  const p=document.getElementById('dp-'+id);
+  const btn=document.getElementById('dptoggle-'+id);
+  if(!p)return;
+  const open=p.classList.toggle('open');
+  btn.textContent=open?'▲ Masquer détails':'▼ Aide à la décision';
+}
+function addDecOpt(id){
+  const v=prompt('Nouvelle option :');if(!v||!v.trim())return;
+  const d=S.decisions.find(x=>x.id===id);if(!d)return;
+  if(!d.options)d.options=[];
+  d.options.push({text:v.trim(),chosen:false});
+  autoSave();renderDecisions();
+  // re-open panel
+  setTimeout(()=>{const p=document.getElementById('dp-'+id);if(p&&!p.classList.contains('open'))toggleDecPanel(id);},50);
+}
+function toggleDecOpt(id,idx){
+  const d=S.decisions.find(x=>x.id===id);if(!d||!d.options)return;
+  d.options[idx].chosen=!d.options[idx].chosen;
+  autoSave();
+  // update chip visually without full re-render
+  const chip=document.getElementById('dopt-'+id+'-'+idx);
+  if(chip)chip.classList.toggle('chosen',d.options[idx].chosen);
+}
+function saveDecField(id,field){
+  const d=S.decisions.find(x=>x.id===id);if(!d)return;
+  const el=document.getElementById('dfield-'+field+'-'+id);if(!el)return;
+  if(field==='review-date'){if(!d.review)d.review={};d.review.date=el.value;}
+  else if(field==='review-q'){if(!d.review)d.review={};d.review.question=el.value;}
+  else d[field]=el.value;
+  autoSave();
+  // if review date set, also create/update a reminder
+  if(field==='review-date'&&el.value){
+    const existing=S.reminders.find(r=>r._decId===id);
+    const question=(d.review&&d.review.question)?d.review.question:'Réévaluer: '+d.text;
+    if(existing){existing.date=el.value;existing.text=question;}
+    else{S.reminders.push({id:uid(),text:question,date:el.value,recur:'none',done:false,_decId:id,ts:Date.now()});}
+    autoSave();renderReminders();
+  }
 }
 function delDecision(id){
   const d=S.decisions.find(x=>x.id===id);
@@ -1402,7 +1473,11 @@ function renderDecisions(){
   let items=S.decisions;if(dF!=='all')items=items.filter(x=>x.status===dF);
   items=[...items].sort((a,b)=>b.ts-a.ts);
   const el=document.getElementById('dec-list');
-  el.innerHTML=items.length?items.map(d=>`
+  el.innerHTML=items.length?items.map(d=>{
+    const opts=d.options||[];
+    const hasDetail=opts.length||(d.criteria&&d.criteria.trim())||(d.risks&&d.risks.trim())||((d.review)&&(d.review.date||d.review.question));
+    const optsHtml=opts.map((o,i)=>`<span class="dec-opt${o.chosen?' chosen':''}" id="dopt-${d.id}-${i}" onclick="toggleDecOpt('${d.id}',${i})">${esc(o.text)}</span>`).join('');
+    return `
     <div class="item" draggable="true" data-id="${d.id}">
       <div class="dh"><span></span><span></span><span></span></div>
       <div class="reorder-btns">
@@ -1420,6 +1495,32 @@ function renderDecisions(){
           </select>
           <span class="meta-date">${fd(d.ts)}</span>
         </div>
+        <!-- Detail panel -->
+        <div class="dec-panel${hasDetail?' open':''}" id="dp-${d.id}">
+          <div class="dec-field">
+            <div class="dec-field-label">Options envisagées <span>(clique pour marquer le choix retenu)</span></div>
+            <div class="dec-opts">
+              ${optsHtml}
+              <button class="dec-opt-add" onclick="addDecOpt('${d.id}')">+ option</button>
+            </div>
+          </div>
+          <div class="dec-field">
+            <div class="dec-field-label">Critères de choix <span>(optionnel)</span></div>
+            <textarea class="dec-ta" rows="2" id="dfield-criteria-${d.id}" placeholder="Ce qui compte vraiment pour toi…" onblur="saveDecField('${d.id}','criteria')">${esc(d.criteria||'')}</textarea>
+          </div>
+          <div class="dec-field">
+            <div class="dec-field-label">Risques / Incertitudes <span>(optionnel)</span></div>
+            <textarea class="dec-ta" rows="2" id="dfield-risks-${d.id}" placeholder="Ce qui pourrait mal tourner…" onblur="saveDecField('${d.id}','risks')">${esc(d.risks||'')}</textarea>
+          </div>
+          <div class="dec-field">
+            <div class="dec-field-label">Revue <span>(optionnel — crée un rappel automatique)</span></div>
+            <div class="dec-review-row">
+              <input type="date" class="dec-review-date" id="dfield-review-date-${d.id}" value="${(d.review&&d.review.date)||''}" onblur="saveDecField('${d.id}','review-date')">
+              <input type="text" class="dec-review-q" id="dfield-review-q-${d.id}" value="${esc((d.review&&d.review.question)||'')}" placeholder="Question à te poser ce jour-là…" onblur="saveDecField('${d.id}','review-q')">
+            </div>
+          </div>
+        </div>
+        <button class="dec-toggle" id="dptoggle-${d.id}" onclick="toggleDecPanel('${d.id}')">${hasDetail?'▲ Masquer détails':'▼ Aide à la décision'}</button>
         <div class="edit-form" id="ef-${d.id}" data-id="${d.id}">
           <div class="edit-row">
             <input class="edit-in" id="edt-${d.id}" type="text" value="${esc(d.text)}" onkeydown="if(event.key==='Escape')closeEdit('${d.id}')">
@@ -1440,7 +1541,8 @@ function renderDecisions(){
       </div>
       <button class="edit-btn" onclick="openEdit('${d.id}')" title="Modifier">✎</button>
       <button class="del" onclick="delDecision('${d.id}')">×</button>
-    </div>`).join(''):`<div class="empty">Aucune décision</div>`;
+    </div>`;
+  }).join(''):`<div class="empty">Aucune décision</div>`;
   setupDrag(el,'decisions',renderDecisions);
   const tot=S.decisions.length,pend=S.decisions.filter(x=>x.status==='pending').length,done=S.decisions.filter(x=>x.status==='done').length,rej=S.decisions.filter(x=>x.status==='rejected').length;
   document.getElementById('dec-stats').innerHTML=`
