@@ -1553,23 +1553,22 @@ async function pushToArchive(items){
 async function archiveDone(){
   const doneItems=S.todos.filter(x=>x.done);
   if(!doneItems.length){toast('Aucune tâche terminée à archiver');return;}
+  if(!drTok){
+    toastAction('⚠ Connecte Drive avant d'archiver','Connecter',()=>driveAuth());
+    return;
+  }
   if(!confirm('Archiver '+doneItems.length+' tâche(s) terminée(s) ?\n\nElles seront sauvegardées dans projet001-archive.json sur Drive et supprimées de la liste.'))return;
-  // Log local
+  toast('💾 Archivage en cours…');
+  const ok = await pushToArchive(doneItems);
+  if(!ok) return; // pushToArchive already toasted the error — don't delete
+  // Only remove from todos if Drive write succeeded
   doneItems.forEach(t=>{
     logA('todo','✓ Archivé: "'+t.text+'" ('+getCatById(t.cat).label+' · '+t.pri.toUpperCase()+')');
   });
-  // Push to Drive archive
-  toast('💾 Archivage en cours…');
-  const ok = await pushToArchive(doneItems);
-  // Remove from todos
   S.todos=S.todos.filter(x=>!x.done);
   autoSave();renderTodos();
-  if(ok){
-    toast('✓ '+doneItems.length+' tâche(s) archivée(s) → projet001-archive.json');
-    logA('drive','Archive → '+ARCHIVE_FILENAME+' ('+doneItems.length+' tâches)');
-  } else {
-    toast('✓ '+doneItems.length+' tâche(s) supprimées (Drive non connecté)');
-  }
+  toast('✓ '+doneItems.length+' tâche(s) archivée(s) → projet001-archive.json');
+  logA('drive','Archive → '+ARCHIVE_FILENAME+' ('+doneItems.length+' tâches)');
 }
 
 function renderTodos(){
