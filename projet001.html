@@ -1554,7 +1554,7 @@ async function archiveDone(){
   const doneItems=S.todos.filter(x=>x.done);
   if(!doneItems.length){toast('Aucune tâche terminée à archiver');return;}
   if(!drTok){
-    toastAction('⚠ Connecte Drive avant d'archiver','Connecter',()=>driveAuth());
+    toastAction('⚠ Drive non connecté — relie Drive pour archiver','Connecter',()=>driveAuth());
     return;
   }
   if(!confirm('Archiver '+doneItems.length+' tâche(s) terminée(s) ?\n\nElles seront sauvegardées dans projet001-archive.json sur Drive et supprimées de la liste.'))return;
