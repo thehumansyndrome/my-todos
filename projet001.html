@@ -2,22 +2,22 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>projet001</title>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* ── TOKENS ── */
 :root {
-  --bg:       #FAF9F7;
-  --bg2:      #F2F0EC;
-  --bg3:      #E8E5DF;
-  --card:     #FFFFFF;
-  --line:     #E4E1DA;
-  --line2:    #D0CCC3;
-  --text:     #1A1917;
-  --text2:    #6B6760;
-  --text3:    #A09C94;
-  --accent:   #C2410C;   /* Anthropic orange */
+  --bg:       #F7F6F3;
+  --bg2:      #EFEDE8;
+  --bg3:      #E6E3DC;
+  --card:     #FDFCFA;
+  --line:     #E8E5DE;
+  --line2:    #D5D0C8;
+  --text:     #1C1A18;
+  --text2:    #6E6A63;
+  --text3:    #ABA59C;
+  --accent:   #C2410C;
   --accent2:  #FEF3C7;
   --blue:     #2563EB;
   --blue-bg:  #EFF6FF;
@@ -84,6 +84,7 @@ body{
   background:var(--card);
   border-bottom:1px solid var(--line);
   position:sticky;top:0;z-index:100;
+  padding-top:env(safe-area-inset-top);
 }
 .header-inner{
   max-width:720px;margin:0 auto;
@@ -145,7 +146,7 @@ body{
 .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
 
 /* ── LAYOUT ── */
-.page{max-width:720px;margin:0 auto;padding:20px 16px 80px;}
+.page{max-width:720px;margin:0 auto;padding:20px 16px calc(80px + env(safe-area-inset-bottom));padding-left:max(16px, env(safe-area-inset-left));padding-right:max(16px, env(safe-area-inset-right));}
 .section{display:none;}
 .section.active{display:block;}
 
