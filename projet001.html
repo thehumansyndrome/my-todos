@@ -89,9 +89,13 @@ body{
 .header-inner{
   max-width:720px;margin:0 auto;
   padding:0 16px;
-  display:flex;align-items:center;gap:10px;
+  display:flex;align-items:center;gap:8px;
   height:52px;
+  overflow-x:auto;
+  scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
 }
+.header-inner::-webkit-scrollbar{display:none;}
 .wordmark{
   font-family:var(--mono);
   font-size:13px;font-weight:500;
@@ -647,19 +651,20 @@ body{
   <div class="header-inner">
     <span class="wordmark">todos</span>
     <span class="proj-tag">projet001</span>
-    <div class="hspace"></div>
-    <button class="hbtn" id="save-status-btn" onclick="forcePush()" title="Forcer la sync Drive">
-      <span id="save-dot" style="width:6px;height:6px;border-radius:50%;background:var(--text3);transition:background .3s;flex-shrink:0;"></span>
-      <span id="save-label">Sync</span>
-    </button>
-    <button class="hbtn" id="undo-btn" onclick="undoLast()" title="Annuler la dernière suppression" style="display:none">↩ Undo</button>
-    <button class="hbtn green" onclick="openImp()">Import</button>
-    <button class="hbtn" id="btn-refresh" onclick="drivePull()" style="display:none" title="Charger depuis Drive">↻ Refresh</button>
-    <span class="live-badge" id="live-badge"><span class="live-dot"></span>Live</span>
-    <button class="hbtn" onclick="switchTab('log');setTimeout(()=>document.getElementById('drive-anchor').scrollIntoView({behavior:'smooth'}),120)">
-      <span class="gdot" id="gdot"></span>Drive
-    </button>
-    <button class="hbtn" id="theme-btn" onclick="toggleTheme()">☀︎</button>
+    <div class="hbtns-scroll">
+      <button class="hbtn" id="save-status-btn" onclick="forcePush()" title="Forcer la sync Drive">
+        <span id="save-dot" style="width:6px;height:6px;border-radius:50%;background:var(--text3);transition:background .3s;flex-shrink:0;"></span>
+        <span id="save-label">Sync</span>
+      </button>
+      <button class="hbtn" id="undo-btn" onclick="undoLast()" title="Annuler la dernière suppression" style="display:none">↩ Undo</button>
+      <button class="hbtn green" onclick="openImp()">Import</button>
+      <button class="hbtn" id="btn-refresh" onclick="drivePull()" style="display:none" title="Charger depuis Drive">↻ Refresh</button>
+      <span class="live-badge" id="live-badge"><span class="live-dot"></span>Live</span>
+      <button class="hbtn" onclick="switchTab('log');setTimeout(()=>document.getElementById('drive-anchor').scrollIntoView({behavior:'smooth'}),120)">
+        <span class="gdot" id="gdot"></span>Drive
+      </button>
+    </div>
+    <button class="hbtn hbtn-fixed" id="theme-btn" onclick="toggleTheme()">☀︎</button>
   </div>
 </div>
 
