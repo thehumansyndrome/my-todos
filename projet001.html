@@ -335,36 +335,6 @@ body{
 .ts-done{background:var(--green-bg);color:var(--green);}
 .meta-date{font-size:11px;color:var(--text3);font-family:var(--mono);}
 
-/* ── DECISIONS ── */
-.dec-reason{font-size:12px;color:var(--text2);margin-top:3px;font-style:italic;}
-/* Decision detail panel */
-.dec-panel{display:none;margin-top:10px;border-top:1px solid var(--line);padding-top:10px;}
-.dec-panel.open{display:block;}
-.dec-field{margin-bottom:10px;}
-.dec-field:last-child{margin-bottom:0;}
-.dec-field-label{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:5px;}
-.dec-opts{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:4px;}
-.dec-opt{font-size:12px;padding:3px 10px;border-radius:20px;border:1px solid var(--line2);color:var(--text2);background:var(--bg2);cursor:pointer;transition:all .12s;}
-.dec-opt:hover{border-color:var(--purple);color:var(--purple);}
-.dec-opt.chosen{background:var(--green-bg);color:var(--green);border-color:var(--green);font-weight:500;}
-.dec-opt-add{font-size:12px;padding:3px 10px;border-radius:20px;border:1px dashed var(--line2);color:var(--text3);background:transparent;cursor:pointer;transition:all .12s;}
-.dec-opt-add:hover{border-color:var(--purple);color:var(--purple);}
-.dec-ta{width:100%;font-family:var(--sans);font-size:12px;padding:6px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);resize:none;outline:none;line-height:1.4;}
-.dec-ta:focus{border-color:var(--accent);}
-.dec-ta::placeholder{color:var(--text3);}
-.dec-review-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-.dec-review-date{font-family:var(--sans);font-size:12px;padding:5px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;width:140px;}
-.dec-review-date:focus{border-color:var(--accent);}
-.dec-review-q{flex:1;min-width:160px;font-family:var(--sans);font-size:12px;padding:5px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;}
-.dec-review-q:focus{border-color:var(--accent);}
-.dec-toggle{font-size:11px;font-family:var(--mono);color:var(--text3);background:transparent;border:none;cursor:pointer;padding:2px 0;margin-top:4px;display:flex;align-items:center;gap:4px;}
-.dec-toggle:hover{color:var(--purple);}
-.dsel{
-  font-family:var(--mono);font-size:10px;
-  padding:2px 6px;border:1px solid var(--line);
-  border-radius:var(--r);background:var(--bg);color:var(--text2);
-  cursor:pointer;
-}
 
 /* ── HABITS ── */
 .week-nav{
@@ -536,7 +506,6 @@ body{
   text-transform:uppercase;letter-spacing:.06em;flex-shrink:0;
 }
 .at-todo{background:var(--blue-bg);color:var(--blue);}
-.at-decision{background:var(--purple-bg);color:var(--purple);}
 .at-reminder{background:var(--amber-bg);color:var(--amber);}
 .at-habit{background:var(--green-bg);color:var(--green);}
 .at-drive{background:var(--bg2);color:var(--text2);}
@@ -687,7 +656,6 @@ body{
 <div class="tabs">
   <div class="tabs-inner">
     <button class="tab active" onclick="switchTab('todos')">Todos</button>
-    <button class="tab" onclick="switchTab('decisions')">Decisions</button>
     <button class="tab" onclick="switchTab('reminders')">Reminders</button>
     <button class="tab" onclick="switchTab('habits')">Habits</button>
     <button class="tab" onclick="switchTab('challenges')">Challenges</button>
@@ -715,25 +683,6 @@ body{
     <div class="list" id="todo-list"></div>
   </div>
 
-  <!-- ══ DECISIONS ══ -->
-  <div id="tab-decisions" class="section">
-    <div class="stats" id="dec-stats"></div>
-    <div class="add-row" style="flex-direction:column;align-items:stretch;">
-      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-        <input class="main-in" type="text" id="dec-in" placeholder="Décision à logguer…" onkeydown="if(event.key==='Enter')addDecision()">
-        <select id="dec-st">
-          <option value="pending">Pending</option>
-          <option value="done">Made</option>
-          <option value="rejected">Rejected</option>
-        </select>
-        <button class="add-btn" onclick="addDecision()">+ Add</button>
-      </div>
-      <input type="text" id="dec-reason" placeholder="Raison / contexte (optionnel)…"
-        style="margin-top:6px;width:100%;font-family:var(--sans);font-size:13px;padding:6px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;">
-    </div>
-    <div class="filters" id="dec-filters"></div>
-    <div class="list" id="dec-list"></div>
-  </div>
 
   <!-- ══ REMINDERS ══ -->
   <div id="tab-reminders" class="section">
@@ -924,7 +873,7 @@ body{
   <div class="modal">
     <div class="modal-title">Import JSON</div>
     <div class="modal-sub">Colle un export. Remplace toutes les données locales.</div>
-    <textarea id="imp-area" placeholder='{"todos":[],"decisions":[],"reminders":[],"habits":[],"habitLogs":{}}'></textarea>
+    <textarea id="imp-area" placeholder='{"todos":[],"reminders":[],"habits":[],"habitLogs":{}}'></textarea>
     <div class="modal-footer">
       <button class="lbtn" onclick="closeImp()">Annuler</button>
       <button class="lbtn success" onclick="confirmImp()">Importer</button>
@@ -938,7 +887,7 @@ body{
 /* ══ CONSTANTS ══ */
 const P='projet001';
 const SK='td_v4_'+P, AK='td_act_'+P, TK='td_theme_'+P, DK='td_drive_'+P;
-const TABS=['todos','decisions','reminders','habits','challenges','courses','log'];
+const TABS=['todos','reminders','habits','challenges','courses','log'];
 
 /* ══ DEFAULT CATEGORIES ══ */
 const DEFAULT_CATS = [
@@ -948,14 +897,13 @@ const DEFAULT_CATS = [
 ];
 
 /* ══ STATE ══ */
-let S={todos:[],decisions:[],reminders:[],habits:[],habitLogs:{},categories:[],challenges:[],courses:[]};
+let S={todos:[],reminders:[],habits:[],habitLogs:{},categories:[],challenges:[],courses:[]};
 let AL=[];
 let wOff=0, tF='all', dF='all', rF='all', hF='all', chF='all';
 
 function ensureState(){
   // Guarantee every key always exists — defensive against partial/missing data
   if(!S.todos) S.todos=[];
-  if(!S.decisions) S.decisions=[];
   if(!S.reminders) S.reminders=[];
   if(!S.habits) S.habits=[];
   if(!S.habitLogs) S.habitLogs={};
@@ -963,14 +911,6 @@ function ensureState(){
   if(!S.categories.length) S.categories=JSON.parse(JSON.stringify(DEFAULT_CATS));
   if(!S.challenges) S.challenges=[];
   if(!S.courses) S.courses=[];
-  // Migrate existing decisions — add new fields if missing
-  S.decisions.forEach(d=>{
-    if(!d.options) d.options=[];
-    if(d.criteria===undefined) d.criteria='';
-    if(d.risks===undefined) d.risks='';
-    if(!d.review) d.review={date:'',question:''};
-    if(d.outcome===undefined) d.outcome='';
-  });
 }
 
 function save(){try{localStorage.setItem(SK,JSON.stringify(S));}catch(e){}}
@@ -981,7 +921,7 @@ function load(){
     if(d){
       const p=JSON.parse(d);
       S={
-        todos:p.todos||[],decisions:p.decisions||[],
+        todos:p.todos||[],
         reminders:p.reminders||[],habits:p.habits||[],
         habitLogs:p.habitLogs||{},challenges:p.challenges||[],courses:p.courses||[],
         categories:Array.isArray(p.categories)?p.categories:[]
@@ -1115,7 +1055,7 @@ function toast(m,d=2400){const t=document.getElementById('toast');t.textContent=
 
 /* ══ UNDO STACK ══ */
 // Each entry: { id, undoId, tag, label, snapshot }
-// snapshot = the deleted item (todo/decision/reminder/habit)
+// snapshot = the deleted item (todo/reminder/habit)
 // undoId links the AL entry to its undo snapshot
 let undoStack = [];
 const UNDO_KEY = 'td_undo_' + P;
@@ -1139,8 +1079,6 @@ function restoreItem(undoId){
   const {tag, snapshot} = entry;
   if(tag==='todo'){
     if(!S.todos.find(x=>x.id===snapshot.id)) S.todos.push(snapshot);
-  } else if(tag==='decision'){
-    if(!S.decisions.find(x=>x.id===snapshot.id)) S.decisions.push(snapshot);
   } else if(tag==='challenge'){
     if(!S.challenges.find(x=>x.id===snapshot.id)) S.challenges.push(snapshot);
   } else if(tag==='reminder'){
@@ -1192,7 +1130,7 @@ function renderAL(){
   const el=document.getElementById('act-list');
   const e=[...AL].reverse().slice(0,100);
   if(!e.length){el.innerHTML='<div class="empty">Aucune activité</div>';return;}
-  const tc={todo:'at-todo',decision:'at-decision',reminder:'at-reminder',habit:'at-habit',challenge:'at-challenge',drive:'at-drive'};
+  const tc={todo:'at-todo',reminder:'at-reminder',habit:'at-habit',challenge:'at-challenge',drive:'at-drive'};
   // Check which undoIds are still available
   const availableUndos = new Set(undoStack.map(x=>x.undoId));
   el.innerHTML=e.map(x=>{
@@ -1339,15 +1277,15 @@ function openImp(){document.getElementById('imp-area').value='';document.getElem
 function closeImp(){document.getElementById('imp-modal').classList.remove('open');}
 function confirmImp(){
   try{const d=JSON.parse(document.getElementById('imp-area').value);
-    if(d.todos&&d.decisions){
-      S={todos:d.todos,decisions:d.decisions,reminders:d.reminders||[],habits:d.habits||[],habitLogs:d.habitLogs||{},challenges:d.challenges||[],
+    if(d.todos){
+      S={todos:d.todos,reminders:d.reminders||[],habits:d.habits||[],habitLogs:d.habitLogs||{},challenges:d.challenges||[],
          categories:d.categories&&d.categories.length?d.categories:JSON.parse(JSON.stringify(DEFAULT_CATS))};
       save();renderCatSelects();renderAll();closeImp();toast('✓ Import réussi');logA('drive','Données importées');}
     else toast('❌ Format invalide');}
   catch(e){toast('❌ JSON invalide');}
 }
-function clearAll(){if(!confirm('Tout effacer ?'))return;S={todos:[],decisions:[],reminders:[],habits:[],habitLogs:{},challenges:[],categories:JSON.parse(JSON.stringify(DEFAULT_CATS))};save();renderCatSelects();renderAll();renderLog();toast('Données effacées');logA('drive','Tout effacé');}
-function renderAll(){renderTodos();renderDecisions();renderReminders();renderHabits();renderChallenges();renderCourses();}
+function clearAll(){if(!confirm('Tout effacer ?'))return;S={todos:[],reminders:[],habits:[],habitLogs:{},challenges:[],categories:JSON.parse(JSON.stringify(DEFAULT_CATS))};save();renderCatSelects();renderAll();renderLog();toast('Données effacées');logA('drive','Tout effacé');}
+function renderAll(){renderTodos();renderReminders();renderHabits();renderChallenges();renderCourses();}
 document.getElementById('imp-modal').addEventListener('click',function(e){if(e.target===this)closeImp();});
 
 /* ══ GOOGLE DRIVE ══ */
@@ -1405,10 +1343,9 @@ async function drivePull(){
     const r=await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`,{headers:{Authorization:'Bearer '+drTok}});
     if(!r.ok)throw new Error('HTTP '+r.status);
     const d=await r.json();
-    if(!d.todos||!d.decisions)throw new Error('Format invalide');
+    if(!d.todos)throw new Error('Format invalide');
     S={
       todos:d.todos,
-      decisions:d.decisions,
       reminders:d.reminders||[],
       habits:d.habits||[],
       habitLogs:d.habitLogs||{},
@@ -1434,7 +1371,7 @@ function setupDrag(el,key,renderFn){
   el.addEventListener('dragstart',e=>{const it=e.target.closest('.item[draggable]');if(!it)return;dgId=it.dataset.id;dgKey=key;it.classList.add('dragging');e.dataTransfer.effectAllowed='move';});
   el.addEventListener('dragend',()=>{document.querySelectorAll('.item').forEach(i=>i.classList.remove('dragging','drag-over'));dgId=null;});
   el.addEventListener('dragover',e=>{e.preventDefault();const it=e.target.closest('.item[draggable]');if(!it||it.dataset.id===dgId)return;document.querySelectorAll('.item').forEach(i=>i.classList.remove('drag-over'));it.classList.add('drag-over');});
-  el.addEventListener('drop',e=>{e.preventDefault();const it=e.target.closest('.item[draggable]');if(!it||it.dataset.id===dgId||dgKey!==key)return;const arr=S[key];const fi=arr.findIndex(x=>x.id===dgId),ti=arr.findIndex(x=>x.id===it.dataset.id);if(fi===-1||ti===-1)return;const[m]=arr.splice(fi,1);arr.splice(ti,0,m);save();renderFn();logA(key==='todos'?'todo':key==='decisions'?'decision':'reminder','Réordonné');});
+  el.addEventListener('drop',e=>{e.preventDefault();const it=e.target.closest('.item[draggable]');if(!it||it.dataset.id===dgId||dgKey!==key)return;const arr=S[key];const fi=arr.findIndex(x=>x.id===dgId),ti=arr.findIndex(x=>x.id===it.dataset.id);if(fi===-1||ti===-1)return;const[m]=arr.splice(fi,1);arr.splice(ti,0,m);save();renderFn();logA(key==='todos'?'todo':'reminder','Réordonné');});
 }
 
 /* Mobile reorder */
@@ -1656,154 +1593,6 @@ function renderTodos(){
     <div class="stat"><div class="stat-n">${total}</div><div class="stat-l">Total</div></div>`;
 }
 
-/* ══ DECISIONS ══ */
-function addDecision(){
-  const v=document.getElementById('dec-in').value.trim();if(!v)return;
-  const d={id:uid(),text:v,status:document.getElementById('dec-st').value,reason:document.getElementById('dec-reason').value.trim(),
-    options:[],criteria:'',risks:'',review:{date:'',question:''},outcome:'',ts:Date.now()};
-  S.decisions.push(d);document.getElementById('dec-in').value='';document.getElementById('dec-reason').value='';autoSave();renderDecisions();logA('decision','Ajouté: "'+v+'"');
-}
-function saveDecision(id){
-  const d=S.decisions.find(x=>x.id===id);if(!d)return;
-  const txt=document.getElementById('edt-'+id).value.trim();if(!txt)return;
-  d.text=txt;
-  d.reason=document.getElementById('edr-'+id).value.trim();
-  d.status=document.getElementById('eds-'+id).value;
-  autoSave();closeEdit(id);renderDecisions();logA('decision','Modifié: "'+txt+'"');
-}
-function toggleDecPanel(id){
-  const p=document.getElementById('dp-'+id);
-  const btn=document.getElementById('dptoggle-'+id);
-  if(!p)return;
-  const open=p.classList.toggle('open');
-  btn.textContent=open?'▲ Masquer détails':'▼ Aide à la décision';
-}
-function addDecOpt(id){
-  const v=prompt('Nouvelle option :');if(!v||!v.trim())return;
-  const d=S.decisions.find(x=>x.id===id);if(!d)return;
-  if(!d.options)d.options=[];
-  d.options.push({text:v.trim(),chosen:false});
-  autoSave();renderDecisions();
-  // re-open panel
-  setTimeout(()=>{const p=document.getElementById('dp-'+id);if(p&&!p.classList.contains('open'))toggleDecPanel(id);},50);
-}
-function toggleDecOpt(id,idx){
-  const d=S.decisions.find(x=>x.id===id);if(!d||!d.options)return;
-  d.options[idx].chosen=!d.options[idx].chosen;
-  autoSave();
-  // update chip visually without full re-render
-  const chip=document.getElementById('dopt-'+id+'-'+idx);
-  if(chip)chip.classList.toggle('chosen',d.options[idx].chosen);
-}
-function saveDecField(id,field){
-  const d=S.decisions.find(x=>x.id===id);if(!d)return;
-  const el=document.getElementById('dfield-'+field+'-'+id);if(!el)return;
-  if(field==='review-date'){if(!d.review)d.review={};d.review.date=el.value;}
-  else if(field==='review-q'){if(!d.review)d.review={};d.review.question=el.value;}
-  else d[field]=el.value;
-  autoSave();
-  // if review date set, also create/update a reminder
-  if(field==='review-date'&&el.value){
-    const existing=S.reminders.find(r=>r._decId===id);
-    const question=(d.review&&d.review.question)?d.review.question:'Réévaluer: '+d.text;
-    if(existing){existing.date=el.value;existing.text=question;}
-    else{S.reminders.push({id:uid(),text:question,date:el.value,recur:'none',done:false,_decId:id,ts:Date.now()});}
-    autoSave();renderReminders();
-  }
-}
-function delDecision(id){
-  const d=S.decisions.find(x=>x.id===id);
-  if(!d) return;
-  S.decisions=S.decisions.filter(x=>x.id!==id);
-  autoSave();renderDecisions();
-  const undoId=pushUndo('decision',d.text,d);
-  logA('decision','Supprimé: "'+d.text+'"', undoId);
-}
-function setDecSt(id,s){const d=S.decisions.find(x=>x.id===id);if(d){d.status=s;autoSave();renderDecisions();logA('decision','"'+d.text+'" → '+s);}}
-function renderDecisions(){
-  const fk=['all','pending','done','rejected'],fl={all:'All',pending:'Pending',done:'Made',rejected:'Rejected'};
-  document.getElementById('dec-filters').innerHTML=fk.map(f=>`<button class="fb${dF===f?' on':''}" onclick="dF='${f}';renderDecisions()">${fl[f]}</button>`).join('');
-  let items=S.decisions;if(dF!=='all')items=items.filter(x=>x.status===dF);
-  items=[...items].sort((a,b)=>b.ts-a.ts);
-  const el=document.getElementById('dec-list');
-  el.innerHTML=items.length?items.map(d=>{
-    const opts=d.options||[];
-    const hasDetail=opts.length||(d.criteria&&d.criteria.trim())||(d.risks&&d.risks.trim())||((d.review)&&(d.review.date||d.review.question));
-    const optsHtml=opts.map((o,i)=>`<span class="dec-opt${o.chosen?' chosen':''}" id="dopt-${d.id}-${i}" onclick="toggleDecOpt('${d.id}',${i})">${esc(o.text)}</span>`).join('');
-    return `
-    <div class="item" draggable="true" data-id="${d.id}">
-      <div class="dh"><span></span><span></span><span></span></div>
-      <div class="reorder-btns">
-        <button class="rb" onclick="moveItem('decisions','${d.id}',-1,renderDecisions)">↑</button>
-        <button class="rb" onclick="moveItem('decisions','${d.id}',1,renderDecisions)">↓</button>
-      </div>
-      <div class="item-body">
-        <div class="item-text">${esc(d.text)}</div>
-        ${d.reason?`<div class="dec-reason">${esc(d.reason)}</div>`:''}
-        <div class="item-meta" style="margin-top:5px">
-          <select class="dsel" onchange="setDecSt('${d.id}',this.value)">
-            <option value="pending"${d.status==='pending'?' selected':''}>Pending</option>
-            <option value="done"${d.status==='done'?' selected':''}>Made</option>
-            <option value="rejected"${d.status==='rejected'?' selected':''}>Rejected</option>
-          </select>
-          <span class="meta-date">${fd(d.ts)}</span>
-        </div>
-        <!-- Detail panel -->
-        <div class="dec-panel" id="dp-${d.id}">
-          <div class="dec-field">
-            <div class="dec-field-label">Options envisagées <span>(clique pour marquer le choix retenu)</span></div>
-            <div class="dec-opts">
-              ${optsHtml}
-              <button class="dec-opt-add" onclick="addDecOpt('${d.id}')">+ option</button>
-            </div>
-          </div>
-          <div class="dec-field">
-            <div class="dec-field-label">Critères de choix <span>(optionnel)</span></div>
-            <textarea class="dec-ta" rows="2" id="dfield-criteria-${d.id}" placeholder="Ce qui compte vraiment pour toi…" onblur="saveDecField('${d.id}','criteria')">${esc(d.criteria||'')}</textarea>
-          </div>
-          <div class="dec-field">
-            <div class="dec-field-label">Risques / Incertitudes <span>(optionnel)</span></div>
-            <textarea class="dec-ta" rows="2" id="dfield-risks-${d.id}" placeholder="Ce qui pourrait mal tourner…" onblur="saveDecField('${d.id}','risks')">${esc(d.risks||'')}</textarea>
-          </div>
-          <div class="dec-field">
-            <div class="dec-field-label">Revue <span>(optionnel — crée un rappel automatique)</span></div>
-            <div class="dec-review-row">
-              <input type="date" class="dec-review-date" id="dfield-review-date-${d.id}" value="${(d.review&&d.review.date)||''}" onblur="saveDecField('${d.id}','review-date')">
-              <input type="text" class="dec-review-q" id="dfield-review-q-${d.id}" value="${esc((d.review&&d.review.question)||'')}" placeholder="Question à te poser ce jour-là…" onblur="saveDecField('${d.id}','review-q')">
-            </div>
-          </div>
-        </div>
-        <button class="dec-toggle" id="dptoggle-${d.id}" onclick="toggleDecPanel('${d.id}')">▼ Aide à la décision</button>
-        <div class="edit-form" id="ef-${d.id}" data-id="${d.id}">
-          <div class="edit-row">
-            <input class="edit-in" id="edt-${d.id}" type="text" value="${esc(d.text)}" onkeydown="if(event.key==='Escape')closeEdit('${d.id}')">
-          </div>
-          <div class="edit-row">
-            <input class="edit-in" id="edr-${d.id}" type="text" value="${esc(d.reason||'')}" placeholder="Raison / contexte…">
-            <select class="edit-in sm" id="eds-${d.id}">
-              <option value="pending"${d.status==='pending'?' selected':''}>Pending</option>
-              <option value="done"${d.status==='done'?' selected':''}>Made</option>
-              <option value="rejected"${d.status==='rejected'?' selected':''}>Rejected</option>
-            </select>
-          </div>
-          <div class="eact">
-            <button class="save-btn" onclick="saveDecision('${d.id}')">Enregistrer</button>
-            <button class="cancel-btn" onclick="closeEdit('${d.id}')">Annuler</button>
-          </div>
-        </div>
-      </div>
-      <button class="edit-btn" onclick="openEdit('${d.id}')" title="Modifier">✎</button>
-      <button class="del" onclick="delDecision('${d.id}')">×</button>
-    </div>`;
-  }).join(''):`<div class="empty">Aucune décision</div>`;
-  setupDrag(el,'decisions',renderDecisions);
-  const tot=S.decisions.length,pend=S.decisions.filter(x=>x.status==='pending').length,done=S.decisions.filter(x=>x.status==='done').length,rej=S.decisions.filter(x=>x.status==='rejected').length;
-  document.getElementById('dec-stats').innerHTML=`
-    <div class="stat"><div class="stat-n">${tot}</div><div class="stat-l">Total</div></div>
-    <div class="stat"><div class="stat-n">${pend}</div><div class="stat-l">Pending</div></div>
-    <div class="stat"><div class="stat-n">${done}</div><div class="stat-l">Made</div></div>
-    <div class="stat"><div class="stat-n">${rej}</div><div class="stat-l">Rejected</div></div>`;
-}
 
 /* ══ REMINDERS ══ */
 function addReminder(){
@@ -2045,9 +1834,9 @@ async function pollOnce(){
     );
     if(!dr.ok) throw new Error('HTTP '+dr.status);
     const d = await dr.json();
-    if(!d.todos || !d.decisions) throw new Error('Format invalide');
+    if(!d.todos) throw new Error('Format invalide');
     S = {
-      todos:d.todos, decisions:d.decisions, reminders:d.reminders||[],
+      todos:d.todos, reminders:d.reminders||[],
       habits:d.habits||[], habitLogs:d.habitLogs||{},
       challenges:d.challenges||S.challenges||[],
       categories:Array.isArray(d.categories)&&d.categories.length?d.categories:[]
