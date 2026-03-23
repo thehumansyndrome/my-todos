@@ -1364,6 +1364,7 @@ async function drivePull(){
       reminders:d.reminders||[],
       habits:d.habits||[],
       habitLogs:d.habitLogs||{},
+      challenges:d.challenges||S.challenges||[],
       categories:(d.categories&&d.categories.length)?d.categories:S.categories&&S.categories.length?S.categories:[]
     };
     ensureState();
@@ -1890,6 +1891,7 @@ async function pollOnce(){
     S = {
       todos:d.todos, decisions:d.decisions, reminders:d.reminders||[],
       habits:d.habits||[], habitLogs:d.habitLogs||{},
+      challenges:d.challenges||S.challenges||[],
       categories:Array.isArray(d.categories)&&d.categories.length?d.categories:[]
     };
     ensureState();
@@ -1944,7 +1946,12 @@ function updateChTypeUI(){
 }
 // Set default dates (today → +7)
 (function initChDates(){
-  const today=new Date(),end=new Date();end.setDate(today.getDate()+7);
+  const today=new Date();
+  // End = coming Sunday (or today if already Sunday)
+  const end=new Date(today);
+  const dayOfWeek=today.getDay(); // 0=Sun
+  const daysUntilSun=dayOfWeek===0?0:7-dayOfWeek;
+  end.setDate(today.getDate()+daysUntilSun);
   const fmt=d=>d.toISOString().slice(0,10);
   document.getElementById('ch-start').value=fmt(today);
   document.getElementById('ch-end').value=fmt(end);
