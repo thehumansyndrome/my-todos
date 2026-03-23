@@ -322,6 +322,18 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 
 /* ── MOBILE ── */
 .menu-btn{display:none;font-size:16px;}
+.hbtns-desktop{display:flex;align-items:center;gap:6px;}
+.mobile-more-btn{display:none;font-size:15px;letter-spacing:.05em;padding:4px 8px;}
+
+/* Mobile overflow menu */
+.mobile-menu{
+  display:none;
+  position:absolute;top:var(--header-h);right:0;left:0;
+  background:var(--card);border-bottom:1px solid var(--line);
+  padding:8px 10px;gap:6px;flex-wrap:wrap;
+  z-index:49;box-shadow:0 4px 12px rgba(0,0,0,.08);
+}
+.mobile-menu.open{display:flex;}
 /* Edit mode — reader-content becomes a split view */
 .reader-content.edit-mode{
   padding:0 !important;
@@ -341,6 +353,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 
 @media(max-width:640px){
   .menu-btn{display:flex;}
+  .mobile-more-btn{display:flex;}
+  .hbtns-desktop{display:none;}
+  #toc-btn{display:none !important;}
+  .mode-badge{display:none;}
   .sidebar{
     position:fixed;top:0;left:0;height:100%;z-index:100;
     transform:translateX(-100%);box-shadow:4px 0 20px rgba(0,0,0,.15);
@@ -348,11 +364,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
   .sidebar.open{transform:translateX(0);}
   .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:99;}
   .sidebar-overlay.open{display:block;}
-  .reader-content{padding:16px;}
+  .reader-content{padding:16px 18px 32px;}
   .search-wrap{display:none;}
   .journal-split{flex-direction:column;}
   .journal-edit{border-right:none;border-bottom:1px solid var(--line);}
-  #toc-btn{display:none !important;}
   /* Mobile edit: textarea full width, no preview */
   .reader-content.edit-mode{ flex-direction:column; }
   .edit-textarea{ flex:1; border-right:none; }
@@ -420,13 +435,26 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
       <div class="search-results" id="search-results"></div>
     </div>
     <div class="hspace"></div>
-    <button class="hbtn" id="toc-btn" onclick="toggleTOC()" title="Table des matières">§ TOC</button>
-    <button class="hbtn amber" id="journal-btn" onclick="toggleJournal()">✎ Journal</button>
-    <button class="hbtn" onclick="openUploadPanel()" title="Importer un vault DSCPA vers Drive">⬆ Vault</button>
-    <span class="mode-badge" id="mode-badge"></span>
-    <button class="hbtn" onclick="openSettings()"><span class="gdot" id="gdot"></span> Drive</button>
-    <button class="hbtn" onclick="downloadApp()" title="Télécharger vault-reader.html">⬇ HTML</button>
+    <!-- Desktop buttons -->
+    <div class="hbtns-desktop">
+      <button class="hbtn" id="toc-btn" onclick="toggleTOC()" title="Table des matières">§ TOC</button>
+      <button class="hbtn amber" id="journal-btn" onclick="toggleJournal()">✎ Journal</button>
+      <button class="hbtn" onclick="openUploadPanel()" title="Importer un vault DSCPA vers Drive">⬆ Vault</button>
+      <span class="mode-badge" id="mode-badge"></span>
+      <button class="hbtn" onclick="openSettings()"><span class="gdot" id="gdot"></span> Drive</button>
+      <button class="hbtn" onclick="downloadApp()" title="Télécharger vault-reader.html">⬇ HTML</button>
+    </div>
+    <!-- Always visible: theme + mobile overflow -->
     <button class="hbtn" id="theme-btn" onclick="toggleTheme()">☀︎</button>
+    <button class="hbtn mobile-more-btn" id="mobile-more-btn" onclick="toggleMobileMenu()">···</button>
+  </div>
+  <!-- Mobile overflow menu -->
+  <div class="mobile-menu" id="mobile-menu">
+    <button class="hbtn" id="toc-btn-m" onclick="toggleTOC();closeMobileMenu()">§ TOC</button>
+    <button class="hbtn amber" id="journal-btn-m" onclick="toggleJournal();closeMobileMenu()">✎ Journal</button>
+    <button class="hbtn" onclick="openUploadPanel();closeMobileMenu()">⬆ Vault</button>
+    <button class="hbtn" onclick="openSettings();closeMobileMenu()"><span class="gdot" id="gdot-m"></span> Drive</button>
+    <button class="hbtn" onclick="downloadApp();closeMobileMenu()">⬇ HTML</button>
   </div>
 
   <div class="body">
@@ -2325,6 +2353,24 @@ document.addEventListener('visibilitychange',()=>{
     }
   }
 });
+
+/* ══ MOBILE MENU ══ */
+function toggleMobileMenu(){
+  const m = document.getElementById('mobile-menu');
+  m.classList.toggle('open');
+}
+function closeMobileMenu(){
+  document.getElementById('mobile-menu').classList.remove('open');
+}
+// Sync gdot state to mobile menu gdot
+const origGdot = document.getElementById('gdot');
+if(origGdot){
+  const mo = new MutationObserver(()=>{
+    const gm = document.getElementById('gdot-m');
+    if(gm) gm.className = origGdot.className;
+  });
+  mo.observe(origGdot, {attributes:true, attributeFilter:['class']});
+}
 
 /* ══ DOWNLOAD APP ══ */
 function downloadApp(){
