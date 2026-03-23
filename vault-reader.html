@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Vault Reader</title>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
@@ -36,6 +36,9 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;overflow:hidden;}
 body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;transition:background .15s,color .15s;}
+/* Safe area for notch/bottom bar */
+.app{padding-bottom:env(safe-area-inset-bottom);}
+.header{padding-left:max(14px, env(safe-area-inset-left));padding-right:max(14px, env(safe-area-inset-right));}
 
 /* ── SCROLLBARS ── */
 *{scrollbar-width:thin;scrollbar-color:var(--line2) transparent;}
@@ -364,7 +367,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
   .sidebar.open{transform:translateX(0);}
   .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:99;}
   .sidebar-overlay.open{display:block;}
-  .reader-content{padding:16px 18px 32px;}
+  .reader-content{padding:16px 18px calc(32px + env(safe-area-inset-bottom));}
   .search-wrap{display:none;}
   .journal-split{flex-direction:column;}
   .journal-edit{border-right:none;border-bottom:1px solid var(--line);}
