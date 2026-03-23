@@ -1591,7 +1591,7 @@ function renderDecisions(){
           <span class="meta-date">${fd(d.ts)}</span>
         </div>
         <!-- Detail panel -->
-        <div class="dec-panel${hasDetail?' open':''}" id="dp-${d.id}">
+        <div class="dec-panel" id="dp-${d.id}">
           <div class="dec-field">
             <div class="dec-field-label">Options envisagées <span>(clique pour marquer le choix retenu)</span></div>
             <div class="dec-opts">
@@ -1615,7 +1615,7 @@ function renderDecisions(){
             </div>
           </div>
         </div>
-        <button class="dec-toggle" id="dptoggle-${d.id}" onclick="toggleDecPanel('${d.id}')">${hasDetail?'▲ Masquer détails':'▼ Aide à la décision'}</button>
+        <button class="dec-toggle" id="dptoggle-${d.id}" onclick="toggleDecPanel('${d.id}')">▼ Aide à la décision</button>
         <div class="edit-form" id="ef-${d.id}" data-id="${d.id}">
           <div class="edit-row">
             <input class="edit-in" id="edt-${d.id}" type="text" value="${esc(d.text)}" onkeydown="if(event.key==='Escape')closeEdit('${d.id}')">
