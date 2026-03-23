@@ -540,6 +540,7 @@ body{
 .at-reminder{background:var(--amber-bg);color:var(--amber);}
 .at-habit{background:var(--green-bg);color:var(--green);}
 .at-drive{background:var(--bg2);color:var(--text2);}
+.at-challenge{background:var(--amber-bg);color:var(--amber);}
 
 /* ── TOAST ── */
 #toast{
@@ -574,6 +575,58 @@ body{
 }
 #imp-area:focus{border-color:var(--accent);}
 .modal-footer{display:flex;gap:6px;justify-content:flex-end;margin-top:10px;}
+
+/* ── CHALLENGES ── */
+.ch-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r2);padding:12px 14px;margin-bottom:8px;}
+.ch-card.done{opacity:.7;}
+.ch-header{display:flex;align-items:flex-start;gap:10px;}
+.ch-title{flex:1;font-size:14px;font-weight:500;color:var(--text);line-height:1.4;}
+.ch-badge{font-size:10px;font-weight:500;padding:2px 7px;border-radius:3px;white-space:nowrap;flex-shrink:0;}
+.ch-badge.active{background:var(--blue-bg);color:var(--blue);}
+.ch-badge.done{background:var(--green-bg);color:var(--green);}
+.ch-badge.failed{background:var(--red-bg);color:var(--red);}
+.ch-badge.abandoned{background:var(--bg2);color:var(--text3);}
+.ch-meta{font-size:11px;color:var(--text3);margin-top:4px;display:flex;gap:10px;flex-wrap:wrap;}
+.ch-progress{margin:10px 0 6px;}
+.ch-bar-bg{background:var(--bg2);border-radius:4px;height:6px;overflow:hidden;margin-bottom:4px;}
+.ch-bar{height:6px;border-radius:4px;background:var(--blue);transition:width .3s;}
+.ch-bar.success{background:var(--green);}
+.ch-bar-label{font-size:11px;color:var(--text3);display:flex;justify-content:space-between;}
+.ch-days{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0;}
+.ch-day{font-size:11px;padding:4px 8px;border-radius:var(--r);border:1px solid var(--line2);color:var(--text2);background:var(--bg);cursor:pointer;transition:all .12s;font-family:var(--mono);}
+.ch-day:hover{border-color:var(--blue);color:var(--blue);}
+.ch-day.checked{background:var(--green-bg);color:var(--green);border-color:var(--green);font-weight:500;}
+.ch-day.missed{background:var(--red-bg);color:var(--red);border-color:var(--red);text-decoration:line-through;}
+.ch-day.future{opacity:.5;cursor:default;}
+.ch-counter{display:flex;align-items:center;gap:10px;margin:8px 0;}
+.ch-count-val{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--text);}
+.ch-count-target{font-size:12px;color:var(--text3);}
+.ch-count-btn{font-size:18px;width:32px;height:32px;border-radius:50%;border:1px solid var(--line2);background:var(--bg);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;}
+.ch-count-btn:hover{background:var(--blue-bg);border-color:var(--blue);color:var(--blue);}
+.ch-count-btn.minus{font-size:16px;}
+.ch-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.ch-btn{font-family:var(--mono);font-size:10px;padding:4px 9px;border-radius:var(--r);border:1px solid var(--line2);background:var(--bg);color:var(--text2);cursor:pointer;transition:all .12s;}
+.ch-btn:hover{background:var(--bg2);color:var(--text);}
+.ch-btn.success{border-color:var(--green);color:var(--green);}
+.ch-btn.success:hover{background:var(--green-bg);}
+.ch-btn.danger{border-color:var(--red);color:var(--red);}
+.ch-btn.danger:hover{background:var(--red-bg);}
+.ch-note{margin-top:8px;font-size:12px;color:var(--text2);font-style:italic;padding:6px 8px;background:var(--bg2);border-radius:var(--r);border-left:3px solid var(--green);}
+.ch-bilan{margin-top:8px;padding:10px;background:var(--bg2);border-radius:var(--r);border:1px solid var(--line);}
+.ch-bilan-title{font-size:11px;font-weight:500;color:var(--text);margin-bottom:6px;font-family:var(--mono);}
+.ch-bilan textarea{width:100%;font-family:var(--sans);font-size:12px;padding:6px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);resize:none;outline:none;}
+.ch-bilan textarea:focus{border-color:var(--accent);}
+.ch-bilan-actions{display:flex;gap:6px;margin-top:6px;}
+.ch-score{font-family:var(--mono);font-size:20px;font-weight:500;margin-bottom:4px;}
+.ch-score.high{color:var(--green);}
+.ch-score.mid{color:var(--amber);}
+.ch-score.low{color:var(--red);}
+/* add-row type selector */
+.ch-type-row{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:center;}
+.ch-type-row label{font-size:12px;color:var(--text2);}
+#ch-days-picker{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;}
+.ch-dp-day{font-size:11px;padding:3px 7px;border-radius:var(--r);border:1px solid var(--line2);background:var(--bg);color:var(--text2);cursor:pointer;font-family:var(--mono);}
+.ch-dp-day.on{background:var(--blue-bg);color:var(--blue);border-color:var(--blue);font-weight:500;}
 </style>
 </head>
 <body>
@@ -604,6 +657,7 @@ body{
     <button class="tab" onclick="switchTab('decisions')">Decisions</button>
     <button class="tab" onclick="switchTab('reminders')">Reminders</button>
     <button class="tab" onclick="switchTab('habits')">Habits</button>
+    <button class="tab" onclick="switchTab('challenges')">Challenges</button>
     <button class="tab" onclick="switchTab('log')">Log</button>
   </div>
 </div>
@@ -691,6 +745,42 @@ body{
     </div>
     <div class="filters" id="hab-filters"></div>
     <div id="hab-list"></div>
+  </div>
+
+  <!-- ══ CHALLENGES ══ -->
+  <div id="tab-challenges" class="section">
+    <div class="stats" id="ch-stats"></div>
+    <div class="add-row" style="flex-direction:column;align-items:stretch;">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        <input class="main-in" type="text" id="ch-in" placeholder="Nouveau challenge…" onkeydown="if(event.key==='Enter')addChallenge()" style="flex:2;min-width:160px;">
+        <input type="date" id="ch-start" style="font-family:var(--sans);font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;">
+        <input type="date" id="ch-end" style="font-family:var(--sans);font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;">
+        <button class="add-btn" onclick="addChallenge()">+ Add</button>
+      </div>
+      <div class="ch-type-row">
+        <label>Type :</label>
+        <select id="ch-type" onchange="updateChTypeUI()" style="font-family:var(--sans);font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;">
+          <option value="days">Jours spécifiques</option>
+          <option value="counter">Compteur</option>
+        </select>
+        <span id="ch-counter-wrap" style="display:none;align-items:center;gap:4px;">
+          <label>Objectif :</label>
+          <input type="number" id="ch-target" min="1" value="3" style="width:60px;font-family:var(--sans);font-size:12px;padding:4px 6px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;">
+        </span>
+      </div>
+      <div id="ch-days-picker">
+        <span style="font-size:12px;color:var(--text2);margin-right:4px;">Jours :</span>
+        <button class="ch-dp-day" data-d="1">Lun</button>
+        <button class="ch-dp-day" data-d="2">Mar</button>
+        <button class="ch-dp-day" data-d="3">Mer</button>
+        <button class="ch-dp-day" data-d="4">Jeu</button>
+        <button class="ch-dp-day" data-d="5">Ven</button>
+        <button class="ch-dp-day" data-d="6">Sam</button>
+        <button class="ch-dp-day" data-d="0">Dim</button>
+      </div>
+    </div>
+    <div class="filters" id="ch-filters"></div>
+    <div id="ch-list"></div>
   </div>
 
   <!-- ══ LOG ══ -->
@@ -801,7 +891,7 @@ body{
 /* ══ CONSTANTS ══ */
 const P='projet001';
 const SK='td_v4_'+P, AK='td_act_'+P, TK='td_theme_'+P, DK='td_drive_'+P;
-const TABS=['todos','decisions','reminders','habits','log'];
+const TABS=['todos','decisions','reminders','habits','challenges','log'];
 
 /* ══ DEFAULT CATEGORIES ══ */
 const DEFAULT_CATS = [
@@ -811,9 +901,9 @@ const DEFAULT_CATS = [
 ];
 
 /* ══ STATE ══ */
-let S={todos:[],decisions:[],reminders:[],habits:[],habitLogs:{},categories:[]};
+let S={todos:[],decisions:[],reminders:[],habits:[],habitLogs:{},categories:[],challenges:[]};
 let AL=[];
-let wOff=0, tF='all', dF='all', rF='all', hF='all';
+let wOff=0, tF='all', dF='all', rF='all', hF='all', chF='all';
 
 function ensureState(){
   // Guarantee every key always exists — defensive against partial/missing data
@@ -824,6 +914,7 @@ function ensureState(){
   if(!S.habitLogs) S.habitLogs={};
   if(!S.categories || !Array.isArray(S.categories)) S.categories=[];
   if(!S.categories.length) S.categories=JSON.parse(JSON.stringify(DEFAULT_CATS));
+  if(!S.challenges) S.challenges=[];
   // Migrate existing decisions — add new fields if missing
   S.decisions.forEach(d=>{
     if(!d.options) d.options=[];
@@ -844,7 +935,7 @@ function load(){
       S={
         todos:p.todos||[],decisions:p.decisions||[],
         reminders:p.reminders||[],habits:p.habits||[],
-        habitLogs:p.habitLogs||{},
+        habitLogs:p.habitLogs||{},challenges:p.challenges||[],
         categories:Array.isArray(p.categories)?p.categories:[]
       };
     }
@@ -1002,6 +1093,8 @@ function restoreItem(undoId){
     if(!S.todos.find(x=>x.id===snapshot.id)) S.todos.push(snapshot);
   } else if(tag==='decision'){
     if(!S.decisions.find(x=>x.id===snapshot.id)) S.decisions.push(snapshot);
+  } else if(tag==='challenge'){
+    if(!S.challenges.find(x=>x.id===snapshot.id)) S.challenges.push(snapshot);
   } else if(tag==='reminder'){
     if(!S.reminders.find(x=>x.id===snapshot.id)) S.reminders.push(snapshot);
   } else if(tag==='habit'){
@@ -1051,7 +1144,7 @@ function renderAL(){
   const el=document.getElementById('act-list');
   const e=[...AL].reverse().slice(0,100);
   if(!e.length){el.innerHTML='<div class="empty">Aucune activité</div>';return;}
-  const tc={todo:'at-todo',decision:'at-decision',reminder:'at-reminder',habit:'at-habit',drive:'at-drive'};
+  const tc={todo:'at-todo',decision:'at-decision',reminder:'at-reminder',habit:'at-habit',challenge:'at-challenge',drive:'at-drive'};
   // Check which undoIds are still available
   const availableUndos = new Set(undoStack.map(x=>x.undoId));
   el.innerHTML=e.map(x=>{
@@ -1087,6 +1180,7 @@ function switchTab(t){
   document.getElementById('tab-'+t).classList.add('active');
   if(t==='log'){renderLog();renderAL();loadDriveConf();renderCatManager();}
   if(t==='habits')renderHabits();
+  if(t==='challenges')renderChallenges();
 }
 
 /* ══ THEME ══ */
@@ -1198,14 +1292,14 @@ function closeImp(){document.getElementById('imp-modal').classList.remove('open'
 function confirmImp(){
   try{const d=JSON.parse(document.getElementById('imp-area').value);
     if(d.todos&&d.decisions){
-      S={todos:d.todos,decisions:d.decisions,reminders:d.reminders||[],habits:d.habits||[],habitLogs:d.habitLogs||{},
+      S={todos:d.todos,decisions:d.decisions,reminders:d.reminders||[],habits:d.habits||[],habitLogs:d.habitLogs||{},challenges:d.challenges||[],
          categories:d.categories&&d.categories.length?d.categories:JSON.parse(JSON.stringify(DEFAULT_CATS))};
       save();renderCatSelects();renderAll();closeImp();toast('✓ Import réussi');logA('drive','Données importées');}
     else toast('❌ Format invalide');}
   catch(e){toast('❌ JSON invalide');}
 }
-function clearAll(){if(!confirm('Tout effacer ?'))return;S={todos:[],decisions:[],reminders:[],habits:[],habitLogs:{},categories:JSON.parse(JSON.stringify(DEFAULT_CATS))};save();renderCatSelects();renderAll();renderLog();toast('Données effacées');logA('drive','Tout effacé');}
-function renderAll(){renderTodos();renderDecisions();renderReminders();renderHabits();}
+function clearAll(){if(!confirm('Tout effacer ?'))return;S={todos:[],decisions:[],reminders:[],habits:[],habitLogs:{},challenges:[],categories:JSON.parse(JSON.stringify(DEFAULT_CATS))};save();renderCatSelects();renderAll();renderLog();toast('Données effacées');logA('drive','Tout effacé');}
+function renderAll(){renderTodos();renderDecisions();renderReminders();renderHabits();renderChallenges();}
 document.getElementById('imp-modal').addEventListener('click',function(e){if(e.target===this)closeImp();});
 
 /* ══ GOOGLE DRIVE ══ */
@@ -1834,6 +1928,222 @@ document.addEventListener('visibilitychange', ()=>{
 
 /* ══ INIT ══ */
 renderCatSelects();
+
+/* ══════════════════════════════════
+   CHALLENGES
+══════════════════════════════════ */
+// Day picker toggle
+document.querySelectorAll('.ch-dp-day').forEach(b=>{
+  b.addEventListener('click',()=>b.classList.toggle('on'));
+});
+function updateChTypeUI(){
+  const t=document.getElementById('ch-type').value;
+  document.getElementById('ch-days-picker').style.display=t==='days'?'flex':'none';
+  const cw=document.getElementById('ch-counter-wrap');
+  cw.style.display=t==='counter'?'flex':'none';
+}
+// Set default dates (today → +7)
+(function initChDates(){
+  const today=new Date(),end=new Date();end.setDate(today.getDate()+7);
+  const fmt=d=>d.toISOString().slice(0,10);
+  document.getElementById('ch-start').value=fmt(today);
+  document.getElementById('ch-end').value=fmt(end);
+})();
+
+function addChallenge(){
+  const txt=document.getElementById('ch-in').value.trim();if(!txt)return;
+  const type=document.getElementById('ch-type').value;
+  const start=document.getElementById('ch-start').value;
+  const end=document.getElementById('ch-end').value;
+  if(!start||!end){toast('⚠ Définis une date de début et de fin');return;}
+  if(start>end){toast('⚠ La date de fin doit être après le début');return;}
+  const ch={id:uid(),text:txt,type,dateStart:start,dateEnd:end,
+    target:type==='counter'?parseInt(document.getElementById('ch-target').value)||3:0,
+    days:type==='days'?buildDayDates(start,end):[], logs:[],
+    status:'active',note:'',ts:Date.now()};
+  S.challenges.push(ch);
+  document.getElementById('ch-in').value='';
+  // reset day picker
+  document.querySelectorAll('.ch-dp-day').forEach(b=>b.classList.remove('on'));
+  autoSave();renderChallenges();logA('challenge','Ajouté: "'+txt+'"');
+}
+
+function buildDayDates(start,end){
+  // Return all dates between start/end matching selected weekdays
+  const sel=[...document.querySelectorAll('.ch-dp-day.on')].map(b=>parseInt(b.dataset.d));
+  if(!sel.length)return[];
+  const dates=[];const d=new Date(start);const e=new Date(end);
+  while(d<=e){if(sel.includes(d.getDay()))dates.push(d.toISOString().slice(0,10));d.setDate(d.getDate()+1);}
+  return dates;
+}
+
+function chToggleDay(id,date){
+  const ch=S.challenges.find(x=>x.id===id);if(!ch)return;
+  const today=new Date().toISOString().slice(0,10);
+  if(date>today){toast('⚠ Tu ne peux pas cocher une date future');return;}
+  const idx=ch.logs.indexOf(date);
+  if(idx>=0)ch.logs.splice(idx,1);else ch.logs.push(date);
+  autoSave();renderChallenges();
+}
+
+function chIncrement(id,delta){
+  const ch=S.challenges.find(x=>x.id===id);if(!ch)return;
+  const cur=ch.logs.length;
+  const next=Math.max(0,cur+delta);
+  // logs array stores count as array of timestamps for counter type
+  if(delta>0)ch.logs.push(new Date().toISOString().slice(0,10));
+  else if(ch.logs.length>0)ch.logs.pop();
+  autoSave();renderChallenges();
+}
+
+function chProgress(ch){
+  if(ch.type==='days'){
+    const total=ch.days.length;if(!total)return{done:0,total:0,pct:0};
+    const done=ch.logs.length;return{done,total,pct:Math.round(done/total*100)};
+  }else{
+    const done=ch.logs.length;const total=ch.target||1;
+    return{done,total,pct:Math.min(100,Math.round(done/total*100))};
+  }
+}
+
+function chAutoStatus(ch){
+  if(ch.status!=='active')return ch.status;
+  const today=new Date().toISOString().slice(0,10);
+  if(today<=ch.dateEnd)return'active';
+  // expired — auto-close
+  const p=chProgress(ch);
+  return p.pct>=100?'done':p.pct>=50?'done':'failed';
+}
+
+function openBilan(id){
+  const el=document.getElementById('ch-bilan-'+id);
+  if(el)el.style.display=el.style.display==='none'?'block':'none';
+}
+
+function saveBilan(id){
+  const ch=S.challenges.find(x=>x.id===id);if(!ch)return;
+  const note=document.getElementById('ch-bilan-note-'+id).value.trim();
+  const status=document.getElementById('ch-bilan-status-'+id).value;
+  ch.note=note;ch.status=status;
+  autoSave();renderChallenges();logA('challenge','Bilan: "'+ch.text+'" → '+status);
+  toast('✓ Bilan enregistré');
+}
+
+function delChallenge(id){
+  const ch=S.challenges.find(x=>x.id===id);if(!ch)return;
+  S.challenges=S.challenges.filter(x=>x.id!==id);
+  autoSave();renderChallenges();
+  const undoId=pushUndo('challenge',ch.text,ch);
+  logA('challenge','Supprimé: "'+ch.text+'"',undoId);
+}
+
+function renderChallenges(){
+  const today=new Date().toISOString().slice(0,10);
+  // auto-update expired statuses
+  S.challenges.forEach(ch=>{if(ch.status==='active'&&today>ch.dateEnd)ch.status=chAutoStatus(ch);});
+
+  const fk=['all','active','done','failed'],fl={all:'All',active:'Active',done:'Done',failed:'Failed'};
+  document.getElementById('ch-filters').innerHTML=fk.map(f=>`<button class="fb${chF===f?' on':''}" onclick="chF='${f}';renderChallenges()">${fl[f]}</button>`).join('');
+
+  let items=[...S.challenges].sort((a,b)=>b.ts-a.ts);
+  if(chF!=='all')items=items.filter(x=>x.status===chF);
+
+  const el=document.getElementById('ch-list');
+  if(!items.length){el.innerHTML='<div class="empty">Aucun challenge</div>';renderChStats();return;}
+
+  el.innerHTML=items.map(ch=>{
+    const p=chProgress(ch);
+    const st=ch.status;
+    const expired=today>ch.dateEnd;
+    const barClass=p.pct>=100?'success':'';
+
+    // Days chips
+    let bodyHtml='';
+    if(ch.type==='days'){
+      const dayNames=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+      bodyHtml=`<div class="ch-days">`+ch.days.map(d=>{
+        const checked=ch.logs.includes(d);
+        const isPast=d<today;const isFuture=d>today;
+        const cls=checked?'checked':isPast&&!checked&&st==='active'?'missed':isFuture?'future':'';
+        const clickable=!isFuture&&st==='active'?`onclick="chToggleDay('${ch.id}','${d}')"`:'' ;
+        const label=new Date(d+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
+        return `<span class="ch-day ${cls}" ${clickable}>${label}</span>`;
+      }).join('')+`</div>`;
+    }else{
+      const canInc=st==='active';
+      bodyHtml=`<div class="ch-counter">
+        ${canInc?`<button class="ch-count-btn minus" onclick="chIncrement('${ch.id}',-1)">−</button>`:''}
+        <span class="ch-count-val">${p.done}</span>
+        <span class="ch-count-target">/ ${p.total}</span>
+        ${canInc?`<button class="ch-count-btn" onclick="chIncrement('${ch.id}',1)">+</button>`:''}
+      </div>`;
+    }
+
+    // Score display for finished
+    let scoreHtml='';
+    if(st!=='active'){
+      const cls=p.pct>=80?'high':p.pct>=50?'mid':'low';
+      scoreHtml=`<div class="ch-score ${cls}">${p.pct}%</div>`;
+    }
+
+    // Note
+    const noteHtml=ch.note?`<div class="ch-note">${esc(ch.note)}</div>`:'';
+
+    // Bilan panel
+    const bilanHtml=`<div class="ch-bilan" id="ch-bilan-${ch.id}" style="display:none;">
+      <div class="ch-bilan-title">Bilan du challenge</div>
+      ${scoreHtml}
+      <textarea id="ch-bilan-note-${ch.id}" rows="3" placeholder="Qu'est-ce que tu retiens de ce challenge ?">${esc(ch.note)}</textarea>
+      <div class="ch-bilan-actions">
+        <select id="ch-bilan-status-${ch.id}" style="font-family:var(--sans);font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;">
+          <option value="done"${ch.status==='done'?' selected':''}>✓ Réussi</option>
+          <option value="failed"${ch.status==='failed'?' selected':''}>✗ Échoué</option>
+          <option value="abandoned"${ch.status==='abandoned'?' selected':''}>— Abandonné</option>
+        </select>
+        <button class="ch-btn success" onclick="saveBilan('${ch.id}')">Enregistrer</button>
+      </div>
+    </div>`;
+
+    return `<div class="ch-card${st!=='active'?' done':''}">
+      <div class="ch-header">
+        <div>
+          <div class="ch-title">${esc(ch.text)}</div>
+          <div class="ch-meta">
+            <span>${ch.dateStart} → ${ch.dateEnd}</span>
+            <span>${ch.type==='days'?ch.days.length+' jour(s) prévu(s)':'Objectif: '+ch.target}</span>
+          </div>
+        </div>
+        <span class="ch-badge ${st}">${st==='active'?'Actif':st==='done'?'Réussi':st==='failed'?'Échoué':'Abandonné'}</span>
+      </div>
+      <div class="ch-progress">
+        <div class="ch-bar-bg"><div class="ch-bar ${barClass}" style="width:${p.pct}%"></div></div>
+        <div class="ch-bar-label"><span>${p.done} / ${p.total}</span><span>${p.pct}%</span></div>
+      </div>
+      ${bodyHtml}
+      ${noteHtml}
+      ${bilanHtml}
+      <div class="ch-actions">
+        ${st==='active'&&expired?`<button class="ch-btn success" onclick="openBilan('${ch.id}')">✓ Clore le bilan</button>`:''}
+        ${st!=='active'?`<button class="ch-btn" onclick="openBilan('${ch.id}')">✎ Bilan</button>`:''}
+        <button class="ch-btn danger" onclick="delChallenge('${ch.id}')">× Supprimer</button>
+      </div>
+    </div>`;
+  }).join('');
+  renderChStats();
+}
+
+function renderChStats(){
+  const tot=S.challenges.length;
+  const act=S.challenges.filter(x=>x.status==='active').length;
+  const done=S.challenges.filter(x=>x.status==='done').length;
+  const pct=tot?Math.round(done/tot*100):0;
+  document.getElementById('ch-stats').innerHTML=`
+    <div class="stat"><div class="stat-n">${tot}</div><div class="stat-l">Total</div></div>
+    <div class="stat"><div class="stat-n">${act}</div><div class="stat-l">Actifs</div></div>
+    <div class="stat"><div class="stat-n">${done}</div><div class="stat-l">Réussis</div></div>
+    <div class="stat"><div class="stat-n">${pct}%</div><div class="stat-l">Taux</div></div>`;
+}
+
 renderAll();
 loadDriveConf();
 updateUndoBtn();
