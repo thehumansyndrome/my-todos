@@ -1413,6 +1413,7 @@ async function drivePull(){
       habits:d.habits||[],
       habitLogs:d.habitLogs||{},
       challenges:d.challenges||S.challenges||[],
+      courses:d.courses||S.courses||[],
       categories:(d.categories&&d.categories.length)?d.categories:S.categories&&S.categories.length?S.categories:[]
     };
     ensureState();
