@@ -627,6 +627,18 @@ body{
 #ch-days-picker{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;}
 .ch-dp-day{font-size:11px;padding:3px 7px;border-radius:var(--r);border:1px solid var(--line2);background:var(--bg);color:var(--text2);cursor:pointer;font-family:var(--mono);}
 .ch-dp-day.on{background:var(--blue-bg);color:var(--blue);border-color:var(--blue);font-weight:500;}
+
+/* ── DONE SECTION ── */
+.done-section{margin-top:20px;}
+.done-section-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;cursor:pointer;user-select:none;}
+.done-section-title{font-family:var(--mono);font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);}
+.done-section-count{font-family:var(--mono);font-size:10px;padding:1px 6px;border-radius:3px;background:var(--bg2);color:var(--text3);border:1px solid var(--line);}
+.done-chevron{font-size:10px;color:var(--text3);transition:transform .15s;}
+.done-chevron.open{transform:rotate(180deg);}
+.done-list{display:none;}
+.done-list.open{display:block;}
+.archive-btn{font-family:var(--mono);font-size:10px;padding:3px 9px;border-radius:var(--r);border:1px solid var(--line2);background:var(--bg);color:var(--text3);cursor:pointer;margin-left:auto;transition:all .12s;}
+.archive-btn:hover{background:var(--amber-bg);color:var(--amber);border-color:var(--amber);}
 </style>
 </head>
 <body>
@@ -1429,73 +1441,183 @@ function delTodo(id){
   const undoId=pushUndo('todo',t.text,t);
   logA('todo','Supprimé: "'+t.text+'"', undoId);
 }
+let doneSectionOpen = false;
+
+function todoItemHtml(t){
+  const cat = getCatById(t.cat);
+  const catBadge = `<span style="font-family:var(--mono);font-size:9px;font-weight:500;padding:1px 5px;border-radius:2px;letter-spacing:.04em;text-transform:uppercase;background:${cat.color};color:${cat.textColor};">${esc(cat.label)}</span>`;
+  const catOptions = S.categories.map(c=>`<option value="${c.id}"${t.cat===c.id?' selected':''}>${c.label}</option>`).join('');
+  const pl={p1:'p1',p2:'p2',p3:'p3'};
+  return `
+  <div class="item${t.done?' done':''}" draggable="true" data-id="${t.id}">
+    <div class="dh"><span></span><span></span><span></span></div>
+    <div class="reorder-btns">
+      <button class="rb" onclick="moveItem('todos','${t.id}',-1,renderTodos)">↑</button>
+      <button class="rb" onclick="moveItem('todos','${t.id}',1,renderTodos)">↓</button>
+    </div>
+    <input type="checkbox" class="item-check" ${t.done?'checked':''} onchange="toggleTodo('${t.id}')">
+    <div class="item-body">
+      <div class="item-text">${esc(t.text)}</div>
+      <div class="item-meta">
+        <span class="tag ${pl[t.pri]||'p2'}">${t.pri.toUpperCase()}</span>
+        ${catBadge}
+        <span class="meta-date">${fd(t.ts)}</span>
+      </div>
+      <div class="edit-form" id="ef-${t.id}" data-id="${t.id}">
+        <div class="edit-row">
+          <input class="edit-in" id="et-${t.id}" type="text" value="${esc(t.text)}" onkeydown="if(event.key==='Enter')saveTodo('${t.id}');if(event.key==='Escape')closeEdit('${t.id}')">
+          <select class="edit-in sm" id="ec-${t.id}">${catOptions}</select>
+          <select class="edit-in sm" id="ep-${t.id}">
+            <option value="p1"${t.pri==='p1'?' selected':''}>P1</option>
+            <option value="p2"${t.pri==='p2'?' selected':''}>P2</option>
+            <option value="p3"${t.pri==='p3'?' selected':''}>P3</option>
+          </select>
+        </div>
+        <div class="eact">
+          <button class="save-btn" onclick="saveTodo('${t.id}')">Enregistrer</button>
+          <button class="cancel-btn" onclick="closeEdit('${t.id}')">Annuler</button>
+        </div>
+      </div>
+    </div>
+    <button class="edit-btn" onclick="openEdit('${t.id}')" title="Modifier">✎</button>
+    <button class="del" onclick="delTodo('${t.id}')">×</button>
+  </div>`;
+}
+
+function toggleDoneSection(){
+  doneSectionOpen=!doneSectionOpen;
+  const list=document.getElementById('done-list');
+  const chev=document.getElementById('done-chevron');
+  if(list){list.classList.toggle('open',doneSectionOpen);}
+  if(chev){chev.classList.toggle('open',doneSectionOpen);}
+}
+
+const ARCHIVE_FILENAME = 'projet001-archive.json';
+let archFid = null;
+
+async function drFindOrCreateArchive(){
+  if(archFid) return archFid;
+  const fn = ARCHIVE_FILENAME;
+  const q = encodeURIComponent(`name='${fn}' and trashed=false`);
+  const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`,
+    {headers:{Authorization:'Bearer '+drTok}});
+  const d = await r.json();
+  if(d.files && d.files.length){ archFid=d.files[0].id; return archFid; }
+  // Create empty archive file
+  const bd='---B271828';
+  const meta=JSON.stringify({name:fn,mimeType:'application/json'});
+  const body=JSON.stringify({archives:[]},null,2);
+  const mp=`--${bd}
+Content-Type: application/json
+
+${meta}
+--${bd}
+Content-Type: application/json
+
+${body}
+--${bd}--`;
+  const cr=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
+    {method:'POST',headers:{Authorization:'Bearer '+drTok,'Content-Type':`multipart/related; boundary="${bd}"`},body:mp});
+  const cd=await cr.json();
+  archFid=cd.id;
+  return archFid;
+}
+
+async function pushToArchive(items){
+  if(!drTok){ toast('⚠ Drive non connecté — archive locale uniquement'); return false; }
+  try {
+    const fid = await drFindOrCreateArchive();
+    // Read existing archive
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fid}?alt=media`,
+      {headers:{Authorization:'Bearer '+drTok}});
+    let existing = {archives:[]};
+    if(r.ok){ try{ existing=await r.json(); if(!existing.archives) existing.archives=[]; }catch(e){} }
+    // Append new entries with archivedAt timestamp
+    const now = new Date().toISOString();
+    items.forEach(t=>{
+      existing.archives.push({...t, archivedAt:now, catLabel:getCatById(t.cat).label});
+    });
+    // Push back
+    const wr = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fid}?uploadType=media`,
+      {method:'PATCH', headers:{Authorization:'Bearer '+drTok,'Content-Type':'application/json'},
+       body:JSON.stringify(existing,null,2)});
+    if(!wr.ok) throw new Error('HTTP '+wr.status);
+    return true;
+  } catch(e) {
+    console.warn('[archive]',e.message);
+    toast('⚠ Archive Drive échouée : '+e.message);
+    return false;
+  }
+}
+
+async function archiveDone(){
+  const doneItems=S.todos.filter(x=>x.done);
+  if(!doneItems.length){toast('Aucune tâche terminée à archiver');return;}
+  if(!confirm('Archiver '+doneItems.length+' tâche(s) terminée(s) ?\n\nElles seront sauvegardées dans projet001-archive.json sur Drive et supprimées de la liste.'))return;
+  // Log local
+  doneItems.forEach(t=>{
+    logA('todo','✓ Archivé: "'+t.text+'" ('+getCatById(t.cat).label+' · '+t.pri.toUpperCase()+')');
+  });
+  // Push to Drive archive
+  toast('💾 Archivage en cours…');
+  const ok = await pushToArchive(doneItems);
+  // Remove from todos
+  S.todos=S.todos.filter(x=>!x.done);
+  autoSave();renderTodos();
+  if(ok){
+    toast('✓ '+doneItems.length+' tâche(s) archivée(s) → projet001-archive.json');
+    logA('drive','Archive → '+ARCHIVE_FILENAME+' ('+doneItems.length+' tâches)');
+  } else {
+    toast('✓ '+doneItems.length+' tâche(s) supprimées (Drive non connecté)');
+  }
+}
+
 function renderTodos(){
-  // ── Guard: ensure categories always valid ──
   if(!S.categories || !Array.isArray(S.categories)) ensureState();
-  // ── Build dynamic category filter keys ──
   const catKeys = S.categories.map(c=>c.id);
-  const fkeys=['all',...catKeys,'p1','p2','p3','done'];
-  const fl={all:'All',p1:'P1',p2:'P2',p3:'P3',done:'Done'};
+  const fkeys=['all',...catKeys,'p1','p2','p3'];
+  const fl={all:'All',p1:'P1',p2:'P2',p3:'P3'};
   S.categories.forEach(c=>{ fl[c.id]=c.label; });
   document.getElementById('todo-filters').innerHTML=fkeys.map(f=>`<button class="fb${tF===f?' on':''}" onclick="tF='${f}';renderTodos()">${fl[f]||f}</button>`).join('');
 
-  let items=S.todos;
-  if(tF==='done') items=items.filter(x=>x.done);
-  else if(tF!=='all'){
-    if(catKeys.includes(tF)) items=items.filter(x=>x.cat===tF&&!x.done);
-    else items=items.filter(x=>x.pri===tF&&!x.done);
+  // Active items
+  let active=S.todos.filter(x=>!x.done);
+  if(tF!=='all'){
+    if(catKeys.includes(tF)) active=active.filter(x=>x.cat===tF);
+    else active=active.filter(x=>x.pri===tF);
   }
-  items=[...items].sort((a,b)=>(!a.done&&b.done)?-1:(a.done&&!b.done)?1:0);
 
-  const pl={p1:'p1',p2:'p2',p3:'p3'};
   const el=document.getElementById('todo-list');
-
-  el.innerHTML=items.length?items.map(t=>{
-    const cat = getCatById(t.cat);
-    const catBadge = `<span style="font-family:var(--mono);font-size:9px;font-weight:500;padding:1px 5px;border-radius:2px;letter-spacing:.04em;text-transform:uppercase;background:${cat.color};color:${cat.textColor};">${esc(cat.label)}</span>`;
-    const catOptions = S.categories.map(c=>`<option value="${c.id}"${t.cat===c.id?' selected':''}>${c.label}</option>`).join('');
-    return `
-    <div class="item${t.done?' done':''}" draggable="true" data-id="${t.id}">
-      <div class="dh"><span></span><span></span><span></span></div>
-      <div class="reorder-btns">
-        <button class="rb" onclick="moveItem('todos','${t.id}',-1,renderTodos)">↑</button>
-        <button class="rb" onclick="moveItem('todos','${t.id}',1,renderTodos)">↓</button>
-      </div>
-      <input type="checkbox" class="item-check" ${t.done?'checked':''} onchange="toggleTodo('${t.id}')">
-      <div class="item-body">
-        <div class="item-text">${esc(t.text)}</div>
-        <div class="item-meta">
-          <span class="tag ${pl[t.pri]}">${t.pri.toUpperCase()}</span>
-          ${catBadge}
-          <span class="meta-date">${fd(t.ts)}</span>
-        </div>
-        <div class="edit-form" id="ef-${t.id}" data-id="${t.id}">
-          <div class="edit-row">
-            <input class="edit-in" id="et-${t.id}" type="text" value="${esc(t.text)}" onkeydown="if(event.key==='Enter')saveTodo('${t.id}');if(event.key==='Escape')closeEdit('${t.id}')">
-            <select class="edit-in sm" id="ec-${t.id}">${catOptions}</select>
-            <select class="edit-in sm" id="ep-${t.id}">
-              <option value="p1"${t.pri==='p1'?' selected':''}>P1</option>
-              <option value="p2"${t.pri==='p2'?' selected':''}>P2</option>
-              <option value="p3"${t.pri==='p3'?' selected':''}>P3</option>
-            </select>
-          </div>
-          <div class="eact">
-            <button class="save-btn" onclick="saveTodo('${t.id}')">Enregistrer</button>
-            <button class="cancel-btn" onclick="closeEdit('${t.id}')">Annuler</button>
-          </div>
-        </div>
-      </div>
-      <button class="edit-btn" onclick="openEdit('${t.id}')" title="Modifier">✎</button>
-      <button class="del" onclick="delTodo('${t.id}')">×</button>
-    </div>`}).join(''):`<div class="empty">Aucune tâche</div>`;
-
+  el.innerHTML=active.length
+    ? active.map(t=>todoItemHtml(t)).join('')
+    : '<div class="empty">Aucune tâche active</div>';
   setupDrag(el,'todos',renderTodos);
-  const total=S.todos.length,done=S.todos.filter(x=>x.done).length,p1=S.todos.filter(x=>x.pri==='p1'&&!x.done).length;
+
+  // Done section
+  const doneItems=S.todos.filter(x=>x.done);
+  const doneCount=doneItems.length;
+  let doneSectionHtml='';
+  if(doneCount>0){
+    doneSectionHtml=`<div class="done-section">
+      <div class="done-section-header" onclick="toggleDoneSection()">
+        <span class="done-chevron${doneSectionOpen?' open':''}" id="done-chevron">▼</span>
+        <span class="done-section-title">Terminées</span>
+        <span class="done-section-count">${doneCount}</span>
+        <button class="archive-btn" onclick="event.stopPropagation();archiveDone()" title="Archiver dans le Log">↓ Archiver</button>
+      </div>
+      <div class="done-list${doneSectionOpen?' open':''}" id="done-list">
+        ${doneItems.map(t=>todoItemHtml(t)).join('')}
+      </div>
+    </div>`;
+  }
+  el.innerHTML += doneSectionHtml;
+
+  const total=S.todos.length,done=doneCount,p1=S.todos.filter(x=>x.pri==='p1'&&!x.done).length;
   document.getElementById('todo-stats').innerHTML=`
-    <div class="stat"><div class="stat-n">${total}</div><div class="stat-l">Total</div></div>
     <div class="stat"><div class="stat-n">${total-done}</div><div class="stat-l">Active</div></div>
     <div class="stat"><div class="stat-n">${done}</div><div class="stat-l">Done</div></div>
-    <div class="stat"><div class="stat-n">${p1}</div><div class="stat-l">P1</div></div>`;
+    <div class="stat"><div class="stat-n">${p1}</div><div class="stat-l">P1</div></div>
+    <div class="stat"><div class="stat-n">${total}</div><div class="stat-l">Total</div></div>`;
 }
 
 /* ══ DECISIONS ══ */
