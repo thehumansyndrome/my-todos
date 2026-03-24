@@ -88,14 +88,27 @@ body{
 }
 .header-inner{
   max-width:720px;margin:0 auto;
-  padding:0 16px;
-  display:flex;align-items:center;gap:8px;
+  padding:0 0 0 14px;
+  display:flex;align-items:center;gap:0;
   height:52px;
-  overflow-x:auto;
-  scrollbar-width:none;
-  -webkit-overflow-scrolling:touch;
+  overflow:hidden;
 }
-.header-inner::-webkit-scrollbar{display:none;}
+/* Wordmark + tag — fixes, jamais dans le scroll */
+.header-left{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+/* Zone scrollable horizontalement */
+.hbtns-scroll{
+  display:flex;align-items:center;gap:6px;
+  overflow-x:auto;scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+  flex:1;min-width:0;
+  padding:0 8px;
+  white-space:nowrap;
+  -webkit-mask-image:linear-gradient(to right,black calc(100% - 28px),transparent 100%);
+  mask-image:linear-gradient(to right,black calc(100% - 28px),transparent 100%);
+}
+.hbtns-scroll::-webkit-scrollbar{display:none;}
+/* Thème — fixe à droite, jamais caché */
+.hbtn-fixed{flex-shrink:0;margin-right:12px;}
 .wordmark{
   font-family:var(--mono);
   font-size:13px;font-weight:500;
@@ -649,8 +662,10 @@ body{
 
 <div class="header">
   <div class="header-inner">
-    <span class="wordmark">todos</span>
-    <span class="proj-tag">projet001</span>
+    <div class="header-left">
+      <span class="wordmark">todos</span>
+      <span class="proj-tag">projet001</span>
+    </div>
     <div class="hbtns-scroll">
       <button class="hbtn" id="save-status-btn" onclick="forcePush()" title="Forcer la sync Drive">
         <span id="save-dot" style="width:6px;height:6px;border-radius:50%;background:var(--text3);transition:background .3s;flex-shrink:0;"></span>
