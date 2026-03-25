@@ -716,6 +716,9 @@ body{
   <!-- ══ NOTES ══ -->
   <div id="tab-notes" class="section">
     <div class="stats" id="notes-stats"></div>
+    <div style="margin-bottom:8px;">
+      <input class="main-in" type="search" id="notes-search" placeholder="🔍 Rechercher dans les notes…" oninput="notesQ=this.value.toLowerCase();renderNotes()" style="width:100%;box-sizing:border-box;" autocomplete="off">
+    </div>
     <div class="add-row" style="flex-direction:column;align-items:stretch;gap:6px;">
       <div style="display:flex;gap:6px;align-items:center;">
         <input class="main-in" type="text" id="notes-title-in" placeholder="Titre (optionnel)…" style="max-width:200px;" onkeydown="if(event.key==='Enter')document.getElementById('notes-body-in').focus()">
@@ -942,7 +945,7 @@ const DEFAULT_CATS = [
 /* ══ STATE ══ */
 let S={todos:[],notes:[],reminders:[],habits:[],habitLogs:{},categories:[],challenges:[],courses:[]};
 let AL=[];
-let wOff=0, tF='all', dF='all', rF='all', hF='all', chF='all';
+let wOff=0, tF='all', dF='all', rF='all', hF='all', chF='all', notesQ='';
 
 function ensureState(){
   // Guarantee every key always exists — defensive against partial/missing data
@@ -1669,14 +1672,33 @@ function delNote(id){
   const undoId=pushUndo('note',n.title||n.body.slice(0,40),n);
   logA('note','Supprimé: "'+(n.title||n.body.slice(0,40))+'"',undoId);
 }
+function linkify(text){
+  // Escape HTML first, then make URLs clickable
+  const escaped=esc(text);
+  return escaped.replace(/(https?:\/\/[^\s<>"']+)/g,url=>{
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:var(--accent);text-decoration:underline;word-break:break-all;" onclick="event.stopPropagation()">${url}</a>`;
+  });
+}
+function highlightQ(html,q){
+  if(!q) return html;
+  // Highlight query in already-HTML text, skip inside tags
+  const safe=q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  return html.replace(new RegExp(`(?![^<]*>)(${safe})`, 'gi'), '<mark style="background:var(--yellow,#ffe066);color:var(--text);border-radius:2px;padding:0 1px;">$1</mark>');
+}
 function renderNotes(){
   const el=document.getElementById('notes-list');
-  el.innerHTML=S.notes.length?S.notes.map(n=>{
-    const preview=n.body?n.body.replace(/\n/g,'<br>'):'';
+  const q=notesQ.trim();
+  let notes=S.notes;
+  if(q) notes=notes.filter(n=>(n.title||'').toLowerCase().includes(q)||(n.body||'').toLowerCase().includes(q));
+  el.innerHTML=notes.length?notes.map(n=>{
+    const rawPreview=n.body?linkify(n.body).replace(/\n/g,'<br>'):'';
+    const preview=highlightQ(rawPreview,q);
+    const rawTitle=n.title?linkify(n.title):'';
+    const titleHtml=n.title?`<div class="item-text">${highlightQ(rawTitle,q)}</div>`:'';
     return `
     <div class="item" data-id="${n.id}">
       <div class="item-body">
-        ${n.title?`<div class="item-text">${esc(n.title)}</div>`:''}
+        ${titleHtml}
         ${preview?`<div style="font-size:13px;color:var(--text2);margin-top:${n.title?'4':'0'}px;line-height:1.55;white-space:pre-wrap;">${preview}</div>`:''}
         <div class="item-meta" style="margin-top:6px;">
           <span class="meta-date">${fd(n.ts)}${n.edited?' · modifié':''}</span>
@@ -1697,10 +1719,11 @@ function renderNotes(){
       <button class="edit-btn" onclick="openEdit('${n.id}')" title="Modifier">✎</button>
       <button class="del" onclick="delNote('${n.id}')">×</button>
     </div>`;
-  }).join(''):`<div class="empty">Aucune note</div>`;
+  }).join(''):`<div class="empty">${q?'Aucune note trouvée':'Aucune note'}</div>`;
   const tot=S.notes.length;
+  const shown=notes.length;
   document.getElementById('notes-stats').innerHTML=tot?`
-    <div class="stat"><div class="stat-n">${tot}</div><div class="stat-l">Note${tot>1?'s':''}</div></div>`:'';
+    <div class="stat"><div class="stat-n">${q?shown+'/'+tot:tot}</div><div class="stat-l">Note${tot>1?'s':''}</div></div>`:'';
 }
 
 /* ══ REMINDERS ══ */
