@@ -661,6 +661,10 @@ body{
 .comment-btn{background:none;border:none;cursor:pointer;font-size:13px;padding:2px 4px;opacity:.45;transition:opacity .15s;flex-shrink:0;}
 .comment-btn:hover{opacity:1;}
 .comment-btn.has-comment{opacity:.85;}
+.subtask-badge{font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:2px;background:var(--bg2);color:var(--text3);border:1px solid var(--line);letter-spacing:.04em;}
+.subtask-progress{font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:4px;}
+.subtask-progress.done{color:var(--green);}
+.item.is-subtask{margin-left:18px;border-left:2px solid var(--line);padding-left:6px;}
 .archive-btn{font-family:var(--mono);font-size:10px;padding:3px 9px;border-radius:var(--r);border:1px solid var(--line2);background:var(--bg);color:var(--text3);cursor:pointer;margin-left:auto;transition:all .12s;}
 .archive-btn:hover{background:var(--amber-bg);color:var(--amber);border-color:var(--amber);}
 </style>
@@ -966,7 +970,12 @@ let wOff=0, tF='all', dF='all', rF='all', hF='all', chF='all', notesQ='';
 function ensureState(){
   // Guarantee every key always exists — defensive against partial/missing data
   if(!S.todos) S.todos=[];
-  S.todos.forEach(t=>{ if(t.comment===undefined) t.comment=''; });
+  S.todos.forEach(t=>{
+    if(t.comment===undefined) t.comment='';
+    if(t.subtasks===undefined) t.subtasks=[];
+    if(t.parentId===undefined) t.parentId=null;
+    if(t.type===undefined) t.type=null;
+  });
   if(!S.notes) S.notes=[];
   S.notes.forEach(n=>{ if(!n.images) n.images=[]; });
   if(!S.reminders) S.reminders=[];
@@ -1475,10 +1484,39 @@ function saveTodo(id){
   t.pri=document.getElementById('ep-'+id).value;
   autoSave();closeEdit(id);renderTodos();logA('todo','Modifié: "'+txt+'"');
 }
-function toggleTodo(id){const t=S.todos.find(x=>x.id===id);if(t){t.done=!t.done;autoSave();renderTodos();logA('todo',(t.done?'✓ ':'↩ ')+'"'+t.text+'"');}}
+function toggleTodo(id){
+  const t=S.todos.find(x=>x.id===id);
+  if(!t)return;
+  t.done=!t.done;
+  // If child: check if all siblings done → auto-complete parent
+  if(t.parentId){
+    const parent=S.todos.find(x=>x.id===t.parentId);
+    if(parent && parent.subtasks && parent.subtasks.length){
+      const allDone=parent.subtasks.every(sid=>{
+        const s=S.todos.find(x=>x.id===sid);
+        return s&&s.done;
+      });
+      if(allDone && !parent.done){
+        parent.done=true;
+        logA('todo','✓ Auto-complété: "'+parent.text+'"');
+      } else if(!allDone && parent.done){
+        parent.done=false;
+      }
+    }
+  }
+  autoSave();renderTodos();logA('todo',(t.done?'✓ ':'↩ ')+'"'+t.text+'"');
+}
 function delTodo(id){
   const t=S.todos.find(x=>x.id===id);
-  if(!t) return;
+  if(!t)return;
+  // If parent with subtasks: confirm + cascade
+  if(t.subtasks && t.subtasks.length>0){
+    const n=t.subtasks.length;
+    if(!confirm(`Supprimer "${t.text}" et ses ${n} sous-tâche${n>1?'s':''} ?`))return;
+    // Remove all subtasks (no undo for cascade)
+    S.todos=S.todos.filter(x=>!t.subtasks.includes(x.id));
+    logA('todo',`Supprimé en cascade: "${t.text}" + ${n} sous-tâche${n>1?'s':''}`);
+  }
   S.todos=S.todos.filter(x=>x.id!==id);
   autoSave();renderTodos();
   const undoId=pushUndo('todo',t.text,t);
@@ -1528,8 +1566,23 @@ function todoItemHtml(t){
   const catOptions = S.categories.map(c=>`<option value="${c.id}"${t.cat===c.id?' selected':''}>${c.label}</option>`).join('');
   const pl={p1:'p1',p2:'p2',p3:'p3'};
   const hasComment = !!(t.comment && t.comment.trim());
+
+  // Subtask badges
+  let subtaskBadgeHtml = '';
+  if(t.subtasks && t.subtasks.length>0){
+    const total=t.subtasks.length;
+    const done=t.subtasks.filter(sid=>{ const s=S.todos.find(x=>x.id===sid); return s&&s.done; }).length;
+    const allDone=done===total;
+    subtaskBadgeHtml=`<span class="subtask-progress${allDone?' done':''}">↳ ${done}/${total}</span>`;
+  }
+  if(t.parentId && t.type){
+    subtaskBadgeHtml=`<span class="subtask-badge">↳ ${esc(t.type)}</span>`;
+  }
+
+  const isSubtask = !!t.parentId;
+
   return `
-  <div class="item${t.done?' done':''}" draggable="true" data-id="${t.id}">
+  <div class="item${t.done?' done':''}${isSubtask?' is-subtask':''}" draggable="true" data-id="${t.id}">
     <div class="dh"><span></span><span></span><span></span></div>
     <div class="reorder-btns">
       <button class="rb" onclick="moveItem('todos','${t.id}',-1,renderTodos)">↑</button>
@@ -1541,6 +1594,7 @@ function todoItemHtml(t){
       <div class="item-meta">
         <span class="tag ${pl[t.pri]||'p2'}">${t.pri.toUpperCase()}</span>
         ${catBadge}
+        ${subtaskBadgeHtml}
         <span class="meta-date">${fd(t.ts)}</span>
       </div>
       <div class="todo-comment" id="tc-${t.id}">
@@ -1675,8 +1729,21 @@ function renderTodos(){
   }
 
   const el=document.getElementById('todo-list');
-  el.innerHTML=active.length
-    ? active.map(t=>todoItemHtml(t)).join('')
+  // Interleave subtasks after their parent
+  const ordered=[];
+  active.forEach(t=>{
+    if(!t.parentId){ // only top-level
+      ordered.push(t);
+      if(t.subtasks && t.subtasks.length){
+        t.subtasks.forEach(sid=>{
+          const s=S.todos.find(x=>x.id===sid&&!x.done);
+          if(s) ordered.push(s);
+        });
+      }
+    }
+  });
+  el.innerHTML=ordered.length
+    ? ordered.map(t=>todoItemHtml(t)).join('')
     : '<div class="empty">Aucune tâche active</div>';
   setupDrag(el,'todos',renderTodos);
 
