@@ -1543,7 +1543,7 @@ function todoItemHtml(t){
         ${catBadge}
         <span class="meta-date">${fd(t.ts)}</span>
       </div>
-      <div class="todo-comment${hasComment?' open':''}" id="tc-${t.id}">
+      <div class="todo-comment" id="tc-${t.id}">
         <textarea id="tca-${t.id}" rows="2" placeholder="Instructions, contexte…"
           oninput="autoResizeComment(this);saveTodoComment('${t.id}',this.value)"
           onclick="event.stopPropagation()"
