@@ -665,7 +665,6 @@ body{
 .subtask-progress{font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:4px;}
 .subtask-progress.done{color:var(--green);}
 .item.is-subtask{margin-left:18px;border-left:2px solid var(--line);padding-left:6px;}
-.hz-now{color:#e85d04;}
 .hz-today{color:#f4a261;}
 .hz-later{color:#457b9d;}
 .hz-waiting{color:#9b72cf;}
@@ -729,7 +728,6 @@ body{
         <option value="later">Later</option>
         <option value="waiting">Waiting</option>
         <option value="today">Today</option>
-        <option value="now">Now</option>
       </select>
       <select id="todo-type" title="Template (sous-tâches automatiques)" style="font-family:var(--mono);font-size:11px;padding:4px 6px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text2);cursor:pointer;display:none;">
         <option value="">— type —</option>
@@ -1658,7 +1656,7 @@ function todoItemHtml(t){
   const catOptions = S.categories.map(c=>`<option value="${c.id}"${t.cat===c.id?' selected':''}>${c.label}</option>`).join('');
   const pl={p1:'p1',p2:'p2',p3:'p3'};
   const hasComment = !!(t.comment && t.comment.trim());
-  const HZ_LABELS={now:'Now',today:'Today',later:'Later',waiting:'Waiting',someday:'Someday'};
+  const HZ_LABELS={today:'Today',later:'Later',waiting:'Waiting',someday:'Someday'};
   const hz=t.hz||'someday';
   const hzBadge=hz!=='someday'
     ? `<span class="hz-${hz}" style="font-family:var(--mono);font-size:9px;font-weight:500;letter-spacing:.04em;">${HZ_LABELS[hz]}</span>`
@@ -1713,7 +1711,6 @@ function todoItemHtml(t){
             <option value="p3"${t.pri==='p3'?' selected':''}>P3</option>
           </select>
           <select class="edit-in sm" id="ehz-${t.id}">
-            <option value="now"${hz==='now'?' selected':''}>Now</option>
             <option value="today"${hz==='today'?' selected':''}>Today</option>
             <option value="later"${hz==='later'?' selected':''}>Later</option>
             <option value="waiting"${hz==='waiting'?' selected':''}>Waiting</option>
@@ -1827,8 +1824,8 @@ function renderTodos(){
   S.categories.forEach(c=>{ fl[c.id]=c.label; });
   document.getElementById('todo-filters').innerHTML=fkeys.map(f=>`<button class="fb${tF===f?' on':''}" onclick="tF='${f}';renderTodos()">${fl[f]||f}</button>`).join('');
 
-  const HZ_ALL=['now','today','later','waiting','someday'];
-  const HZ_LABELS2={all:'All',now:'Now',today:'Today',later:'Later',waiting:'Waiting',someday:'Someday'};
+  const HZ_ALL=['today','later','waiting','someday'];
+  const HZ_LABELS2={all:'All',today:'Today',later:'Later',waiting:'Waiting',someday:'Someday'};
   document.getElementById('todo-hz-filters').innerHTML=
     ['all',...HZ_ALL].map(h=>`<button class="fb${hzF===h?' on':''}" onclick="hzF='${h}';renderTodos()">${HZ_LABELS2[h]}</button>`).join('');
 
