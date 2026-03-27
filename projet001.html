@@ -719,6 +719,9 @@ body{
         <option value="p2">P2</option>
         <option value="p3">P3</option>
       </select>
+      <select id="todo-type" title="Template (sous-tâches automatiques)" style="font-family:var(--mono);font-size:11px;padding:4px 6px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text2);cursor:pointer;display:none;">
+        <option value="">— type —</option>
+      </select>
       <button class="add-btn" onclick="addTodo()">+ Add</button>
     </div>
     <div class="filters" id="todo-filters"></div>
@@ -1385,7 +1388,7 @@ function loadGIS(cb){if(window.google&&window.google.accounts){cb();return;}cons
 function driveAuth(){
   const cid=document.getElementById('drive-cid').value.trim();if(!cid){toast('⚠ Entre ton Client ID');return;}
   drCfg.clientId=cid;saveDriveConf();setDS(null,'Connexion…');
-  loadGIS(()=>{try{const cl=google.accounts.oauth2.initTokenClient({client_id:cid,scope:'https://www.googleapis.com/auth/drive.file',callback:(r)=>{if(r.error){setDS(false,'Erreur: '+r.error);toast('❌ '+r.error);return;}drTok=r.access_token;drFid=null;setDS(true,'Connecté ✓');setSaveStatus('ok');updateDriveUI();sessionStorage.setItem('td_tok_'+P,r.access_token);toast('✓ Drive connecté');logA('drive','Connecté à Google Drive');if(pollSecs>0)startPolling();}});cl.requestAccessToken();}catch(e){setDS(false,'Erreur: '+e.message);toast('❌ '+e.message);}});
+  loadGIS(()=>{try{const cl=google.accounts.oauth2.initTokenClient({client_id:cid,scope:'https://www.googleapis.com/auth/drive.file',callback:(r)=>{if(r.error){setDS(false,'Erreur: '+r.error);toast('❌ '+r.error);return;}drTok=r.access_token;drFid=null;setDS(true,'Connecté ✓');setSaveStatus('ok');updateDriveUI();sessionStorage.setItem('td_tok_'+P,r.access_token);toast('✓ Drive connecté');logA('drive','Connecté à Google Drive');drLoadTemplates();if(pollSecs>0)startPolling();}});cl.requestAccessToken();}catch(e){setDS(false,'Erreur: '+e.message);toast('❌ '+e.message);}});
 }
 function driveDisc(){drTok=null;drFid=null;lastModifiedKnown=null;stopPolling();sessionStorage.removeItem('td_tok_'+P);setDS(null,'Déconnecté');setSaveStatus('local');updateDriveUI();toast('Drive déconnecté');}
 
@@ -1437,6 +1440,7 @@ async function drivePull(){
     setDS(true,'Chargé ✓ — '+t);
     toast('✓ Données Drive chargées — '+t);
     logA('drive','Pull ← '+drCfg.filename);
+    drLoadTemplates();
     // Start polling after successful pull
     if(pollSecs > 0) startPolling();
   }
@@ -1470,10 +1474,61 @@ function closeEdit(id){
 }
 
 /* ══ TODOS ══ */
+/* ══ TEMPLATES ══ */
+let TMPL = {};  // loaded from Drive templates.json
+
+async function drLoadTemplates(){
+  if(!drTok) return;
+  try {
+    const fn = 'templates.json';
+    const q  = encodeURIComponent(`name='${fn}' and trashed=false`);
+    const r  = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`,
+      {headers:{Authorization:'Bearer '+drTok}});
+    const d  = await r.json();
+    if(!d.files || !d.files.length) return;
+    const fr = await fetch(`https://www.googleapis.com/drive/v3/files/${d.files[0].id}?alt=media`,
+      {headers:{Authorization:'Bearer '+drTok}});
+    if(!fr.ok) return;
+    TMPL = await fr.json();
+    updateTypeSelect();
+  } catch(e){ console.warn('[templates]', e.message); }
+}
+
+function updateTypeSelect(){
+  const sel = document.getElementById('todo-type');
+  if(!sel) return;
+  const keys = Object.keys(TMPL);
+  if(!keys.length){ sel.style.display='none'; return; }
+  sel.innerHTML = '<option value="">— type —</option>' +
+    keys.map(k=>`<option value="${k}">${TMPL[k].label||k}</option>`).join('');
+  sel.style.display = '';
+}
+
 function addTodo(){
   const v=document.getElementById('todo-in').value.trim();if(!v)return;
-  const t={id:uid(),text:v,cat:document.getElementById('todo-cat').value,pri:document.getElementById('todo-pri').value,done:false,ts:Date.now()};
-  S.todos.push(t);document.getElementById('todo-in').value='';autoSave();renderTodos();logA('todo','Ajouté: "'+v+'"');
+  const cat=document.getElementById('todo-cat').value;
+  const pri=document.getElementById('todo-pri').value;
+  const typeKey=document.getElementById('todo-type')?.value||'';
+  const parentId=uid();
+  const subtaskIds=[];
+
+  if(typeKey && TMPL[typeKey]){
+    const subs=TMPL[typeKey].subtasks||[];
+    subs.forEach(sub=>{
+      const sid=uid();
+      subtaskIds.push(sid);
+      S.todos.push({id:sid,text:sub.text,cat,pri,done:false,ts:Date.now(),
+        comment:'',subtasks:[],parentId,type:typeKey});
+    });
+  }
+
+  const t={id:parentId,text:v,cat,pri,done:false,ts:Date.now(),
+    comment:'',subtasks:subtaskIds,parentId:null,type:typeKey||null};
+  S.todos.push(t);
+  document.getElementById('todo-in').value='';
+  if(document.getElementById('todo-type')) document.getElementById('todo-type').value='';
+  autoSave();renderTodos();
+  logA('todo','Ajouté: "'+v+'"'+(subtaskIds.length?' ('+subtaskIds.length+' sous-tâches)':''));
 }
 function saveTodo(id){
   const t=S.todos.find(x=>x.id===id);if(!t)return;
