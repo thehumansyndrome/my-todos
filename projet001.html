@@ -1830,7 +1830,7 @@ function renderTodos(){
   const HZ_ALL=['now','today','later','waiting','someday'];
   const HZ_LABELS2={all:'All',now:'Now',today:'Today',later:'Later',waiting:'Waiting',someday:'Someday'};
   document.getElementById('todo-hz-filters').innerHTML=
-    ['all',...HZ_ALL].map(h=>`<button class="fb${hzF===h?' on':''}" onclick="hzF='${h}';renderTodos()" style="${h!=='all'?`color:var(--text);`:''}">${HZ_LABELS2[h]}</button>`).join('');
+    ['all',...HZ_ALL].map(h=>`<button class="fb${hzF===h?' on':''}" onclick="hzF='${h}';renderTodos()">${HZ_LABELS2[h]}</button>`).join('');
 
   // Active top-level items (never subtasks in top-level filter)
   let active=S.todos.filter(x=>!x.done && !x.parentId);
