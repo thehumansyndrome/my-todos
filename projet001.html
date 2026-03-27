@@ -1577,6 +1577,12 @@ function delTodo(id){
   const undoId=pushUndo('todo',t.text,t);
   logA('todo','Supprimé: "'+t.text+'"', undoId);
 }
+let collapsedParents = new Set(); // IDs of parents whose subtasks are hidden
+function toggleSubtasks(id){
+  if(collapsedParents.has(id)) collapsedParents.delete(id);
+  else collapsedParents.add(id);
+  renderTodos();
+}
 let doneSectionOpen = false;
 
 function toggleComment(id){
@@ -1628,7 +1634,8 @@ function todoItemHtml(t){
     const total=t.subtasks.length;
     const done=t.subtasks.filter(sid=>{ const s=S.todos.find(x=>x.id===sid); return s&&s.done; }).length;
     const allDone=done===total;
-    subtaskBadgeHtml=`<span class="subtask-progress${allDone?' done':''}">↳ ${done}/${total}</span>`;
+    const collapsed=collapsedParents.has(t.id);
+    subtaskBadgeHtml=`<span class="subtask-progress${allDone?' done':''}" style="cursor:pointer;" onclick="event.stopPropagation();toggleSubtasks('${t.id}')" title="${collapsed?'Afficher':'Masquer'} les sous-tâches">${collapsed?'▶':'▼'} ${done}/${total}</span>`;
   }
   if(t.parentId && t.type){
     subtaskBadgeHtml=`<span class="subtask-badge">↳ ${esc(t.type)}</span>`;
@@ -1776,25 +1783,23 @@ function renderTodos(){
   S.categories.forEach(c=>{ fl[c.id]=c.label; });
   document.getElementById('todo-filters').innerHTML=fkeys.map(f=>`<button class="fb${tF===f?' on':''}" onclick="tF='${f}';renderTodos()">${fl[f]||f}</button>`).join('');
 
-  // Active items
-  let active=S.todos.filter(x=>!x.done);
+  // Active top-level items (never subtasks in top-level filter)
+  let active=S.todos.filter(x=>!x.done && !x.parentId);
   if(tF!=='all'){
     if(catKeys.includes(tF)) active=active.filter(x=>x.cat===tF);
     else active=active.filter(x=>x.pri===tF);
   }
 
   const el=document.getElementById('todo-list');
-  // Interleave subtasks after their parent
+  // Interleave ALL subtasks (done or not) right after their parent
   const ordered=[];
   active.forEach(t=>{
-    if(!t.parentId){ // only top-level
-      ordered.push(t);
-      if(t.subtasks && t.subtasks.length){
-        t.subtasks.forEach(sid=>{
-          const s=S.todos.find(x=>x.id===sid&&!x.done);
-          if(s) ordered.push(s);
-        });
-      }
+    ordered.push(t);
+    if(t.subtasks && t.subtasks.length && !collapsedParents.has(t.id)){
+      t.subtasks.forEach(sid=>{
+        const s=S.todos.find(x=>x.id===sid);
+        if(s) ordered.push(s);
+      });
     }
   });
   el.innerHTML=ordered.length
@@ -1802,8 +1807,8 @@ function renderTodos(){
     : '<div class="empty">Aucune tâche active</div>';
   setupDrag(el,'todos',renderTodos);
 
-  // Done section
-  const doneItems=S.todos.filter(x=>x.done);
+  // Done section — top-level only (subtasks excluded, they live under their parent)
+  const doneItems=S.todos.filter(x=>x.done && !x.parentId);
   const doneCount=doneItems.length;
   let doneSectionHtml='';
   if(doneCount>0){
@@ -1821,12 +1826,14 @@ function renderTodos(){
   }
   el.innerHTML += doneSectionHtml;
 
-  const total=S.todos.length,done=doneCount,p1=S.todos.filter(x=>x.pri==='p1'&&!x.done).length;
+  const totalActive=S.todos.filter(x=>!x.done&&!x.parentId).length;
+  const totalDone=S.todos.filter(x=>x.done&&!x.parentId).length;
+  const p1=S.todos.filter(x=>x.pri==='p1'&&!x.done&&!x.parentId).length;
   document.getElementById('todo-stats').innerHTML=`
-    <div class="stat"><div class="stat-n">${total-done}</div><div class="stat-l">Active</div></div>
-    <div class="stat"><div class="stat-n">${done}</div><div class="stat-l">Done</div></div>
+    <div class="stat"><div class="stat-n">${totalActive}</div><div class="stat-l">Active</div></div>
+    <div class="stat"><div class="stat-n">${totalDone}</div><div class="stat-l">Done</div></div>
     <div class="stat"><div class="stat-n">${p1}</div><div class="stat-l">P1</div></div>
-    <div class="stat"><div class="stat-n">${total}</div><div class="stat-l">Total</div></div>`;
+    <div class="stat"><div class="stat-n">${totalActive+totalDone}</div><div class="stat-l">Total</div></div>`;
 }
 
 
