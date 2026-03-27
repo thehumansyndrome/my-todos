@@ -665,6 +665,11 @@ body{
 .subtask-progress{font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:4px;}
 .subtask-progress.done{color:var(--green);}
 .item.is-subtask{margin-left:18px;border-left:2px solid var(--line);padding-left:6px;}
+.hz-now{color:#e85d04;}
+.hz-today{color:#f4a261;}
+.hz-later{color:#457b9d;}
+.hz-waiting{color:#9b72cf;}
+.hz-someday{color:var(--text3);}
 .archive-btn{font-family:var(--mono);font-size:10px;padding:3px 9px;border-radius:var(--r);border:1px solid var(--line2);background:var(--bg);color:var(--text3);cursor:pointer;margin-left:auto;transition:all .12s;}
 .archive-btn:hover{background:var(--amber-bg);color:var(--amber);border-color:var(--amber);}
 </style>
@@ -719,12 +724,20 @@ body{
         <option value="p2">P2</option>
         <option value="p3">P3</option>
       </select>
+      <select id="todo-hz" title="Horizon temporel" style="font-family:var(--mono);font-size:11px;padding:4px 6px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text2);cursor:pointer;">
+        <option value="someday" selected>Someday</option>
+        <option value="later">Later</option>
+        <option value="waiting">Waiting</option>
+        <option value="today">Today</option>
+        <option value="now">Now</option>
+      </select>
       <select id="todo-type" title="Template (sous-tâches automatiques)" style="font-family:var(--mono);font-size:11px;padding:4px 6px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text2);cursor:pointer;display:none;">
         <option value="">— type —</option>
       </select>
       <button class="add-btn" onclick="addTodo()">+ Add</button>
     </div>
     <div class="filters" id="todo-filters"></div>
+    <div class="filters" id="todo-hz-filters" style="margin-top:4px;"></div>
     <div class="list" id="todo-list"></div>
   </div>
   <!-- ══ NOTES ══ -->
@@ -968,7 +981,7 @@ const DEFAULT_CATS = [
 /* ══ STATE ══ */
 let S={todos:[],notes:[],reminders:[],habits:[],habitLogs:{},categories:[],challenges:[],courses:[]};
 let AL=[];
-let wOff=0, tF='all', dF='all', rF='all', hF='all', chF='all', notesQ='';
+let wOff=0, tF='all', hzF='all', dF='all', rF='all', hF='all', chF='all', notesQ='';
 
 function ensureState(){
   // Guarantee every key always exists — defensive against partial/missing data
@@ -978,6 +991,7 @@ function ensureState(){
     if(t.subtasks===undefined) t.subtasks=[];
     if(t.parentId===undefined) t.parentId=null;
     if(t.type===undefined) t.type=null;
+    if(t.hz===undefined) t.hz='someday';
   });
   if(!S.notes) S.notes=[];
   S.notes.forEach(n=>{ if(!n.images) n.images=[]; });
@@ -1508,6 +1522,7 @@ function addTodo(){
   const v=document.getElementById('todo-in').value.trim();if(!v)return;
   const cat=document.getElementById('todo-cat').value;
   const pri=document.getElementById('todo-pri').value;
+  const hz=document.getElementById('todo-hz')?.value||'someday';
   const typeKey=document.getElementById('todo-type')?.value||'';
   const parentId=uid();
   const subtaskIds=[];
@@ -1517,15 +1532,16 @@ function addTodo(){
     subs.forEach(sub=>{
       const sid=uid();
       subtaskIds.push(sid);
-      S.todos.push({id:sid,text:sub.text,cat,pri,done:false,ts:Date.now(),
+      S.todos.push({id:sid,text:sub.text,cat,pri,hz:'someday',done:false,ts:Date.now(),
         comment:'',subtasks:[],parentId,type:typeKey});
     });
   }
 
-  const t={id:parentId,text:v,cat,pri,done:false,ts:Date.now(),
+  const t={id:parentId,text:v,cat,pri,hz,done:false,ts:Date.now(),
     comment:'',subtasks:subtaskIds,parentId:null,type:typeKey||null};
   S.todos.push(t);
   document.getElementById('todo-in').value='';
+  document.getElementById('todo-hz').value='someday';
   if(document.getElementById('todo-type')) document.getElementById('todo-type').value='';
   autoSave();renderTodos();
   logA('todo','Ajouté: "'+v+'"'+(subtaskIds.length?' ('+subtaskIds.length+' sous-tâches)':''));
@@ -1537,14 +1553,24 @@ function saveTodo(id){
   t.text=txt;
   t.cat=document.getElementById('ec-'+id).value;
   t.pri=document.getElementById('ep-'+id).value;
+  t.hz=document.getElementById('ehz-'+id).value;
   autoSave();closeEdit(id);renderTodos();logA('todo','Modifié: "'+txt+'"');
 }
 function toggleTodo(id){
   const t=S.todos.find(x=>x.id===id);
   if(!t)return;
   t.done=!t.done;
-  // If child: check if all siblings done → auto-complete parent
-  if(t.parentId){
+
+  // Parent unchecked → uncheck all subtasks
+  if(!t.done && t.subtasks && t.subtasks.length){
+    t.subtasks.forEach(sid=>{
+      const s=S.todos.find(x=>x.id===sid);
+      if(s) s.done=false;
+    });
+  }
+
+  // Child checked → auto-complete parent if all siblings done
+  if(t.done && t.parentId){
     const parent=S.todos.find(x=>x.id===t.parentId);
     if(parent && parent.subtasks && parent.subtasks.length){
       const allDone=parent.subtasks.every(sid=>{
@@ -1554,11 +1580,16 @@ function toggleTodo(id){
       if(allDone && !parent.done){
         parent.done=true;
         logA('todo','✓ Auto-complété: "'+parent.text+'"');
-      } else if(!allDone && parent.done){
-        parent.done=false;
       }
     }
   }
+
+  // Child unchecked → uncheck parent if it was done
+  if(!t.done && t.parentId){
+    const parent=S.todos.find(x=>x.id===t.parentId);
+    if(parent && parent.done) parent.done=false;
+  }
+
   autoSave();renderTodos();logA('todo',(t.done?'✓ ':'↩ ')+'"'+t.text+'"');
 }
 function delTodo(id){
@@ -1627,6 +1658,11 @@ function todoItemHtml(t){
   const catOptions = S.categories.map(c=>`<option value="${c.id}"${t.cat===c.id?' selected':''}>${c.label}</option>`).join('');
   const pl={p1:'p1',p2:'p2',p3:'p3'};
   const hasComment = !!(t.comment && t.comment.trim());
+  const HZ_LABELS={now:'Now',today:'Today',later:'Later',waiting:'Waiting',someday:'Someday'};
+  const hz=t.hz||'someday';
+  const hzBadge=hz!=='someday'
+    ? `<span class="hz-${hz}" style="font-family:var(--mono);font-size:9px;font-weight:500;letter-spacing:.04em;">${HZ_LABELS[hz]}</span>`
+    : '';
 
   // Subtask badges
   let subtaskBadgeHtml = '';
@@ -1656,6 +1692,7 @@ function todoItemHtml(t){
       <div class="item-meta">
         <span class="tag ${pl[t.pri]||'p2'}">${t.pri.toUpperCase()}</span>
         ${catBadge}
+        ${hzBadge}
         ${subtaskBadgeHtml}
         <span class="meta-date">${fd(t.ts)}</span>
       </div>
@@ -1674,6 +1711,13 @@ function todoItemHtml(t){
             <option value="p1"${t.pri==='p1'?' selected':''}>P1</option>
             <option value="p2"${t.pri==='p2'?' selected':''}>P2</option>
             <option value="p3"${t.pri==='p3'?' selected':''}>P3</option>
+          </select>
+          <select class="edit-in sm" id="ehz-${t.id}">
+            <option value="now"${hz==='now'?' selected':''}>Now</option>
+            <option value="today"${hz==='today'?' selected':''}>Today</option>
+            <option value="later"${hz==='later'?' selected':''}>Later</option>
+            <option value="waiting"${hz==='waiting'?' selected':''}>Waiting</option>
+            <option value="someday"${hz==='someday'?' selected':''}>Someday</option>
           </select>
         </div>
         <div class="eact">
@@ -1783,12 +1827,18 @@ function renderTodos(){
   S.categories.forEach(c=>{ fl[c.id]=c.label; });
   document.getElementById('todo-filters').innerHTML=fkeys.map(f=>`<button class="fb${tF===f?' on':''}" onclick="tF='${f}';renderTodos()">${fl[f]||f}</button>`).join('');
 
+  const HZ_ALL=['now','today','later','waiting','someday'];
+  const HZ_LABELS2={all:'All',now:'Now',today:'Today',later:'Later',waiting:'Waiting',someday:'Someday'};
+  document.getElementById('todo-hz-filters').innerHTML=
+    ['all',...HZ_ALL].map(h=>`<button class="fb${hzF===h?' on':''}" onclick="hzF='${h}';renderTodos()" style="${h!=='all'?`color:var(--text);`:''}">${HZ_LABELS2[h]}</button>`).join('');
+
   // Active top-level items (never subtasks in top-level filter)
   let active=S.todos.filter(x=>!x.done && !x.parentId);
   if(tF!=='all'){
     if(catKeys.includes(tF)) active=active.filter(x=>x.cat===tF);
     else active=active.filter(x=>x.pri===tF);
   }
+  if(hzF!=='all') active=active.filter(x=>(x.hz||'someday')===hzF);
 
   const el=document.getElementById('todo-list');
   // Interleave ALL subtasks (done or not) right after their parent
