@@ -654,6 +654,13 @@ body{
 .done-chevron.open{transform:rotate(180deg);}
 .done-list{display:none;}
 .done-list.open{display:block;}
+.todo-comment{display:none;margin-top:6px;padding:6px 8px;background:var(--bg2);border-left:2px solid var(--line2);border-radius:0 var(--r) var(--r) 0;}
+.todo-comment.open{display:block;}
+.todo-comment textarea{width:100%;box-sizing:border-box;background:transparent;border:none;outline:none;font-family:var(--sans);font-size:12px;color:var(--text2);line-height:1.55;resize:none;padding:0;}
+.todo-comment textarea::placeholder{color:var(--text3);}
+.comment-btn{background:none;border:none;cursor:pointer;font-size:13px;padding:2px 4px;opacity:.45;transition:opacity .15s;flex-shrink:0;}
+.comment-btn:hover{opacity:1;}
+.comment-btn.has-comment{opacity:.85;}
 .archive-btn{font-family:var(--mono);font-size:10px;padding:3px 9px;border-radius:var(--r);border:1px solid var(--line2);background:var(--bg);color:var(--text3);cursor:pointer;margin-left:auto;transition:all .12s;}
 .archive-btn:hover{background:var(--amber-bg);color:var(--amber);border-color:var(--amber);}
 </style>
@@ -959,6 +966,7 @@ let wOff=0, tF='all', dF='all', rF='all', hF='all', chF='all', notesQ='';
 function ensureState(){
   // Guarantee every key always exists — defensive against partial/missing data
   if(!S.todos) S.todos=[];
+  S.todos.forEach(t=>{ if(t.comment===undefined) t.comment=''; });
   if(!S.notes) S.notes=[];
   S.notes.forEach(n=>{ if(!n.images) n.images=[]; });
   if(!S.reminders) S.reminders=[];
@@ -1478,11 +1486,48 @@ function delTodo(id){
 }
 let doneSectionOpen = false;
 
+function toggleComment(id){
+  const zone=document.getElementById('tc-'+id);
+  const btn=zone&&zone.parentElement.querySelector('.comment-btn');
+  if(!zone)return;
+  const opening=!zone.classList.contains('open');
+  zone.classList.toggle('open',opening);
+  if(opening){
+    const ta=document.getElementById('tca-'+id);
+    if(ta){autoResizeComment(ta);setTimeout(()=>ta.focus(),50);}
+  }
+}
+
+let commentTimers={};
+function saveTodoComment(id,val){
+  clearTimeout(commentTimers[id]);
+  commentTimers[id]=setTimeout(()=>{
+    const t=S.todos.find(x=>x.id===id);
+    if(!t)return;
+    t.comment=val;
+    // update button style live without full re-render
+    const zone=document.getElementById('tc-'+id);
+    const btn=zone&&zone.parentElement.querySelector('.comment-btn');
+    if(btn){
+      const has=!!(val&&val.trim());
+      btn.classList.toggle('has-comment',has);
+      btn.title=has?'Voir le commentaire':'Ajouter un commentaire';
+    }
+    autoSave();
+  },600);
+}
+
+function autoResizeComment(ta){
+  ta.style.height='auto';
+  ta.style.height=ta.scrollHeight+'px';
+}
+
 function todoItemHtml(t){
   const cat = getCatById(t.cat);
   const catBadge = `<span style="font-family:var(--mono);font-size:9px;font-weight:500;padding:1px 5px;border-radius:2px;letter-spacing:.04em;text-transform:uppercase;background:${cat.color};color:${cat.textColor};">${esc(cat.label)}</span>`;
   const catOptions = S.categories.map(c=>`<option value="${c.id}"${t.cat===c.id?' selected':''}>${c.label}</option>`).join('');
   const pl={p1:'p1',p2:'p2',p3:'p3'};
+  const hasComment = !!(t.comment && t.comment.trim());
   return `
   <div class="item${t.done?' done':''}" draggable="true" data-id="${t.id}">
     <div class="dh"><span></span><span></span><span></span></div>
@@ -1497,6 +1542,13 @@ function todoItemHtml(t){
         <span class="tag ${pl[t.pri]||'p2'}">${t.pri.toUpperCase()}</span>
         ${catBadge}
         <span class="meta-date">${fd(t.ts)}</span>
+      </div>
+      <div class="todo-comment${hasComment?' open':''}" id="tc-${t.id}">
+        <textarea id="tca-${t.id}" rows="2" placeholder="Instructions, contexte…"
+          oninput="autoResizeComment(this);saveTodoComment('${t.id}',this.value)"
+          onclick="event.stopPropagation()"
+          onkeydown="if(event.key==='Escape')toggleComment('${t.id}')"
+        >${esc(t.comment||'')}</textarea>
       </div>
       <div class="edit-form" id="ef-${t.id}" data-id="${t.id}">
         <div class="edit-row">
@@ -1514,6 +1566,7 @@ function todoItemHtml(t){
         </div>
       </div>
     </div>
+    <button class="comment-btn${hasComment?' has-comment':''}" onclick="toggleComment('${t.id}')" title="${hasComment?'Voir le commentaire':'Ajouter un commentaire'}">💬</button>
     <button class="edit-btn" onclick="openEdit('${t.id}')" title="Modifier">✎</button>
     <button class="del" onclick="delTodo('${t.id}')">×</button>
   </div>`;
