@@ -932,6 +932,21 @@ body{
       </div>
     </div>
 
+    <!-- Templates -->
+    <div class="log-block">
+      <div class="log-head"><h3>🧩 Templates de tâches</h3></div>
+      <div class="log-body">
+        <p class="log-note" style="margin-bottom:8px;">Colle le contenu de ton <code>templates.json</code> Drive ici pour le charger dans l'app. L'app peut aussi pousser le JSON modifié vers Drive.</p>
+        <div class="btn-row">
+          <button class="lbtn primary" onclick="tmplCopyJson()">Copy JSON</button>
+          <button class="lbtn success" onclick="tmplImport()">Importer</button>
+          <button class="lbtn" onclick="tmplPushDrive()" id="btn-tmpl-push" style="display:none">⬆ Push Drive</button>
+        </div>
+        <textarea id="tmpl-area" placeholder='{"onboarding":{"label":"Onboarding client","subtasks":[{"text":"Préparer contrat"},{"text":"Envoyer accès"}]}}' style="height:140px;margin-top:8px;"></textarea>
+        <p id="tmpl-status" style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:4px;"></p>
+      </div>
+    </div>
+
     <!-- Activity -->
     <div class="log-block">
       <div class="log-head">
@@ -1486,6 +1501,64 @@ function closeEdit(id){
 }
 
 /* ══ TODOS ══ */
+/* ══ TEMPLATE IMPORT / EXPORT ══ */
+function tmplCopyJson(){
+  const txt=JSON.stringify(TMPL,null,2);
+  document.getElementById('tmpl-area').value=txt;
+  navigator.clipboard.writeText(txt).then(()=>toast('✓ Templates JSON copié')).catch(()=>toast('Copie manuelle'));
+}
+
+function tmplImport(){
+  const raw=document.getElementById('tmpl-area').value.trim();
+  if(!raw){toast('⚠ Zone vide');return;}
+  try{
+    const data=JSON.parse(raw);
+    if(typeof data!=='object'||Array.isArray(data)) throw new Error('Format invalide — objet attendu');
+    TMPL=data;
+    updateTypeSelect();
+    const n=Object.keys(data).length;
+    document.getElementById('tmpl-status').textContent=`✓ ${n} template${n>1?'s':''} chargé${n>1?'s':''} · Prêt à utiliser`;
+    if(drTok) document.getElementById('btn-tmpl-push').style.display='';
+    toast(`✓ ${n} template${n>1?'s':''} chargé${n>1?'s':''}`);
+    logA('drive','Templates importés ('+n+')');
+  }catch(e){
+    toast('⚠ JSON invalide : '+e.message);
+    document.getElementById('tmpl-status').textContent='⚠ Erreur : '+e.message;
+  }
+}
+
+let tmplFid=null;
+async function tmplPushDrive(){
+  if(!drTok){toast('⚠ Connecte-toi à Drive');return;}
+  try{
+    const fn='templates.json';
+    // Find or create
+    if(!tmplFid){
+      const q=encodeURIComponent(`name='${fn}' and trashed=false`);
+      const r=await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`,
+        {headers:{Authorization:'Bearer '+drTok}});
+      const d=await r.json();
+      if(d.files&&d.files.length) tmplFid=d.files[0].id;
+    }
+    const body=JSON.stringify(TMPL,null,2);
+    if(tmplFid){
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${tmplFid}?uploadType=media`,
+        {method:'PATCH',headers:{Authorization:'Bearer '+drTok,'Content-Type':'application/json'},body});
+    } else {
+      const bd='---TmplB';
+      const meta=JSON.stringify({name:fn,mimeType:'application/json'});
+      const mp=`--${bd}\r\nContent-Type: application/json\r\n\r\n${meta}\r\n--${bd}\r\nContent-Type: application/json\r\n\r\n${body}\r\n--${bd}--`;
+      const cr=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
+        {method:'POST',headers:{Authorization:'Bearer '+drTok,'Content-Type':`multipart/related; boundary="${bd}"`},body:mp});
+      const cd=await cr.json();
+      tmplFid=cd.id;
+    }
+    toast('✓ templates.json sauvegardé sur Drive');
+    document.getElementById('tmpl-status').textContent='✓ Sauvegardé sur Drive — '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    logA('drive','Templates → Drive (templates.json)');
+  }catch(e){toast('⚠ Erreur Drive : '+e.message);}
+}
+
 /* ══ TEMPLATES ══ */
 let TMPL = {};  // loaded from Drive templates.json
 
@@ -1514,6 +1587,12 @@ function updateTypeSelect(){
   sel.innerHTML = '<option value="">— type —</option>' +
     keys.map(k=>`<option value="${k}">${TMPL[k].label||k}</option>`).join('');
   sel.style.display = '';
+  // Show push button if Drive connected
+  const pushBtn=document.getElementById('btn-tmpl-push');
+  if(pushBtn && drTok) pushBtn.style.display='';
+  // Pre-fill textarea with current TMPL
+  const area=document.getElementById('tmpl-area');
+  if(area && !area.value) area.value=JSON.stringify(TMPL,null,2);
 }
 
 function addTodo(){
