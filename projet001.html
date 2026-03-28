@@ -2103,6 +2103,11 @@ function delTodo(id){
     S.todos=S.todos.filter(x=>!t.subtasks.includes(x.id));
     logA('todo',`Supprimé en cascade: "${t.text}" + ${n} sous-tâche${n>1?'s':''}`);
   }
+  // If it's a subtask, remove its ID from parent.subtasks
+  if(t.parentId){
+    const parent=S.todos.find(x=>x.id===t.parentId);
+    if(parent && parent.subtasks) parent.subtasks=parent.subtasks.filter(sid=>sid!==id);
+  }
   S.todos=S.todos.filter(x=>x.id!==id);
   autoSave();renderTodos();
   const undoId=pushUndo('todo',t.text,t);
