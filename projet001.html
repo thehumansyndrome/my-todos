@@ -518,6 +518,8 @@ body{
 .lbtn.success{background:var(--green-bg);color:var(--green);border-color:var(--green);}
 .lbtn.danger{background:var(--red-bg);color:var(--red);border-color:var(--red);}
 [data-theme="dark"] .lbtn.success{background:transparent;color:#34a853;border-color:#34a853;}
+/* Work category badge — brighter in dark mode */
+[data-theme="dark"] [data-cat-work]{color:#A78BFA !important;border-color:#A78BFA !important;}
 [data-theme="dark"] .lbtn.danger{background:transparent;color:#e57373;border-color:#e57373;}
 [data-theme="dark"] .hbtn.green{background:transparent;color:#34a853;border-color:#34a853;}
 #log-area{
@@ -1208,8 +1210,8 @@ const TABS=['todos','courses','notes','reminders','habits','challenges','log','t
 
 /* ══ DEFAULT CATEGORIES ══ */
 const DEFAULT_CATS = [
-  { id:'perso',  label:'Personal', color:'#EFF6FF', textColor:'#2563EB' },
-  { id:'work',   label:'Work',     color:'#EDE9FE', textColor:'#5B21B6' },
+  { id:'perso',  label:'Personal', color:'#EFF6FF', textColor:'#2563EB', darkColor:'#60A5FA' },
+  { id:'work',   label:'Work',     color:'#EDE9FE', textColor:'#6D28D9', darkColor:'#A78BFA' },
 ];
 
 /* ══ STATE ══ */
@@ -1240,6 +1242,10 @@ function ensureState(){
   // Update Personal color if still using old pink
   const persoCat=S.categories.find(c=>c.id==='perso');
   if(persoCat && (persoCat.textColor==='#9D174D'||persoCat.textColor==='#0D7377')){ persoCat.color='#EFF6FF'; persoCat.textColor='#2563EB'; }
+  const workCatMig=S.categories.find(c=>c.id==='work');
+  if(workCatMig && (workCatMig.textColor==='#5B21B6'||workCatMig.textColor==='#7C3AED')){ workCatMig.textColor='#6D28D9'; }
+  if(workCatMig && !workCatMig.darkColor) workCatMig.darkColor='#A78BFA';
+  if(persoCat && !persoCat.darkColor) persoCat.darkColor='#60A5FA';
   if(!S.challenges) S.challenges=[];
   if(!S.courses) S.courses=[];
 }
@@ -2207,7 +2213,9 @@ function autoResizeComment(ta){
 
 function todoItemHtml(t){
   const cat = getCatById(t.cat);
-  const catBadge = `<span style="font-family:var(--mono);font-size:9px;font-weight:500;padding:1px 5px;border-radius:2px;letter-spacing:.04em;text-transform:uppercase;background:transparent;color:${cat.textColor};border:1px solid ${cat.textColor};opacity:.85;">${esc(cat.label)}</span>`;
+  const isDarkMode = document.documentElement.getAttribute('data-theme')==='dark';
+  const catColor = isDarkMode ? (cat.darkColor||cat.textColor) : cat.textColor;
+  const catBadge = `<span style="font-family:var(--mono);font-size:9px;font-weight:500;padding:1px 5px;border-radius:2px;letter-spacing:.04em;text-transform:uppercase;background:transparent;color:${catColor};border:1px solid ${catColor};opacity:.9;">${esc(cat.label)}</span>`;
   const catOptions = S.categories.map(c=>`<option value="${c.id}"${t.cat===c.id?' selected':''}>${c.label}</option>`).join('');
   const pl={p1:'p1',p2:'p2',p3:'p3'};
   const hasComment = !!(t.comment && t.comment.trim());
@@ -2989,7 +2997,12 @@ function renderHabits(){
   document.getElementById('hab-list').innerHTML=vis.map(h=>{
     const streak=calcStreak(h),laws=h.laws||{},lf=[laws.signal,laws.envie,laws.reponse,laws.recompense].filter(Boolean).length;
     const typo=h.typo||'neutral',tl={good:'+ Good',neutral:'~ Neutral',bad:'− Bad'};
-    const ba=typo==='bad'?'border-color:var(--red)':typo==='good'?'border-color:var(--green)':'';
+    const isDark = document.documentElement.getAttribute('data-theme')==='dark';
+    const ba=typo==='bad'
+      ? (isDark?'border-color:#7f3535':'border-color:var(--red)')
+      : typo==='good'
+        ? (isDark?'border-color:#2a4a2a':'border-color:var(--green)')
+        : '';
     const dots=dates.map(d=>{const ds=isoDate(d),lg=isLogged(h.id,ds),it=ds===ts,fut=ds>ts;return`<div class="dot${lg?' done':''}${it?' tod':''}${fut?' fut':''}" ${fut?'':'onclick="toggleLog(\''+h.id+'\',\''+ds+'\')"'}><span class="dot-n">${d.getDate()}</span><span class="dot-d">${DAYS[d.getDay()]}</span></div>`;}).join('');
     return`<div class="hcard" style="${ba}">
       <div class="hcard-head">
