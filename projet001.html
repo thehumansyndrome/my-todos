@@ -1230,6 +1230,12 @@ function ensureState(){
     if(t.hz===undefined || t.hz==='someday') t.hz='later';
     if(t.cat==='projet') t.cat='perso'; // migration: projet → perso
   });
+  // Clean ghost IDs from subtasks[] — fixes stale counters (e.g. 0/3 after deletions)
+  const allIds=new Set(S.todos.map(x=>x.id));
+  S.todos.forEach(t=>{
+    if(t.subtasks && t.subtasks.length)
+      t.subtasks=t.subtasks.filter(sid=>allIds.has(sid));
+  });
   if(!S.notes) S.notes=[];
   S.notes.forEach(n=>{ if(!n.images) n.images=[]; if(n.large===undefined) n.large=true; });
   if(!S.reminders) S.reminders=[];
