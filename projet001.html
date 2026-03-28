@@ -725,10 +725,10 @@ body{
         <option value="p3">P3</option>
       </select>
       <select id="todo-hz" title="Horizon temporel" style="font-family:var(--mono);font-size:11px;padding:4px 6px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text2);cursor:pointer;">
-        <option value="someday" selected>Someday</option>
+        <option value="today" selected>Today</option>
         <option value="later">Later</option>
         <option value="waiting">Waiting</option>
-        <option value="today">Today</option>
+        <option value="someday">Someday</option>
       </select>
       <select id="todo-type" title="Template (sous-tâches automatiques)" style="font-family:var(--mono);font-size:11px;padding:4px 6px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text2);cursor:pointer;display:none;">
         <option value="">— type —</option>
@@ -1017,7 +1017,7 @@ const DEFAULT_CATS = [
 /* ══ STATE ══ */
 let S={todos:[],notes:[],reminders:[],habits:[],habitLogs:{},categories:[],challenges:[],courses:[]};
 let AL=[];
-let wOff=0, tF='all', hzF='all', dF='all', rF='all', hF='all', chF='all', notesQ='';
+let wOff=0, tF='all', hzF='today', dF='all', rF='all', hF='all', chF='all', notesQ='';
 
 function ensureState(){
   // Guarantee every key always exists — defensive against partial/missing data
@@ -1058,6 +1058,7 @@ function load(){
   }catch(e){}
   try{const a=localStorage.getItem(AK);if(a)AL=JSON.parse(a);}catch(e){}
   ensureState();
+  applyHzEscalation();
 }
 load();
 
@@ -1857,6 +1858,21 @@ function delTodo(id){
   logA('todo','Supprimé: "'+t.text+'"', undoId);
 }
 let collapsedParents = new Set(); // IDs of parents whose subtasks are hidden
+function applyHzEscalation(){
+  const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  let changed = false;
+  S.todos.forEach(t=>{
+    if(t.done) return;
+    if((t.hz||'today') !== 'today') return;
+    if(now - (t.ts||0) > ONE_WEEK){
+      t.hz = 'later';
+      changed = true;
+    }
+  });
+  if(changed) autoSave();
+}
+
 function toggleSubtasks(id){
   if(collapsedParents.has(id)) collapsedParents.delete(id);
   else collapsedParents.add(id);
@@ -2068,6 +2084,7 @@ async function archiveDone(){
 
 function renderTodos(){
   if(!S.categories || !Array.isArray(S.categories)) ensureState();
+  applyHzEscalation();
   const catKeys = S.categories.map(c=>c.id);
   const fkeys=['all',...catKeys,'p1','p2','p3'];
   const fl={all:'All',p1:'P1',p2:'P2',p3:'P3'};
