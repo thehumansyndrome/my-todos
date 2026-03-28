@@ -657,6 +657,85 @@ body{
 .done-chevron.open{transform:rotate(180deg);}
 .done-list{display:none;}
 .done-list.open{display:block;}
+
+/* ── NOTES GRID ── */
+.notes-grid{
+  columns:2;column-gap:10px;
+  margin-top:4px;
+}
+@media(max-width:480px){.notes-grid{columns:1;}}
+@media(min-width:700px){.notes-grid{columns:3;}}
+
+.note-card{
+  break-inside:avoid;
+  border-radius:8px;
+  border:1px solid var(--line);
+  padding:12px 14px 10px;
+  margin-bottom:10px;
+  cursor:pointer;
+  transition:box-shadow .15s, transform .1s;
+  position:relative;
+  display:block;
+}
+.note-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.08);transform:translateY(-1px);}
+.note-card.expanded{cursor:default;}
+.note-card-title{
+  font-size:13px;font-weight:500;color:var(--text);
+  margin-bottom:5px;line-height:1.35;
+}
+.note-card-body{
+  font-size:12px;color:var(--text2);line-height:1.55;
+  white-space:pre-wrap;word-break:break-word;
+}
+.note-card-body.clamped{
+  display:-webkit-box;-webkit-line-clamp:6;
+  -webkit-box-orient:vertical;overflow:hidden;
+  white-space:normal;
+}
+.note-card-footer{
+  display:flex;align-items:center;gap:6px;
+  margin-top:8px;flex-wrap:wrap;
+}
+.note-card-date{font-family:var(--mono);font-size:10px;color:var(--text3);}
+.note-card-imgs{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;}
+.note-card-actions{
+  display:none;gap:5px;margin-top:8px;
+}
+.note-card.expanded .note-card-actions{display:flex;}
+.note-card-btn{
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  padding:3px 9px;border-radius:var(--r);
+  border:1px solid var(--line2);background:var(--bg);
+  color:var(--text2);cursor:pointer;transition:all .1s;
+}
+.note-card-btn:hover{background:var(--bg2);color:var(--text);}
+.note-card-btn.danger:hover{background:var(--red-bg);color:var(--red);border-color:var(--red);}
+
+/* note colors — pastel, respects dark mode */
+.nc-0{background:#FFFDE7;}
+.nc-1{background:#E8F5E9;}
+.nc-2{background:#E3F2FD;}
+.nc-3{background:#FCE4EC;}
+.nc-4{background:#F3E5F5;}
+.nc-5{background:#E0F2F1;}
+.nc-6{background:#FFF3E0;}
+.nc-7{background:#E8EAF6;}
+[data-theme="dark"] .nc-0,
+[data-theme="dark"] .nc-1,
+[data-theme="dark"] .nc-2,
+[data-theme="dark"] .nc-3,
+[data-theme="dark"] .nc-4,
+[data-theme="dark"] .nc-5,
+[data-theme="dark"] .nc-6,
+[data-theme="dark"] .nc-7{background:var(--bg3);}
+
+/* note inline edit overlay */
+.note-edit-overlay{
+  display:none;flex-direction:column;gap:6px;
+  margin-top:8px;padding-top:8px;
+  border-top:1px solid var(--line);
+}
+.note-card.expanded .note-edit-overlay.open{display:flex;}
 .todo-comment{display:none;margin-top:6px;padding:6px 8px;background:var(--bg2);border-left:2px solid var(--line2);border-radius:0 var(--r) var(--r) 0;}
 .todo-comment.open{display:block;}
 .todo-comment textarea{width:100%;box-sizing:border-box;background:transparent;border:none;outline:none;font-family:var(--sans);font-size:12px;color:var(--text2);line-height:1.55;resize:none;padding:0;}
@@ -765,7 +844,7 @@ body{
       <input type="file" id="notes-img-input" accept="image/*" multiple style="display:none" onchange="handleNoteImgFiles(this.files,'new')">
       <div id="notes-img-preview" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;"></div>
     </div>
-    <div class="list" id="notes-list"></div>
+    <div class="notes-grid" id="notes-list"></div>
   </div>
 
 
@@ -2293,7 +2372,7 @@ function saveNote(id){
     n.images=[...n.images,...pendingEditImgs[id]];
     delete pendingEditImgs[id];
   }
-  autoSave();closeEdit(id);renderNotes();logA('note','Modifié: "'+(t||b.slice(0,40))+'"');
+  autoSave();closeNoteEdit(id);renderNotes();logA('note','Modifié: "'+(t||b.slice(0,40))+'"');
 }
 function delNote(id){
   const n=S.notes.find(x=>x.id===id);if(!n)return;
@@ -2346,55 +2425,78 @@ function highlightQ(html,q){
   const safe=q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
   return html.replace(new RegExp(`(?![^<]*>)(${safe})`, 'gi'), '<mark style="background:var(--yellow,#ffe066);color:var(--text);border-radius:2px;padding:0 1px;">$1</mark>');
 }
+// Track expanded note cards
+let expandedNotes = new Set();
+
+function toggleNoteCard(id){
+  if(expandedNotes.has(id)) expandedNotes.delete(id);
+  else expandedNotes.add(id);
+  renderNotes();
+}
+
+function openNoteEdit(id){
+  expandedNotes.add(id);
+  renderNotes();
+  setTimeout(()=>{
+    const ov=document.getElementById('neo-'+id);
+    if(ov){ ov.classList.add('open'); document.getElementById('ent-'+id).focus(); }
+  },30);
+}
+
+function closeNoteEdit(id){
+  const ov=document.getElementById('neo-'+id);
+  if(ov) ov.classList.remove('open');
+}
+
 function renderNotes(){
   const el=document.getElementById('notes-list');
   const q=notesQ.trim();
   let notes=S.notes;
   if(q) notes=notes.filter(n=>(n.title||'').toLowerCase().includes(q)||(n.body||'').toLowerCase().includes(q));
-  el.innerHTML=notes.length?notes.map(n=>{
-    const rawPreview=n.body?linkify(n.body).replace(/\n/g,'<br>'):'';
-    const preview=highlightQ(rawPreview,q);
-    const rawTitle=n.title?linkify(n.title):'';
-    const titleHtml=n.title?`<div class="item-text">${highlightQ(rawTitle,q)}</div>`:'';
+  const COLORS=8;
+  el.innerHTML=notes.length?notes.map((n,idx)=>{
+    const col=idx%COLORS;
+    const expanded=expandedNotes.has(n.id);
     const imgs=n.images||[];
-    const imgsHtml=imgs.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">${imgs.map((src,i)=>`
-      <div style="position:relative;display:inline-block;">
-        <img src="${src}" style="max-width:160px;max-height:120px;border-radius:4px;border:1px solid var(--line);cursor:pointer;object-fit:cover;" onclick="openImgViewer('${n.id}',${i})" title="Voir en grand">
-        <button onclick="event.stopPropagation();delNoteImg('${n.id}',${i})" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;line-height:1;padding:0;" title="Supprimer">×</button>
+    const titleHtml=n.title?`<div class="note-card-title">${highlightQ(esc(n.title),q)}</div>`:'';
+    const rawBody=n.body?n.body:'';
+    const bodyHtml=rawBody?`<div class="note-card-body${expanded?'':' clamped'}">${highlightQ(linkify(rawBody).replace(/\n/g,'<br>'),q)}</div>`:'';
+    const imgsHtml=imgs.length?`<div class="note-card-imgs">${imgs.map((src,i)=>`
+      <div style="position:relative;">
+        <img src="${src}" style="max-width:${expanded?'100%':'72px'};max-height:${expanded?'200px':'56px'};border-radius:4px;border:1px solid rgba(0,0,0,.08);cursor:pointer;object-fit:cover;" onclick="event.stopPropagation();openImgViewer('${n.id}',${i})">
+        ${expanded?`<button onclick="event.stopPropagation();delNoteImg('${n.id}',${i})" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;width:16px;height:16px;font-size:9px;cursor:pointer;line-height:1;padding:0;">×</button>`:''}
       </div>`).join('')}</div>`:'';
+    const editOverlay=`
+      <div class="note-edit-overlay" id="neo-${n.id}">
+        <input class="edit-in" id="ent-${n.id}" type="text" placeholder="Titre…" value="${esc(n.title||'')}" onkeydown="if(event.key==='Escape')closeNoteEdit('${n.id}')">
+        <textarea class="edit-in" id="enb-${n.id}" rows="4" style="resize:vertical;line-height:1.5;" onkeydown="if(event.ctrlKey&&event.key==='Enter'){event.preventDefault();saveNote('${n.id}');}">${esc(n.body||'')}</textarea>
+        <div style="border:1.5px dashed var(--line);border-radius:var(--r);padding:6px 10px;font-family:var(--mono);font-size:10px;color:var(--text3);cursor:pointer;text-align:center;"
+          onclick="document.getElementById('nei-${n.id}').click()"
+          ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
+          ondragleave="this.style.borderColor='var(--line)'"
+          ondrop="event.preventDefault();this.style.borderColor='var(--line)';handleNoteImgFiles(event.dataTransfer.files,'${n.id}')">
+          + image
+        </div>
+        <input type="file" id="nei-${n.id}" accept="image/*" multiple style="display:none" onchange="handleNoteImgFiles(this.files,'${n.id}')">
+        <div id="nep-${n.id}" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+        <div style="display:flex;gap:5px;">
+          <button class="save-btn" onclick="event.stopPropagation();saveNote('${n.id}')">Enregistrer</button>
+          <button class="cancel-btn" onclick="event.stopPropagation();closeNoteEdit('${n.id}')">Annuler</button>
+        </div>
+      </div>`;
     return `
-    <div class="item" data-id="${n.id}">
-      <div class="item-body">
-        ${titleHtml}
-        ${preview?`<div style="font-size:13px;color:var(--text2);margin-top:${n.title?'4':'0'}px;line-height:1.55;white-space:pre-wrap;">${preview}</div>`:''}
-        ${imgsHtml}
-        <div class="item-meta" style="margin-top:6px;">
-          <span class="meta-date">${fd(n.ts)}${n.edited?' · modifié':''}${imgs.length?' · '+imgs.length+' image'+(imgs.length>1?'s':''):''}</span>
-        </div>
-        <div class="edit-form" id="ef-${n.id}" data-id="${n.id}">
-          <div class="edit-row">
-            <input class="edit-in" id="ent-${n.id}" type="text" placeholder="Titre…" value="${esc(n.title||'')}" onkeydown="if(event.key==='Escape')closeEdit('${n.id}')">
-          </div>
-          <div class="edit-row">
-            <textarea class="edit-in" id="enb-${n.id}" rows="4" style="resize:vertical;line-height:1.5;" onkeydown="if(event.ctrlKey&&event.key==='Enter'){event.preventDefault();saveNote('${n.id}');}">${esc(n.body||'')}</textarea>
-          </div>
-          <div style="border:1.5px dashed var(--line);border-radius:var(--r);padding:8px 12px;font-family:var(--mono);font-size:11px;color:var(--text3);cursor:pointer;text-align:center;margin-top:4px;"
-            onclick="document.getElementById('nei-${n.id}').click()"
-            ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
-            ondragleave="this.style.borderColor='var(--line)'"
-            ondrop="event.preventDefault();this.style.borderColor='var(--line)';handleNoteImgFiles(event.dataTransfer.files,'${n.id}')">
-            📎 Ajouter une image
-          </div>
-          <input type="file" id="nei-${n.id}" accept="image/*" multiple style="display:none" onchange="handleNoteImgFiles(this.files,'${n.id}')">
-          <div id="nep-${n.id}" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;"></div>
-          <div class="eact">
-            <button class="save-btn" onclick="saveNote('${n.id}')">Enregistrer</button>
-            <button class="cancel-btn" onclick="closeEdit('${n.id}')">Annuler</button>
-          </div>
-        </div>
+    <div class="note-card nc-${col}${expanded?' expanded':''}" data-id="${n.id}" onclick="toggleNoteCard('${n.id}')">
+      ${titleHtml}
+      ${bodyHtml}
+      ${imgsHtml}
+      <div class="note-card-footer">
+        <span class="note-card-date">${fd(n.ts)}${n.edited?' · modifié':''}</span>
       </div>
-      <button class="edit-btn" onclick="openEdit('${n.id}')" title="Modifier">✎</button>
-      <button class="del" onclick="delNote('${n.id}')">×</button>
+      <div class="note-card-actions">
+        <button class="note-card-btn" onclick="event.stopPropagation();openNoteEdit('${n.id}')">✎ Modifier</button>
+        <button class="note-card-btn danger" onclick="event.stopPropagation();delNote('${n.id}')">× Supprimer</button>
+      </div>
+      ${editOverlay}
     </div>`;
   }).join(''):`<div class="empty">${q?'Aucune note trouvée':'Aucune note'}</div>`;
   const tot=S.notes.length;
