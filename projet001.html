@@ -58,6 +58,38 @@
   --purple-bg:#130E25;
 }
 
+/* ── DIM theme — Notion-style neutral gray ── */
+[data-theme="dim"] {
+  --bg:       #2F3437;
+  --bg2:      #373C3F;
+  --bg3:      #3F4547;
+  --card:     #343A3D;
+  --line:     #454C50;
+  --line2:    #525A5E;
+  --text:     #D4CFCA;
+  --text2:    #9B9590;
+  --text3:    #636059;
+  --accent:   #F97316;
+  --accent2:  #2A1F0A;
+  --blue:     #6BA3F5;   --blue-bg:   #0F1F3A;
+  --green:    #4ADE80;   --green-bg:  #0A2018;
+  --red:      #F87171;   --red-bg:    #2A0F0F;
+  --amber:    #FBBF24;   --amber-bg:  #1F1505;
+  --purple:   #A78BFA;   --purple-bg: #1A1030;
+}
+[data-theme="dim"] input[type="search"]{color-scheme:dark;}
+[data-theme="dim"] input,
+[data-theme="dim"] textarea,
+[data-theme="dim"] select{ color-scheme:dark; }
+[data-theme="dim"] .search-mark{background:#5a4a00;color:#f5d76e;}
+[data-theme="dim"] .p1{background:#3a0f0f;color:#f87171;}
+[data-theme="dim"] .p2{background:#2e1f06;color:#fbbf24;}
+[data-theme="dim"] .p3{background:#0f1535;color:#818cf8;}
+[data-theme="dim"] .lbtn.success{background:transparent;color:#34a853;border-color:#34a853;}
+[data-theme="dim"] .lbtn.danger{background:transparent;color:#e57373;border-color:#e57373;}
+[data-theme="dim"] .hbtn.green{background:transparent;color:#34a853;border-color:#34a853;}
+[data-theme="dim"] .nc-0,.nc-1,.nc-2,.nc-3,.nc-4,.nc-5,.nc-6,.nc-7{background:var(--bg3);}
+
 /* ── RESET ── */
 *{box-sizing:border-box;margin:0;padding:0;}
 
@@ -1519,12 +1551,23 @@ function switchTab(t){
 }
 
 /* ══ THEME ══ */
-function applyTheme(dark){
-  document.documentElement.setAttribute('data-theme',dark?'dark':'');
-  document.getElementById('theme-btn').textContent=dark?'☾':'☀︎';
+const THEMES=['light','dim','dark'];
+const THEME_ICONS={'light':'☀︎','dim':'◑','dark':'☾'};
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme', t==='light' ? '' : t);
+  document.getElementById('theme-btn').textContent=THEME_ICONS[t]||'☀︎';
+  localStorage.setItem(TK, t);
 }
-function toggleTheme(){const d=document.documentElement.getAttribute('data-theme')==='dark';applyTheme(!d);localStorage.setItem(TK,!d?'dark':'light');}
-(()=>{const s=localStorage.getItem(TK);applyTheme(s?s==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches);})();
+function toggleTheme(){
+  const cur=localStorage.getItem(TK)||'light';
+  const idx=THEMES.indexOf(cur);
+  applyTheme(THEMES[(idx+1)%THEMES.length]);
+}
+(()=>{
+  const s=localStorage.getItem(TK);
+  if(s && THEMES.includes(s)){ applyTheme(s); }
+  else { applyTheme(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'); }
+})();
 
 /* ══ AUTO-SAVE & SYNC ══
    Every data mutation calls autoSave() instead of save() directly.
