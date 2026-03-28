@@ -1993,14 +1993,18 @@ function renderTemplates(){
       </div>`).join('');
     return `
     <div class="log-block" style="margin-bottom:0;">
-      <div class="log-head" style="gap:8px;">
-        <input type="text" value="${esc(tmpl.label||k)}" id="tl-${k}"
-          style="font-family:var(--sans);font-size:13px;font-weight:500;background:transparent;border:none;outline:none;color:var(--text);flex:1;min-width:0;"
-          onfocus="this.style.borderBottom='1px solid var(--accent)'" onblur="this.style.borderBottom='';tmplUpdateLabel('${k}',this.value)"
-          title="Cliquer pour renommer">
-        <span style="font-family:var(--mono);font-size:10px;color:var(--text3);flex-shrink:0;">${subs.length} sous-tâche${subs.length>1?'s':''}</span>
-        <span style="font-family:var(--mono);font-size:10px;color:var(--line);flex-shrink:0;">clé: ${esc(k)}</span>
-        <button onclick="tmplDelete('${k}')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:2px 6px;flex-shrink:0;" title="Supprimer">×</button>
+      <div class="log-head" style="flex-direction:column;align-items:stretch;gap:4px;padding:10px 12px 6px;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <input type="text" value="${esc(tmpl.label||k)}" id="tl-${k}"
+            style="font-family:var(--sans);font-size:14px;font-weight:500;background:transparent;border:none;outline:none;color:var(--text);flex:1;min-width:0;"
+            onfocus="this.style.borderBottom='1px solid var(--accent)'" onblur="this.style.borderBottom='';tmplUpdateLabel('${k}',this.value)"
+            title="Cliquer pour renommer">
+          <button onclick="tmplDelete('${k}')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:2px 6px;flex-shrink:0;" title="Supprimer">×</button>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text3);">${subs.length} sous-tâche${subs.length>1?'s':''}</span>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text3);opacity:.4;">clé: ${esc(k)}</span>
+        </div>
       </div>
       <div class="log-body" style="padding:8px 12px;">
         <div id="tsubs-${k}">${subsHtml}</div>
