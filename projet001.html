@@ -754,6 +754,20 @@ body{
 
 .archive-btn{font-family:var(--mono);font-size:10px;padding:3px 9px;border-radius:var(--r);border:1px solid var(--line2);background:var(--bg);color:var(--text3);cursor:pointer;margin-left:auto;transition:all .12s;}
 .archive-btn:hover{background:var(--amber-bg);color:var(--amber);border-color:var(--amber);}
+
+/* ── NOTE TAGS ── */
+.note-tag{
+  font-family:var(--mono);font-size:9px;font-weight:500;
+  padding:1px 6px;border-radius:2px;
+  background:var(--bg3);color:var(--text2);
+  border:1px solid var(--line2);
+  letter-spacing:.03em;cursor:pointer;
+  transition:all .1s;
+}
+.note-tag:hover{background:var(--text);color:var(--bg);border-color:var(--text);}
+.note-tag.active{background:var(--text);color:var(--bg);border-color:var(--text);}
+.note-tag.auto{border-style:dashed;}
+.notes-tag-filters{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;}
 </style>
 </head>
 <body>
@@ -825,25 +839,25 @@ body{
   <!-- ══ NOTES ══ -->
   <div id="tab-notes" class="section">
     <div class="stats" id="notes-stats"></div>
-    <div style="margin-bottom:8px;">
-      <input class="main-in" type="search" id="notes-search" placeholder="🔍 Rechercher dans les notes…" oninput="notesQ=this.value.toLowerCase();renderNotes()" style="width:100%;box-sizing:border-box;" autocomplete="off">
-    </div>
     <div class="add-row" style="flex-direction:column;align-items:stretch;gap:6px;">
-      <div style="display:flex;gap:6px;align-items:center;">
-        <input class="main-in" type="text" id="notes-title-in" placeholder="Titre (optionnel)…" style="max-width:200px;" onkeydown="if(event.key==='Enter')document.getElementById('notes-body-in').focus()">
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <input class="main-in" type="text" id="notes-title-in" placeholder="Titre (optionnel)…" style="flex:1;min-width:120px;" onkeydown="if(event.key==='Enter')document.getElementById('notes-body-in').focus()">
+        <input class="main-in" type="text" id="notes-tags-in" placeholder="#tag1 #tag2…" style="width:130px;" title="Tags manuels — séparés par des espaces">
+        <input class="main-in" type="search" id="notes-search" placeholder="Rechercher…" oninput="notesQ=this.value.toLowerCase();renderNotes()" style="width:120px;" autocomplete="off">
         <button class="add-btn" onclick="addNote()">+ Add</button>
       </div>
-      <textarea id="notes-body-in" rows="3" placeholder="Note… (Entrée pour une nouvelle ligne, Ctrl+Entrée pour sauvegarder)" onkeydown="if(event.ctrlKey&&event.key==='Enter'){event.preventDefault();addNote();}" style="width:100%;font-family:var(--sans);font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;resize:vertical;line-height:1.5;"></textarea>
+      <textarea id="notes-body-in" rows="3" placeholder="Note… (#hashtags reconnus auto · Ctrl+Entrée pour sauvegarder)" onkeydown="if(event.ctrlKey&&event.key==='Enter'){event.preventDefault();addNote();}" style="width:100%;font-family:var(--sans);font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;resize:vertical;line-height:1.5;"></textarea>
       <div id="notes-img-drop" onclick="document.getElementById('notes-img-input').click()"
         ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
         ondragleave="this.style.borderColor='var(--line)'"
         ondrop="event.preventDefault();this.style.borderColor='var(--line)';handleNoteImgDrop(event.dataTransfer.files)"
-        style="border:1.5px dashed var(--line);border-radius:var(--r);padding:10px 14px;font-family:var(--mono);font-size:11px;color:var(--text3);cursor:pointer;text-align:center;transition:border-color .15s;">
+        style="border:1.5px dashed var(--line);border-radius:var(--r);padding:8px 14px;font-family:var(--mono);font-size:11px;color:var(--text3);cursor:pointer;text-align:center;transition:border-color .15s;">
         📎 Coller une image (Ctrl+V) · Cliquer ou glisser-déposer
       </div>
       <input type="file" id="notes-img-input" accept="image/*" multiple style="display:none" onchange="handleNoteImgFiles(this.files,'new')">
       <div id="notes-img-preview" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;"></div>
     </div>
+    <div class="notes-tag-filters" id="notes-tag-filters"></div>
     <div class="notes-grid" id="notes-list"></div>
   </div>
 
@@ -2348,14 +2362,34 @@ function renderTodos(){
 
 
 /* ══ NOTES ══ */
+function extractHashtags(text){
+  const found=(text||'').match(/#([a-zA-Z0-9_À-ž]+)/g)||[];
+  return [...new Set(found.map(t=>t.slice(1).toLowerCase()))];
+}
+function parseManualTags(str){
+  return [...new Set((str||'').split(/[\s,;]+/).map(t=>t.replace(/^#/,'').toLowerCase()).filter(Boolean))];
+}
+function noteTags(n){
+  const auto=extractHashtags((n.title||'')+' '+(n.body||''));
+  const manual=n.tags||[];
+  // merge, dedupe, auto first
+  const all=[...new Set([...auto,...manual])];
+  return {auto, manual, all};
+}
+
+let noteTagFilter = null; // currently active tag filter
+
 function addNote(){
   const title=document.getElementById('notes-title-in').value.trim();
   const body=document.getElementById('notes-body-in').value.trim();
+  const tagsRaw=document.getElementById('notes-tags-in').value.trim();
   if(!body&&!title&&!pendingNoteImgs.length)return;
-  const n={id:uid(),title:title,body:body,images:[...pendingNoteImgs],ts:Date.now()};
+  const tags=parseManualTags(tagsRaw);
+  const n={id:uid(),title:title,body:body,tags:tags,images:[...pendingNoteImgs],ts:Date.now()};
   S.notes.unshift(n);
   document.getElementById('notes-title-in').value='';
   document.getElementById('notes-body-in').value='';
+  document.getElementById('notes-tags-in').value='';
   document.getElementById('notes-title-in').focus();
   pendingNoteImgs=[];
   document.getElementById('notes-img-preview').innerHTML='';
@@ -2365,8 +2399,9 @@ function saveNote(id){
   const n=S.notes.find(x=>x.id===id);if(!n)return;
   const t=document.getElementById('ent-'+id).value.trim();
   const b=document.getElementById('enb-'+id).value.trim();
+  const tagsRaw=document.getElementById('etags-'+id)?document.getElementById('etags-'+id).value.trim():'';
   if(!b&&!t&&!(n.images&&n.images.length)&&!((pendingEditImgs[id]||[]).length))return;
-  n.title=t;n.body=b;n.edited=Date.now();
+  n.title=t;n.body=b;n.tags=parseManualTags(tagsRaw);n.edited=Date.now();
   if(pendingEditImgs[id]){
     if(!n.images)n.images=[];
     n.images=[...n.images,...pendingEditImgs[id]];
@@ -2451,13 +2486,32 @@ function closeNoteEdit(id){
 function renderNotes(){
   const el=document.getElementById('notes-list');
   const q=notesQ.trim();
+
+  // Collect all tags across all notes for the filter bar
+  const allTagsMap={};
+  S.notes.forEach(n=>{
+    noteTags(n).all.forEach(t=>{
+      allTagsMap[t]=(allTagsMap[t]||0)+1;
+    });
+  });
+  const allTagsSorted=Object.keys(allTagsMap).sort();
+  const tagFiltersEl=document.getElementById('notes-tag-filters');
+  if(tagFiltersEl){
+    tagFiltersEl.innerHTML=allTagsSorted.length
+      ? allTagsSorted.map(t=>`<button class="note-tag${noteTagFilter===t?' active':''}" onclick="event.stopPropagation();noteTagFilter=noteTagFilter==='${t}'?null:'${t}';renderNotes()">#${t} <span style="opacity:.5">${allTagsMap[t]}</span></button>`).join('')
+      : '';
+  }
+
   let notes=S.notes;
-  if(q) notes=notes.filter(n=>(n.title||'').toLowerCase().includes(q)||(n.body||'').toLowerCase().includes(q));
+  if(q) notes=notes.filter(n=>(n.title||'').toLowerCase().includes(q)||(n.body||'').toLowerCase().includes(q)||(noteTags(n).all.some(t=>t.includes(q.replace(/^#/,'')))));
+  if(noteTagFilter) notes=notes.filter(n=>noteTags(n).all.includes(noteTagFilter));
+
   const COLORS=8;
   el.innerHTML=notes.length?notes.map((n,idx)=>{
     const col=idx%COLORS;
     const expanded=expandedNotes.has(n.id);
     const imgs=n.images||[];
+    const {auto,manual,all}=noteTags(n);
     const titleHtml=n.title?`<div class="note-card-title">${highlightQ(esc(n.title),q)}</div>`:'';
     const rawBody=n.body?n.body:'';
     const bodyHtml=rawBody?`<div class="note-card-body${expanded?'':' clamped'}">${highlightQ(linkify(rawBody).replace(/\n/g,'<br>'),q)}</div>`:'';
@@ -2466,12 +2520,14 @@ function renderNotes(){
         <img src="${src}" style="max-width:${expanded?'100%':'72px'};max-height:${expanded?'200px':'56px'};border-radius:4px;border:1px solid rgba(0,0,0,.08);cursor:pointer;object-fit:cover;" onclick="event.stopPropagation();openImgViewer('${n.id}',${i})">
         ${expanded?`<button onclick="event.stopPropagation();delNoteImg('${n.id}',${i})" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;width:16px;height:16px;font-size:9px;cursor:pointer;line-height:1;padding:0;">×</button>`:''}
       </div>`).join('')}</div>`:'';
+    const tagsHtml=all.length?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;">${all.map(t=>`<span class="note-tag${auto.includes(t)?' auto':''}" onclick="event.stopPropagation();noteTagFilter=noteTagFilter==='${t}'?null:'${t}';renderNotes()">#${t}</span>`).join('')}</div>`:'';
     const editOverlay=`
       <div class="note-edit-overlay" id="neo-${n.id}">
         <input class="edit-in" id="ent-${n.id}" type="text" placeholder="Titre…" value="${esc(n.title||'')}" onkeydown="if(event.key==='Escape')closeNoteEdit('${n.id}')">
         <textarea class="edit-in" id="enb-${n.id}" rows="4" style="resize:vertical;line-height:1.5;" onkeydown="if(event.ctrlKey&&event.key==='Enter'){event.preventDefault();saveNote('${n.id}');}">${esc(n.body||'')}</textarea>
+        <input class="edit-in" id="etags-${n.id}" type="text" placeholder="#tag manuel…" value="${esc((n.tags||[]).join(' '))}" style="font-size:12px;" onclick="event.stopPropagation()">
         <div style="border:1.5px dashed var(--line);border-radius:var(--r);padding:6px 10px;font-family:var(--mono);font-size:10px;color:var(--text3);cursor:pointer;text-align:center;"
-          onclick="document.getElementById('nei-${n.id}').click()"
+          onclick="event.stopPropagation();document.getElementById('nei-${n.id}').click()"
           ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
           ondragleave="this.style.borderColor='var(--line)'"
           ondrop="event.preventDefault();this.style.borderColor='var(--line)';handleNoteImgFiles(event.dataTransfer.files,'${n.id}')">
@@ -2489,6 +2545,7 @@ function renderNotes(){
       ${titleHtml}
       ${bodyHtml}
       ${imgsHtml}
+      ${tagsHtml}
       <div class="note-card-footer">
         <span class="note-card-date">${fd(n.ts)}${n.edited?' · modifié':''}</span>
       </div>
