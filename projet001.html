@@ -1922,7 +1922,7 @@ function addSubtaskInline(parentId){
   if(!parent)return;
   const sid=uid();
   const sub={
-    id:sid, text, cat:parent.cat, pri:parent.pri, hz:'today',
+    id:sid, text, cat:parent.cat, pri:parent.pri, hz:parent.hz,
     done:false, ts:Date.now(), comment:'', subtasks:[], parentId, type:parent.type
   };
   S.todos.push(sub);
@@ -1933,6 +1933,28 @@ function addSubtaskInline(parentId){
   logA('todo','Sous-tâche ajoutée: "'+text+'" → "'+parent.text+'"');
   // Re-open edit form and subtask zone after re-render
   setTimeout(()=>{ openEdit(parentId); toggleAddSubtask(parentId); },50);
+}
+
+function saveAsTemplate(parentId){
+  const parent=S.todos.find(x=>x.id===parentId);
+  if(!parent||!parent.subtasks||!parent.subtasks.length){ toast('⚠ Pas de sous-tâches à templatiser'); return; }
+  // Build a default key from the task text
+  const defaultKey=parent.text.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-_]/g,'').slice(0,30)||'template';
+  const key=prompt('Clé du template (lettres, chiffres, tirets) :', defaultKey);
+  if(!key) return;
+  const cleanKey=key.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-_]/g,'');
+  if(!cleanKey){ toast('⚠ Clé invalide'); return; }
+  if(TMPL[cleanKey] && !confirm(`Le template "${cleanKey}" existe déjà. Le remplacer ?`)) return;
+  const subtasks=parent.subtasks.map(sid=>{
+    const s=S.todos.find(x=>x.id===sid);
+    return s ? {text:s.text} : null;
+  }).filter(Boolean);
+  TMPL[cleanKey]={ label:parent.text, subtasks };
+  updateTypeSelect();
+  tmplAutoSave();
+  toast('✓ Template "'+cleanKey+'" créé ('+subtasks.length+' sous-tâches)');
+  logA('todo','Template créé depuis tâche : "'+parent.text+'"');
+  closeEdit(parentId);
 }
 
 function toggleSubtasks(id){
@@ -2061,6 +2083,7 @@ function todoItemHtml(t){
           <button class="save-btn" onclick="saveTodo('${t.id}')">Enregistrer</button>
           <button class="cancel-btn" onclick="closeEdit('${t.id}')">Annuler</button>
           ${!t.parentId ? `<button class="cancel-btn" onclick="toggleAddSubtask('${t.id}')" title="Ajouter une sous-tâche" style="margin-left:auto;">+ sous-tâche</button>` : ''}
+          ${!t.parentId && t.subtasks && t.subtasks.length ? `<button class="cancel-btn" onclick="saveAsTemplate('${t.id}')" title="Créer un template depuis cette tâche" style="color:var(--accent);border-color:var(--accent);">⊕ template</button>` : ''}
         </div>
         ${!t.parentId ? `
         <div id="esub-${t.id}" style="display:none;margin-top:6px;display:none;">
