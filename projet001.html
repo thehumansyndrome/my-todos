@@ -2406,7 +2406,7 @@ function linkify(text){
       const cleanUrl=url.replace(/&amp;/g,'&');
       const start=new URL(cleanUrl).searchParams.get('t')||'0';
       const embedSrc=`https://www.youtube.com/embed/${ytId}?start=${start}&rel=0`;
-      return `<div class="yt-embed" data-src="${embedSrc}" data-id="${ytId}" onclick="loadYtEmbed(this)" style="position:relative;width:100%;max-width:480px;aspect-ratio:16/9;background:#000;border-radius:6px;overflow:hidden;cursor:pointer;margin:6px 0;">
+      return `<div class="yt-embed" data-src="${embedSrc}" data-id="${ytId}" onclick="event.stopPropagation();loadYtEmbed(this)" style="position:relative;width:100%;max-width:480px;aspect-ratio:16/9;background:#000;border-radius:6px;overflow:hidden;cursor:pointer;margin:6px 0;">
         <img src="https://i.ytimg.com/vi/${ytId}/hqdefault.jpg" style="width:100%;height:100%;object-fit:cover;opacity:.85;">
         <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
           <div style="width:56px;height:40px;background:#ff0000;border-radius:10px;display:flex;align-items:center;justify-content:center;">
