@@ -2192,6 +2192,11 @@ function renderTodos(){
   }
   if(hzF!=='all') active=active.filter(x=>(x.hz||'today')===hzF);
 
+  // NOW tasks always float to top — stable sort preserves manual order within each group
+  if(hzF==='all' || hzF==='now'){
+    active.sort((a,b)=>{ const an=a.hz==='now'?0:1, bn=b.hz==='now'?0:1; return an-bn; });
+  }
+
   const el=document.getElementById('todo-list');
   // Interleave ALL subtasks (done or not) right after their parent
   const ordered=[];
