@@ -456,11 +456,12 @@ body{
   border:none;border-bottom:1px solid var(--line);
   margin-bottom:0;overflow:hidden;
   background:transparent;
+  padding:16px 0 8px;
 }
 .hcard:first-child{border-top:1px solid var(--line);}
 .hcard-head{
   display:flex;align-items:center;gap:8px;
-  padding:10px 0 6px;flex-wrap:wrap;
+  padding:0 0 8px;flex-wrap:wrap;
 }
 .hname{font-size:13px;font-weight:500;color:var(--text);}
 .hcat-tag{
@@ -3280,11 +3281,7 @@ function renderHabits(){
     const streak=calcStreak(h),laws=h.laws||{},lf=[laws.signal,laws.envie,laws.reponse,laws.recompense].filter(Boolean).length;
     const typo=h.typo||'neutral',tl={good:'+ Good',neutral:'~ Neutral',bad:'− Bad'};
     const isDark = document.documentElement.getAttribute('data-theme')==='dark';
-    const ba=typo==='bad'
-      ? (isDark?'border-left:3px solid #7f3535':'border-left:3px solid var(--red)')
-      : typo==='good'
-        ? (isDark?'border-left:3px solid #2a4a2a':'border-left:3px solid var(--green)')
-        : 'border-left:3px solid transparent';
+    const ba='';
     const dots=dates.map(d=>{const ds=isoDate(d),lg=isLogged(h.id,ds),it=ds===ts,fut=ds>ts;return`<div class="dot${lg?' done':''}${it?' tod':''}${fut?' fut':''}" ${fut?'':'onclick="toggleLog(\''+h.id+'\',\''+ds+'\')"'}><span class="dot-n">${d.getDate()}</span><span class="dot-d">${DAYS[d.getDay()]}</span></div>`;}).join('');
     return`<div class="hcard" style="${ba}">
       <div class="hcard-head">
