@@ -1077,11 +1077,10 @@ body{
       </div>
     </div>
   </div>
-</div>
 
 <!-- ══ TEMPLATES TAB ══ -->
 <div id="tab-templates" class="section" style="display:none;">
-  <div class="stats" id="tmpl-stats"></div>
+  <div class="stats" id="tmpl-stats" style="display:none;"></div>
 
   <!-- Add form manuel -->
   <div class="add-row" style="align-items:center;">
@@ -1099,6 +1098,7 @@ body{
     <button class="lbtn" id="btn-tmpl-push2" onclick="tmplPushDrive()" style="display:none;">⬆ Sauver sur Drive</button>
     <span id="tmpl-drive-status" style="font-family:var(--mono);font-size:11px;color:var(--text3);"></span>
   </div>
+</div>
 </div>
 
 <!-- MODAL -->
@@ -1673,9 +1673,15 @@ function closeEdit(id){
 function renderTemplates(){
   const keys=Object.keys(TMPL);
   const stats=document.getElementById('tmpl-stats');
-  if(stats) stats.innerHTML=keys.length
-    ? `<div class="stat"><div class="stat-n">${keys.length}</div><div class="stat-l">Template${keys.length>1?'s':''}</div></div>`
-    : '';
+  if(stats){
+    if(keys.length){
+      stats.innerHTML=`<div class="stat"><div class="stat-n">${keys.length}</div><div class="stat-l">Template${keys.length>1?'s':''}</div></div>`;
+      stats.style.display='';
+    } else {
+      stats.innerHTML='';
+      stats.style.display='none';
+    }
+  }
 
   const el=document.getElementById('tmpl-list');
   if(!el) return;
@@ -2482,6 +2488,9 @@ function highlightQ(html,q){
 let expandedNotes = new Set();
 
 function toggleNoteCard(id){
+  // Don't collapse if the edit overlay is open
+  const ov = document.getElementById('neo-'+id);
+  if(ov && ov.classList.contains('open')) return;
   if(expandedNotes.has(id)) expandedNotes.delete(id);
   else expandedNotes.add(id);
   renderNotes();
@@ -2502,6 +2511,8 @@ function closeNoteEdit(id){
 }
 
 function renderNotes(){
+  // Don't re-render if a note edit overlay is currently open — would kill the user's input
+  if(document.querySelector('.note-edit-overlay.open')) return;
   const el=document.getElementById('notes-list');
   const q=notesQ.trim();
 
@@ -2542,7 +2553,7 @@ function renderNotes(){
     const editOverlay=`
       <div class="note-edit-overlay" id="neo-${n.id}" onclick="event.stopPropagation()">
         <input class="edit-in" id="ent-${n.id}" type="text" placeholder="Titre…" value="${esc(n.title||'')}" onkeydown="if(event.key==='Escape')closeNoteEdit('${n.id}')">
-        <textarea class="edit-in" id="enb-${n.id}" rows="4" style="resize:vertical;line-height:1.5;" onkeydown="if(event.ctrlKey&&event.key==='Enter'){event.preventDefault();saveNote('${n.id}');}">${esc(n.body||'')}</textarea>
+        <textarea class="edit-in" id="enb-${n.id}" rows="4" style="resize:vertical;line-height:1.5;" onclick="event.stopPropagation()" onkeydown="if(event.ctrlKey&&event.key==='Enter'){event.preventDefault();saveNote('${n.id}');}">${esc(n.body||'')}</textarea>
         <input class="edit-in" id="etags-${n.id}" type="text" placeholder="#tag manuel…" value="${esc((n.tags||[]).join(' '))}" style="font-size:12px;" onclick="event.stopPropagation()">
         <div style="border:1.5px dashed var(--line);border-radius:var(--r);padding:6px 10px;font-family:var(--mono);font-size:10px;color:var(--text3);cursor:pointer;text-align:center;"
           onclick="event.stopPropagation();document.getElementById('nei-${n.id}').click()"
