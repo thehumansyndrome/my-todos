@@ -725,6 +725,74 @@ body{
 }
 .courses-clear:hover{background:var(--red-bg);color:var(--red);border-color:var(--red);}
 
+/* ── FAB (floating action button) ── */
+.fab{
+  display:none;
+  position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));right:20px;
+  width:56px;height:56px;border-radius:50%;
+  background:var(--accent);color:#fff;
+  border:none;font-size:26px;line-height:1;
+  box-shadow:0 4px 16px rgba(0,0,0,.25);
+  cursor:pointer;z-index:200;
+  align-items:center;justify-content:center;
+  transition:transform .15s, opacity .15s;
+}
+.fab:active{transform:scale(.92);}
+@media(max-width:600px){.fab{display:flex;}}
+
+/* ── QUICK ADD MODAL ── */
+.qamodal{
+  display:none;position:fixed;inset:0;z-index:300;
+  align-items:flex-end;justify-content:center;
+}
+.qamodal.open{display:flex;}
+.qamodal-backdrop{
+  position:absolute;inset:0;background:rgba(0,0,0,.45);
+}
+.qamodal-sheet{
+  position:relative;z-index:1;
+  width:100%;max-width:600px;
+  background:var(--card);
+  border-radius:16px 16px 0 0;
+  padding:16px 16px calc(16px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;gap:10px;
+  animation:slideup .2s ease;
+}
+@keyframes slideup{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.qamodal-handle{
+  width:36px;height:4px;border-radius:2px;
+  background:var(--line2);margin:0 auto 4px;
+}
+.qamodal-title{
+  font-family:var(--mono);font-size:11px;font-weight:500;
+  text-transform:uppercase;letter-spacing:.06em;color:var(--text3);
+}
+.qamodal-in{
+  font-family:var(--sans);font-size:16px;
+  padding:10px 12px;
+  border:1px solid var(--line2);border-radius:var(--r2);
+  background:var(--bg);color:var(--text);
+  outline:none;width:100%;box-sizing:border-box;
+  transition:border-color .12s;
+}
+.qamodal-in:focus{border-color:var(--accent);}
+.qamodal-row{display:flex;gap:8px;flex-wrap:wrap;}
+.qamodal-row select{
+  font-family:var(--mono);font-size:12px;
+  padding:7px 10px;border:1px solid var(--line2);border-radius:var(--r);
+  background:var(--bg);color:var(--text2);
+  flex:1;min-width:80px;outline:none;
+}
+.qamodal-add{
+  font-family:var(--mono);font-size:13px;font-weight:500;
+  padding:12px;border-radius:var(--r2);
+  background:var(--accent);color:#fff;
+  border:none;cursor:pointer;
+  width:100%;letter-spacing:.02em;
+  transition:opacity .12s;
+}
+.qamodal-add:active{opacity:.85;}
+
 /* ── DONE SECTION ── */
 .done-section{margin-top:20px;}
 .done-section-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;cursor:pointer;user-select:none;}
@@ -968,6 +1036,34 @@ body{
     <div class="filters" id="todo-filters"></div>
     <div class="filters" id="todo-hz-filters" style="margin-top:4px;"></div>
     <div class="list" id="todo-list"></div>
+  </div>
+
+  <!-- FAB + Quick Add Modal -->
+  <button class="fab" id="fab-btn" onclick="openQA()" title="Nouvelle tâche">+</button>
+  <div class="qamodal" id="qa-modal" onclick="if(event.target===this||event.target.classList.contains('qamodal-backdrop'))closeQA()">
+    <div class="qamodal-backdrop"></div>
+    <div class="qamodal-sheet">
+      <div class="qamodal-handle"></div>
+      <div class="qamodal-title">Nouvelle tâche</div>
+      <textarea class="qamodal-in" id="qa-text" rows="2" placeholder="Que faut-il faire ?"
+        style="resize:none;line-height:1.45;"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitQA();}"></textarea>
+      <div class="qamodal-row">
+        <select id="qa-cat"></select>
+        <select id="qa-pri">
+          <option value="p1">P1</option>
+          <option value="p2" selected>P2</option>
+          <option value="p3">P3</option>
+        </select>
+        <select id="qa-hz">
+          <option value="now">Now</option>
+          <option value="today" selected>Today</option>
+          <option value="later">Later</option>
+          <option value="waiting">Waiting</option>
+        </select>
+      </div>
+      <button class="qamodal-add" onclick="submitQA()">Ajouter</button>
+    </div>
   </div>
   <!-- ══ NOTES ══ -->
   <div id="tab-notes" class="section">
@@ -1566,6 +1662,7 @@ function switchTab(t){
   if(t==='habits')renderHabits();
   if(t==='challenges')renderChallenges();
   if(t==='templates')renderTemplates();
+  updateFabVisibility(t);
 }
 
 /* ══ THEME ══ */
@@ -2071,6 +2168,39 @@ function updateTypeSelect(){
   if(area && !area.value) area.value=JSON.stringify(TMPL,null,2);
   // Re-render templates tab if active
   if(document.getElementById('tab-templates')?.classList.contains('active')) renderTemplates();
+}
+
+/* ══ QUICK ADD (FAB) ══ */
+function openQA(){
+  // Sync cat options
+  const sel=document.getElementById('qa-cat');
+  sel.innerHTML=S.categories.map(c=>`<option value="${c.id}">${c.label}</option>`).join('');
+  document.getElementById('qa-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('qa-text').focus(),100);
+}
+function closeQA(){
+  document.getElementById('qa-modal').classList.remove('open');
+  document.getElementById('qa-text').value='';
+}
+function submitQA(){
+  const text=document.getElementById('qa-text').value.trim();
+  if(!text) return;
+  const cat=document.getElementById('qa-cat').value;
+  const pri=document.getElementById('qa-pri').value;
+  const hz=document.getElementById('qa-hz').value;
+  const t={id:uid(),text,cat,pri,hz,done:false,ts:Date.now(),comment:'',subtasks:[],parentId:null,type:null};
+  S.todos.push(t);
+  autoSave();renderTodos();
+  logA('todo','Ajouté (FAB): "'+text+'"');
+  closeQA();
+  // Toast confirmation
+  toast('✓ "'+text.slice(0,30)+(text.length>30?'…':'')+'" ajoutée');
+}
+
+/* Show/hide FAB based on active tab */
+function updateFabVisibility(tab){
+  const fab=document.getElementById('fab-btn');
+  if(fab) fab.style.display = tab==='todos' ? '' : 'none';
 }
 
 function addTodo(){
