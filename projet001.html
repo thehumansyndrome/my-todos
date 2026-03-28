@@ -65,6 +65,8 @@
 *{scrollbar-width:thin;scrollbar-color:var(--line2) transparent;}
 input[type="search"]{-webkit-appearance:none;appearance:none;color-scheme:light;}
 [data-theme="dark"] input[type="search"]{color-scheme:dark;}
+.search-mark{background:#ffe066;color:#1a1a1a;border-radius:2px;padding:0 1px;}
+[data-theme="dark"] .search-mark{background:#5a4a00;color:#f5d76e;}
 *::-webkit-scrollbar{width:4px;height:4px;}
 *::-webkit-scrollbar-track{background:transparent;}
 *::-webkit-scrollbar-thumb{background:var(--line2);border-radius:2px;}
@@ -358,6 +360,11 @@ body{
 .p3{background:#E0E7FF;color:#3730A3;}
 .cwork{background:#EDE9FE;color:#5B21B6;}
 .cperso{background:#FCE7F3;color:#9D174D;}
+[data-theme="dark"] .p1{background:#3a0f0f;color:#f87171;}
+[data-theme="dark"] .p2{background:#2e1f06;color:#fbbf24;}
+[data-theme="dark"] .p3{background:#0f1535;color:#818cf8;}
+[data-theme="dark"] .cwork{background:#1a0f35;color:#a78bfa;}
+[data-theme="dark"] .cperso{background:#2d0f1f;color:#f472b6;}
 
 .ts-overdue{background:var(--red-bg);color:var(--red);}
 .ts-today{background:var(--amber-bg);color:var(--amber);}
@@ -1185,7 +1192,7 @@ const TABS=['todos','courses','notes','reminders','habits','challenges','log','t
 
 /* ══ DEFAULT CATEGORIES ══ */
 const DEFAULT_CATS = [
-  { id:'perso',  label:'Personal', color:'#FCE7F3', textColor:'#9D174D' },
+  { id:'perso',  label:'Personal', color:'#EFF6FF', textColor:'#2563EB' },
   { id:'work',   label:'Work',     color:'#EDE9FE', textColor:'#5B21B6' },
 ];
 
@@ -1214,6 +1221,9 @@ function ensureState(){
   if(!S.categories.length) S.categories=JSON.parse(JSON.stringify(DEFAULT_CATS));
   // Remove 'projet' from saved categories if present
   S.categories=S.categories.filter(c=>c.id!=='projet');
+  // Update Personal color if still using old pink
+  const persoCat=S.categories.find(c=>c.id==='perso');
+  if(persoCat && (persoCat.textColor==='#9D174D'||persoCat.textColor==='#0D7377')){ persoCat.color='#EFF6FF'; persoCat.textColor='#2563EB'; }
   if(!S.challenges) S.challenges=[];
   if(!S.courses) S.courses=[];
 }
@@ -2181,7 +2191,7 @@ function autoResizeComment(ta){
 
 function todoItemHtml(t){
   const cat = getCatById(t.cat);
-  const catBadge = `<span style="font-family:var(--mono);font-size:9px;font-weight:500;padding:1px 5px;border-radius:2px;letter-spacing:.04em;text-transform:uppercase;background:${cat.color};color:${cat.textColor};">${esc(cat.label)}</span>`;
+  const catBadge = `<span style="font-family:var(--mono);font-size:9px;font-weight:500;padding:1px 5px;border-radius:2px;letter-spacing:.04em;text-transform:uppercase;background:transparent;color:${cat.textColor};border:1px solid ${cat.textColor};opacity:.85;">${esc(cat.label)}</span>`;
   const catOptions = S.categories.map(c=>`<option value="${c.id}"${t.cat===c.id?' selected':''}>${c.label}</option>`).join('');
   const pl={p1:'p1',p2:'p2',p3:'p3'};
   const hasComment = !!(t.comment && t.comment.trim());
@@ -2543,7 +2553,7 @@ function highlightQ(html,q){
   if(!q) return html;
   // Highlight query in already-HTML text, skip inside tags
   const safe=q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-  return html.replace(new RegExp(`(?![^<]*>)(${safe})`, 'gi'), '<mark style="background:var(--yellow,#ffe066);color:var(--text);border-radius:2px;padding:0 1px;">$1</mark>');
+  return html.replace(new RegExp(`(?![^<]*>)(${safe})`, 'gi'), '<mark class="search-mark">$1</mark>');
 }
 // Track expanded note cards
 let expandedNotes = new Set();
