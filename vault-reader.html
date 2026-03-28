@@ -33,6 +33,34 @@
   --amber:#F5A623;--amber-bg:#1A1100;
   --red:#FF6B6B;--red-bg:#260D0D;
 }
+
+/* ── SAND theme — warm lavender light ── */
+[data-theme="sand"] {
+  --bg:#F8F7FF;--bg2:#EEEDF6;--bg3:#E4E3ED;--card:#FFFFFF;
+  --line:#D8D7E4;--line2:#C8C7D4;
+  --text:#1C1B2E;--text2:#5C5B72;--text3:#9C9BAA;
+  --accent:#C2410C;--blue:#1D4ED8;--blue-bg:#DBEAFE;
+  --green:#15803D;--green-bg:#DCFCE7;
+  --amber:#B45309;--amber-bg:#FEF3C7;
+  --red:#B91C1C;--red-bg:#FEE2E2;
+}
+
+/* ── NAVY theme — deep blue night ── */
+[data-theme="navy"] {
+  --bg:#0D1321;--bg2:#131A2B;--bg3:#192035;--card:#111827;
+  --line:#222D40;--line2:#2E3D55;
+  --text:#C5CCE0;--text2:#7080A0;--text3:#404D65;
+  --accent:#F97316;--blue:#6BA3F5;--blue-bg:#0F1F3A;
+  --green:#4ADE80;--green-bg:#0A2018;
+  --amber:#FBBF24;--amber-bg:#1F1505;
+  --red:#F87171;--red-bg:#2A0F0F;
+}
+
+/* Force inputs/selects to use app tokens — prevents white flash in dark/navy */
+input,textarea,select{background:var(--bg);color:var(--text);border-color:var(--line);color-scheme:light;}
+[data-theme="dark"] input,[data-theme="dark"] textarea,[data-theme="dark"] select{color-scheme:dark;}
+[data-theme="navy"] input,[data-theme="navy"] textarea,[data-theme="navy"] select{color-scheme:dark;}
+
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;overflow:hidden;}
 body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;transition:background .15s,color .15s;}
@@ -758,17 +786,27 @@ function loadCfg(){
 }
 
 /* ══ THEME ══ */
-function applyTheme(dark){
-  document.documentElement.setAttribute('data-theme', dark?'dark':'');
-  document.getElementById('theme-btn').textContent = dark ? '☾' : '☀︎';
-  document.getElementById('hljs-dark').disabled = !dark;
-  document.getElementById('hljs-light').disabled = dark;
+const THEMES = ['light','sand','navy','dark'];
+const THEME_ICONS = {light:'☀︎', dark:'☾', sand:'◑', navy:'✦'};
+function applyTheme(t){
+  if(!THEMES.includes(t)) t='light';
+  document.documentElement.setAttribute('data-theme', t==='light'?'':t);
+  document.getElementById('theme-btn').textContent = THEME_ICONS[t];
+  const isDark = t==='dark'||t==='navy';
+  document.getElementById('hljs-dark').disabled = !isDark;
+  document.getElementById('hljs-light').disabled = isDark;
+  localStorage.setItem(TK, t);
 }
 function toggleTheme(){
-  const d = document.documentElement.getAttribute('data-theme')==='dark';
-  applyTheme(!d); localStorage.setItem(TK, !d?'dark':'light');
+  const cur = localStorage.getItem(TK)||'light';
+  const next = THEMES[(THEMES.indexOf(cur)+1)%THEMES.length];
+  applyTheme(next);
 }
-(()=>{ const s=localStorage.getItem(TK); applyTheme(s?s==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches); })();
+(()=>{
+  const s = localStorage.getItem(TK);
+  const def = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  applyTheme(s&&THEMES.includes(s) ? s : def);
+})();
 
 /* ══ TOAST ══ */
 let tT;
