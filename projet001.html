@@ -962,6 +962,22 @@ body{
   <!-- ══ LOG ══ -->
   <div id="tab-log" class="section">
 
+    <!-- Display -->
+    <div class="log-block">
+      <div class="log-head"><h3>🔡 Affichage</h3></div>
+      <div class="log-body">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span style="font-family:var(--mono);font-size:11px;color:var(--text2);">Taille de police</span>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <button class="lbtn" onclick="changeFontSize(-1)" style="font-size:14px;font-weight:500;padding:3px 10px;">A−</button>
+            <span id="font-size-label" style="font-family:var(--mono);font-size:11px;color:var(--text2);min-width:30px;text-align:center;"></span>
+            <button class="lbtn" onclick="changeFontSize(1)" style="font-size:16px;font-weight:500;padding:3px 10px;">A+</button>
+          </div>
+          <button class="lbtn" onclick="changeFontSize(0)" style="font-size:11px;">Reset</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Drive -->
     <div class="log-block" id="drive-anchor">
       <div class="log-head"><h3>☁ Google Drive Sync</h3></div>
@@ -3257,6 +3273,26 @@ function renderCourses(){
       <button class="del" onclick="delCourse('${c.id}')" title="Supprimer">×</button>
     </div>`).join('');
 }
+
+/* ══ FONT SIZE ══ */
+const FS_KEY = 'td_fs_' + P;
+const FS_MIN = 11, FS_MAX = 22, FS_DEFAULT = 14;
+let currentFs = parseInt(localStorage.getItem(FS_KEY)) || FS_DEFAULT;
+
+function applyFontSize(size){
+  currentFs = Math.min(FS_MAX, Math.max(FS_MIN, size));
+  document.body.style.fontSize = currentFs + 'px';
+  localStorage.setItem(FS_KEY, currentFs);
+  const lbl = document.getElementById('font-size-label');
+  if(lbl) lbl.textContent = currentFs + 'px';
+}
+
+function changeFontSize(dir){
+  if(dir === 0) applyFontSize(FS_DEFAULT);
+  else applyFontSize(currentFs + dir);
+}
+
+applyFontSize(currentFs);
 
 renderAll();
 updateUndoBtn();
