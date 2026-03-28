@@ -45,21 +45,19 @@
   --red:#B91C1C;--red-bg:#FEE2E2;
 }
 
-/* ── NAVY theme — deep blue night ── */
-[data-theme="navy"] {
-  --bg:#0D1321;--bg2:#131A2B;--bg3:#192035;--card:#111827;
-  --line:#222D40;--line2:#2E3D55;
-  --text:#C5CCE0;--text2:#7080A0;--text3:#404D65;
-  --accent:#F97316;--blue:#6BA3F5;--blue-bg:#0F1F3A;
-  --green:#4ADE80;--green-bg:#0A2018;
-  --amber:#FBBF24;--amber-bg:#1F1505;
-  --red:#F87171;--red-bg:#2A0F0F;
+/* ── GPT theme — ChatGPT dark ── */
+[data-theme="gpt"] {
+  --bg:#212121;--bg2:#171717;--bg3:#2A2A2A;--card:#212121;
+  --line:#333333;--line2:#444444;
+  --text:#ECECEC;--text2:#A0A0A0;--text3:#5A5A5A;
+  --accent:#10A37F;--blue:#6BA3F5;--blue-bg:#0D1A2E;
+  --green:#10A37F;--green-bg:#0A2018;
+  --amber:#F5A623;--amber-bg:#1A1100;
+  --red:#EF4444;--red-bg:#260D0D;
 }
-
-/* Force inputs/selects to use app tokens — prevents white flash in dark/navy */
+[data-theme="gpt"] input,[data-theme="gpt"] textarea,[data-theme="gpt"] select{color-scheme:dark;}
 input,textarea,select{background:var(--bg);color:var(--text);border-color:var(--line);color-scheme:light;}
 [data-theme="dark"] input,[data-theme="dark"] textarea,[data-theme="dark"] select{color-scheme:dark;}
-[data-theme="navy"] input,[data-theme="navy"] textarea,[data-theme="navy"] select{color-scheme:dark;}
 
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;overflow:hidden;}
@@ -473,7 +471,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
       <button class="hbtn" onclick="openUploadPanel()" title="Importer un vault DSCPA vers Drive">⬆ Vault</button>
       <span class="mode-badge" id="mode-badge"></span>
       <button class="hbtn" onclick="openSettings()"><span class="gdot" id="gdot"></span> Drive</button>
-      <button class="hbtn" onclick="downloadApp()" title="Télécharger vault-reader.html">⬇ HTML</button>
     </div>
     <!-- Always visible: theme + mobile overflow -->
     <button class="hbtn" id="theme-btn" onclick="toggleTheme()">☀︎</button>
@@ -485,7 +482,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
     <button class="hbtn amber" id="journal-btn-m" onclick="toggleJournal();closeMobileMenu()">✎ Journal</button>
     <button class="hbtn" onclick="openUploadPanel();closeMobileMenu()">⬆ Vault</button>
     <button class="hbtn" onclick="openSettings();closeMobileMenu()"><span class="gdot" id="gdot-m"></span> Drive</button>
-    <button class="hbtn" onclick="downloadApp();closeMobileMenu()">⬇ HTML</button>
   </div>
 
   <div class="body">
@@ -786,13 +782,13 @@ function loadCfg(){
 }
 
 /* ══ THEME ══ */
-const THEMES = ['light','sand','navy','dark'];
-const THEME_ICONS = {light:'☀︎', dark:'☾', sand:'◑', navy:'✦'};
+const THEMES = ['light','sand','dark','gpt'];
+const THEME_ICONS = {light:'☀︎', dark:'☾', sand:'◑', gpt:'⬡'};
 function applyTheme(t){
   if(!THEMES.includes(t)) t='light';
   document.documentElement.setAttribute('data-theme', t==='light'?'':t);
   document.getElementById('theme-btn').textContent = THEME_ICONS[t];
-  const isDark = t==='dark'||t==='navy';
+  const isDark = t==='dark'||t==='gpt';
   document.getElementById('hljs-dark').disabled = !isDark;
   document.getElementById('hljs-light').disabled = isDark;
   localStorage.setItem(TK, t);
