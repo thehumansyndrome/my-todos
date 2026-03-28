@@ -791,6 +791,19 @@ body{
 .note-tag.active{background:var(--text);color:var(--bg);border-color:var(--text);}
 .note-tag.auto{border-style:dashed;}
 
+/* ── NOTE LARGE FONT ── */
+.note-card.large-font .note-card-body{font-size:24px;line-height:1.4;}
+.note-card.large-font .note-card-title{font-size:26px;}
+.note-large-btn{
+  font-family:var(--mono);font-size:9px;font-weight:500;
+  padding:1px 7px;border-radius:2px;
+  border:1px solid var(--line2);
+  background:var(--bg);color:var(--text3);
+  cursor:pointer;transition:all .1s;
+}
+.note-large-btn:hover{background:var(--blue-bg);color:var(--blue);border-color:var(--blue);}
+.note-large-btn.on{background:var(--blue-bg);color:var(--blue);border-color:var(--blue);}
+
 /* ── NOTE READ STATE ── */
 .note-unread-dot{
   width:7px;height:7px;border-radius:50%;
@@ -2558,6 +2571,15 @@ function closeNoteEdit(id){
 
 let noteReadFilter = null; // null | 'unread' | 'read'
 
+function toggleNoteLarge(id, e){
+  if(e) e.stopPropagation();
+  const n=S.notes.find(x=>x.id===id);
+  if(!n) return;
+  n.large = !n.large;
+  autoSave();
+  renderNotes();
+}
+
 function toggleNoteRead(id, e){
   if(e) e.stopPropagation();
   const n=S.notes.find(x=>x.id===id);
@@ -2642,15 +2664,17 @@ function renderNotes(){
         </div>
       </div>`;
     const isRead = !!n.read;
+    const isLarge = !!n.large;
     const unreadDot = !isRead ? `<span class="note-unread-dot" title="Non lue"></span>` : '';
     return `
-    <div class="note-card nc-${col}${expanded?' expanded':''}${isRead?' is-read':''}" data-id="${n.id}" onclick="toggleNoteCard('${n.id}')">
+    <div class="note-card nc-${col}${expanded?' expanded':''}${isRead?' is-read':''}${isLarge?' large-font':''}" data-id="${n.id}" onclick="toggleNoteCard('${n.id}')">
       ${unreadDot}${titleHtml}
       ${bodyHtml}
       ${imgsHtml}
       ${tagsHtml}
       <div class="note-card-footer">
         <span class="note-card-date">${fd(n.ts)}${n.edited?' · modifié':''}</span>
+        <button class="note-large-btn${isLarge?' on':''}" onclick="toggleNoteLarge('${n.id}',event)" title="Basculer grande police">A${isLarge?'↓':'↑'}</button>
         <button class="note-read-btn${isRead?' read':''}" onclick="toggleNoteRead('${n.id}',event)" title="${isRead?'Marquer non lue':'Marquer comme lue'}">${isRead?'✓ Lu':'Marquer lu'}</button>
       </div>
       <div class="note-card-actions">
