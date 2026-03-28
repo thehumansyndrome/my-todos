@@ -1018,10 +1018,10 @@ body{
           <span style="font-family:var(--mono);font-size:11px;color:var(--text2);">Taille de police</span>
           <div style="display:flex;align-items:center;gap:4px;">
             <button class="lbtn" onclick="changeFontSize(-1)" style="font-size:14px;font-weight:500;padding:3px 10px;">A−</button>
-            <span id="font-size-label" style="font-family:var(--mono);font-size:11px;color:var(--text2);min-width:30px;text-align:center;"></span>
+            <span id="font-size-label" style="font-family:var(--mono);font-size:11px;color:var(--text2);min-width:36px;text-align:center;"></span>
             <button class="lbtn" onclick="changeFontSize(1)" style="font-size:16px;font-weight:500;padding:3px 10px;">A+</button>
           </div>
-          <button class="lbtn" onclick="changeFontSize(0)" style="font-size:11px;">Reset</button>
+          <button class="lbtn" onclick="changeFontSize(0)" style="font-size:11px;">100%</button>
         </div>
       </div>
     </div>
@@ -3364,23 +3364,38 @@ function renderCourses(){
 
 /* ══ FONT SIZE ══ */
 const FS_KEY = 'td_fs_' + P;
-const FS_MIN = 11, FS_MAX = 22, FS_DEFAULT = 14;
-let currentFs = parseInt(localStorage.getItem(FS_KEY)) || FS_DEFAULT;
+const FS_STEPS = [0.8, 0.9, 1.0, 1.1, 1.2, 1.35, 1.5];
+const FS_DEFAULT_IDX = 2; // 1.0
+let currentFsIdx = parseInt(localStorage.getItem(FS_KEY));
+if(isNaN(currentFsIdx) || currentFsIdx < 0 || currentFsIdx >= FS_STEPS.length) currentFsIdx = FS_DEFAULT_IDX;
 
-function applyFontSize(size){
-  currentFs = Math.min(FS_MAX, Math.max(FS_MIN, size));
-  document.body.style.fontSize = currentFs + 'px';
-  localStorage.setItem(FS_KEY, currentFs);
+function applyFontSize(idx){
+  currentFsIdx = Math.min(FS_STEPS.length - 1, Math.max(0, idx));
+  const scale = FS_STEPS[currentFsIdx];
+  document.documentElement.style.setProperty('--fs-scale', scale);
+  // Use zoom for Chromium (crisp), transform:scale fallback for others
+  const page = document.querySelector('.page');
+  if(page){
+    if(CSS.supports('zoom', '1')){
+      page.style.zoom = scale;
+      page.style.transform = '';
+    } else {
+      page.style.transformOrigin = 'top center';
+      page.style.transform = `scale(${scale})`;
+      page.style.marginBottom = scale < 1 ? `-${Math.round((1-scale)*600)}px` : '';
+    }
+  }
+  localStorage.setItem(FS_KEY, currentFsIdx);
   const lbl = document.getElementById('font-size-label');
-  if(lbl) lbl.textContent = currentFs + 'px';
+  if(lbl) lbl.textContent = Math.round(scale * 100) + '%';
 }
 
 function changeFontSize(dir){
-  if(dir === 0) applyFontSize(FS_DEFAULT);
-  else applyFontSize(currentFs + dir);
+  if(dir === 0) applyFontSize(FS_DEFAULT_IDX);
+  else applyFontSize(currentFsIdx + dir);
 }
 
-applyFontSize(currentFs);
+applyFontSize(currentFsIdx);
 
 renderAll();
 updateUndoBtn();
