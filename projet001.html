@@ -2540,7 +2540,7 @@ function renderNotes(){
       </div>`).join('')}</div>`:'';
     const tagsHtml=all.length?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;">${all.map(t=>`<span class="note-tag${auto.includes(t)?' auto':''}" onclick="event.stopPropagation();noteTagFilter=noteTagFilter==='${t}'?null:'${t}';renderNotes()">#${t}</span>`).join('')}</div>`:'';
     const editOverlay=`
-      <div class="note-edit-overlay" id="neo-${n.id}">
+      <div class="note-edit-overlay" id="neo-${n.id}" onclick="event.stopPropagation()">
         <input class="edit-in" id="ent-${n.id}" type="text" placeholder="Titre…" value="${esc(n.title||'')}" onkeydown="if(event.key==='Escape')closeNoteEdit('${n.id}')">
         <textarea class="edit-in" id="enb-${n.id}" rows="4" style="resize:vertical;line-height:1.5;" onkeydown="if(event.ctrlKey&&event.key==='Enter'){event.preventDefault();saveNote('${n.id}');}">${esc(n.body||'')}</textarea>
         <input class="edit-in" id="etags-${n.id}" type="text" placeholder="#tag manuel…" value="${esc((n.tags||[]).join(' '))}" style="font-size:12px;" onclick="event.stopPropagation()">
