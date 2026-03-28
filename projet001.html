@@ -65,6 +65,19 @@
 *{scrollbar-width:thin;scrollbar-color:var(--line2) transparent;}
 input[type="search"]{-webkit-appearance:none;appearance:none;color-scheme:light;}
 [data-theme="dark"] input[type="search"]{color-scheme:dark;}
+
+/* Force all inputs/textareas to use app tokens — prevents white flash in dark mode */
+input, textarea, select{
+  background:var(--bg);
+  color:var(--text);
+  border-color:var(--line);
+  color-scheme: light;
+}
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select{
+  color-scheme: dark;
+}
 .search-mark{background:#ffe066;color:#1a1a1a;border-radius:2px;padding:0 1px;}
 [data-theme="dark"] .search-mark{background:#5a4a00;color:#f5d76e;}
 *::-webkit-scrollbar{width:4px;height:4px;}
@@ -504,6 +517,9 @@ body{
 .lbtn.primary:hover{opacity:.8;}
 .lbtn.success{background:var(--green-bg);color:var(--green);border-color:var(--green);}
 .lbtn.danger{background:var(--red-bg);color:var(--red);border-color:var(--red);}
+[data-theme="dark"] .lbtn.success{background:transparent;color:#34a853;border-color:#34a853;}
+[data-theme="dark"] .lbtn.danger{background:transparent;color:#e57373;border-color:#e57373;}
+[data-theme="dark"] .hbtn.green{background:transparent;color:#34a853;border-color:#34a853;}
 #log-area{
   width:100%;font-family:var(--mono);font-size:10px;line-height:1.6;
   padding:10px;border:1px solid var(--line);border-radius:var(--r);
