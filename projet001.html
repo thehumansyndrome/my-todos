@@ -78,17 +78,17 @@
   --purple:   #6D28D9;   --purple-bg: #EDE9FE;
 }
 
-/* ── NAVY theme — deep blue night 0D1321 ── */
-[data-theme="navy"] {
-  --bg:       #0D1321;
-  --bg2:      #131A2B;
-  --bg3:      #192035;
-  --card:     #111827;
-  --line:     #222D40;
-  --line2:    #2E3D55;
-  --text:     #C5CCE0;
-  --text2:    #7080A0;
-  --text3:    #404D65;
+/* ── THEME: ChatGPT ── */
+[data-theme="gpt"] {
+  --bg:       #212121;
+  --bg2:      #2A2A2A;
+  --bg3:      #333333;
+  --card:     #2F2F2F;
+  --line:     #3A3A3A;
+  --line2:    #484848;
+  --text:     #ECECEC;
+  --text2:    #8E8E8E;
+  --text3:    #565656;
   --accent:   #F97316;
   --accent2:  #1A1100;
   --blue:     #6BA3F5;   --blue-bg:   #0F1F3A;
@@ -97,18 +97,15 @@
   --amber:    #FBBF24;   --amber-bg:  #1F1505;
   --purple:   #A78BFA;   --purple-bg: #1A1030;
 }
-[data-theme="navy"] input[type="search"]{color-scheme:dark;}
-[data-theme="navy"] input,
-[data-theme="navy"] textarea,
-[data-theme="navy"] select{ color-scheme:dark; }
-[data-theme="navy"] .search-mark{background:#5a4a00;color:#f5d76e;}
-[data-theme="navy"] .p1{background:#3a0f0f;color:#f87171;}
-[data-theme="navy"] .p2{background:#2e1f06;color:#fbbf24;}
-[data-theme="navy"] .p3{background:#0f1535;color:#818cf8;}
-[data-theme="navy"] .lbtn.success{background:transparent;color:#34a853;border-color:#34a853;}
-[data-theme="navy"] .lbtn.danger{background:transparent;color:#e57373;border-color:#e57373;}
-[data-theme="navy"] .hbtn.green{background:transparent;color:#34a853;border-color:#34a853;}
-[data-theme="navy"] .nc-0,.nc-1,.nc-2,.nc-3,.nc-4,.nc-5,.nc-6,.nc-7{background:var(--bg3);}
+[data-theme="gpt"] input,[data-theme="gpt"] textarea,[data-theme="gpt"] select{color-scheme:dark;}
+[data-theme="gpt"] .search-mark{background:#5a4a00;color:#f5d76e;}
+[data-theme="gpt"] .p1{background:#3a0f0f;color:#f87171;}
+[data-theme="gpt"] .p2{background:#2e1f06;color:#fbbf24;}
+[data-theme="gpt"] .p3{background:#0f1535;color:#818cf8;}
+[data-theme="gpt"] .lbtn.success{background:transparent;color:#34a853;border-color:#34a853;}
+[data-theme="gpt"] .lbtn.danger{background:transparent;color:#e57373;border-color:#e57373;}
+[data-theme="gpt"] .hbtn.green{background:transparent;color:#34a853;border-color:#34a853;}
+[data-theme="gpt"] .nc-0,.nc-1,.nc-2,.nc-3,.nc-4,.nc-5,.nc-6,.nc-7{background:var(--bg3);}
 
 /* ── RESET ── */
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -1571,8 +1568,8 @@ function switchTab(t){
 }
 
 /* ══ THEME ══ */
-const THEMES=['light','sand','navy','dark'];
-const THEME_ICONS={'light':'☀︎','sand':'○','navy':'◑','dark':'☾'};
+const THEMES=['light','sand','gpt','dark'];
+const THEME_ICONS={'light':'☀︎','sand':'○','gpt':'◎','dark':'☾'};
 function applyTheme(t){
   document.documentElement.setAttribute('data-theme', t==='light' ? '' : t);
   document.getElementById('theme-btn').textContent=THEME_ICONS[t]||'☀︎';
