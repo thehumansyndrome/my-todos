@@ -1830,7 +1830,7 @@ function saveTodo(id){
   if(t.subtasks && t.subtasks.length){
     t.subtasks.forEach(sid=>{
       const s=S.todos.find(x=>x.id===sid);
-      if(s){ s.cat=newCat; s.pri=newPri; }
+      if(s){ s.cat=newCat; s.pri=newPri; s.hz=newHz; }
     });
   }
   // If hz filter is active and new hz doesn't match, switch to 'all' so task stays visible
