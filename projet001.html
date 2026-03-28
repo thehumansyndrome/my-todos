@@ -729,7 +729,7 @@ body{
       </select>
       <select id="todo-hz" title="Horizon temporel" style="font-family:var(--mono);font-size:11px;padding:4px 6px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text2);cursor:pointer;">
         <option value="now">Now</option>
-        <option value="today" selected>Today</option>
+        <option value="today">Today</option>
         <option value="later">Later</option>
         <option value="waiting">Waiting</option>
       </select>
@@ -1019,7 +1019,7 @@ const DEFAULT_CATS = [
 /* ══ STATE ══ */
 let S={todos:[],notes:[],reminders:[],habits:[],habitLogs:{},categories:[],challenges:[],courses:[]};
 let AL=[];
-let wOff=0, tF='all', hzF='today', dF='all', rF='all', hF='all', chF='all', notesQ='';
+let wOff=0, tF='all', hzF='all', dF='all', rF='all', hF='all', chF='all', notesQ='';
 
 function ensureState(){
   // Guarantee every key always exists — defensive against partial/missing data
