@@ -1342,11 +1342,8 @@ body{
 
   <!-- Add form manuel -->
   <div class="add-row" style="align-items:center;">
-    <input class="main-in" type="text" id="tmpl-key-in" placeholder="clé (ex: onboarding)" autocomplete="off"
-      style="max-width:160px;font-family:var(--mono);"
-      onkeydown="if(event.key==='Enter')document.getElementById('tmpl-label-in').focus()">
-    <input class="main-in" type="text" id="tmpl-label-in" placeholder="Label affiché"
-      onkeydown="if(event.key==='Enter')addTemplate()">
+    <input class="main-in" type="text" id="tmpl-label-in" placeholder="Nom du template…" autocomplete="off"
+      style="flex:1;" onkeydown="if(event.key==='Enter')addTemplate()">
     <button class="add-btn" onclick="addTemplate()">+ Add</button>
   </div>
 
@@ -2021,14 +2018,11 @@ function renderTemplates(){
 }
 
 function addTemplate(){
-  const keyRaw=document.getElementById('tmpl-key-in').value.trim();
   const label=document.getElementById('tmpl-label-in').value.trim();
-  if(!keyRaw){toast('⚠ Clé requise');return;}
-  const key=keyRaw.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-_]/g,'');
-  if(!key){toast('⚠ Clé invalide (lettres, chiffres, tirets)');return;}
-  if(TMPL[key]){toast('⚠ Clé déjà existante : '+key);return;}
-  TMPL[key]={label:label||key,subtasks:[]};
-  document.getElementById('tmpl-key-in').value='';
+  if(!label){toast('⚠ Nom requis');return;}
+  const key=label.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-_]/g,'').slice(0,40)||'template-'+Date.now().toString(36);
+  const finalKey=TMPL[key]?key+'-'+Date.now().toString(36):key;
+  TMPL[finalKey]={label:label,subtasks:[]};
   document.getElementById('tmpl-label-in').value='';
   updateTypeSelect();
   renderTemplates();
