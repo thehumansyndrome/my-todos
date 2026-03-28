@@ -58,8 +58,28 @@
   --purple-bg:#130E25;
 }
 
-/* ── DIM theme — Navy blue dark ── */
-[data-theme="dim"] {
+/* ── SAND theme — warm light gray D6D5C9 ── */
+[data-theme="sand"] {
+  --bg:       #F8F7FF;
+  --bg2:      #EEEDF6;
+  --bg3:      #E4E3ED;
+  --card:     #FFFFFF;
+  --line:     #D8D7E4;
+  --line2:    #C8C7D4;
+  --text:     #1C1B2E;
+  --text2:    #5C5B72;
+  --text3:    #9C9BAA;
+  --accent:   #C2410C;
+  --accent2:  #FEF3C7;
+  --blue:     #1D4ED8;   --blue-bg:   #DBEAFE;
+  --green:    #15803D;   --green-bg:  #DCFCE7;
+  --red:      #B91C1C;   --red-bg:    #FEE2E2;
+  --amber:    #B45309;   --amber-bg:  #FEF3C7;
+  --purple:   #6D28D9;   --purple-bg: #EDE9FE;
+}
+
+/* ── NAVY theme — deep blue night 0D1321 ── */
+[data-theme="navy"] {
   --bg:       #0D1321;
   --bg2:      #131A2B;
   --bg3:      #192035;
@@ -77,18 +97,18 @@
   --amber:    #FBBF24;   --amber-bg:  #1F1505;
   --purple:   #A78BFA;   --purple-bg: #1A1030;
 }
-[data-theme="dim"] input[type="search"]{color-scheme:dark;}
-[data-theme="dim"] input,
-[data-theme="dim"] textarea,
-[data-theme="dim"] select{ color-scheme:dark; }
-[data-theme="dim"] .search-mark{background:#5a4a00;color:#f5d76e;}
-[data-theme="dim"] .p1{background:#3a0f0f;color:#f87171;}
-[data-theme="dim"] .p2{background:#2e1f06;color:#fbbf24;}
-[data-theme="dim"] .p3{background:#0f1535;color:#818cf8;}
-[data-theme="dim"] .lbtn.success{background:transparent;color:#34a853;border-color:#34a853;}
-[data-theme="dim"] .lbtn.danger{background:transparent;color:#e57373;border-color:#e57373;}
-[data-theme="dim"] .hbtn.green{background:transparent;color:#34a853;border-color:#34a853;}
-[data-theme="dim"] .nc-0,.nc-1,.nc-2,.nc-3,.nc-4,.nc-5,.nc-6,.nc-7{background:var(--bg3);}
+[data-theme="navy"] input[type="search"]{color-scheme:dark;}
+[data-theme="navy"] input,
+[data-theme="navy"] textarea,
+[data-theme="navy"] select{ color-scheme:dark; }
+[data-theme="navy"] .search-mark{background:#5a4a00;color:#f5d76e;}
+[data-theme="navy"] .p1{background:#3a0f0f;color:#f87171;}
+[data-theme="navy"] .p2{background:#2e1f06;color:#fbbf24;}
+[data-theme="navy"] .p3{background:#0f1535;color:#818cf8;}
+[data-theme="navy"] .lbtn.success{background:transparent;color:#34a853;border-color:#34a853;}
+[data-theme="navy"] .lbtn.danger{background:transparent;color:#e57373;border-color:#e57373;}
+[data-theme="navy"] .hbtn.green{background:transparent;color:#34a853;border-color:#34a853;}
+[data-theme="navy"] .nc-0,.nc-1,.nc-2,.nc-3,.nc-4,.nc-5,.nc-6,.nc-7{background:var(--bg3);}
 
 /* ── RESET ── */
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -1551,8 +1571,8 @@ function switchTab(t){
 }
 
 /* ══ THEME ══ */
-const THEMES=['light','dim','dark'];
-const THEME_ICONS={'light':'☀︎','dim':'◑','dark':'☾'};
+const THEMES=['light','sand','navy','dark'];
+const THEME_ICONS={'light':'☀︎','sand':'○','navy':'◑','dark':'☾'};
 function applyTheme(t){
   document.documentElement.setAttribute('data-theme', t==='light' ? '' : t);
   document.getElementById('theme-btn').textContent=THEME_ICONS[t]||'☀︎';
