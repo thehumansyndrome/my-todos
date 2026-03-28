@@ -2672,9 +2672,9 @@ function renderNotes(){
       ${bodyHtml}
       ${imgsHtml}
       ${tagsHtml}
+      <button class="note-large-btn${isLarge?' on':''}" onclick="toggleNoteLarge('${n.id}',event)" title="Basculer grande police" style="position:absolute;top:8px;right:8px;">A${isLarge?'↓':'↑'}</button>
       <div class="note-card-footer">
         <span class="note-card-date">${fd(n.ts)}${n.edited?' · modifié':''}</span>
-        <button class="note-large-btn${isLarge?' on':''}" onclick="toggleNoteLarge('${n.id}',event)" title="Basculer grande police">A${isLarge?'↓':'↑'}</button>
         <button class="note-read-btn${isRead?' read':''}" onclick="toggleNoteRead('${n.id}',event)" title="${isRead?'Marquer non lue':'Marquer comme lue'}">${isRead?'✓ Lu':'Marquer lu'}</button>
       </div>
       <div class="note-card-actions">
