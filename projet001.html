@@ -676,9 +676,34 @@ body{
   transition:box-shadow .15s, transform .1s;
   position:relative;
   display:block;
+  /* collapsed: max height + fade */
+  max-height:200px;
+  overflow:hidden;
+}
+.note-card:not(.expanded)::after{
+  content:'';
+  position:absolute;bottom:0;left:0;right:0;
+  height:48px;
+  background:linear-gradient(transparent, var(--card-fade, #fff));
+  pointer-events:none;
+  border-radius:0 0 8px 8px;
+}
+/* match fade color to each pastel */
+.nc-0:not(.expanded)::after{--card-fade:#FFFDE7;}
+.nc-1:not(.expanded)::after{--card-fade:#E8F5E9;}
+.nc-2:not(.expanded)::after{--card-fade:#E3F2FD;}
+.nc-3:not(.expanded)::after{--card-fade:#FCE4EC;}
+.nc-4:not(.expanded)::after{--card-fade:#F3E5F5;}
+.nc-5:not(.expanded)::after{--card-fade:#E0F2F1;}
+.nc-6:not(.expanded)::after{--card-fade:#FFF3E0;}
+.nc-7:not(.expanded)::after{--card-fade:#E8EAF6;}
+[data-theme="dark"] .note-card:not(.expanded)::after{--card-fade:var(--bg3);}
+.note-card.expanded{
+  cursor:default;
+  max-height:none;
+  overflow:visible;
 }
 .note-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.08);transform:translateY(-1px);}
-.note-card.expanded{cursor:default;}
 .note-card-title{
   font-size:13px;font-weight:500;color:var(--text);
   margin-bottom:5px;line-height:1.35;
