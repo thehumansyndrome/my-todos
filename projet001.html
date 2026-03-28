@@ -970,84 +970,6 @@ body{
 <div id="tab-templates" class="section" style="display:none;">
   <div class="stats" id="tmpl-stats"></div>
 
-  <!-- AI Generator -->
-  <div class="log-block" style="margin-bottom:12px;">
-    <div class="log-head" style="gap:10px;">
-      <h3>✨ Générer un template par IA</h3>
-      <div style="margin-left:auto;display:flex;gap:6px;align-items:center;">
-        <span style="font-family:var(--mono);font-size:10px;color:var(--text3);">Mode</span>
-        <button id="ai-mode-btn" onclick="toggleAiMode()"
-          style="font-family:var(--mono);font-size:10px;padding:2px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg2);color:var(--text2);cursor:pointer;">
-          Texte libre
-        </button>
-      </div>
-    </div>
-    <div class="log-body">
-
-      <!-- Mode texte libre -->
-      <div id="ai-free-mode">
-        <textarea id="ai-free-input" rows="3" placeholder="Décris le processus… ex: &quot;Processus de recrutement d'un freelance : brief, sourcing, entretiens, contrat, onboarding&quot;"
-          style="width:100%;box-sizing:border-box;font-family:var(--sans);font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;resize:vertical;line-height:1.5;"
-          onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--line)'"></textarea>
-      </div>
-
-      <!-- Mode questionnaire guidé -->
-      <div id="ai-guided-mode" style="display:none;">
-        <div style="display:flex;flex-direction:column;gap:8px;">
-          <div>
-            <label style="font-family:var(--mono);font-size:10px;color:var(--text3);display:block;margin-bottom:3px;">Nom du processus</label>
-            <input id="ai-q-name" type="text" placeholder="ex: Recrutement freelance"
-              style="width:100%;box-sizing:border-box;font-family:var(--sans);font-size:13px;padding:6px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;"
-              onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--line)'">
-          </div>
-          <div style="display:flex;gap:8px;">
-            <div style="flex:1;">
-              <label style="font-family:var(--mono);font-size:10px;color:var(--text3);display:block;margin-bottom:3px;">Nombre d'étapes</label>
-              <select id="ai-q-steps" style="width:100%;font-family:var(--mono);font-size:12px;padding:6px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text2);">
-                <option value="3-5">3 à 5</option>
-                <option value="5-8" selected>5 à 8</option>
-                <option value="8-12">8 à 12</option>
-              </select>
-            </div>
-            <div style="flex:1;">
-              <label style="font-family:var(--mono);font-size:10px;color:var(--text3);display:block;margin-bottom:3px;">Contexte</label>
-              <select id="ai-q-ctx" style="width:100%;font-family:var(--mono);font-size:12px;padding:6px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text2);">
-                <option value="work">Travail / Pro</option>
-                <option value="perso">Personnel</option>
-                <option value="projet">Projet</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <label style="font-family:var(--mono);font-size:10px;color:var(--text3);display:block;margin-bottom:3px;">Contraintes ou détails (optionnel)</label>
-            <input id="ai-q-details" type="text" placeholder="ex: équipe de 2, budget limité, délai 2 semaines…"
-              style="width:100%;box-sizing:border-box;font-family:var(--sans);font-size:13px;padding:6px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;"
-              onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--line)'">
-          </div>
-        </div>
-      </div>
-
-      <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;">
-        <button class="add-btn" onclick="aiGenerateTemplate()" id="ai-gen-btn">✨ Générer</button>
-        <span id="ai-gen-status" style="font-family:var(--mono);font-size:11px;color:var(--text3);"></span>
-      </div>
-
-      <!-- Preview -->
-      <div id="ai-preview" style="display:none;margin-top:12px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;">
-        <div style="padding:8px 12px;background:var(--bg2);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;">
-          <span style="font-family:var(--mono);font-size:11px;color:var(--text3);">Proposition IA</span>
-          <span id="ai-preview-label" style="font-family:var(--sans);font-size:13px;font-weight:500;color:var(--text);"></span>
-          <div style="margin-left:auto;display:flex;gap:6px;">
-            <button class="lbtn success" onclick="aiAcceptTemplate()">✓ Charger</button>
-            <button class="lbtn" onclick="aiRegenerateTemplate()">↻ Regénérer</button>
-            <button class="lbtn danger" onclick="document.getElementById('ai-preview').style.display='none'">×</button>
-          </div>
-        </div>
-        <div id="ai-preview-body" style="padding:10px 12px;"></div>
-      </div>
-    </div>
-  </div>
-
   <!-- Add form manuel -->
   <div class="add-row" style="align-items:center;">
     <input class="main-in" type="text" id="tmpl-key-in" placeholder="clé (ex: onboarding)" autocomplete="off"
@@ -1607,205 +1529,7 @@ function closeEdit(id){
 }
 
 /* ══ TODOS ══ */
-/* ══ AI TEMPLATE GENERATOR ══ */
-let aiMode = 'free'; // 'free' | 'guided'
-let aiLastResult = null;
-let aiLastInput = null;
-
-function toggleAiMode(){
-  aiMode = aiMode === 'free' ? 'guided' : 'free';
-  document.getElementById('ai-free-mode').style.display   = aiMode==='free'    ? '' : 'none';
-  document.getElementById('ai-guided-mode').style.display = aiMode==='guided'  ? '' : 'none';
-  document.getElementById('ai-mode-btn').textContent      = aiMode==='free'    ? 'Texte libre' : 'Guidé';
-  document.getElementById('ai-preview').style.display     = 'none';
-}
-
-function buildAiPrompt(){
-  if(aiMode === 'free'){
-    const txt = document.getElementById('ai-free-input').value.trim();
-    if(!txt){ toast('⚠ Décris le processus d\'abord'); return null; }
-    aiLastInput = txt;
-    return `Tu es un expert en gestion de projet et productivité.
-L'utilisateur décrit un processus : "${txt}"
-
-Génère un template de tâches structuré en JSON strict, sans markdown, sans explication.
-Retourne UNIQUEMENT ce JSON :
-{
-  "key": "nom-court-en-kebab-case",
-  "label": "Label lisible en français",
-  "subtasks": [
-    {"text": "Étape 1 claire et actionnable"},
-    {"text": "Étape 2"},
-    ...
-  ]
-}
-Règles :
-- 4 à 8 sous-tâches maximum
-- Chaque sous-tâche commence par un verbe d'action
-- Le texte est concis (5-8 mots max)
-- La clé est en kebab-case sans accents`;
-  } else {
-    const name    = document.getElementById('ai-q-name').value.trim();
-    const steps   = document.getElementById('ai-q-steps').value;
-    const ctx     = document.getElementById('ai-q-ctx').value;
-    const details = document.getElementById('ai-q-details').value.trim();
-    if(!name){ toast('⚠ Nom du processus requis'); return null; }
-    aiLastInput = {name, steps, ctx, details};
-    return `Tu es un expert en gestion de projet et productivité.
-Crée un template de tâches pour : "${name}"
-Contexte : ${ctx} | Nombre d'étapes souhaité : ${steps}${details ? ` | Contraintes : ${details}` : ''}
-
-Retourne UNIQUEMENT ce JSON strict, sans markdown :
-{
-  "key": "nom-court-en-kebab-case",
-  "label": "Label lisible en français",
-  "subtasks": [
-    {"text": "Étape 1 claire et actionnable"},
-    ...
-  ]
-}
-Règles :
-- Respecte le nombre d'étapes demandé
-- Chaque sous-tâche commence par un verbe d'action
-- Texte concis (5-8 mots max)
-- Clé en kebab-case sans accents`;
-  }
-}
-
-async function aiGenerateTemplate(){
-  const prompt = buildAiPrompt();
-  if(!prompt) return;
-
-  const btn = document.getElementById('ai-gen-btn');
-  const status = document.getElementById('ai-gen-status');
-  btn.disabled = true;
-  btn.textContent = '…';
-  status.textContent = 'Génération en cours…';
-  document.getElementById('ai-preview').style.display = 'none';
-
-  try {
-    // Use iframe proxy to bypass CORS on GitHub Pages
-    const result = await callAnthropicViaIframe(prompt);
-    const raw = result.trim();
-    const clean = raw.replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
-    const parsed = JSON.parse(clean);
-    if(!parsed.key || !parsed.label || !Array.isArray(parsed.subtasks)) throw new Error('Format invalide');
-    aiLastResult = parsed;
-    renderAiPreview(parsed);
-    status.textContent = `✓ ${parsed.subtasks.length} sous-tâches générées`;
-  } catch(e) {
-    status.textContent = '⚠ Erreur : ' + e.message;
-    toast('⚠ Génération échouée : ' + e.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '✨ Générer';
-  }
-}
-
-function callAnthropicViaIframe(prompt){
-  return new Promise((resolve, reject) => {
-    const timeout = setTimeout(()=>{ cleanup(); reject(new Error('Timeout (30s)')); }, 30000);
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
-    iframe.src = 'https://claude.ai/artifact-proxy'; // triggers Anthropic API access context
-
-    function cleanup(){ clearTimeout(timeout); if(iframe.parentNode) document.body.removeChild(iframe); window.removeEventListener('message', onMsg); }
-
-    function onMsg(e){
-      if(e.data?.type === 'anthropic-response'){
-        cleanup();
-        if(e.data.error) reject(new Error(e.data.error));
-        else resolve(e.data.text);
-      }
-    }
-    window.addEventListener('message', onMsg);
-
-    iframe.onload = () => {
-      try {
-        iframe.contentWindow.postMessage({
-          type: 'anthropic-request',
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          messages: [{role:'user', content: prompt}]
-        }, '*');
-      } catch(e){ cleanup(); reject(e); }
-    };
-    iframe.onerror = () => { cleanup(); reject(new Error('Iframe non accessible')); };
-    document.body.appendChild(iframe);
-  });
-}
-
-function aiRegenerateTemplate(){ aiGenerateTemplate(); }
-
-function renderAiPreview(tmpl){
-  document.getElementById('ai-preview-label').textContent = tmpl.label;
-  document.getElementById('ai-preview-body').innerHTML = `
-    <div style="margin-bottom:8px;">
-      <span style="font-family:var(--mono);font-size:10px;color:var(--text3);">clé : </span>
-      <input id="ai-key-edit" value="${esc(tmpl.key)}"
-        style="font-family:var(--mono);font-size:11px;padding:2px 6px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;width:180px;"
-        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--line)'">
-      <span style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:12px;">label : </span>
-      <input id="ai-label-edit" value="${esc(tmpl.label)}"
-        style="font-family:var(--sans);font-size:12px;padding:2px 6px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;width:200px;"
-        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--line)'">
-    </div>
-    <div id="ai-subs-list">
-      ${tmpl.subtasks.map((s,i)=>`
-      <div style="display:flex;align-items:center;gap:6px;padding:2px 0;">
-        <span style="font-family:var(--mono);font-size:10px;color:var(--text3);flex-shrink:0;width:16px;">${i+1}.</span>
-        <input value="${esc(s.text)}" id="ai-sub-${i}"
-          style="flex:1;font-family:var(--sans);font-size:12px;padding:3px 7px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;"
-          onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--line)'">
-        <button onclick="aiRemoveSub(${i})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:13px;padding:2px 4px;">×</button>
-      </div>`).join('')}
-    </div>
-    <button onclick="aiAddSub()"
-      style="margin-top:6px;font-family:var(--mono);font-size:11px;padding:3px 10px;border:1px dashed var(--line);border-radius:var(--r);background:transparent;color:var(--text3);cursor:pointer;">
-      + sous-tâche
-    </button>`;
-  document.getElementById('ai-preview').style.display = '';
-}
-
-function aiRemoveSub(i){
-  if(!aiLastResult) return;
-  aiLastResult.subtasks.splice(i,1);
-  renderAiPreview(aiLastResult);
-}
-
-function aiAddSub(){
-  if(!aiLastResult) return;
-  aiLastResult.subtasks.push({text:'Nouvelle étape'});
-  renderAiPreview(aiLastResult);
-  const inp = document.getElementById('ai-sub-'+(aiLastResult.subtasks.length-1));
-  if(inp){inp.focus();inp.select();}
-}
-
-function aiAcceptTemplate(){
-  if(!aiLastResult) return;
-  // Read edited values from inputs
-  const key   = (document.getElementById('ai-key-edit')?.value||aiLastResult.key).trim()
-    .toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-_]/g,'');
-  const label = (document.getElementById('ai-label-edit')?.value||aiLastResult.label).trim();
-  const subs  = aiLastResult.subtasks.map((_,i)=>{
-    const inp = document.getElementById('ai-sub-'+i);
-    return {text: inp ? inp.value.trim() : _.text};
-  }).filter(s=>s.text);
-
-  if(!key){ toast('⚠ Clé invalide'); return; }
-  if(TMPL[key] && !confirm(`Le template "${key}" existe déjà. Remplacer ?`)) return;
-
-  TMPL[key] = {label, subtasks: subs};
-  updateTypeSelect();
-  renderTemplates();
-  tmplAutoSave();
-  document.getElementById('ai-preview').style.display = 'none';
-  document.getElementById('ai-gen-status').textContent = '';
-  if(aiMode==='free') document.getElementById('ai-free-input').value = '';
-  else { document.getElementById('ai-q-name').value=''; document.getElementById('ai-q-details').value=''; }
-  toast(`✓ Template "${label}" chargé`);
-  logA('todo', `Template IA créé : "${key}" (${subs.length} sous-tâches)`);
-}
+/* ══ TEMPLATES TAB ══ */
 
 /* ══ TEMPLATES TAB ══ */
 function renderTemplates(){
@@ -2155,6 +1879,36 @@ function applyHzEscalation(){
   if(changed) autoSave();
 }
 
+function toggleAddSubtask(id){
+  const zone=document.getElementById('esub-'+id);
+  if(!zone)return;
+  const open=zone.style.display==='none'||!zone.style.display;
+  zone.style.display=open?'block':'none';
+  if(open) setTimeout(()=>{ const inp=document.getElementById('esubin-'+id); if(inp)inp.focus(); },50);
+}
+
+function addSubtaskInline(parentId){
+  const inp=document.getElementById('esubin-'+parentId);
+  if(!inp)return;
+  const text=inp.value.trim();
+  if(!text){inp.focus();return;}
+  const parent=S.todos.find(x=>x.id===parentId);
+  if(!parent)return;
+  const sid=uid();
+  const sub={
+    id:sid, text, cat:parent.cat, pri:parent.pri, hz:'today',
+    done:false, ts:Date.now(), comment:'', subtasks:[], parentId, type:parent.type
+  };
+  S.todos.push(sub);
+  if(!parent.subtasks) parent.subtasks=[];
+  parent.subtasks.push(sid);
+  inp.value='';
+  autoSave();renderTodos();
+  logA('todo','Sous-tâche ajoutée: "'+text+'" → "'+parent.text+'"');
+  // Re-open edit form and subtask zone after re-render
+  setTimeout(()=>{ openEdit(parentId); toggleAddSubtask(parentId); },50);
+}
+
 function toggleSubtasks(id){
   if(collapsedParents.has(id)) collapsedParents.delete(id);
   else collapsedParents.add(id);
@@ -2267,7 +2021,18 @@ function todoItemHtml(t){
         <div class="eact">
           <button class="save-btn" onclick="saveTodo('${t.id}')">Enregistrer</button>
           <button class="cancel-btn" onclick="closeEdit('${t.id}')">Annuler</button>
+          ${!t.parentId ? `<button class="cancel-btn" onclick="toggleAddSubtask('${t.id}')" title="Ajouter une sous-tâche" style="margin-left:auto;">+ sous-tâche</button>` : ''}
         </div>
+        ${!t.parentId ? `
+        <div id="esub-${t.id}" style="display:none;margin-top:6px;display:none;">
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="text" id="esubin-${t.id}" placeholder="Texte de la sous-tâche…"
+              style="flex:1;font-family:var(--sans);font-size:12px;padding:5px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;"
+              onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--line)'"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();addSubtaskInline('${t.id}');}if(event.key==='Escape')toggleAddSubtask('${t.id}')">
+            <button class="save-btn" onclick="addSubtaskInline('${t.id}')">Ajouter</button>
+          </div>
+        </div>` : ''}
       </div>
     </div>
     <button class="comment-btn${hasComment?' has-comment':''}" onclick="toggleComment('${t.id}')" title="${hasComment?'Voir le commentaire':'Ajouter un commentaire'}">💬</button>
