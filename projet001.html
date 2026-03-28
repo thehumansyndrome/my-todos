@@ -1231,7 +1231,7 @@ function ensureState(){
     if(t.cat==='projet') t.cat='perso'; // migration: projet → perso
   });
   if(!S.notes) S.notes=[];
-  S.notes.forEach(n=>{ if(!n.images) n.images=[]; });
+  S.notes.forEach(n=>{ if(!n.images) n.images=[]; if(n.large===undefined) n.large=true; });
   if(!S.reminders) S.reminders=[];
   if(!S.habits) S.habits=[];
   if(!S.habitLogs) S.habitLogs={};
@@ -1752,7 +1752,15 @@ function openEdit(id){
     if(f.id!=='ef-'+id)closeEdit(f.dataset.id);
   });
   document.getElementById('ef-'+id).classList.add('open');
-  document.getElementById('ef-'+id).querySelector('.edit-in').focus();
+  const first = document.getElementById('ef-'+id).querySelector('.edit-in');
+  first.focus();
+  // Auto-resize textarea to fit full content
+  if(first.tagName==='TEXTAREA'){
+    first.style.height='auto';
+    first.style.height=first.scrollHeight+'px';
+    // Place cursor at end
+    first.selectionStart=first.selectionEnd=first.value.length;
+  }
 }
 function closeEdit(id){
   const f=document.getElementById('ef-'+id);
@@ -2278,7 +2286,7 @@ function todoItemHtml(t){
       </div>
       <div class="edit-form" id="ef-${t.id}" data-id="${t.id}">
         <div class="edit-row">
-          <input class="edit-in" id="et-${t.id}" type="text" value="${esc(t.text)}" onkeydown="if(event.key==='Enter')saveTodo('${t.id}');if(event.key==='Escape')closeEdit('${t.id}')">
+          <textarea class="edit-in" id="et-${t.id}" rows="2" style="resize:none;overflow:hidden;line-height:1.45;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();saveTodo('${t.id}');}if(event.key==='Escape')closeEdit('${t.id}');" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'">${esc(t.text)}</textarea>
           <select class="edit-in sm" id="ec-${t.id}">${catOptions}</select>
           <select class="edit-in sm" id="ep-${t.id}">
             <option value="p1"${t.pri==='p1'?' selected':''}>P1</option>
@@ -2504,7 +2512,7 @@ function addNote(){
   const tagsRaw=document.getElementById('notes-tags-in').value.trim();
   if(!body&&!title&&!pendingNoteImgs.length)return;
   const tags=parseManualTags(tagsRaw);
-  const n={id:uid(),title:title,body:body,tags:tags,images:[...pendingNoteImgs],ts:Date.now()};
+  const n={id:uid(),title:title,body:body,tags:tags,images:[...pendingNoteImgs],ts:Date.now(),large:true};
   S.notes.unshift(n);
   document.getElementById('notes-title-in').value='';
   document.getElementById('notes-body-in').value='';
