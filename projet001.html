@@ -1788,10 +1788,20 @@ function saveTodo(id){
   const t=S.todos.find(x=>x.id===id);if(!t)return;
   const txt=document.getElementById('et-'+id).value.trim();
   if(!txt)return;
+  const newCat=document.getElementById('ec-'+id).value;
+  const newPri=document.getElementById('ep-'+id).value;
+  const newHz=document.getElementById('ehz-'+id).value;
   t.text=txt;
-  t.cat=document.getElementById('ec-'+id).value;
-  t.pri=document.getElementById('ep-'+id).value;
-  t.hz=document.getElementById('ehz-'+id).value;
+  t.cat=newCat;
+  t.pri=newPri;
+  t.hz=newHz;
+  // Propagate cat + pri to subtasks
+  if(t.subtasks && t.subtasks.length){
+    t.subtasks.forEach(sid=>{
+      const s=S.todos.find(x=>x.id===sid);
+      if(s){ s.cat=newCat; s.pri=newPri; }
+    });
+  }
   autoSave();closeEdit(id);renderTodos();logA('todo','Modifié: "'+txt+'"');
 }
 function toggleTodo(id){
