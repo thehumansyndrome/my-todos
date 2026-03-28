@@ -707,6 +707,7 @@ body{
     <button class="tab" onclick="switchTab('habits')">Habits</button>
     <button class="tab" onclick="switchTab('challenges')">Challenges</button>
     <button class="tab" onclick="switchTab('log')">Log</button>
+    <button class="tab" onclick="switchTab('templates')">Templates</button>
   </div>
 </div>
 
@@ -963,6 +964,28 @@ body{
   </div>
 </div>
 
+<!-- ══ TEMPLATES TAB ══ -->
+<div id="tab-templates" class="section" style="display:none;">
+  <div class="stats" id="tmpl-stats"></div>
+
+  <!-- Add form -->
+  <div class="add-row" style="align-items:center;">
+    <input class="main-in" type="text" id="tmpl-key-in" placeholder="clé (ex: onboarding)" autocomplete="off"
+      style="max-width:160px;font-family:var(--mono);"
+      onkeydown="if(event.key==='Enter')document.getElementById('tmpl-label-in').focus()">
+    <input class="main-in" type="text" id="tmpl-label-in" placeholder="Label affiché"
+      onkeydown="if(event.key==='Enter')addTemplate()">
+    <button class="add-btn" onclick="addTemplate()">+ Add</button>
+  </div>
+
+  <div id="tmpl-list" style="display:flex;flex-direction:column;gap:10px;margin-top:12px;"></div>
+
+  <div style="margin-top:16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+    <button class="lbtn" id="btn-tmpl-push2" onclick="tmplPushDrive()" style="display:none;">⬆ Sauver sur Drive</button>
+    <span id="tmpl-drive-status" style="font-family:var(--mono);font-size:11px;color:var(--text3);"></span>
+  </div>
+</div>
+
 <!-- MODAL -->
 <div id="imp-modal">
   <div class="modal">
@@ -982,7 +1005,7 @@ body{
 /* ══ CONSTANTS ══ */
 const P='projet001';
 const SK='td_v4_'+P, AK='td_act_'+P, TK='td_theme_'+P, DK='td_drive_'+P;
-const TABS=['todos','courses','notes','reminders','habits','challenges','log'];
+const TABS=['todos','courses','notes','reminders','habits','challenges','log','templates'];
 
 /* ══ DEFAULT CATEGORIES ══ */
 const DEFAULT_CATS = [
@@ -1269,11 +1292,13 @@ document.addEventListener('keydown', e=>{
 /* ══ TABS ══ */
 function switchTab(t){
   document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',TABS[i]===t));
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  document.getElementById('tab-'+t).classList.add('active');
+  document.querySelectorAll('.section').forEach(s=>{ s.classList.remove('active'); s.style.display='none'; });
+  const el=document.getElementById('tab-'+t);
+  el.classList.add('active'); el.style.display='';
   if(t==='log'){renderLog();renderAL();loadDriveConf();renderCatManager();}
   if(t==='habits')renderHabits();
   if(t==='challenges')renderChallenges();
+  if(t==='templates')renderTemplates();
 }
 
 /* ══ THEME ══ */
@@ -1501,6 +1526,136 @@ function closeEdit(id){
 }
 
 /* ══ TODOS ══ */
+/* ══ TEMPLATES TAB ══ */
+function renderTemplates(){
+  const keys=Object.keys(TMPL);
+  const stats=document.getElementById('tmpl-stats');
+  if(stats) stats.innerHTML=keys.length
+    ? `<div class="stat"><div class="stat-n">${keys.length}</div><div class="stat-l">Template${keys.length>1?'s':''}</div></div>`
+    : '';
+
+  const el=document.getElementById('tmpl-list');
+  if(!el) return;
+  if(!keys.length){
+    el.innerHTML='<div class="empty">Aucun template — crée-en un ci-dessus</div>';
+    return;
+  }
+  el.innerHTML=keys.map(k=>{
+    const tmpl=TMPL[k];
+    const subs=tmpl.subtasks||[];
+    const subsHtml=subs.map((s,i)=>`
+      <div style="display:flex;align-items:center;gap:6px;padding:3px 0;" id="tst-${k}-${i}">
+        <span style="font-family:var(--mono);font-size:10px;color:var(--text3);flex-shrink:0;">${i+1}.</span>
+        <input type="text" value="${esc(s.text)}" id="tsi-${k}-${i}"
+          style="flex:1;font-family:var(--sans);font-size:12px;padding:3px 7px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;"
+          onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--line)'"
+          onchange="tmplUpdateSubtask('${k}',${i},this.value)">
+        <button onclick="tmplMoveSubtask('${k}',${i},-1)" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:12px;padding:2px 4px;" ${i===0?'disabled':''}>↑</button>
+        <button onclick="tmplMoveSubtask('${k}',${i},1)"  style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:12px;padding:2px 4px;" ${i===subs.length-1?'disabled':''}>↓</button>
+        <button onclick="tmplDelSubtask('${k}',${i})" style="background:none;border:none;cursor:pointer;color:var(--red,#ef4444);font-size:13px;padding:2px 4px;">×</button>
+      </div>`).join('');
+    return `
+    <div class="log-block" style="margin-bottom:0;">
+      <div class="log-head" style="gap:8px;">
+        <input type="text" value="${esc(tmpl.label||k)}" id="tl-${k}"
+          style="font-family:var(--sans);font-size:13px;font-weight:500;background:transparent;border:none;outline:none;color:var(--text);flex:1;min-width:0;"
+          onfocus="this.style.borderBottom='1px solid var(--accent)'" onblur="this.style.borderBottom='';tmplUpdateLabel('${k}',this.value)"
+          title="Cliquer pour renommer">
+        <span style="font-family:var(--mono);font-size:10px;color:var(--text3);flex-shrink:0;">${subs.length} sous-tâche${subs.length>1?'s':''}</span>
+        <span style="font-family:var(--mono);font-size:10px;color:var(--line);flex-shrink:0;">clé: ${esc(k)}</span>
+        <button onclick="tmplDelete('${k}')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:2px 6px;flex-shrink:0;" title="Supprimer">×</button>
+      </div>
+      <div class="log-body" style="padding:8px 12px;">
+        <div id="tsubs-${k}">${subsHtml}</div>
+        <button onclick="tmplAddSubtask('${k}')"
+          style="margin-top:6px;font-family:var(--mono);font-size:11px;padding:3px 10px;border:1px dashed var(--line);border-radius:var(--r);background:transparent;color:var(--text3);cursor:pointer;">
+          + sous-tâche
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Show Drive push button
+  const pb=document.getElementById('btn-tmpl-push2');
+  if(pb) pb.style.display=drTok?'':'none';
+}
+
+function addTemplate(){
+  const keyRaw=document.getElementById('tmpl-key-in').value.trim();
+  const label=document.getElementById('tmpl-label-in').value.trim();
+  if(!keyRaw){toast('⚠ Clé requise');return;}
+  const key=keyRaw.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-_]/g,'');
+  if(!key){toast('⚠ Clé invalide (lettres, chiffres, tirets)');return;}
+  if(TMPL[key]){toast('⚠ Clé déjà existante : '+key);return;}
+  TMPL[key]={label:label||key,subtasks:[]};
+  document.getElementById('tmpl-key-in').value='';
+  document.getElementById('tmpl-label-in').value='';
+  updateTypeSelect();
+  renderTemplates();
+  tmplAutoSave();
+  logA('todo','Template créé : "'+key+'"');
+}
+
+function tmplUpdateLabel(key,val){
+  if(!TMPL[key]) return;
+  TMPL[key].label=val.trim()||key;
+  updateTypeSelect();
+  tmplAutoSave();
+}
+
+function tmplDelete(key){
+  if(!confirm(`Supprimer le template "${TMPL[key]?.label||key}" ?`)) return;
+  delete TMPL[key];
+  updateTypeSelect();
+  renderTemplates();
+  tmplAutoSave();
+  logA('todo','Template supprimé : "'+key+'"');
+}
+
+function tmplAddSubtask(key){
+  if(!TMPL[key]) return;
+  TMPL[key].subtasks.push({text:'Nouvelle sous-tâche'});
+  renderTemplates();
+  // Focus new input
+  const idx=TMPL[key].subtasks.length-1;
+  setTimeout(()=>{
+    const inp=document.getElementById(`tsi-${key}-${idx}`);
+    if(inp){inp.focus();inp.select();}
+  },50);
+  tmplAutoSave();
+}
+
+function tmplUpdateSubtask(key,i,val){
+  if(!TMPL[key]||!TMPL[key].subtasks[i]) return;
+  TMPL[key].subtasks[i].text=val.trim()||'Sous-tâche';
+  tmplAutoSave();
+}
+
+function tmplDelSubtask(key,i){
+  if(!TMPL[key]) return;
+  TMPL[key].subtasks.splice(i,1);
+  renderTemplates();
+  tmplAutoSave();
+}
+
+function tmplMoveSubtask(key,i,dir){
+  if(!TMPL[key]) return;
+  const arr=TMPL[key].subtasks;
+  const ni=i+dir;
+  if(ni<0||ni>=arr.length) return;
+  [arr[i],arr[ni]]=[arr[ni],arr[i]];
+  renderTemplates();
+  tmplAutoSave();
+}
+
+let tmplSaveTimer=null;
+function tmplAutoSave(){
+  clearTimeout(tmplSaveTimer);
+  tmplSaveTimer=setTimeout(()=>{
+    if(drTok) tmplPushDrive();
+  },2000);
+}
+
 /* ══ TEMPLATE IMPORT / EXPORT ══ */
 function tmplCopyJson(){
   const txt=JSON.stringify(TMPL,null,2);
@@ -1554,7 +1709,11 @@ async function tmplPushDrive(){
       tmplFid=cd.id;
     }
     toast('✓ templates.json sauvegardé sur Drive');
-    document.getElementById('tmpl-status').textContent='✓ Sauvegardé sur Drive — '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    const msg='✓ Sauvegardé — '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    const s1=document.getElementById('tmpl-status');
+    const s2=document.getElementById('tmpl-drive-status');
+    if(s1) s1.textContent=msg;
+    if(s2) s2.textContent=msg;
     logA('drive','Templates → Drive (templates.json)');
   }catch(e){toast('⚠ Erreur Drive : '+e.message);}
 }
@@ -1593,6 +1752,8 @@ function updateTypeSelect(){
   // Pre-fill textarea with current TMPL
   const area=document.getElementById('tmpl-area');
   if(area && !area.value) area.value=JSON.stringify(TMPL,null,2);
+  // Re-render templates tab if active
+  if(document.getElementById('tab-templates')?.classList.contains('active')) renderTemplates();
 }
 
 function addTodo(){
