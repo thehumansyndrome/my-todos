@@ -767,6 +767,26 @@ body{
 .note-tag:hover{background:var(--text);color:var(--bg);border-color:var(--text);}
 .note-tag.active{background:var(--text);color:var(--bg);border-color:var(--text);}
 .note-tag.auto{border-style:dashed;}
+
+/* ── NOTE READ STATE ── */
+.note-unread-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--accent);flex-shrink:0;
+  display:inline-block;margin-right:4px;
+  vertical-align:middle;
+}
+.note-card.is-read{opacity:.65;}
+.note-card.is-read:hover{opacity:.85;}
+.note-read-btn{
+  font-family:var(--mono);font-size:9px;font-weight:500;
+  padding:1px 7px;border-radius:2px;
+  border:1px solid var(--line2);
+  background:var(--bg);color:var(--text3);
+  cursor:pointer;transition:all .1s;
+  white-space:nowrap;
+}
+.note-read-btn:hover{background:var(--green-bg);color:var(--green);border-color:var(--green);}
+.note-read-btn.read{background:var(--green-bg);color:var(--green);border-color:var(--green);}
 .notes-tag-filters{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;}
 </style>
 </head>
@@ -859,7 +879,10 @@ body{
       <input type="file" id="notes-img-input" accept="image/*" multiple style="display:none" onchange="handleNoteImgFiles(this.files,'new')">
       <div id="notes-img-preview" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;"></div>
     </div>
-    <div class="notes-tag-filters" id="notes-tag-filters"></div>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
+      <div class="notes-tag-filters" id="notes-tag-filters" style="display:inline-flex;flex-wrap:wrap;gap:4px;margin-bottom:0;"></div>
+      <div id="notes-read-filter" style="display:flex;gap:4px;"></div>
+    </div>
     <div class="notes-grid" id="notes-list"></div>
   </div>
 
@@ -2510,6 +2533,17 @@ function closeNoteEdit(id){
   if(ov) ov.classList.remove('open');
 }
 
+let noteReadFilter = null; // null | 'unread' | 'read'
+
+function toggleNoteRead(id, e){
+  if(e) e.stopPropagation();
+  const n=S.notes.find(x=>x.id===id);
+  if(!n) return;
+  n.read = !n.read;
+  autoSave();
+  renderNotes();
+}
+
 function renderNotes(){
   // Don't re-render if a note edit overlay is currently open — would kill the user's input
   if(document.querySelector('.note-edit-overlay.open')) return;
@@ -2531,9 +2565,24 @@ function renderNotes(){
       : '';
   }
 
+  // Read filter buttons
+  const unreadCount = S.notes.filter(n=>!n.read).length;
+  const readFilterEl = document.getElementById('notes-read-filter');
+  if(readFilterEl){
+    readFilterEl.innerHTML = `
+      <button class="note-tag${noteReadFilter==='unread'?' active':''}" onclick="noteReadFilter=noteReadFilter==='unread'?null:'unread';renderNotes()">
+        ● Non lues <span style="opacity:.5">${unreadCount}</span>
+      </button>
+      <button class="note-tag${noteReadFilter==='read'?' active':''}" onclick="noteReadFilter=noteReadFilter==='read'?null:'read';renderNotes()">
+        ✓ Lues
+      </button>`;
+  }
+
   let notes=S.notes;
   if(q) notes=notes.filter(n=>(n.title||'').toLowerCase().includes(q)||(n.body||'').toLowerCase().includes(q)||(noteTags(n).all.some(t=>t.includes(q.replace(/^#/,'')))));
   if(noteTagFilter) notes=notes.filter(n=>noteTags(n).all.includes(noteTagFilter));
+  if(noteReadFilter==='unread') notes=notes.filter(n=>!n.read);
+  if(noteReadFilter==='read') notes=notes.filter(n=>!!n.read);
 
   const COLORS=8;
   el.innerHTML=notes.length?notes.map((n,idx)=>{
@@ -2569,14 +2618,17 @@ function renderNotes(){
           <button class="cancel-btn" onclick="event.stopPropagation();closeNoteEdit('${n.id}')">Annuler</button>
         </div>
       </div>`;
+    const isRead = !!n.read;
+    const unreadDot = !isRead ? `<span class="note-unread-dot" title="Non lue"></span>` : '';
     return `
-    <div class="note-card nc-${col}${expanded?' expanded':''}" data-id="${n.id}" onclick="toggleNoteCard('${n.id}')">
-      ${titleHtml}
+    <div class="note-card nc-${col}${expanded?' expanded':''}${isRead?' is-read':''}" data-id="${n.id}" onclick="toggleNoteCard('${n.id}')">
+      ${unreadDot}${titleHtml}
       ${bodyHtml}
       ${imgsHtml}
       ${tagsHtml}
       <div class="note-card-footer">
         <span class="note-card-date">${fd(n.ts)}${n.edited?' · modifié':''}</span>
+        <button class="note-read-btn${isRead?' read':''}" onclick="toggleNoteRead('${n.id}',event)" title="${isRead?'Marquer non lue':'Marquer comme lue'}">${isRead?'✓ Lu':'Marquer lu'}</button>
       </div>
       <div class="note-card-actions">
         <button class="note-card-btn" onclick="event.stopPropagation();openNoteEdit('${n.id}')">✎ Modifier</button>
