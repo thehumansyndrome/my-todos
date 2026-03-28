@@ -572,7 +572,7 @@ body{
 [data-theme="dark"] [data-cat-work]{color:#A78BFA !important;border-color:#A78BFA !important;}
 [data-theme="dark"] .lbtn.danger{background:transparent;color:#e57373;border-color:#e57373;}
 [data-theme="dark"] .hbtn.green{background:transparent;color:#34a853;border-color:#34a853;}
-#log-area{
+#log-area, #tmpl-area{
   width:100%;font-family:var(--mono);font-size:10px;line-height:1.6;
   padding:10px;border:1px solid var(--line);border-radius:var(--r);
   background:#0D0C0B;color:#A3E635;
@@ -1316,7 +1316,7 @@ body{
           <button class="lbtn success" onclick="tmplImport()">Importer</button>
           <button class="lbtn" onclick="tmplPushDrive()" id="btn-tmpl-push" style="display:none">⬆ Push Drive</button>
         </div>
-        <textarea id="tmpl-area" placeholder='{"onboarding":{"label":"Onboarding client","subtasks":[{"text":"Préparer contrat"},{"text":"Envoyer accès"}]}}' style="height:140px;margin-top:8px;"></textarea>
+        <textarea id="tmpl-area" placeholder='{"onboarding":{"label":"Onboarding client","subtasks":[{"text":"Préparer contrat"},{"text":"Envoyer accès"}]}}' style="margin-top:8px;"></textarea>
         <p id="tmpl-status" style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:4px;"></p>
       </div>
     </div>
@@ -1985,7 +1985,7 @@ function renderTemplates(){
         <span style="font-family:var(--mono);font-size:10px;color:var(--text3);flex-shrink:0;">${i+1}.</span>
         <input type="text" value="${esc(s.text)}" id="tsi-${k}-${i}"
           style="flex:1;font-family:var(--sans);font-size:12px;padding:3px 7px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;"
-          onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--line)'"
+          onfocus="this.style.borderColor='var(--accent)';this.selectionStart=this.selectionEnd=this.value.length;" onblur="this.style.borderColor='var(--line)'"
           onchange="tmplUpdateSubtask('${k}',${i},this.value)">
         <button onclick="tmplMoveSubtask('${k}',${i},-1)" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:12px;padding:2px 4px;" ${i===0?'disabled':''}>↑</button>
         <button onclick="tmplMoveSubtask('${k}',${i},1)"  style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:12px;padding:2px 4px;" ${i===subs.length-1?'disabled':''}>↓</button>
@@ -1997,7 +1997,7 @@ function renderTemplates(){
         <div style="display:flex;align-items:center;gap:6px;">
           <input type="text" value="${esc(tmpl.label||k)}" id="tl-${k}"
             style="font-family:var(--sans);font-size:14px;font-weight:500;background:transparent;border:none;outline:none;color:var(--text);flex:1;min-width:0;"
-            onfocus="this.style.borderBottom='1px solid var(--accent)'" onblur="this.style.borderBottom='';tmplUpdateLabel('${k}',this.value)"
+            onfocus="this.style.borderBottom='1px solid var(--accent)';this.selectionStart=this.selectionEnd=this.value.length;" onblur="this.style.borderBottom='';tmplUpdateLabel('${k}',this.value)"
             title="Cliquer pour renommer">
           <button onclick="tmplDelete('${k}')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:2px 6px;flex-shrink:0;" title="Supprimer">×</button>
         </div>
