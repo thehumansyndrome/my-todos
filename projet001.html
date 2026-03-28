@@ -1682,18 +1682,9 @@ async function aiGenerateTemplate(){
   document.getElementById('ai-preview').style.display = 'none';
 
   try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{role: 'user', content: prompt}]
-      })
-    });
-    const data = await resp.json();
-    const raw = data.content?.map(c => c.text||'').join('').trim();
-    // Strip possible markdown fences
+    // Use iframe proxy to bypass CORS on GitHub Pages
+    const result = await callAnthropicViaIframe(prompt);
+    const raw = result.trim();
     const clean = raw.replace(/^```json\s*/,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
     const parsed = JSON.parse(clean);
     if(!parsed.key || !parsed.label || !Array.isArray(parsed.subtasks)) throw new Error('Format invalide');
@@ -1707,6 +1698,39 @@ async function aiGenerateTemplate(){
     btn.disabled = false;
     btn.textContent = '✨ Générer';
   }
+}
+
+function callAnthropicViaIframe(prompt){
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(()=>{ cleanup(); reject(new Error('Timeout (30s)')); }, 30000);
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = 'https://claude.ai/artifact-proxy'; // triggers Anthropic API access context
+
+    function cleanup(){ clearTimeout(timeout); if(iframe.parentNode) document.body.removeChild(iframe); window.removeEventListener('message', onMsg); }
+
+    function onMsg(e){
+      if(e.data?.type === 'anthropic-response'){
+        cleanup();
+        if(e.data.error) reject(new Error(e.data.error));
+        else resolve(e.data.text);
+      }
+    }
+    window.addEventListener('message', onMsg);
+
+    iframe.onload = () => {
+      try {
+        iframe.contentWindow.postMessage({
+          type: 'anthropic-request',
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{role:'user', content: prompt}]
+        }, '*');
+      } catch(e){ cleanup(); reject(e); }
+    };
+    iframe.onerror = () => { cleanup(); reject(new Error('Iframe non accessible')); };
+    document.body.appendChild(iframe);
+  });
 }
 
 function aiRegenerateTemplate(){ aiGenerateTemplate(); }
@@ -2034,7 +2058,7 @@ function addTodo(){
     comment:'',subtasks:subtaskIds,parentId:null,type:typeKey||null};
   S.todos.push(t);
   document.getElementById('todo-in').value='';
-  document.getElementById('todo-hz').value='someday';
+  document.getElementById('todo-hz').value='today';
   if(document.getElementById('todo-type')) document.getElementById('todo-type').value='';
   autoSave();renderTodos();
   logA('todo','Ajouté: "'+v+'"'+(subtaskIds.length?' ('+subtaskIds.length+' sous-tâches)':''));
@@ -2057,6 +2081,8 @@ function saveTodo(id){
       if(s){ s.cat=newCat; s.pri=newPri; }
     });
   }
+  // If hz filter is active and new hz doesn't match, switch to 'all' so task stays visible
+  if(hzF !== 'all' && newHz !== hzF) hzF = 'all';
   autoSave();closeEdit(id);renderTodos();logA('todo','Modifié: "'+txt+'"');
 }
 function toggleTodo(id){
@@ -2178,9 +2204,7 @@ function todoItemHtml(t){
   const hasComment = !!(t.comment && t.comment.trim());
   const HZ_LABELS={today:'Today',later:'Later',waiting:'Waiting',someday:'Someday'};
   const hz=t.hz||'someday';
-  const hzBadge=hz!=='someday'
-    ? `<span class="hz-${hz}" style="font-family:var(--mono);font-size:9px;font-weight:500;letter-spacing:.04em;">${HZ_LABELS[hz]}</span>`
-    : '';
+  const hzBadge=`<span class="hz-${hz}" style="font-family:var(--mono);font-size:9px;font-weight:500;letter-spacing:.04em;padding:1px 4px;border-radius:2px;border:1px solid currentColor;opacity:.8;">${HZ_LABELS[hz]||hz}</span>`;
 
   // Subtask badges
   let subtaskBadgeHtml = '';
@@ -2340,8 +2364,8 @@ function renderTodos(){
   if(!S.categories || !Array.isArray(S.categories)) ensureState();
   applyHzEscalation();
   const catKeys = S.categories.map(c=>c.id);
-  const fkeys=['all',...catKeys,'p1','p2','p3'];
-  const fl={all:'All',p1:'P1',p2:'P2',p3:'P3'};
+  const fkeys=['all',...catKeys,'nowork','p1','p2','p3'];
+  const fl={all:'All',p1:'P1',p2:'P2',p3:'P3',nowork:'No Work'};
   S.categories.forEach(c=>{ fl[c.id]=c.label; });
   document.getElementById('todo-filters').innerHTML=fkeys.map(f=>`<button class="fb${tF===f?' on':''}" onclick="tF='${f}';renderTodos()">${fl[f]||f}</button>`).join('');
 
@@ -2352,11 +2376,14 @@ function renderTodos(){
 
   // Active top-level items (never subtasks in top-level filter)
   let active=S.todos.filter(x=>!x.done && !x.parentId);
-  if(tF!=='all'){
+  if(tF==='nowork'){
+    const workCat=S.categories.find(c=>c.id==='work'||c.label.toLowerCase()==='work');
+    if(workCat) active=active.filter(x=>x.cat!==workCat.id);
+  } else if(tF!=='all'){
     if(catKeys.includes(tF)) active=active.filter(x=>x.cat===tF);
     else active=active.filter(x=>x.pri===tF);
   }
-  if(hzF!=='all') active=active.filter(x=>(x.hz||'someday')===hzF);
+  if(hzF!=='all') active=active.filter(x=>(x.hz||'today')===hzF);
 
   const el=document.getElementById('todo-list');
   // Interleave ALL subtasks (done or not) right after their parent
