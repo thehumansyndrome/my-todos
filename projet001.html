@@ -2217,7 +2217,7 @@ function addTodo(){
     subs.forEach(sub=>{
       const sid=uid();
       subtaskIds.push(sid);
-      S.todos.push({id:sid,text:sub.text,cat,pri,hz:'later',done:false,ts:Date.now(),
+      S.todos.push({id:sid,text:sub.text,cat,pri,hz,done:false,ts:Date.now(),
         comment:'',subtasks:[],parentId,type:typeKey});
     });
   }
