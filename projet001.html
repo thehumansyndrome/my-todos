@@ -1050,13 +1050,13 @@ body{
       <select id="todo-cat"></select>
       <select id="todo-pri">
         <option value="p1">P1</option>
-        <option value="p2">P2</option>
+        <option value="p2" selected>P2</option>
         <option value="p3">P3</option>
       </select>
       <select id="todo-hz" title="Horizon temporel" style="font-family:var(--mono);font-size:11px;padding:4px 6px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text2);cursor:pointer;">
         <option value="now">Now</option>
-        <option value="today" selected>Today</option>
-        <option value="later">Later</option>
+        <option value="today">Today</option>
+        <option value="later" selected>Later</option>
         <option value="waiting">Waiting</option>
       </select>
       <select id="todo-type" title="Template (sous-tâches automatiques)" style="font-family:var(--mono);font-size:11px;padding:4px 6px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text2);cursor:pointer;display:none;">
@@ -1093,8 +1093,8 @@ body{
           </select>
           <select id="qa-hz">
             <option value="now">Now</option>
-            <option value="today" selected>Today</option>
-            <option value="later">Later</option>
+            <option value="today">Today</option>
+            <option value="later" selected>Later</option>
             <option value="waiting">Waiting</option>
           </select>
         </div>
@@ -2329,7 +2329,8 @@ function addTodo(){
     comment:'',subtasks:subtaskIds,parentId:null,type:typeKey||null};
   S.todos.push(t);
   document.getElementById('todo-in').value='';
-  document.getElementById('todo-hz').value='today';
+  document.getElementById('todo-hz').value='later';
+  populateCatSelect('todo-cat','perso');
   if(document.getElementById('todo-type')) document.getElementById('todo-type').value='';
   autoSave();renderTodos();
   logA('todo','Ajouté: "'+v+'"'+(subtaskIds.length?' ('+subtaskIds.length+' sous-tâches)':''));
