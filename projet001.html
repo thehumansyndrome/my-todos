@@ -798,6 +798,32 @@ body{
 }
 .qamodal-add:active{opacity:.85;}
 
+/* ── ATTACHMENTS ── */
+.todo-attachments{margin-top:6px;display:flex;flex-direction:column;gap:6px;}
+.attach-item{
+  display:flex;align-items:center;gap:8px;
+  padding:5px 8px;border-radius:var(--r);
+  background:var(--bg2);border:1px solid var(--line);
+  font-size:12px;color:var(--text2);
+  text-decoration:none;cursor:pointer;
+}
+.attach-item:hover{background:var(--bg3);color:var(--text);}
+.attach-icon{font-size:14px;flex-shrink:0;}
+.attach-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono);font-size:10px;}
+.attach-del{background:none;border:none;cursor:pointer;color:var(--text3);font-size:13px;padding:0 2px;flex-shrink:0;}
+.attach-del:hover{color:var(--red);}
+.attach-img{max-width:100%;max-height:160px;border-radius:var(--r);border:1px solid var(--line);display:block;margin-top:4px;cursor:pointer;}
+.attach-btn{background:none;border:none;cursor:pointer;font-size:14px;padding:0 3px;opacity:.4;transition:opacity .15s;flex-shrink:0;margin-top:1px;}
+.attach-btn:hover{opacity:1;}
+.attach-btn.has-attach{opacity:.85;}
+.attach-add-row{display:flex;gap:6px;margin-top:6px;}
+.attach-add-in{
+  flex:1;font-family:var(--sans);font-size:12px;
+  padding:5px 8px;border:1px solid var(--line);border-radius:var(--r);
+  background:var(--bg);color:var(--text);outline:none;
+}
+.attach-add-in:focus{border-color:var(--accent);}
+
 /* ── DONE SECTION ── */
 .done-section{margin-top:20px;}
 .done-section-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;cursor:pointer;user-select:none;}
@@ -1402,6 +1428,7 @@ function ensureState(){
     if(t.parentId===undefined) t.parentId=null;
     if(t.type===undefined) t.type=null;
     if(t.hz===undefined || t.hz==='someday') t.hz='later';
+    if(t.attachments===undefined) t.attachments=[];
     if(t.cat==='projet') t.cat='perso'; // migration: projet → perso
   });
   // Clean ghost IDs from subtasks[] — fixes stale counters (e.g. 0/3 after deletions)
@@ -2497,6 +2524,88 @@ function autoResizeComment(ta){
   ta.style.height=ta.scrollHeight+'px';
 }
 
+/* ══ ATTACHMENTS ══ */
+function attachIcon(url){
+  if(!url) return '🔗';
+  const u=url.toLowerCase();
+  if(/youtube\.com|youtu\.be/.test(u)) return '▶';
+  if(/\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/.test(u)) return '🖼';
+  if(/\.(pdf)(\?|$)/.test(u)) return '📄';
+  if(/\.(doc|docx)(\?|$)/.test(u)) return '📝';
+  if(/\.(xls|xlsx|csv)(\?|$)/.test(u)) return '📊';
+  if(/drive\.google\.com/.test(u)) return '☁';
+  return '🔗';
+}
+function attachLabel(url){
+  try{ return decodeURIComponent(new URL(url).pathname.split('/').pop()||url).slice(0,60)||url; }
+  catch(e){ return url.slice(0,60); }
+}
+function isImageUrl(url){
+  return /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(url);
+}
+function isYoutubeUrl(url){
+  return /youtube\.com|youtu\.be/.test(url);
+}
+function attachHtml(t){
+  const atts=t.attachments||[];
+  if(!atts.length) return '';
+  return `<div class="todo-attachments">${atts.map((url,i)=>{
+    const icon=attachIcon(url);
+    const label=attachLabel(url);
+    if(isImageUrl(url)){
+      return `<div>
+        <img src="${esc(url)}" class="attach-img" onclick="window.open('${esc(url)}','_blank')" title="${esc(url)}">
+        <button class="attach-del" onclick="event.stopPropagation();delAttach('${t.id}',${i})" title="Supprimer">×</button>
+      </div>`;
+    }
+    if(isYoutubeUrl(url)){
+      const ytId=(url.match(/(?:v=|youtu\.be\/)([^&?]+)/)||[])[1];
+      if(ytId) return `<div style="position:relative;">
+        <div class="yt-embed" data-src="https://www.youtube.com/embed/${ytId}?rel=0" data-id="${ytId}"
+          onclick="event.stopPropagation();loadYtEmbed(this)"
+          style="position:relative;width:100%;max-width:400px;aspect-ratio:16/9;background:#000;border-radius:6px;overflow:hidden;cursor:pointer;margin-top:4px;">
+          <img src="https://i.ytimg.com/vi/${ytId}/hqdefault.jpg" style="width:100%;height:100%;object-fit:cover;opacity:.85;">
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+            <div style="width:44px;height:32px;background:#ff0000;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+              <div style="width:0;height:0;border-top:8px solid transparent;border-bottom:8px solid transparent;border-left:14px solid #fff;margin-left:3px;"></div>
+            </div>
+          </div>
+        </div>
+        <button class="attach-del" onclick="event.stopPropagation();delAttach('${t.id}',${i})" title="Supprimer" style="position:absolute;top:8px;right:4px;background:rgba(0,0,0,.5);color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;">×</button>
+      </div>`;
+    }
+    return `<a class="attach-item" href="${esc(url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">
+      <span class="attach-icon">${icon}</span>
+      <span class="attach-label">${esc(label)}</span>
+      <button class="attach-del" onclick="event.stopPropagation();event.preventDefault();delAttach('${t.id}',${i})" title="Supprimer">×</button>
+    </a>`;
+  }).join('')}</div>`;
+}
+function delAttach(id,i){
+  const t=S.todos.find(x=>x.id===id);
+  if(!t||!t.attachments) return;
+  t.attachments.splice(i,1);
+  autoSave();renderTodos();
+}
+function addAttach(id){
+  const inp=document.getElementById('eatt-'+id);
+  if(!inp) return;
+  const url=inp.value.trim();
+  if(!url) return;
+  const t=S.todos.find(x=>x.id===id);
+  if(!t) return;
+  if(!t.attachments) t.attachments=[];
+  t.attachments.push(url);
+  inp.value='';
+  autoSave();renderTodos();
+  setTimeout(()=>openEdit(id),50);
+}
+function toggleAttachments(id){
+  const zone=document.getElementById('tatts-'+id);
+  if(!zone) return;
+  zone.style.display=zone.style.display==='none'?'block':'none';
+}
+
 function todoItemHtml(t){
   const cat = getCatById(t.cat);
   const isDarkMode = document.documentElement.getAttribute('data-theme')==='dark';
@@ -2562,6 +2671,15 @@ function todoItemHtml(t){
           onkeydown="if(event.key==='Escape')toggleComment('${t.id}')"
         >${esc(t.comment||'')}</textarea>
       </div>
+      <div id="tatts-${t.id}" style="display:${t.attachments&&t.attachments.length?'block':'none'};">
+        ${attachHtml(t)}
+        <div class="attach-add-row">
+          <input class="attach-add-in" id="eatt-${t.id}" type="url" placeholder="Coller une URL (image, PDF, YouTube, Drive…)"
+            onclick="event.stopPropagation()"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();addAttach('${t.id}');}if(event.key==='Escape')toggleAttachments('${t.id}')">
+          <button class="save-btn" onclick="event.stopPropagation();addAttach('${t.id}')">+</button>
+        </div>
+      </div>
       <div class="edit-form" id="ef-${t.id}" data-id="${t.id}">
         <div class="edit-row">
           <textarea class="edit-in" id="et-${t.id}" rows="2" style="resize:none;overflow:hidden;line-height:1.45;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();saveTodo('${t.id}');}if(event.key==='Escape')closeEdit('${t.id}');" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'">${esc(t.text)}</textarea>
@@ -2596,6 +2714,7 @@ function todoItemHtml(t){
         </div>` : ''}
       </div>
     </div>
+    <button class="attach-btn${t.attachments&&t.attachments.length?' has-attach':''}" onclick="toggleAttachments('${t.id}')" title="Pièces jointes">📎</button>
     <button class="comment-btn${hasComment?' has-comment':''}" onclick="toggleComment('${t.id}')" title="${hasComment?'Voir le commentaire':'Ajouter un commentaire'}">💬</button>
     <button class="edit-btn" onclick="openEdit('${t.id}')" title="Modifier">✎</button>
     <button class="del" onclick="delTodo('${t.id}')">×</button>
