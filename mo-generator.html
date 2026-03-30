@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MO Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── Tokens ── */
+:root {
+  --bg:       #F7F6F3;
+  --surface:  #FFFFFF;
+  --border:   #E5E3DE;
+  --text:     #1A1917;
+  --muted:    #7A7671;
+  --accent:   #1A1917;
+  --green:    #16A34A;
+  --amber:    #D97706;
+  --red:      #DC2626;
+  --blue:     #2563EB;
+  --radius:   6px;
+  --mono:     'Geist Mono', monospace;
+}
+[data-theme="sand"] {
+  --bg: #F8F7FF; --surface: #FFFFFF; --border: #E2E0F0;
+  --text: #1A1830; --muted: #6B6880; --accent: #4F46E5;
+}
+[data-theme="navy"] {
+  --bg: #161925; --surface: #1F2437; --border: #2D3348;
+  --text: #E8EAF0; --muted: #8890A8; --accent: #818CF8;
+  --green: #34D399; --amber: #FCD34D; --red: #F87171; --blue: #60A5FA;
+}
+[data-theme="dark"] {
+  --bg: #111113; --surface: #1C1C1E; --border: #2C2C2E;
+  --text: #F5F5F7; --muted: #8E8E93; --accent: #A78BFA;
+  --green: #34D399; --amber: #FCD34D; --red: #F87171; --blue: #60A5FA;
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-family: 'Geist', sans-serif; font-size: 15px; background: var(--bg); color: var(--text); }
+body { min-height: 100vh; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+textarea, input { font-family: inherit; background: var(--bg); color: var(--text); color-scheme: light; }
+[data-theme="navy"] textarea, [data-theme="navy"] input,
+[data-theme="dark"]  textarea, [data-theme="dark"]  input { color-scheme: dark; }
+
+/* ── Layout ── */
+.header {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 0 16px; height: 52px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.app-title { font-size: 14px; font-weight: 500; letter-spacing: -0.01em; }
+.sync-dot { font-size: 12px; color: var(--muted); }
+
+.header-right { display: flex; align-items: center; gap: 8px; }
+.icon-btn {
+  width: 32px; height: 32px; border-radius: var(--radius);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: var(--muted); transition: background .15s;
+}
+.icon-btn:hover { background: var(--border); color: var(--text); }
+
+.tabs {
+  position: sticky; top: 52px; z-index: 99;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; padding: 0 16px; gap: 0;
+}
+.tab {
+  padding: 10px 16px; font-size: 13px; font-weight: 400; color: var(--muted);
+  border-bottom: 2px solid transparent; cursor: pointer; transition: color .15s;
+}
+.tab.active { color: var(--text); font-weight: 500; border-bottom-color: var(--accent); }
+
+.page { max-width: 1100px; margin: 0 auto; padding: 20px 16px 80px; }
+.section { display: none; }
+.section.active { display: block; }
+
+/* ── Editor layout ── */
+.editor-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 700px) {
+  .editor-grid { grid-template-columns: 1fr; }
+}
+
+.pane {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.pane-header {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px; font-weight: 500; color: var(--muted);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.pane-header span { letter-spacing: .04em; text-transform: uppercase; }
+
+.editor-area {
+  width: 100%; min-height: 520px;
+  padding: 14px; font-size: 13px; line-height: 1.65;
+  font-family: var(--mono);
+  border: none; outline: none; resize: none;
+  background: var(--surface); color: var(--text);
+}
+
+/* ── Preview ── */
+.preview-area {
+  padding: 14px 16px; min-height: 520px;
+  font-size: 13px; line-height: 1.7;
+}
+.preview-area h1 {
+  font-size: 16px; font-weight: 600; margin-bottom: 10px;
+  letter-spacing: -0.02em;
+}
+.preview-area h2 {
+  font-size: 13px; font-weight: 600; margin: 16px 0 8px;
+  text-transform: uppercase; letter-spacing: .04em; color: var(--muted);
+}
+.preview-meta { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.preview-meta b { color: var(--text); font-weight: 500; }
+.preview-steps { list-style: none; margin: 0; padding: 0; }
+.preview-steps li { padding: 3px 0; }
+.preview-steps li.step { font-weight: 400; }
+.preview-steps li.sub {
+  padding-left: 18px; color: var(--muted); font-size: 12px;
+}
+.preview-steps li.sub::before { content: "– "; }
+.preview-result, .preview-error {
+  margin-top: 12px; font-size: 13px; padding: 8px 10px;
+  border-radius: var(--radius); border: 1px solid var(--border);
+}
+.preview-result { color: var(--green); border-color: var(--green); }
+.preview-error  { color: var(--amber); border-color: var(--amber); }
+.preview-empty { color: var(--muted); font-size: 13px; padding-top: 40px; text-align: center; }
+
+/* ── Action bar ── */
+.action-bar {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-top: 12px;
+}
+.btn {
+  padding: 7px 14px; border-radius: var(--radius);
+  font-size: 13px; font-weight: 500; border: 1px solid var(--border);
+  color: var(--text); background: var(--surface); transition: background .15s;
+}
+.btn:hover { background: var(--border); }
+.btn.primary {
+  background: var(--accent); color: var(--bg); border-color: var(--accent);
+}
+.btn.primary:hover { opacity: .88; }
+.btn.sm { padding: 5px 10px; font-size: 12px; }
+
+/* ── History tab ── */
+.history-empty { color: var(--muted); font-size: 13px; padding: 40px 0; text-align: center; }
+.history-list { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+.history-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 14px;
+}
+.history-card-top {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+}
+.history-title { font-size: 14px; font-weight: 500; flex: 1; }
+.history-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.history-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+/* ── Drive section ── */
+.drive-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); margin-bottom: 16px;
+  font-size: 13px;
+}
+.drive-status { color: var(--muted); flex: 1; }
+
+/* ── Help section ── */
+.help-section {
+  margin-top: 28px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+.help-toggle {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  padding: 11px 16px; cursor: pointer;
+  font-size: 12px; font-weight: 500; color: var(--muted);
+  letter-spacing: .04em; text-transform: uppercase;
+  background: none; border: none; text-align: left;
+  transition: background .15s;
+}
+.help-toggle:hover { background: var(--border); }
+.help-toggle .chevron { font-size: 10px; transition: transform .2s; }
+.help-toggle.open .chevron { transform: rotate(180deg); }
+.help-body {
+  display: none; padding: 16px 20px 20px;
+  border-top: 1px solid var(--border);
+}
+.help-body.open { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+@media (max-width: 700px) { .help-body.open { grid-template-columns: 1fr; } }
+.help-group { display: flex; flex-direction: column; gap: 10px; }
+.help-group h3 { font-size: 11px; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
+.help-row { display: flex; gap: 10px; align-items: baseline; font-size: 13px; }
+.help-tag {
+  font-family: var(--mono); font-size: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 4px; padding: 1px 6px;
+  color: var(--accent); white-space: nowrap; flex-shrink: 0;
+}
+.help-desc { color: var(--muted); line-height: 1.5; }
+.help-note {
+  grid-column: 1 / -1; font-size: 12px; color: var(--muted);
+  border-top: 1px solid var(--border); padding-top: 12px; margin-top: 4px;
+  line-height: 1.6;
+}
+
+/* ── Toast ── */
+#toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(8px);
+  background: var(--text); color: var(--bg);
+  padding: 8px 16px; border-radius: 20px; font-size: 13px;
+  opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; z-index: 999;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <span class="app-title">MO Generator</span>
+    <span class="sync-dot" id="sync-dot">⚫ Local</span>
+  </div>
+  <div class="header-right">
+    <button class="icon-btn" id="drive-btn" title="Google Drive" onclick="handleDriveBtn()">☁</button>
+    <button class="icon-btn" id="theme-btn" title="Thème" onclick="toggleTheme()">☀︎</button>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('editor')">Éditeur</div>
+  <div class="tab" onclick="switchTab('history')">Historique</div>
+</div>
+
+<!-- Page -->
+<div class="page">
+
+  <!-- TAB: Editor -->
+  <div id="tab-editor" class="section active">
+
+    <div class="editor-grid">
+      <!-- Notes brutes -->
+      <div class="pane">
+        <div class="pane-header">
+          <span>Notes brutes</span>
+          <button class="btn sm" onclick="resetTemplate()">↺ Template</button>
+        </div>
+        <textarea class="editor-area" id="raw-input" spellcheck="false"
+          oninput="onEdit()" placeholder="Commencez à taper vos notes ici…"></textarea>
+      </div>
+
+      <!-- Aperçu -->
+      <div class="pane">
+        <div class="pane-header">
+          <span>Aperçu</span>
+          <div style="display:flex;gap:6px">
+            <button class="btn sm" onclick="copyHtml()" title="Copier le MO formaté — à coller dans Outlook ou Gmail">⎘ Email</button>
+            <button class="btn sm" onclick="downloadFile('md')">↓ .md</button>
+            <button class="btn sm" onclick="downloadFile('txt')">↓ .txt</button>
+            <button class="btn sm primary" onclick="saveMO()">Enregistrer</button>
+          </div>
+        </div>
+        <div class="preview-area" id="preview"></div>
+      </div>
+    </div><!-- /editor-grid -->
+
+    <!-- Zone aide -->
+    <div class="help-section">
+      <button class="help-toggle" id="help-toggle" onclick="toggleHelp()">
+        <span>Guide des marqueurs</span>
+        <span class="chevron">▼</span>
+      </button>
+      <div class="help-body" id="help-body">
+
+        <div class="help-group">
+          <h3>En-tête</h3>
+          <div class="help-row"><span class="help-tag">titre:</span><span class="help-desc">Titre du mode opératoire</span></div>
+          <div class="help-row"><span class="help-tag">quand:</span><span class="help-desc">Contexte d'utilisation — quand déclencher ce MO ?</span></div>
+          <div class="help-row"><span class="help-tag">duree:</span><span class="help-desc">Durée estimée (ex : 5 min)</span></div>
+          <div class="help-row"><span class="help-tag">auteur:</span><span class="help-desc">Auteur ou responsable du MO</span></div>
+          <div class="help-row"><span class="help-tag">modifie:</span><span class="help-desc">Date de dernière modification — format JJ-MM-AAAA</span></div>
+        </div>
+
+        <div class="help-group">
+          <h3>Étapes</h3>
+          <div class="help-row"><span class="help-tag">E:</span><span class="help-desc">Étape principale — numérotée automatiquement</span></div>
+          <div class="help-row"><span class="help-tag">SE:</span><span class="help-desc">Sous-étape — rattachée à l'étape E: précédente, indentée en sortie</span></div>
+          <h3 style="margin-top:8px">Résultat &amp; erreur</h3>
+          <div class="help-row"><span class="help-tag">resultat:</span><span class="help-desc">Résultat attendu — affiché avec ✅</span></div>
+          <div class="help-row"><span class="help-tag">erreur:</span><span class="help-desc">Erreur fréquente à éviter — affichée avec ⚠️</span></div>
+        </div>
+
+        <div class="help-note">
+          💡 Tout ce qui n'est pas un marqueur reconnu est ignoré — vos notes libres restent telles quelles dans la zone de saisie.<br>
+          La casse est ignorée : <code style="font-family:var(--mono);font-size:11px">Titre:</code> = <code style="font-family:var(--mono);font-size:11px">titre:</code> = <code style="font-family:var(--mono);font-size:11px">TITRE:</code>.<br>
+          Seuls <code style="font-family:var(--mono);font-size:11px">titre:</code> et au moins une étape <code style="font-family:var(--mono);font-size:11px">E:</code> sont requis. Tous les autres marqueurs sont optionnels.
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /tab-editor -->
+  <div id="tab-history" class="section">
+    <div class="drive-bar">
+      <span class="drive-status" id="drive-status-label">Non connecté à Drive</span>
+      <button class="btn sm" id="drive-action-btn" onclick="handleDriveBtn()">Connecter</button>
+      <button class="btn sm" onclick="pullFromDrive()" id="pull-btn" style="display:none">↓ Sync</button>
+    </div>
+    <div id="history-container">
+      <p class="history-empty">Aucun mode opératoire enregistré.<br>Rédigez vos notes et cliquez sur <b>Enregistrer</b>.</p>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<!-- GIS -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<script>
+// ── Constants ──────────────────────────────────────────────────────────────────
+const APP       = 'mo-generator';
+const SK        = `td_v4_${APP}`;
+const TK        = `td_theme_${APP}`;
+const TOK_KEY   = `td_tok_${APP}`;
+const CLIENT_ID = '396437854818-0csbts6dv9pb8l8u7bnlssk7cqb3njbo.apps.googleusercontent.com';
+const SCOPE     = 'https://www.googleapis.com/auth/drive.file';
+const THEMES    = ['light', 'sand', 'navy', 'dark'];
+const ICONS     = { light:'☀︎', sand:'○', navy:'◑', dark:'☾' };
+
+const TEMPLATE = `titre: 
+quand: 
+duree: 
+auteur: 
+modifie: 
+
+Notes libres (ignorées) — contexte, liens, références…
+
+E: 
+E: 
+SE: 
+E: 
+E: 
+
+resultat: 
+erreur: `;
+
+// ── State ──────────────────────────────────────────────────────────────────────
+let S = { history: [] };
+let driveFileId = null;
+let tokenClient = null;
+let accessToken = sessionStorage.getItem(TOK_KEY) || null;
+let saveTimer = null;
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+function ensureState() {
+  if (!Array.isArray(S.history)) S.history = [];
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem(SK);
+    if (raw) S = JSON.parse(raw);
+  } catch(e) {}
+  ensureState();
+  const saved = localStorage.getItem(`${SK}_draft`);
+  document.getElementById('raw-input').value = saved || TEMPLATE;
+  renderPreview();
+  renderHistory();
+  initDrive();
+}
+
+// ── Theme ──────────────────────────────────────────────────────────────────────
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t === 'light' ? '' : t);
+  document.getElementById('theme-btn').textContent = ICONS[t] || '☀︎';
+  localStorage.setItem(TK, t);
+}
+function toggleTheme() {
+  const cur = localStorage.getItem(TK) || 'light';
+  applyTheme(THEMES[(THEMES.indexOf(cur) + 1) % THEMES.length]);
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const ids = ['editor','history'];
+    t.classList.toggle('active', ids[i] === id);
+  });
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(`tab-${id}`).classList.add('active');
+}
+
+// ── Template reset ────────────────────────────────────────────────────────────
+function resetTemplate() {
+  document.getElementById('raw-input').value = TEMPLATE;
+  renderPreview();
+}
+
+// ── Parsing (port JS de mo.py) ─────────────────────────────────────────────────
+const MOIS = {
+  '01':'janvier','02':'février','03':'mars','04':'avril',
+  '05':'mai','06':'juin','07':'juillet','08':'août',
+  '09':'septembre','10':'octobre','11':'novembre','12':'décembre'
+};
+
+function formatDate(raw) {
+  let m = raw.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  if (m) return `${parseInt(m[1])} ${MOIS[m[2]]||m[2]} ${m[3]}`;
+  m = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return `${parseInt(m[3])} ${MOIS[m[2]]||m[2]} ${m[1]}`;
+  return raw;
+}
+
+function parse(text) {
+  const mo = { titre:'', quand:'', duree:'', auteur:'', modifie:'', etapes:[], resultat:'', erreur:'' };
+  let cur = null;
+  for (const raw of text.split('\n')) {
+    const line = raw.trim();
+    if (!line) continue;
+    let m;
+    if      (m = line.match(/^titre\s*:\s*(.+)/i))             mo.titre    = m[1].trim();
+    else if (m = line.match(/^quand\s*:\s*(.+)/i))             mo.quand    = m[1].trim();
+    else if (m = line.match(/^dur[eé]e\s*:\s*(.+)/i))          mo.duree    = m[1].trim();
+    else if (m = line.match(/^auteur\s*:\s*(.+)/i))            mo.auteur   = m[1].trim();
+    else if (m = line.match(/^modifi[eé]\s*:\s*(.+)/i))        mo.modifie  = formatDate(m[1].trim());
+    else if (m = line.match(/^r[eé]sultat\s*:\s*(.+)/i))       mo.resultat = m[1].trim();
+    else if (m = line.match(/^erreur\s*:\s*(.+)/i))            mo.erreur   = m[1].trim();
+    else if (m = line.match(/^E\s*:\s*(.+)/))  { cur = { texte: m[1].trim(), sous_etapes:[] }; mo.etapes.push(cur); }
+    else if (m = line.match(/^SE\s*:\s*(.+)/)) {
+      if (!cur) { cur = { texte:'', sous_etapes:[] }; mo.etapes.push(cur); }
+      cur.sous_etapes.push(m[1].trim());
+    }
+  }
+  return mo;
+}
+
+// ── Render preview ─────────────────────────────────────────────────────────────
+function renderPreview() {
+  const text = document.getElementById('raw-input').value;
+  const mo   = parse(text);
+  const el   = document.getElementById('preview');
+
+  const hasContent = mo.titre || mo.etapes.length;
+  if (!hasContent) {
+    el.innerHTML = '<p class="preview-empty">L\'aperçu apparaîtra ici au fil de la saisie.</p>';
+    return;
+  }
+
+  let html = '';
+  if (mo.titre) html += `<h1>${esc(mo.titre)}</h1>`;
+
+  const metas = [
+    mo.quand    && ['Quand l\'utiliser', mo.quand],
+    mo.duree    && ['Durée estimée',     mo.duree],
+    mo.auteur   && ['Auteur',            mo.auteur],
+    mo.modifie  && ['Dernière modification', mo.modifie],
+  ].filter(Boolean);
+  for (const [k,v] of metas)
+    html += `<p class="preview-meta"><b>${esc(k)} :</b> ${esc(v)}</p>`;
+
+  if (mo.etapes.length) {
+    html += '<h2>Étapes</h2><ol class="preview-steps">';
+    let n = 0;
+    for (const e of mo.etapes) {
+      if (e.texte) { n++; html += `<li class="step">${n}. ${esc(e.texte)}</li>`; }
+      for (const se of e.sous_etapes)
+        html += `<li class="sub">${esc(se)}</li>`;
+    }
+    html += '</ol>';
+  }
+
+  if (mo.resultat) html += `<div class="preview-result">✅ <b>Résultat attendu :</b> ${esc(mo.resultat)}</div>`;
+  if (mo.erreur)   html += `<div class="preview-error">⚠️ <b>Erreur fréquente :</b> ${esc(mo.erreur)}</div>`;
+
+  el.innerHTML = html;
+}
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── On edit ───────────────────────────────────────────────────────────────────
+function onEdit() {
+  renderPreview();
+  localStorage.setItem(`${SK}_draft`, document.getElementById('raw-input').value);
+  setSyncDot('pending');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(autoSave, 2000);
+}
+
+// ── Download ──────────────────────────────────────────────────────────────────
+function renderMd(mo) {
+  const lines = [];
+  lines.push(mo.titre ? `# ${mo.titre}` : '# Mode opératoire', '');
+  if (mo.quand)   lines.push(`**Quand l'utiliser :** ${mo.quand}`);
+  if (mo.duree)   lines.push(`**Durée estimée :** ${mo.duree}`);
+  if (mo.auteur)  lines.push(`**Auteur :** ${mo.auteur}`);
+  if (mo.modifie) lines.push(`**Dernière modification :** ${mo.modifie}`);
+  if (mo.quand || mo.duree || mo.auteur || mo.modifie) lines.push('');
+  if (mo.etapes.length) {
+    lines.push('## Étapes', '');
+    let n = 0;
+    for (const e of mo.etapes) {
+      if (e.texte) { n++; lines.push(`${n}. ${e.texte}`); }
+      for (const se of e.sous_etapes) lines.push(`   - ${se}`);
+    }
+    lines.push('');
+  }
+  if (mo.resultat) lines.push(`✅ **Résultat attendu :** ${mo.resultat}`);
+  if (mo.erreur)   lines.push(`⚠️ **Erreur fréquente :** ${mo.erreur}`);
+  return lines.join('\n');
+}
+
+function renderTxt(mo) {
+  const lines = [];
+  const titre = mo.titre || 'Mode opératoire';
+  lines.push(titre, '='.repeat(titre.length), '');
+  if (mo.quand)   lines.push(`Quand l'utiliser : ${mo.quand}`);
+  if (mo.duree)   lines.push(`Durée estimée : ${mo.duree}`);
+  if (mo.auteur)  lines.push(`Auteur : ${mo.auteur}`);
+  if (mo.modifie) lines.push(`Dernière modification : ${mo.modifie}`);
+  if (mo.quand || mo.duree || mo.auteur || mo.modifie) lines.push('');
+  if (mo.etapes.length) {
+    lines.push('Étapes', '------');
+    let n = 0;
+    for (const e of mo.etapes) {
+      if (e.texte) { n++; lines.push(`${n}. ${e.texte}`); }
+      for (const se of e.sous_etapes) lines.push(`   - ${se}`);
+    }
+    lines.push('');
+  }
+  if (mo.resultat) lines.push(`[OK] Résultat attendu : ${mo.resultat}`);
+  if (mo.erreur)   lines.push(`[!]  Erreur fréquente : ${mo.erreur}`);
+  return lines.join('\n');
+}
+
+function downloadFile(fmt) {
+  const mo      = parse(document.getElementById('raw-input').value);
+  const content = fmt === 'md' ? renderMd(mo) : renderTxt(mo);
+  const slug    = (mo.titre || 'mode-operatoire')
+    .toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  const name = `${slug}-MO.${fmt}`;
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  toast(`↓ ${name}`);
+}
+
+// ── Save to history ───────────────────────────────────────────────────────────
+function saveMO() {
+  const raw = document.getElementById('raw-input').value;
+  const mo  = parse(raw);
+  if (!mo.titre && !mo.etapes.length) { toast('Rien à enregistrer'); return; }
+
+  const entry = {
+    id:      Date.now(),
+    titre:   mo.titre || '(sans titre)',
+    auteur:  mo.auteur,
+    modifie: mo.modifie,
+    etapes:  mo.etapes.length,
+    raw,
+    savedAt: new Date().toLocaleDateString('fr-FR'),
+  };
+  S.history.unshift(entry);
+  if (S.history.length > 50) S.history.pop();
+  persist();
+  renderHistory();
+  toast('✓ MO enregistré');
+}
+
+function deleteEntry(id) {
+  S.history = S.history.filter(e => e.id !== id);
+  persist();
+  renderHistory();
+  toast('Supprimé');
+}
+
+function loadEntry(id) {
+  const e = S.history.find(x => x.id === id);
+  if (!e) return;
+  document.getElementById('raw-input').value = e.raw;
+  renderPreview();
+  switchTab('editor');
+  toast('MO chargé dans l\'éditeur');
+}
+
+function renderHistory() {
+  const el = document.getElementById('history-container');
+  if (!S.history.length) {
+    el.innerHTML = '<p class="history-empty">Aucun mode opératoire enregistré.<br>Rédigez vos notes et cliquez sur <b>Enregistrer</b>.</p>';
+    return;
+  }
+  el.innerHTML = `<div class="history-list">${S.history.map(e => `
+    <div class="history-card">
+      <div class="history-card-top">
+        <div>
+          <div class="history-title">${esc(e.titre)}</div>
+          <div class="history-meta">
+            ${e.auteur ? `${esc(e.auteur)} · ` : ''}
+            ${e.modifie ? `modifié ${esc(e.modifie)} · ` : ''}
+            ${e.etapes} étape${e.etapes > 1 ? 's' : ''} · enregistré ${e.savedAt}
+          </div>
+        </div>
+        <div class="history-actions">
+          <button class="btn sm" onclick="loadEntry(${e.id})">Éditer</button>
+          <button class="btn sm" onclick="copyHtmlEntry(${e.id})" title="Copier pour Outlook ou Gmail">⎘ Email</button>
+          <button class="btn sm" onclick="dlEntry(${e.id},'md')">↓ md</button>
+          <button class="btn sm" onclick="dlEntry(${e.id},'txt')">↓ txt</button>
+          <button class="btn sm" style="color:var(--red)" onclick="deleteEntry(${e.id})">✕</button>
+        </div>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+function dlEntry(id, fmt) {
+  const e = S.history.find(x => x.id === id);
+  if (!e) return;
+  const mo = parse(e.raw);
+  const content = fmt === 'md' ? renderMd(mo) : renderTxt(mo);
+  const slug = (mo.titre || 'mode-operatoire')
+    .toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${slug}-MO.${fmt}`;
+  a.click();
+}
+
+async function copyHtmlEntry(id) {
+  const e = S.history.find(x => x.id === id);
+  if (!e) return;
+  const mo      = parse(e.raw);
+  const htmlStr = renderHtmlEmail(mo);
+  const textStr = renderTxt(mo);
+  try {
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        'text/html':  new Blob([htmlStr], { type: 'text/html' }),
+        'text/plain': new Blob([textStr], { type: 'text/plain' }),
+      })
+    ]);
+    toast('⎘ Copié — collez dans Outlook ou Gmail');
+  } catch(err) {
+    await navigator.clipboard.writeText(textStr);
+    toast('⎘ Copié en texte brut (navigateur limité)');
+  }
+}
+
+// ── Persist ───────────────────────────────────────────────────────────────────
+function persist() {
+  localStorage.setItem(SK, JSON.stringify(S));
+  setSyncDot('pending');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(autoSave, 2000);
+}
+
+function setSyncDot(state) {
+  const el = document.getElementById('sync-dot');
+  const labels = { local:'⚫ Local', pending:'🟡 En attente', ok:'🟢 Sync ✓', error:'🔴 Erreur' };
+  el.textContent = labels[state] || '⚫ Local';
+}
+
+// ── Google Drive ───────────────────────────────────────────────────────────────
+const DRIVE_FILE = 'mo-generator.json';
+
+function initDrive() {
+  if (!window.google) { setTimeout(initDrive, 500); return; }
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID, scope: SCOPE,
+    callback: (resp) => {
+      if (resp.error) { setSyncDot('error'); return; }
+      accessToken = resp.access_token;
+      sessionStorage.setItem(TOK_KEY, accessToken);
+      updateDriveUI(true);
+      pushToDrive();
+    }
+  });
+  if (accessToken) updateDriveUI(true);
+}
+
+function handleDriveBtn() {
+  if (!tokenClient) { toast('Drive non initialisé'); return; }
+  if (accessToken) { pushToDrive(); toast('Synchronisation…'); }
+  else tokenClient.requestAccessToken();
+}
+
+function updateDriveUI(connected) {
+  document.getElementById('drive-status-label').textContent =
+    connected ? 'Connecté à Google Drive' : 'Non connecté à Drive';
+  document.getElementById('drive-action-btn').textContent =
+    connected ? 'Sync maintenant' : 'Connecter';
+  document.getElementById('pull-btn').style.display = connected ? '' : 'none';
+}
+
+async function pushToDrive() {
+  if (!accessToken) return;
+  setSyncDot('pending');
+  try {
+    const body = JSON.stringify(S);
+    if (!driveFileId) driveFileId = await findDriveFile();
+    if (driveFileId) {
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body
+      });
+    } else {
+      const meta = await fetch('https://www.googleapis.com/drive/v3/files', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: DRIVE_FILE, mimeType: 'application/json' })
+      }).then(r => r.json());
+      driveFileId = meta.id;
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body
+      });
+    }
+    setSyncDot('ok');
+  } catch(e) { setSyncDot('error'); }
+}
+
+async function pullFromDrive() {
+  if (!accessToken) return;
+  try {
+    const id = driveFileId || await findDriveFile();
+    if (!id) { toast('Aucun fichier Drive trouvé'); return; }
+    driveFileId = id;
+    const res  = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    const data = await res.json();
+    S = data; ensureState();
+    localStorage.setItem(SK, JSON.stringify(S));
+    renderHistory();
+    setSyncDot('ok');
+    toast('↓ Données Drive chargées');
+  } catch(e) { setSyncDot('error'); toast('Erreur Drive'); }
+}
+
+async function findDriveFile() {
+  const res = await fetch(
+    `https://www.googleapis.com/drive/v3/files?q=name='${DRIVE_FILE}' and trashed=false&fields=files(id)`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  const data = await res.json();
+  return data.files?.[0]?.id || null;
+}
+
+function autoSave() {
+  if (accessToken) pushToDrive();
+  else setSyncDot('local');
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────────
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ── Copy HTML for email ───────────────────────────────────────────────────────
+function renderHtmlEmail(mo) {
+  const s = {
+    h1:    'font-family:Arial,sans-serif;font-size:18px;font-weight:600;margin:0 0 8px;color:#1A1917;',
+    meta:  'font-family:Arial,sans-serif;font-size:13px;color:#7A7671;margin:2px 0;',
+    metab: 'font-weight:600;color:#1A1917;',
+    h2:    'font-family:Arial,sans-serif;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#7A7671;margin:18px 0 6px;',
+    ol:    'font-family:Arial,sans-serif;font-size:14px;line-height:1.7;margin:0;padding-left:20px;color:#1A1917;',
+    li:    'margin:2px 0;',
+    sub:   'font-family:Arial,sans-serif;font-size:13px;color:#7A7671;margin:1px 0 1px 16px;list-style:none;',
+    ok:    'font-family:Arial,sans-serif;font-size:13px;color:#16A34A;border:1px solid #16A34A;border-radius:4px;padding:7px 10px;margin-top:14px;display:block;',
+    warn:  'font-family:Arial,sans-serif;font-size:13px;color:#D97706;border:1px solid #D97706;border-radius:4px;padding:7px 10px;margin-top:8px;display:block;',
+  };
+
+  let html = `<div style="max-width:600px;font-family:Arial,sans-serif;">`;
+
+  if (mo.titre)   html += `<h1 style="${s.h1}">${esc(mo.titre)}</h1>`;
+
+  const metas = [
+    mo.quand   && ['Quand l\'utiliser', mo.quand],
+    mo.duree   && ['Durée estimée',     mo.duree],
+    mo.auteur  && ['Auteur',            mo.auteur],
+    mo.modifie && ['Dernière modification', mo.modifie],
+  ].filter(Boolean);
+  for (const [k,v] of metas)
+    html += `<p style="${s.meta}"><span style="${s.metab}">${esc(k)} :</span> ${esc(v)}</p>`;
+
+  if (mo.etapes.length) {
+    html += `<p style="${s.h2}">Étapes</p><ol style="${s.ol}">`;
+    for (const e of mo.etapes) {
+      if (e.texte) html += `<li style="${s.li}">${esc(e.texte)}`;
+      if (e.sous_etapes.length) {
+        html += `<ul style="margin:2px 0;padding-left:16px;">`;
+        for (const se of e.sous_etapes)
+          html += `<li style="${s.sub}">${esc(se)}</li>`;
+        html += `</ul>`;
+      }
+      if (e.texte) html += `</li>`;
+    }
+    html += `</ol>`;
+  }
+
+  if (mo.resultat) html += `<span style="${s.ok}">✅ <strong>Résultat attendu :</strong> ${esc(mo.resultat)}</span>`;
+  if (mo.erreur)   html += `<span style="${s.warn}">⚠️ <strong>Erreur fréquente :</strong> ${esc(mo.erreur)}</span>`;
+
+  html += `</div>`;
+  return html;
+}
+
+async function copyHtml() {
+  const mo       = parse(document.getElementById('raw-input').value);
+  const htmlStr  = renderHtmlEmail(mo);
+  const textStr  = renderTxt(mo);
+  try {
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        'text/html':  new Blob([htmlStr],  { type: 'text/html' }),
+        'text/plain': new Blob([textStr],  { type: 'text/plain' }),
+      })
+    ]);
+    toast('⎘ Copié — collez dans Outlook ou Gmail');
+  } catch(e) {
+    // Fallback : copie texte brut si ClipboardItem non supporté
+    await navigator.clipboard.writeText(textStr);
+    toast('⎘ Copié en texte brut (navigateur limité)');
+  }
+}
+
+// ── Help toggle ───────────────────────────────────────────────────────────────
+function toggleHelp() {
+  const toggle = document.getElementById('help-toggle');
+  const body   = document.getElementById('help-body');
+  const open   = body.classList.toggle('open');
+  toggle.classList.toggle('open', open);
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+applyTheme(localStorage.getItem(TK) || 'light');
+load();
+</script>
+</body>
+</html>
