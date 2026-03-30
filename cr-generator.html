@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CR Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── Tokens ── */
+:root {
+  --bg:      #F7F6F3;
+  --surface: #FFFFFF;
+  --border:  #E5E3DE;
+  --text:    #1A1917;
+  --muted:   #7A7671;
+  --accent:  #1A1917;
+  --green:   #16A34A;
+  --amber:   #D97706;
+  --red:     #DC2626;
+  --blue:    #2563EB;
+  --radius:  6px;
+  --mono:    'Geist Mono', monospace;
+}
+[data-theme="sand"] {
+  --bg:#F8F7FF; --surface:#FFFFFF; --border:#E2E0F0;
+  --text:#1A1830; --muted:#6B6880; --accent:#4F46E5;
+}
+[data-theme="navy"] {
+  --bg:#161925; --surface:#1F2437; --border:#2D3348;
+  --text:#E8EAF0; --muted:#8890A8; --accent:#818CF8;
+  --green:#34D399; --amber:#FCD34D; --red:#F87171; --blue:#60A5FA;
+}
+[data-theme="dark"] {
+  --bg:#111113; --surface:#1C1C1E; --border:#2C2C2E;
+  --text:#F5F5F7; --muted:#8E8E93; --accent:#A78BFA;
+  --green:#34D399; --amber:#FCD34D; --red:#F87171; --blue:#60A5FA;
+}
+
+/* ── Reset ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-family:'Geist',sans-serif;font-size:15px;background:var(--bg);color:var(--text);}
+body{min-height:100vh;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;}
+textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text);color-scheme:light;}
+[data-theme="navy"] textarea,[data-theme="navy"] input,[data-theme="navy"] select,
+[data-theme="dark"] textarea,[data-theme="dark"] input,[data-theme="dark"] select{color-scheme:dark;}
+
+/* ── Header ── */
+.header{
+  position:sticky;top:0;z-index:100;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 16px;height:52px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.header-left{display:flex;align-items:center;gap:12px;}
+.app-title{font-size:14px;font-weight:500;letter-spacing:-0.01em;}
+.sync-dot{font-size:12px;color:var(--muted);}
+.header-right{display:flex;align-items:center;gap:8px;}
+.icon-btn{
+  width:32px;height:32px;border-radius:var(--radius);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;color:var(--muted);transition:background .15s;
+}
+.icon-btn:hover{background:var(--border);color:var(--text);}
+
+/* ── Tabs ── */
+.tabs{
+  position:sticky;top:52px;z-index:99;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;padding:0 16px;
+}
+.tab{
+  padding:10px 16px;font-size:13px;font-weight:400;color:var(--muted);
+  border-bottom:2px solid transparent;cursor:pointer;transition:color .15s;
+}
+.tab.active{color:var(--text);font-weight:500;border-bottom-color:var(--accent);}
+
+/* ── Page ── */
+.page{max-width:1100px;margin:0 auto;padding:20px 16px 80px;}
+.section{display:none;}
+.section.active{display:block;}
+
+/* ── Editor grid ── */
+.editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}
+@media(max-width:700px){.editor-grid{grid-template-columns:1fr;}}
+
+.pane{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.pane-header{
+  padding:10px 14px;border-bottom:1px solid var(--border);
+  font-size:12px;font-weight:500;color:var(--muted);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.pane-header span{letter-spacing:.04em;text-transform:uppercase;}
+
+.editor-area{
+  width:100%;min-height:540px;padding:14px;
+  font-size:13px;line-height:1.65;font-family:var(--mono);
+  border:none;outline:none;resize:none;
+  background:var(--surface);color:var(--text);
+}
+
+/* ── Format bar ── */
+.fmt-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 14px;border-bottom:1px solid var(--border);
+  font-size:12px;color:var(--muted);
+}
+.fmt-select{
+  font-size:12px;padding:3px 8px;border:1px solid var(--border);
+  border-radius:var(--radius);background:var(--bg);color:var(--text);
+  outline:none;cursor:pointer;
+}
+
+/* ── Preview ── */
+.preview-area{padding:14px 16px;min-height:540px;font-size:13px;line-height:1.7;}
+.preview-area h1{font-size:16px;font-weight:600;margin-bottom:8px;letter-spacing:-0.02em;}
+.preview-area h2{font-size:11px;font-weight:600;margin:16px 0 8px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);}
+.preview-meta{font-size:12px;color:var(--muted);margin-bottom:3px;}
+.preview-meta b{color:var(--text);font-weight:500;}
+.preview-decision{padding:3px 0;font-size:13px;}
+.preview-action{
+  display:flex;gap:8px;align-items:baseline;padding:5px 0;
+  border-bottom:1px solid var(--border);font-size:13px;
+}
+.preview-action:last-child{border-bottom:none;}
+.action-quoi{flex:1;}
+.action-who{font-size:12px;color:var(--accent);font-weight:500;white-space:nowrap;}
+.action-date{font-size:12px;color:var(--muted);white-space:nowrap;}
+.preview-empty{color:var(--muted);font-size:13px;padding-top:40px;text-align:center;}
+.preview-next{font-size:13px;color:var(--muted);margin-top:4px;}
+.preview-none{color:var(--muted);font-size:12px;font-style:italic;}
+
+/* ── Buttons ── */
+.btn{
+  padding:7px 14px;border-radius:var(--radius);
+  font-size:13px;font-weight:500;border:1px solid var(--border);
+  color:var(--text);background:var(--surface);transition:background .15s;
+}
+.btn:hover{background:var(--border);}
+.btn.primary{background:var(--accent);color:var(--bg);border-color:var(--accent);}
+.btn.primary:hover{opacity:.88;}
+.btn.sm{padding:5px 10px;font-size:12px;}
+
+/* ── History ── */
+.history-empty{color:var(--muted);font-size:13px;padding:40px 0;text-align:center;}
+.history-list{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+.history-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;}
+.history-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.history-title{font-size:14px;font-weight:500;flex:1;}
+.history-meta{font-size:12px;color:var(--muted);margin-top:3px;}
+.history-actions{display:flex;gap:6px;flex-shrink:0;}
+
+/* ── Drive bar ── */
+.drive-bar{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);margin-bottom:16px;font-size:13px;
+}
+.drive-status{color:var(--muted);flex:1;}
+
+/* ── Help ── */
+.help-section{
+  margin-top:28px;border:1px solid var(--border);
+  border-radius:var(--radius);background:var(--surface);overflow:hidden;
+}
+.help-toggle{
+  width:100%;display:flex;align-items:center;justify-content:space-between;
+  padding:11px 16px;cursor:pointer;font-size:12px;font-weight:500;color:var(--muted);
+  letter-spacing:.04em;text-transform:uppercase;background:none;border:none;
+  text-align:left;transition:background .15s;
+}
+.help-toggle:hover{background:var(--border);}
+.help-toggle .chevron{font-size:10px;transition:transform .2s;}
+.help-toggle.open .chevron{transform:rotate(180deg);}
+.help-body{display:none;padding:16px 20px 20px;border-top:1px solid var(--border);}
+.help-body.open{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+@media(max-width:700px){.help-body.open{grid-template-columns:1fr;}}
+.help-group{display:flex;flex-direction:column;gap:10px;}
+.help-group h3{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;}
+.help-row{display:flex;gap:10px;align-items:baseline;font-size:13px;}
+.help-tag{
+  font-family:var(--mono);font-size:12px;background:var(--bg);border:1px solid var(--border);
+  border-radius:4px;padding:1px 6px;color:var(--accent);white-space:nowrap;flex-shrink:0;
+}
+.help-desc{color:var(--muted);line-height:1.5;}
+.help-note{
+  grid-column:1/-1;font-size:12px;color:var(--muted);
+  border-top:1px solid var(--border);padding-top:12px;margin-top:4px;line-height:1.6;
+}
+
+/* ── Toast ── */
+#toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);
+  background:var(--text);color:var(--bg);padding:8px 16px;border-radius:20px;font-size:13px;
+  opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <span class="app-title">CR Generator</span>
+    <span class="sync-dot" id="sync-dot">⚫ Local</span>
+  </div>
+  <div class="header-right">
+    <button class="icon-btn" title="Google Drive" onclick="handleDriveBtn()">☁</button>
+    <button class="icon-btn" id="theme-btn" title="Thème" onclick="toggleTheme()">☀︎</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('editor')">Éditeur</div>
+  <div class="tab" onclick="switchTab('history')">Historique</div>
+</div>
+
+<div class="page">
+
+  <!-- TAB: Éditeur -->
+  <div id="tab-editor" class="section active">
+    <div class="editor-grid">
+
+      <div class="pane">
+        <div class="pane-header">
+          <span>Notes brutes</span>
+          <button class="btn sm" onclick="resetTemplate()">↺ Template</button>
+        </div>
+        <textarea class="editor-area" id="raw-input" spellcheck="false"
+          oninput="onEdit()" placeholder="Collez vos notes ici…"></textarea>
+      </div>
+
+      <div class="pane">
+        <div class="fmt-bar">
+          <label for="fmt-select">Format :</label>
+          <select id="fmt-select" class="fmt-select" onchange="renderPreview()">
+            <option value="obsidian">Obsidian (.md)</option>
+            <option value="notion">Notion</option>
+            <option value="texte">Texte brut</option>
+          </select>
+        </div>
+        <div class="pane-header">
+          <span>Aperçu</span>
+          <div style="display:flex;gap:6px;">
+            <button class="btn sm" onclick="copyHtml()" title="Copier pour Outlook ou Gmail">⎘ Email</button>
+            <button class="btn sm" onclick="downloadCR()">↓ Fichier</button>
+            <button class="btn sm primary" onclick="saveCR()">Enregistrer</button>
+          </div>
+        </div>
+        <div class="preview-area" id="preview"></div>
+      </div>
+
+    </div>
+
+    <!-- Zone aide -->
+    <div class="help-section">
+      <button class="help-toggle" id="help-toggle" onclick="toggleHelp()">
+        <span>Guide des marqueurs</span>
+        <span class="chevron">▼</span>
+      </button>
+      <div class="help-body" id="help-body">
+
+        <div class="help-group">
+          <h3>Frontmatter YAML (optionnel)</h3>
+          <div class="help-row"><span class="help-tag">title:</span><span class="help-desc">Titre de la réunion</span></div>
+          <div class="help-row"><span class="help-tag">date:</span><span class="help-desc">Format JJ-MM-AAAA ou AAAA-MM-JJ</span></div>
+          <div class="help-row"><span class="help-tag">duree:</span><span class="help-desc">Durée (ex : 1h30)</span></div>
+          <div class="help-row"><span class="help-tag">participants:</span><span class="help-desc">Liste entre crochets — [Alice, Bob]</span></div>
+          <div class="help-row"><span class="help-tag">objectif:</span><span class="help-desc">Objectif de la réunion</span></div>
+          <div class="help-row"><span class="help-tag">next-date:</span><span class="help-desc">Date de la prochaine réunion</span></div>
+          <div class="help-row"><span class="help-tag">next-agenda:</span><span class="help-desc">Ordre du jour suivant</span></div>
+        </div>
+
+        <div class="help-group">
+          <h3>Marqueurs dans le corps</h3>
+          <div class="help-row"><span class="help-tag">D:</span><span class="help-desc">Décision — numérotée automatiquement</span></div>
+          <div class="help-row"><span class="help-tag">A:</span><span class="help-desc">Action — <code style="font-family:var(--mono);font-size:11px">@Prénom</code> et date <code style="font-family:var(--mono);font-size:11px">JJ-MM-AAAA</code> optionnels, actions triées par date</span></div>
+          <h3 style="margin-top:10px;">Exemples</h3>
+          <div class="help-row"><span class="help-tag" style="white-space:normal;">D: Budget T2 validé à 50k€</span></div>
+          <div class="help-row"><span class="help-tag" style="white-space:normal;">A: Rédiger le brief @Alice 15-04-2026</span></div>
+        </div>
+
+        <div class="help-note">
+          💡 Le frontmatter YAML se place en tête de fichier entre <code style="font-family:var(--mono);font-size:11px">---</code>. Sans frontmatter, la date est celle du jour.<br>
+          Tout ce qui n'est pas un marqueur <code style="font-family:var(--mono);font-size:11px">D:</code> ou <code style="font-family:var(--mono);font-size:11px">A:</code> dans le corps est ignoré — vos notes libres restent intactes.<br>
+          Formats de sortie : <b>Obsidian</b> génère un .md avec YAML et wikilinks · <b>Notion</b> est collable directement · <b>Texte brut</b> pour email ou Slack.
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /tab-editor -->
+
+  <!-- TAB: Historique -->
+  <div id="tab-history" class="section">
+    <div class="drive-bar">
+      <span class="drive-status" id="drive-status-label">Non connecté à Drive</span>
+      <button class="btn sm" id="drive-action-btn" onclick="handleDriveBtn()">Connecter</button>
+      <button class="btn sm" onclick="pullFromDrive()" id="pull-btn" style="display:none">↓ Sync</button>
+    </div>
+    <div id="history-container">
+      <p class="history-empty">Aucun CR enregistré.<br>Rédigez vos notes et cliquez sur <b>Enregistrer</b>.</p>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+// ── Constants ─────────────────────────────────────────────────────────────────
+const APP     = 'cr-generator';
+const SK      = `td_v4_${APP}`;
+const TK      = `td_theme_${APP}`;
+const TOK_KEY = `td_tok_${APP}`;
+const CLIENT_ID = '962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com';
+const SCOPE   = 'https://www.googleapis.com/auth/drive.file';
+const THEMES  = ['light','sand','navy','dark'];
+const ICONS   = {light:'☀︎',sand:'○',navy:'◑',dark:'☾'};
+
+const TEMPLATE = `---
+title: 
+date: 
+duree: 
+participants: []
+objectif: 
+next-date: 
+next-agenda: 
+---
+
+Notes libres — ignorées par le générateur
+
+D: 
+D: 
+
+A:  @Prénom JJ-MM-AAAA
+A:  @Prénom JJ-MM-AAAA
+`;
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let S = { history: [] };
+let driveFileId = null;
+let tokenClient = null;
+let accessToken = sessionStorage.getItem(TOK_KEY) || null;
+let saveTimer   = null;
+
+function ensureState() {
+  if (!Array.isArray(S.history)) S.history = [];
+}
+
+function load() {
+  try { const r = localStorage.getItem(SK); if (r) S = JSON.parse(r); } catch(e) {}
+  ensureState();
+  const draft = localStorage.getItem(`${SK}_draft`);
+  document.getElementById('raw-input').value = draft || TEMPLATE;
+  renderPreview();
+  renderHistory();
+  initDrive();
+}
+
+// ── Theme ─────────────────────────────────────────────────────────────────────
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t==='light' ? '' : t);
+  document.getElementById('theme-btn').textContent = ICONS[t] || '☀︎';
+  localStorage.setItem(TK, t);
+}
+function toggleTheme() {
+  const cur = localStorage.getItem(TK) || 'light';
+  applyTheme(THEMES[(THEMES.indexOf(cur)+1) % THEMES.length]);
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach((t,i) =>
+    t.classList.toggle('active', ['editor','history'][i] === id));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(`tab-${id}`).classList.add('active');
+}
+
+function resetTemplate() {
+  document.getElementById('raw-input').value = TEMPLATE;
+  renderPreview();
+}
+
+// ── Date helpers ──────────────────────────────────────────────────────────────
+const MOIS_LONG  = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+const MOIS_SHORT = ['jan.','fév.','mars','avr.','mai','juin','juil.','août','sep.','oct.','nov.','déc.'];
+
+function parseDate(s) {
+  if (!s) return null;
+  let m = s.match(/(\d{2})-(\d{2})-(\d{4})/);
+  if (m) return new Date(+m[3], +m[2]-1, +m[1]);
+  m = s.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return new Date(+m[1], +m[2]-1, +m[3]);
+  return null;
+}
+
+function fmtDateFr(d, short) {
+  if (!d) return '—';
+  const arr = short ? MOIS_SHORT : MOIS_LONG;
+  return `${d.getDate()} ${arr[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function extractDate(text) {
+  let m = text.match(/(\d{2}-\d{2}-\d{4})/);
+  if (m) return parseDate(m[1]);
+  m = text.match(/(\d{4}-\d{2}-\d{2})/);
+  if (m) return parseDate(m[1]);
+  return null;
+}
+
+function removeDateStr(text) {
+  return text.replace(/\d{2}-\d{2}-\d{4}/, '').replace(/\d{4}-\d{2}-\d{2}/, '').trim();
+}
+
+// ── Frontmatter parser ────────────────────────────────────────────────────────
+function parseFrontmatter(text) {
+  const fm = {};
+  let body = text;
+  if (text.trimStart().startsWith('---')) {
+    const start = text.indexOf('---');
+    const end   = text.indexOf('---', start + 3);
+    if (end !== -1) {
+      const block = text.slice(start+3, end).trim();
+      body = text.slice(end+3).trim();
+      for (const line of block.split('\n')) {
+        const colon = line.indexOf(':');
+        if (colon === -1) continue;
+        const key = line.slice(0, colon).trim();
+        let   val = line.slice(colon+1).trim().replace(/^['"]|['"]$/g, '');
+        if (val.startsWith('[') && val.endsWith(']')) {
+          val = val.slice(1,-1).split(',').map(v => v.trim().replace(/^['"]|['"]$/g,'')).filter(Boolean);
+        }
+        fm[key] = val;
+      }
+    }
+  }
+  return { fm, body };
+}
+
+// ── Markers parser ────────────────────────────────────────────────────────────
+function parseMarkers(body) {
+  const decisions = [];
+  const actions   = [];
+  for (const raw of body.split('\n')) {
+    const line = raw.trim();
+    if (/^[Dd]:\s+/.test(line)) {
+      decisions.push(line.replace(/^[Dd]:\s+/, '').trim());
+    } else if (/^[Aa]:\s*\S/.test(line)) {
+      let rest = line.replace(/^[Aa]:\s*/, '').trim();
+      const whoM = rest.match(/@(\S+)/);
+      const who  = whoM ? whoM[1] : null;
+      if (who) rest = rest.replace('@'+who, '').trim();
+      const date = extractDate(rest);
+      rest = removeDateStr(rest);
+      rest = rest.replace(/\s{2,}/g,' ').replace(/^[\s\-\u2014]+|[\s\-\u2014]+$/g,'').trim();
+      actions.push({ quoi: rest, qui: who || '—', date, dateFr: fmtDateFr(date, true) });
+    }
+  }
+  actions.sort((a,b) => {
+    if (!a.date && !b.date) return 0;
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    return a.date - b.date;
+  });
+  return { decisions, actions };
+}
+
+// ── Resolve meta ──────────────────────────────────────────────────────────────
+function resolveMeta(fm) {
+  let date = parseDate(fm.date || '');
+  if (!date) date = new Date();
+  let parts = fm.participants || [];
+  if (typeof parts === 'string') parts = parts.split(',').map(p=>p.trim()).filter(Boolean);
+  return {
+    titre:      fm.title || 'Réunion',
+    date,
+    dateFr:     fmtDateFr(date, false),
+    duree:      fm.duree || '',
+    participants: parts,
+    objectif:   fm.objectif || '',
+    nextDate:   fm['next-date'] || '',
+    nextAgenda: fm['next-agenda'] || '',
+  };
+}
+
+function parseAll(text) {
+  const { fm, body } = parseFrontmatter(text);
+  const meta = resolveMeta(fm);
+  const { decisions, actions } = parseMarkers(body);
+  return { meta, decisions, actions };
+}
+
+// ── Render preview ────────────────────────────────────────────────────────────
+function renderPreview() {
+  const text = document.getElementById('raw-input').value;
+  const { meta, decisions, actions } = parseAll(text);
+  const el = document.getElementById('preview');
+
+  if (!decisions.length && !actions.length) {
+    el.innerHTML = '<p class="preview-empty">L\'aperçu apparaîtra ici.<br>Ajoutez des marqueurs <b>D:</b> ou <b>A:</b> dans vos notes.</p>';
+    return;
+  }
+
+  let html = `<h1>CR — ${esc(meta.titre)}</h1>`;
+  const hp = [meta.dateFr];
+  if (meta.duree) hp.push(meta.duree);
+  html += `<p class="preview-meta">${esc(hp.join(' · '))}</p>`;
+  if (meta.participants.length)
+    html += `<p class="preview-meta"><b>Participants :</b> ${esc(meta.participants.join(', '))}</p>`;
+  if (meta.objectif)
+    html += `<p class="preview-meta"><b>Objectif :</b> ${esc(meta.objectif)}</p>`;
+
+  html += '<h2>Décisions</h2>';
+  if (decisions.length)
+    decisions.forEach((d,i) => { html += `<p class="preview-decision"><b>${i+1}.</b> ${esc(d)}</p>`; });
+  else
+    html += '<p class="preview-none">Aucune décision marquée (D:)</p>';
+
+  html += '<h2>Actions</h2>';
+  if (actions.length) {
+    html += '<div>';
+    actions.forEach(a => {
+      html += `<div class="preview-action">
+        <span class="action-quoi">${esc(a.quoi)}</span>
+        <span class="action-who">${a.qui !== '—' ? '@'+esc(a.qui) : ''}</span>
+        <span class="action-date">${esc(a.dateFr)}</span>
+      </div>`;
+    });
+    html += '</div>';
+  } else {
+    html += '<p class="preview-none">Aucune action marquée (A:)</p>';
+  }
+
+  if (meta.nextDate || meta.nextAgenda) {
+    html += '<h2>Prochaine réunion</h2>';
+    if (meta.nextDate)   html += `<p class="preview-next">📅 ${esc(meta.nextDate)}</p>`;
+    if (meta.nextAgenda) html += `<p class="preview-next">📋 ${esc(meta.nextAgenda)}</p>`;
+  }
+
+  el.innerHTML = html;
+}
+
+// ── Text renderers ────────────────────────────────────────────────────────────
+function renderObsidian(meta, decisions, actions) {
+  const isoDate = meta.date.toISOString().split('T')[0];
+  const lines = ['---', `title: "CR — ${meta.titre}"`, `date: ${isoDate}`];
+  if (meta.duree) lines.push(`duree: "${meta.duree}"`);
+  if (meta.participants.length)
+    lines.push(`participants: [${meta.participants.map(p=>`"${p}"`).join(', ')}]`);
+  if (meta.objectif) lines.push(`objectif: "${meta.objectif}"`);
+  lines.push('tags: [réunion, compte-rendu]', '---', '');
+  lines.push(`# CR — ${meta.titre}`, '');
+  let header = `**Date :** ${meta.dateFr}`;
+  if (meta.duree) header += ` · ${meta.duree}`;
+  lines.push(header);
+  if (meta.participants.length)
+    lines.push(`**Participants :** ${meta.participants.map(p=>`[[${p}]]`).join(', ')}`);
+  if (meta.objectif) lines.push(`**Objectif :** ${meta.objectif}`);
+  lines.push('', '---', '', '## Décisions', '');
+  if (decisions.length) decisions.forEach((d,i) => lines.push(`${i+1}. ${d}`));
+  else lines.push('_Aucune décision marquée (D:)_');
+  lines.push('', '## Actions', '');
+  if (actions.length)
+    actions.forEach(a => {
+      const who = a.qui !== '—' ? `[[${a.qui}]]` : '—';
+      lines.push(`- [ ] ${a.quoi} — ${who} — **${a.dateFr}**`);
+    });
+  else lines.push('_Aucune action marquée (A:)_');
+  lines.push('');
+  if (meta.nextDate || meta.nextAgenda) {
+    lines.push('## Prochaine réunion', '');
+    if (meta.nextDate)   lines.push(`- **Date :** ${meta.nextDate}`);
+    if (meta.nextAgenda) lines.push(`- **Ordre du jour :** ${meta.nextAgenda}`);
+    lines.push('');
+  }
+  return lines.join('\n');
+}
+
+function renderNotion(meta, decisions, actions) {
+  const lines = [`# CR — ${meta.titre}`, ''];
+  let header = `> ${meta.dateFr}`;
+  if (meta.duree) header += ` · ${meta.duree}`;
+  lines.push(header, '');
+  if (meta.participants.length) lines.push(`**Participants :** ${meta.participants.join(', ')}`);
+  if (meta.objectif) lines.push(`**Objectif :** ${meta.objectif}`);
+  lines.push('', '## Décisions', '');
+  if (decisions.length) decisions.forEach((d,i) => lines.push(`${i+1}. ${d}`));
+  else lines.push('_Aucune décision marquée (D:)_');
+  lines.push('', '## Actions', '');
+  if (actions.length) {
+    lines.push('| Action | Responsable | Échéance |', '|--------|-------------|----------|');
+    actions.forEach(a => lines.push(`| ${a.quoi} | ${a.qui} | ${a.dateFr} |`));
+  } else lines.push('_Aucune action marquée (A:)_');
+  lines.push('');
+  if (meta.nextDate || meta.nextAgenda) {
+    lines.push('## Prochaine réunion', '');
+    if (meta.nextDate)   lines.push(`- **Date :** ${meta.nextDate}`);
+    if (meta.nextAgenda) lines.push(`- **Ordre du jour :** ${meta.nextAgenda}`);
+    lines.push('');
+  }
+  return lines.join('\n');
+}
+
+function renderTexte(meta, decisions, actions) {
+  const lines = ['COMPTE RENDU', meta.titre];
+  let dateLine = meta.dateFr;
+  if (meta.duree) dateLine += ` — ${meta.duree}`;
+  lines.push(dateLine);
+  if (meta.participants.length) lines.push(`Participants : ${meta.participants.join(', ')}`);
+  if (meta.objectif) lines.push(`Objectif : ${meta.objectif}`);
+  lines.push('');
+  if (decisions.length) {
+    lines.push('DÉCISIONS');
+    decisions.forEach((d,i) => lines.push(`${i+1}. ${d}`));
+    lines.push('');
+  }
+  if (actions.length) {
+    lines.push('ACTIONS');
+    actions.forEach(a => {
+      let line = `— ${a.quoi}`;
+      if (a.qui !== '—') line += ` → ${a.qui}`;
+      line += ` (${a.dateFr})`;
+      lines.push(line);
+    });
+    lines.push('');
+  }
+  if (meta.nextDate || meta.nextAgenda) {
+    lines.push('PROCHAINE RÉUNION');
+    if (meta.nextDate)   lines.push(`Date : ${meta.nextDate}`);
+    if (meta.nextAgenda) lines.push(`Ordre du jour : ${meta.nextAgenda}`);
+  }
+  return lines.join('\n');
+}
+
+function getCurrentOutput() {
+  const text = document.getElementById('raw-input').value;
+  const { meta, decisions, actions } = parseAll(text);
+  const fmt = document.getElementById('fmt-select').value;
+  const ext = fmt === 'texte' ? 'txt' : 'md';
+  let content;
+  if (fmt === 'notion') content = renderNotion(meta, decisions, actions);
+  else if (fmt === 'texte') content = renderTexte(meta, decisions, actions);
+  else content = renderObsidian(meta, decisions, actions);
+  return { meta, content, ext };
+}
+
+// ── Download ──────────────────────────────────────────────────────────────────
+function downloadCR() {
+  const { meta, content, ext } = getCurrentOutput();
+  const isoDate = meta.date.toISOString().split('T')[0];
+  const slug = meta.titre.toLowerCase().normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  const name = `${isoDate}-CR-${slug}.${ext}`;
+  const blob = new Blob([content], { type:'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  toast(`↓ ${name}`);
+}
+
+// ── Copy HTML email ───────────────────────────────────────────────────────────
+function renderHtmlEmail(meta, decisions, actions) {
+  const s = {
+    h1:    'font-family:Arial,sans-serif;font-size:18px;font-weight:600;margin:0 0 6px;color:#1A1917;',
+    meta:  'font-family:Arial,sans-serif;font-size:13px;color:#7A7671;margin:2px 0;',
+    metab: 'font-weight:600;color:#1A1917;',
+    h2:    'font-family:Arial,sans-serif;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#7A7671;margin:20px 0 8px;',
+    ditem: 'font-family:Arial,sans-serif;font-size:14px;color:#1A1917;margin:4px 0;',
+    tbl:   'border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:13px;',
+    th:    'text-align:left;padding:6px 10px;font-size:11px;font-weight:600;color:#7A7671;text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid #E5E3DE;',
+    td:    'padding:6px 10px;border-bottom:1px solid #E5E3DE;color:#1A1917;vertical-align:top;',
+    tdwho: 'padding:6px 10px;border-bottom:1px solid #E5E3DE;color:#2563EB;font-weight:500;vertical-align:top;',
+    tddt:  'padding:6px 10px;border-bottom:1px solid #E5E3DE;color:#7A7671;vertical-align:top;',
+    next:  'font-family:Arial,sans-serif;font-size:13px;color:#7A7671;margin:3px 0;',
+  };
+
+  let html = `<div style="max-width:600px;font-family:Arial,sans-serif;">`;
+  html += `<h1 style="${s.h1}">CR — ${esc(meta.titre)}</h1>`;
+  const hp = [meta.dateFr];
+  if (meta.duree) hp.push(meta.duree);
+  html += `<p style="${s.meta}">${esc(hp.join(' · '))}</p>`;
+  if (meta.participants.length)
+    html += `<p style="${s.meta}"><span style="${s.metab}">Participants :</span> ${esc(meta.participants.join(', '))}</p>`;
+  if (meta.objectif)
+    html += `<p style="${s.meta}"><span style="${s.metab}">Objectif :</span> ${esc(meta.objectif)}</p>`;
+
+  html += `<p style="${s.h2}">Décisions</p>`;
+  if (decisions.length)
+    decisions.forEach((d,i) => { html += `<p style="${s.ditem}">${i+1}. ${esc(d)}</p>`; });
+  else
+    html += `<p style="${s.meta}"><em>Aucune décision</em></p>`;
+
+  html += `<p style="${s.h2}">Actions</p>`;
+  if (actions.length) {
+    html += `<table style="${s.tbl}"><thead><tr>
+      <th style="${s.th}">Action</th>
+      <th style="${s.th}">Responsable</th>
+      <th style="${s.th}">Échéance</th>
+    </tr></thead><tbody>`;
+    actions.forEach(a => {
+      html += `<tr>
+        <td style="${s.td}">${esc(a.quoi)}</td>
+        <td style="${s.tdwho}">${a.qui !== '—' ? esc(a.qui) : ''}</td>
+        <td style="${s.tddt}">${esc(a.dateFr)}</td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+  } else {
+    html += `<p style="${s.meta}"><em>Aucune action</em></p>`;
+  }
+
+  if (meta.nextDate || meta.nextAgenda) {
+    html += `<p style="${s.h2}">Prochaine réunion</p>`;
+    if (meta.nextDate)   html += `<p style="${s.next}">📅 ${esc(meta.nextDate)}</p>`;
+    if (meta.nextAgenda) html += `<p style="${s.next}">📋 ${esc(meta.nextAgenda)}</p>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+async function copyHtml() {
+  const text = document.getElementById('raw-input').value;
+  const { meta, decisions, actions } = parseAll(text);
+  const htmlStr = renderHtmlEmail(meta, decisions, actions);
+  const textStr = renderTexte(meta, decisions, actions);
+  try {
+    await navigator.clipboard.write([new ClipboardItem({
+      'text/html':  new Blob([htmlStr], { type:'text/html' }),
+      'text/plain': new Blob([textStr], { type:'text/plain' }),
+    })]);
+    toast('⎘ Copié — collez dans Outlook ou Gmail');
+  } catch(e) {
+    await navigator.clipboard.writeText(textStr);
+    toast('⎘ Copié en texte brut (navigateur limité)');
+  }
+}
+
+// ── Save / History ────────────────────────────────────────────────────────────
+function saveCR() {
+  const raw = document.getElementById('raw-input').value;
+  const { meta, decisions, actions } = parseAll(raw);
+  if (!decisions.length && !actions.length) {
+    toast('Rien à enregistrer — ajoutez D: ou A:');
+    return;
+  }
+  const entry = {
+    id:        Date.now(),
+    titre:     meta.titre,
+    dateFr:    meta.dateFr,
+    decisions: decisions.length,
+    actions:   actions.length,
+    raw,
+    savedAt:   new Date().toLocaleDateString('fr-FR'),
+  };
+  S.history.unshift(entry);
+  if (S.history.length > 50) S.history.pop();
+  persist();
+  renderHistory();
+  toast('✓ CR enregistré');
+}
+
+function deleteEntry(id) {
+  S.history = S.history.filter(e => e.id !== id);
+  persist();
+  renderHistory();
+  toast('Supprimé');
+}
+
+function loadEntry(id) {
+  const e = S.history.find(x => x.id === id);
+  if (!e) return;
+  document.getElementById('raw-input').value = e.raw;
+  renderPreview();
+  switchTab('editor');
+  toast('CR chargé dans l\'éditeur');
+}
+
+function copyHtmlEntry(id) {
+  const e = S.history.find(x => x.id === id);
+  if (!e) return;
+  document.getElementById('raw-input').value = e.raw;
+  copyHtml();
+}
+
+function dlEntry(id) {
+  const e = S.history.find(x => x.id === id);
+  if (!e) return;
+  document.getElementById('raw-input').value = e.raw;
+  downloadCR();
+}
+
+function renderHistory() {
+  const el = document.getElementById('history-container');
+  if (!S.history.length) {
+    el.innerHTML = '<p class="history-empty">Aucun CR enregistré.<br>Rédigez vos notes et cliquez sur <b>Enregistrer</b>.</p>';
+    return;
+  }
+  el.innerHTML = `<div class="history-list">${S.history.map(e => `
+    <div class="history-card">
+      <div class="history-card-top">
+        <div>
+          <div class="history-title">${esc(e.titre)}</div>
+          <div class="history-meta">
+            ${esc(e.dateFr)} ·
+            ${e.decisions} décision${e.decisions!==1?'s':''} ·
+            ${e.actions} action${e.actions!==1?'s':''} ·
+            enregistré ${e.savedAt}
+          </div>
+        </div>
+        <div class="history-actions">
+          <button class="btn sm" onclick="loadEntry(${e.id})">Éditer</button>
+          <button class="btn sm" onclick="copyHtmlEntry(${e.id})" title="Copier pour Outlook ou Gmail">⎘ Email</button>
+          <button class="btn sm" onclick="dlEntry(${e.id})">↓ Fichier</button>
+          <button class="btn sm" style="color:var(--red)" onclick="deleteEntry(${e.id})">✕</button>
+        </div>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+// ── Persist ───────────────────────────────────────────────────────────────────
+function persist() {
+  localStorage.setItem(SK, JSON.stringify(S));
+  setSyncDot('pending');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(autoSave, 2000);
+}
+
+function setSyncDot(state) {
+  const labels = {local:'⚫ Local',pending:'🟡 En attente',ok:'🟢 Sync ✓',error:'🔴 Erreur'};
+  document.getElementById('sync-dot').textContent = labels[state] || '⚫ Local';
+}
+
+function onEdit() {
+  renderPreview();
+  localStorage.setItem(`${SK}_draft`, document.getElementById('raw-input').value);
+  setSyncDot('pending');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(autoSave, 2000);
+}
+
+// ── Google Drive ──────────────────────────────────────────────────────────────
+const DRIVE_FILE = 'cr-generator.json';
+
+function initDrive() {
+  if (!window.google) { setTimeout(initDrive, 500); return; }
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID, scope: SCOPE,
+    callback: (resp) => {
+      if (resp.error) { setSyncDot('error'); return; }
+      accessToken = resp.access_token;
+      sessionStorage.setItem(TOK_KEY, accessToken);
+      updateDriveUI(true);
+      pushToDrive();
+    }
+  });
+  if (accessToken) updateDriveUI(true);
+}
+
+function handleDriveBtn() {
+  if (!tokenClient) { toast('Drive non initialisé'); return; }
+  if (accessToken) { pushToDrive(); toast('Synchronisation…'); }
+  else tokenClient.requestAccessToken();
+}
+
+function updateDriveUI(connected) {
+  document.getElementById('drive-status-label').textContent =
+    connected ? 'Connecté à Google Drive' : 'Non connecté à Drive';
+  document.getElementById('drive-action-btn').textContent =
+    connected ? 'Sync maintenant' : 'Connecter';
+  document.getElementById('pull-btn').style.display = connected ? '' : 'none';
+}
+
+async function pushToDrive() {
+  if (!accessToken) return;
+  setSyncDot('pending');
+  try {
+    const body = JSON.stringify(S);
+    if (!driveFileId) driveFileId = await findDriveFile();
+    if (driveFileId) {
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`,
+        {method:'PATCH',headers:{Authorization:`Bearer ${accessToken}`,'Content-Type':'application/json'},body});
+    } else {
+      const m = await fetch('https://www.googleapis.com/drive/v3/files',
+        {method:'POST',headers:{Authorization:`Bearer ${accessToken}`,'Content-Type':'application/json'},
+        body:JSON.stringify({name:DRIVE_FILE,mimeType:'application/json'})}).then(r=>r.json());
+      driveFileId = m.id;
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`,
+        {method:'PATCH',headers:{Authorization:`Bearer ${accessToken}`,'Content-Type':'application/json'},body});
+    }
+    setSyncDot('ok');
+  } catch(e) { setSyncDot('error'); }
+}
+
+async function pullFromDrive() {
+  if (!accessToken) return;
+  try {
+    const id = driveFileId || await findDriveFile();
+    if (!id) { toast('Aucun fichier Drive trouvé'); return; }
+    driveFileId = id;
+    const res  = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`,
+      {headers:{Authorization:`Bearer ${accessToken}`}});
+    const data = await res.json();
+    S = data; ensureState();
+    localStorage.setItem(SK, JSON.stringify(S));
+    renderHistory();
+    setSyncDot('ok');
+    toast('↓ Données Drive chargées');
+  } catch(e) { setSyncDot('error'); toast('Erreur Drive'); }
+}
+
+async function findDriveFile() {
+  const res = await fetch(
+    `https://www.googleapis.com/drive/v3/files?q=name='${DRIVE_FILE}' and trashed=false&fields=files(id)`,
+    {headers:{Authorization:`Bearer ${accessToken}`}});
+  const data = await res.json();
+  return data.files?.[0]?.id || null;
+}
+
+function autoSave() {
+  if (accessToken) pushToDrive();
+  else setSyncDot('local');
+}
+
+// ── Help toggle ───────────────────────────────────────────────────────────────
+function toggleHelp() {
+  const toggle = document.getElementById('help-toggle');
+  const body   = document.getElementById('help-body');
+  const open   = body.classList.toggle('open');
+  toggle.classList.toggle('open', open);
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+applyTheme(localStorage.getItem(TK) || 'light');
+load();
+</script>
+</body>
+</html>
