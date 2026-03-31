@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OPS — Schwerpunkt · AAR · OODA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root {
+  --bg:#F7F6F3; --card:#FFFFFF; --border:#E8E6E0; --text:#1A1A1A;
+  --text2:#6B6B6B; --text3:#9A9A9A; --accent:#5046E5; --accent2:#0F6E56;
+  --amber:#854F0B; --red:#A32D2D; --green:#2D6A3F;
+  --purple-bg:#EEEDFE; --purple-text:#3C3489; --purple-border:#AFA9EC;
+  --teal-bg:#E1F5EE; --teal-text:#085041; --teal-border:#5DCAA5;
+  --blue-bg:#E6F1FB; --blue-text:#0C447C; --blue-border:#85B7EB;
+  --amber-bg:#FAEEDA; --amber-text:#633806; --amber-border:#EF9F27;
+  --gray-bg:#F1EFE8; --gray-text:#444441;
+  --card-fade:#FFFFFF;
+}
+[data-theme="sand"] {
+  --bg:#F8F7FF; --card:#FFFFFF; --border:#E0DEEF; --text:#1A1A1A;
+  --text2:#6B6B6B; --text3:#9A9A9A; --card-fade:#FFFFFF;
+}
+[data-theme="navy"] {
+  --bg:#161925; --card:#1E2333; --border:#2A3050; --text:#E8EAF0;
+  --text2:#8B91A8; --text3:#5A6080; --card-fade:#1E2333;
+  --purple-bg:#2A2560; --purple-text:#C5BFFF; --purple-border:#534AB7;
+  --teal-bg:#0A2820; --teal-text:#5DCAA5; --teal-border:#0F6E56;
+  --blue-bg:#0A1A30; --blue-text:#85B7EB; --blue-border:#185FA5;
+  --amber-bg:#2A1A00; --amber-text:#FAC775; --amber-border:#854F0B;
+  --gray-bg:#252520; --gray-text:#B4B2A9;
+}
+[data-theme="dark"] {
+  --bg:#111113; --card:#1A1A1C; --border:#2A2A2E; --text:#E8E8EA;
+  --text2:#8A8A90; --text3:#5A5A60; --card-fade:#1A1A1C;
+  --purple-bg:#26215C; --purple-text:#C5BFFF; --purple-border:#534AB7;
+  --teal-bg:#04342C; --teal-text:#5DCAA5; --teal-border:#0F6E56;
+  --blue-bg:#042C53; --blue-text:#85B7EB; --blue-border:#185FA5;
+  --amber-bg:#412402; --amber-text:#FAC775; --amber-border:#854F0B;
+  --gray-bg:#2C2C2A; --gray-text:#B4B2A9;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Geist',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh}
+.header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border);padding:0 16px;height:52px;display:flex;align-items:center;justify-content:space-between}
+.header-left{display:flex;align-items:center;gap:12px}
+.app-title{font-size:15px;font-weight:500;letter-spacing:-.02em}
+.sync-badge{font-size:11px;color:var(--text3);font-family:'Geist Mono',monospace}
+.header-right{display:flex;align-items:center;gap:8px}
+.hbtn{background:transparent;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;font-family:'Geist',sans-serif;color:var(--text2);cursor:pointer;transition:all .15s}
+.hbtn:hover{background:var(--card);color:var(--text)}
+.tabs{position:sticky;top:52px;z-index:99;background:var(--bg);border-bottom:1px solid var(--border);display:flex;padding:0 16px;gap:0;overflow-x:auto}
+.tab{padding:10px 16px;font-size:13px;font-weight:400;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:500}
+.tab:hover:not(.active){color:var(--text)}
+.page{max-width:720px;margin:0 auto;padding:20px 16px 80px}
+.section{display:none}
+.section.active{display:block}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:12px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.card-title{font-size:14px;font-weight:500}
+.card-sub{font-size:12px;color:var(--text2);margin-top:2px}
+
+/* Pills */
+.pill{display:inline-block;font-size:11px;font-weight:500;padding:2px 9px;border-radius:20px;border:1px solid transparent}
+.pill-purple{background:var(--purple-bg);color:var(--purple-text);border-color:var(--purple-border)}
+.pill-teal{background:var(--teal-bg);color:var(--teal-text);border-color:var(--teal-border)}
+.pill-blue{background:var(--blue-bg);color:var(--blue-text);border-color:var(--blue-border)}
+.pill-amber{background:var(--amber-bg);color:var(--amber-text);border-color:var(--amber-border)}
+.pill-gray{background:var(--gray-bg);color:var(--gray-text)}
+
+/* Schwerpunkt */
+.schwer-box{background:var(--purple-bg);border:1px solid var(--purple-border);border-radius:12px;padding:20px;margin-bottom:16px}
+.schwer-label{font-size:11px;font-weight:500;color:var(--purple-text);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.schwer-text{font-size:17px;font-weight:500;color:var(--purple-text);line-height:1.4;min-height:26px}
+.schwer-placeholder{color:var(--purple-border);font-style:italic;font-size:14px}
+.schwer-meta{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+.schwer-status{display:flex;gap:8px}
+.status-btn{background:transparent;border:1px solid var(--purple-border);border-radius:20px;padding:3px 12px;font-size:12px;font-family:'Geist',sans-serif;color:var(--purple-text);cursor:pointer;transition:all .15s}
+.status-btn.active-yes{background:#2D6A3F;border-color:#2D6A3F;color:#fff}
+.status-btn.active-no{background:var(--red);border-color:var(--red);color:#fff}
+.status-btn:hover{opacity:.8}
+
+/* Inputs */
+input,textarea,select{font-family:'Geist',sans-serif;font-size:13px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 12px;width:100%;outline:none;transition:border-color .15s;color-scheme:light}
+[data-theme="dark"] input,[data-theme="dark"] textarea,[data-theme="dark"] select{color-scheme:dark}
+input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:70px;line-height:1.5}
+.input-group{margin-bottom:12px}
+.input-label{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:5px}
+
+/* Buttons */
+.btn{font-family:'Geist',sans-serif;font-size:13px;font-weight:500;padding:8px 16px;border-radius:8px;cursor:pointer;transition:all .15s;border:1px solid transparent}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{opacity:.88}
+.btn-secondary{background:transparent;border-color:var(--border);color:var(--text2)}
+.btn-secondary:hover{background:var(--card);color:var(--text)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+/* AAR */
+.aar-q{border-radius:10px;padding:14px 16px;margin-bottom:10px}
+.aar-q1{background:var(--blue-bg);border-left:3px solid var(--blue-border)}
+.aar-q2{background:var(--purple-bg);border-left:3px solid var(--purple-border)}
+.aar-q3{background:var(--amber-bg);border-left:3px solid var(--amber-border)}
+.aar-q4{background:var(--teal-bg);border-left:3px solid var(--teal-border)}
+.aar-qnum{font-size:11px;font-weight:500;margin-bottom:4px}
+.aar-q1 .aar-qnum{color:var(--blue-text)}
+.aar-q2 .aar-qnum{color:var(--purple-text)}
+.aar-q3 .aar-qnum{color:var(--amber-text)}
+.aar-q4 .aar-qnum{color:var(--teal-text)}
+.aar-qtitle{font-size:13px;font-weight:500;color:var(--text);margin-bottom:8px}
+.aar-q1 textarea{background:var(--card);border-color:var(--blue-border)}
+.aar-q2 textarea{background:var(--card);border-color:var(--purple-border)}
+.aar-q3 textarea{background:var(--card);border-color:var(--amber-border)}
+.aar-q4 textarea{background:var(--card);border-color:var(--teal-border)}
+
+/* OODA */
+.ooda-form{background:var(--blue-bg);border:1px solid var(--blue-border);border-radius:12px;padding:16px 20px;margin-bottom:16px}
+.ooda-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:520px){.ooda-fields{grid-template-columns:1fr}}
+.ooda-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:8px;cursor:pointer;transition:border-color .15s}
+.ooda-item:hover{border-color:var(--blue-border)}
+.ooda-item-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.ooda-context{font-size:13px;font-weight:500;color:var(--text);line-height:1.4}
+.ooda-decision{font-size:12px;color:var(--text2);margin-top:4px;font-style:italic}
+.ooda-detail{display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.ooda-detail.open{display:block}
+.ooda-detail-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}
+.ooda-detail-label{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.ooda-detail-val{font-size:12px;color:var(--text2)}
+.ooda-speed{display:flex;gap:6px;margin-top:4px}
+.speed-dot{width:8px;height:8px;border-radius:50%;background:var(--border)}
+.speed-dot.filled{background:var(--accent)}
+
+/* Historique */
+.week-card{background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.week-header{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .15s}
+.week-header:hover{background:var(--bg)}
+.week-title{font-size:13px;font-weight:500}
+.week-chips{display:flex;gap:6px;flex-wrap:wrap}
+.week-body{display:none;padding:0 16px 14px;border-top:1px solid var(--border)}
+.week-body.open{display:block}
+.week-section{margin-top:12px}
+.week-section-label{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.week-section-val{font-size:13px;color:var(--text2);line-height:1.5}
+
+/* Métriques */
+.metrics-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:16px}
+@media(max-width:480px){.metrics-grid{grid-template-columns:1fr 1fr}}
+.metric-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;text-align:center}
+.metric-val{font-size:24px;font-weight:500;font-family:'Geist Mono',monospace}
+.metric-val.good{color:#2D6A3F}
+.metric-val.bad{color:var(--red)}
+.metric-val.neutral{color:var(--accent)}
+.metric-lab{font-size:11px;color:var(--text3);margin-top:3px}
+.trend-row{display:flex;gap:4px;justify-content:center;margin-top:6px}
+.trend-dot{width:7px;height:7px;border-radius:50%;background:var(--border)}
+.trend-dot.hit{background:#2D6A3F}
+.trend-dot.miss{background:var(--red)}
+
+/* Agenda */
+.agenda-grid{display:grid;grid-template-columns:60px repeat(5,minmax(0,1fr));gap:0;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}
+.ag-head{background:var(--card);padding:8px 6px;text-align:center;font-size:12px;font-weight:500;border-bottom:1px solid var(--border);color:var(--text)}
+.ag-head.today-col{background:var(--purple-bg);color:var(--purple-text)}
+.ag-time{padding:0 6px;display:flex;align-items:center;justify-content:flex-end;font-size:10px;font-family:'Geist Mono',monospace;color:var(--text3);background:var(--card);border-right:1px solid var(--border);min-height:44px}
+.ag-cell{border-left:1px solid var(--border);border-bottom:1px solid var(--border);padding:3px;min-height:44px;position:relative;background:var(--card);vertical-align:top}
+.ag-cell.today-col{background:var(--purple-bg);background:color-mix(in srgb,var(--purple-bg) 40%,var(--card) 60%)}
+.ag-block{border-radius:5px;padding:4px 6px;font-size:11px;font-weight:500;cursor:pointer;margin-bottom:2px;line-height:1.3;transition:opacity .15s;word-break:break-word}
+.ag-block:hover{opacity:.8}
+.ag-block.type-schwer{background:var(--purple-bg);color:var(--purple-text);border-left:2px solid var(--purple-border)}
+.ag-block.type-sop{background:var(--teal-bg);color:var(--teal-text);border-left:2px solid var(--teal-border)}
+.ag-block.type-job{background:var(--gray-bg);color:var(--gray-text);border-left:2px solid var(--border)}
+.ag-block.type-perso{background:var(--blue-bg);color:var(--blue-text);border-left:2px solid var(--blue-border)}
+.ag-block.type-buffer{background:var(--amber-bg);color:var(--amber-text);border-left:2px solid var(--amber-border)}
+.ag-add{font-size:10px;color:var(--text3);cursor:pointer;padding:2px 4px;border-radius:4px;display:block;text-align:center;opacity:0;transition:opacity .15s}
+.ag-cell:hover .ag-add{opacity:1}
+.ag-legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.ag-legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.ag-legend-dot{width:10px;height:10px;border-radius:2px}
+.ag-modal{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;display:none}
+.ag-modal.open{display:block}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:var(--bg);padding:8px 18px;border-radius:20px;font-size:13px;font-weight:500;z-index:999;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Delete btn */
+.del-btn{background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:0 4px;line-height:1;flex-shrink:0;transition:color .15s}
+.del-btn:hover{color:var(--red)}
+
+/* Divider */
+.divider{height:1px;background:var(--border);margin:16px 0}
+
+/* Week selector */
+.week-nav{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.week-nav-btn{background:transparent;border:1px solid var(--border);border-radius:6px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:16px;transition:all .15s}
+.week-nav-btn:hover{background:var(--card);color:var(--text)}
+.week-label{font-size:13px;font-weight:500;color:var(--text);flex:1;text-align:center}
+
+/* Empty state */
+.empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px}
+
+input[type="date"]{cursor:pointer}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <span class="app-title">OPS</span>
+    <span class="sync-badge" id="sync-badge">⚫ Local</span>
+  </div>
+  <div class="header-right">
+    <button class="hbtn" id="theme-btn" onclick="toggleTheme()">☀︎</button>
+    <button class="hbtn" id="drive-btn" onclick="driveAuth()">Drive</button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="tab active" onclick="showTab('schwerpunkt')">Schwerpunkt</div>
+  <div class="tab" onclick="showTab('agenda')">Agenda</div>
+  <div class="tab" onclick="showTab('aar')">AAR</div>
+  <div class="tab" onclick="showTab('ooda')">OODA</div>
+  <div class="tab" onclick="showTab('historique')">Historique</div>
+  <div class="tab" onclick="showTab('metriques')">Métriques</div>
+</nav>
+
+<div class="page">
+
+<!-- ═══════════════ SCHWERPUNKT ═══════════════ -->
+<div id="tab-schwerpunkt" class="section active">
+  <div id="schwer-display" class="schwer-box">
+    <div class="schwer-label">Schwerpunkt · Semaine <span id="schwer-week-num">—</span></div>
+    <div id="schwer-text-display" class="schwer-text schwer-placeholder">Aucun objectif défini pour cette semaine</div>
+    <div class="schwer-meta">
+      <span id="schwer-deadline-display" class="pill pill-gray" style="display:none"></span>
+      <div class="schwer-status">
+        <button class="status-btn" id="btn-yes" onclick="setSchwerpunktStatus('oui')">Atteint</button>
+        <button class="status-btn" id="btn-no" onclick="setSchwerpunktStatus('non')">Non atteint</button>
+        <button class="status-btn" onclick="setSchwerpunktStatus(null)">En cours</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Définir le Schwerpunkt</div>
+        <div class="card-sub">1 objectif unique · format militaire</div>
+      </div>
+    </div>
+    <div class="input-group">
+      <div class="input-label">Objectif (compléter : "D'ici vendredi, ___ est ___")</div>
+      <textarea id="schwer-input" placeholder="Ex : le module de persistence de projet001 est fonctionnel et testé" rows="2" style="min-height:60px"></textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="input-group" style="margin-bottom:0">
+        <div class="input-label">Deadline</div>
+        <input type="date" id="schwer-date">
+      </div>
+      <div class="input-group" style="margin-bottom:0">
+        <div class="input-label">Contexte</div>
+        <select id="schwer-ctx">
+          <option value="perso">Projet perso</option>
+          <option value="job">Job</option>
+          <option value="mixte">Mixte</option>
+        </select>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveSchwerpunkt()">Valider le Schwerpunkt</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:12px">
+    <div class="card-header" style="margin-bottom:8px">
+      <div>
+        <div class="card-title">Urgences subies cette semaine</div>
+        <div class="card-sub">Objectif : ≤ 2 par semaine</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="hbtn" onclick="changeUrgences(-1)" style="width:32px;height:32px;padding:0;font-size:18px;display:flex;align-items:center;justify-content:center">−</button>
+        <span id="urgences-count" style="font-size:28px;font-weight:500;font-family:'Geist Mono',monospace;min-width:32px;text-align:center">0</span>
+        <button class="hbtn" onclick="changeUrgences(1)" style="width:32px;height:32px;padding:0;font-size:18px;display:flex;align-items:center;justify-content:center">+</button>
+      </div>
+    </div>
+    <div id="urgences-bar" style="height:6px;border-radius:3px;background:var(--border);overflow:hidden;margin-bottom:8px">
+      <div id="urgences-fill" style="height:100%;border-radius:3px;transition:width .3s,background .3s"></div>
+    </div>
+    <div id="urgences-msg" style="font-size:12px;color:var(--text3)"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="margin-bottom:10px">SOPs · Check hebdo</div>
+    <div id="sop-list"></div>
+    <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+      <input id="sop-input" placeholder="Ajouter une SOP…" style="flex:1" onkeydown="if(event.key==='Enter')addSop()">
+      <button class="btn btn-secondary btn-sm" onclick="addSop()">+</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ AGENDA ═══════════════ -->
+<div id="tab-agenda" class="section">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+    <div>
+      <div style="font-size:15px;font-weight:500" id="agenda-week-title">Semaine —</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:2px" id="agenda-schwer-preview"></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="hbtn" onclick="changeAgendaWeek(-1)">‹</button>
+      <button class="hbtn" onclick="changeAgendaWeek(0)">Auj.</button>
+      <button class="hbtn" onclick="changeAgendaWeek(1)">›</button>
+    </div>
+  </div>
+
+  <div class="ag-legend">
+    <div class="ag-legend-item"><div class="ag-legend-dot" style="background:var(--purple-bg);border:1px solid var(--purple-border)"></div>Schwerpunkt</div>
+    <div class="ag-legend-item"><div class="ag-legend-dot" style="background:var(--teal-bg);border:1px solid var(--teal-border)"></div>SOP</div>
+    <div class="ag-legend-item"><div class="ag-legend-dot" style="background:var(--gray-bg);border:1px solid var(--border)"></div>Job</div>
+    <div class="ag-legend-item"><div class="ag-legend-dot" style="background:var(--blue-bg);border:1px solid var(--blue-border)"></div>Perso</div>
+    <div class="ag-legend-item"><div class="ag-legend-dot" style="background:var(--amber-bg);border:1px solid var(--amber-border)"></div>Buffer</div>
+  </div>
+
+  <div class="ag-modal" id="ag-modal">
+    <div style="font-size:13px;font-weight:500;margin-bottom:10px" id="ag-modal-title">Ajouter un bloc</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div class="input-group" style="margin-bottom:0">
+        <div class="input-label">Titre</div>
+        <input id="ag-inp-title" placeholder="Ex : Deep work projet001">
+      </div>
+      <div class="input-group" style="margin-bottom:0">
+        <div class="input-label">Type</div>
+        <select id="ag-inp-type">
+          <option value="schwer">Schwerpunkt</option>
+          <option value="job">Job</option>
+          <option value="perso">Perso</option>
+          <option value="sop">SOP</option>
+          <option value="buffer">Buffer urgences</option>
+        </select>
+      </div>
+      <div class="input-group" style="margin-bottom:0">
+        <div class="input-label">Heure début</div>
+        <input type="time" id="ag-inp-start" value="09:00">
+      </div>
+      <div class="input-group" style="margin-bottom:0">
+        <div class="input-label">Heure fin</div>
+        <input type="time" id="ag-inp-end" value="11:00">
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:0">
+      <button class="btn btn-primary btn-sm" onclick="saveAgendaBlock()">Ajouter</button>
+      <button class="btn btn-secondary btn-sm" onclick="closeAgendaModal()">Annuler</button>
+    </div>
+  </div>
+
+  <div id="agenda-grid-container"></div>
+
+  <div style="font-size:12px;color:var(--text3);text-align:center;margin-top:8px">
+    Clique sur une cellule pour ajouter un bloc · Clique sur un bloc pour le supprimer
+  </div>
+</div>
+
+<!-- ═══════════════ AAR ═══════════════ -->
+<div id="tab-aar" class="section">
+  <div class="week-nav">
+    <button class="week-nav-btn" onclick="changeAARWeek(-1)">‹</button>
+    <span class="week-label" id="aar-week-label">Semaine en cours</span>
+    <button class="week-nav-btn" onclick="changeAARWeek(1)">›</button>
+  </div>
+
+  <div class="aar-q aar-q1">
+    <div class="aar-qnum">Question 1 · Observer</div>
+    <div class="aar-qtitle">Qu'est-ce qui était prévu ?</div>
+    <textarea id="aar-q1" placeholder="Le Schwerpunkt, les objectifs fixés, le plan initial…" rows="3"></textarea>
+  </div>
+  <div class="aar-q aar-q2">
+    <div class="aar-qnum">Question 2 · Orienter</div>
+    <div class="aar-qtitle">Qu'est-ce qui s'est passé réellement ?</div>
+    <textarea id="aar-q2" placeholder="Les faits bruts, sans jugement — ce qui a été accompli, ce qui a bloqué…" rows="3"></textarea>
+  </div>
+  <div class="aar-q aar-q3">
+    <div class="aar-qnum">Question 3 · Décider</div>
+    <div class="aar-qtitle">Pourquoi l'écart ?</div>
+    <textarea id="aar-q3" placeholder="Causes réelles (pas de boucs émissaires) — estimation, interruptions, dépendances…" rows="3"></textarea>
+  </div>
+  <div class="aar-q aar-q4">
+    <div class="aar-qnum">Question 4 · Agir</div>
+    <div class="aar-qtitle">Que change-t-on concrètement ?</div>
+    <textarea id="aar-q4" placeholder="1 action, 1 responsable, 1 date. Devient souvent le prochain Schwerpunkt." rows="3"></textarea>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
+    <div class="input-group" style="margin-bottom:0">
+      <div class="input-label">Schwerpunkt atteint ?</div>
+      <select id="aar-schwer-status">
+        <option value="">— En cours —</option>
+        <option value="oui">Oui</option>
+        <option value="non">Non</option>
+        <option value="partiel">Partiellement</option>
+      </select>
+    </div>
+    <div class="input-group" style="margin-bottom:0">
+      <div class="input-label">SOPs respectées (sur 5)</div>
+      <input type="number" id="aar-sops" min="0" max="5" placeholder="ex : 4">
+    </div>
+    <div class="input-group" style="margin-bottom:0">
+      <div class="input-label">Urgences subies</div>
+      <input type="number" id="aar-urgences" min="0" placeholder="ex : 3">
+    </div>
+  </div>
+
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-primary" style="flex:1" onclick="saveAAR()">Enregistrer l'AAR</button>
+    <button class="btn btn-secondary" onclick="exportAARtoSchwerpunkt()">→ Schwerpunkt suivant</button>
+  </div>
+</div>
+
+<!-- ═══════════════ OODA ═══════════════ -->
+<div id="tab-ooda" class="section">
+  <div class="ooda-form">
+    <div class="card-title" style="margin-bottom:12px;color:var(--blue-text)">Capturer une décision OODA</div>
+    <div class="input-group">
+      <div class="input-label">Situation / contexte</div>
+      <input id="ooda-ctx" placeholder="Ex : email urgent du manager à 14h pendant un bloc deep work">
+    </div>
+    <div class="ooda-fields">
+      <div class="input-group" style="margin-bottom:0">
+        <div class="input-label">Observation</div>
+        <textarea id="ooda-obs" placeholder="Ce que j'ai constaté" rows="2" style="min-height:55px"></textarea>
+      </div>
+      <div class="input-group" style="margin-bottom:0">
+        <div class="input-label">Orientation</div>
+        <textarea id="ooda-ori" placeholder="Comment j'ai interprété" rows="2" style="min-height:55px"></textarea>
+      </div>
+      <div class="input-group" style="margin-bottom:0">
+        <div class="input-label">Décision</div>
+        <textarea id="ooda-dec" placeholder="Ce que j'ai choisi" rows="2" style="min-height:55px"></textarea>
+      </div>
+      <div class="input-group" style="margin-bottom:0">
+        <div class="input-label">Action</div>
+        <textarea id="ooda-act" placeholder="Ce que j'ai fait" rows="2" style="min-height:55px"></textarea>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+      <div class="input-group" style="margin-bottom:0">
+        <div class="input-label">Vitesse de boucle (1–5)</div>
+        <input type="number" id="ooda-speed" min="1" max="5" value="3" placeholder="3">
+      </div>
+      <div class="input-group" style="margin-bottom:0">
+        <div class="input-label">Résultat</div>
+        <select id="ooda-result">
+          <option value="bon">Bon</option>
+          <option value="moyen">Moyen</option>
+          <option value="mauvais">À revoir</option>
+        </select>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveOODA()">Capturer</button>
+    </div>
+  </div>
+
+  <div id="ooda-list"></div>
+</div>
+
+<!-- ═══════════════ HISTORIQUE ═══════════════ -->
+<div id="tab-historique" class="section">
+  <div id="historique-list"></div>
+</div>
+
+<!-- ═══════════════ MÉTRIQUES ═══════════════ -->
+<div id="tab-metriques" class="section">
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-val neutral" id="m-total-weeks">0</div>
+      <div class="metric-lab">Semaines tracées</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val" id="m-schwer-rate">—</div>
+      <div class="metric-lab">Taux Schwerpunkt</div>
+      <div class="trend-row" id="m-schwer-trend"></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val" id="m-sop-avg">—</div>
+      <div class="metric-lab">SOPs moy/semaine</div>
+    </div>
+  </div>
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-val" id="m-ooda-total">0</div>
+      <div class="metric-lab">Décisions OODA</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val" id="m-ooda-good">—</div>
+      <div class="metric-lab">% bonnes décisions</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val" id="m-streak">0</div>
+      <div class="metric-lab">Streak AAR</div>
+    </div>
+  </div>
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-val" id="m-urg-week">—</div>
+      <div class="metric-lab">Urgences cette semaine</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val" id="m-urg-avg">—</div>
+      <div class="metric-lab">Urgences moy/semaine</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val" id="m-urg-trend-val">—</div>
+      <div class="metric-lab">Tendance urgences</div>
+      <div class="trend-row" id="m-urg-trend"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:8px">
+    <div class="card-title" style="margin-bottom:12px">Légendes</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.8">
+      <b>Taux Schwerpunkt</b> = % de semaines où l'objectif a été atteint.<br>
+      <b>SOPs moy</b> = moyenne des SOPs respectées par semaine (sur 5).<br>
+      <b>Streak AAR</b> = nombre de semaines consécutives avec un AAR complété.<br>
+      <b>% bonnes décisions</b> = décisions OODA marquées "Bon".<br>
+      <b>Urgences moy</b> = moyenne d'urgences subies par semaine. Objectif : ≤ 2.
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="card-title" style="margin-bottom:10px">Données</div>
+  <div class="btn-row">
+    <button class="btn btn-secondary btn-sm" onclick="exportData()">Exporter JSON</button>
+    <button class="btn btn-secondary btn-sm" onclick="triggerImport()">Importer JSON</button>
+    <button class="btn btn-secondary btn-sm" onclick="clearAll()" style="color:var(--red);border-color:var(--red)">Effacer tout</button>
+  </div>
+  <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+</div>
+
+</div><!-- end .page -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+const APP = 'ops001';
+const SK  = `td_v4_${APP}`;
+const TK  = `td_theme_${APP}`;
+const TOKK= `td_tok_${APP}`;
+const CLIENT_ID = '438214987894-q0stsj00g7g1gc3k61g7ukrkhiq1mmlj.apps.googleusercontent.com';
+const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+const DRIVE_FILE = 'ops001.json';
+let driveFileId = null, tokenClient = null, gisReady = false;
+let currentAARWeek = 0; // offset from current week
+
+// ─── State ───────────────────────────────────────────────
+let S = {};
+function ensureState() {
+  if (!S.weeks)     S.weeks = {};
+  if (!S.oodas)     S.oodas = [];
+  if (!S.sops)      S.sops  = ['SOP réveil (15 min)', 'SOP shutdown (10 min)', 'SOP triage mail 2×/jour', 'SOP planif dimanche', 'SOP tâche bloquée'];
+  if (!S.agendaBlocks) S.agendaBlocks = {};
+}
+
+function getWeekKey(offset=0) {
+  const d = new Date();
+  d.setDate(d.getDate() + offset * 7);
+  const jan4 = new Date(d.getFullYear(), 0, 4);
+  const wn = Math.ceil(((d - jan4) / 86400000 + jan4.getDay() + 1) / 7);
+  return `${d.getFullYear()}-W${String(wn).padStart(2,'0')}`;
+}
+
+function getWeekLabel(key) {
+  // Parse week key to get a readable date range
+  const [year, w] = key.split('-W');
+  const jan4 = new Date(parseInt(year), 0, 4);
+  const weekStart = new Date(jan4);
+  weekStart.setDate(jan4.getDate() - jan4.getDay() + 1 + (parseInt(w)-1)*7);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
+  const fmt = d => d.toLocaleDateString('fr-FR', {day:'numeric',month:'short'});
+  return `${fmt(weekStart)} – ${fmt(weekEnd)}`;
+}
+
+function currentWeek(key) { return ensureWeek(key || getWeekKey()); }
+function ensureWeek(key) {
+  if (!S.weeks[key]) S.weeks[key] = { schwerpunkt:'', deadline:'', ctx:'perso', status:null, urgences:0, aar:{q1:'',q2:'',q3:'',q4:'',schwerStatus:'',sops:'',urgences:''} };
+  return S.weeks[key];
+}
+
+// ─── Persistence ─────────────────────────────────────────
+let saveTimer = null;
+function autoSave() {
+  setSyncBadge('pending');
+  localStorage.setItem(SK, JSON.stringify(S));
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(drivePush, 2000);
+}
+function loadLocal() {
+  try { const d = localStorage.getItem(SK); if (d) S = JSON.parse(d); } catch(e){}
+  ensureState(); renderAll();
+}
+
+// ─── UI ──────────────────────────────────────────────────
+const THEMES = ['light','sand','navy','dark'];
+const THEME_ICONS = {light:'☀︎',sand:'○',navy:'◑',dark:'☾'};
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t==='light'?'':t);
+  document.getElementById('theme-btn').textContent = THEME_ICONS[t]||'☀︎';
+  localStorage.setItem(TK, t);
+}
+function toggleTheme() {
+  const cur = localStorage.getItem(TK)||'light';
+  applyTheme(THEMES[(THEMES.indexOf(cur)+1)%THEMES.length]);
+}
+
+function showTab(id) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  const map = {schwerpunkt:0,agenda:1,aar:2,ooda:3,historique:4,metriques:5};
+  const idx = map[id];
+  if (idx !== undefined) document.querySelectorAll('.tab')[idx].classList.add('active');
+  if (id==='agenda') renderAgenda();
+  if (id==='aar') renderAAR();
+  if (id==='ooda') renderOODA();
+  if (id==='historique') renderHistorique();
+  if (id==='metriques') renderMetriques();
+}
+
+function toast(msg, dur=2200) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), dur);
+}
+
+function setSyncBadge(state) {
+  const b = document.getElementById('sync-badge');
+  const m = {local:'⚫ Local', pending:'🟡 Pending', ok:'🟢 Sync ✓', err:'🔴 Erreur'};
+  b.textContent = m[state]||m.local;
+}
+
+// ─── Schwerpunkt ─────────────────────────────────────────
+function renderSchwerpunkt() {
+  const wk = getWeekKey();
+  const wn = wk.split('-W')[1];
+  document.getElementById('schwer-week-num').textContent = wn;
+  const w = S.weeks[wk];
+  const display = document.getElementById('schwer-text-display');
+  const ddisplay = document.getElementById('schwer-deadline-display');
+  if (w && w.schwerpunkt) {
+    display.textContent = 'D\'ici ' + (w.deadline ? new Date(w.deadline+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}) : 'vendredi') + ', ' + w.schwerpunkt;
+    display.classList.remove('schwer-placeholder');
+    if (w.deadline) { ddisplay.textContent = new Date(w.deadline+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'}); ddisplay.style.display='inline-block'; }
+    else ddisplay.style.display='none';
+    // pre-fill form
+    document.getElementById('schwer-input').value = w.schwerpunkt;
+    document.getElementById('schwer-date').value = w.deadline||'';
+    document.getElementById('schwer-ctx').value = w.ctx||'perso';
+  } else {
+    display.textContent = 'Aucun objectif défini pour cette semaine';
+    display.classList.add('schwer-placeholder');
+    ddisplay.style.display='none';
+  }
+  // status buttons
+  const status = w ? w.status : null;
+  document.getElementById('btn-yes').className = 'status-btn' + (status==='oui'?' active-yes':'');
+  document.getElementById('btn-no').className  = 'status-btn' + (status==='non'?' active-no':'');
+  renderSOPs();
+  renderUrgences();
+}
+
+function saveSchwerpunkt() {
+  const val = document.getElementById('schwer-input').value.trim();
+  if (!val) { toast('Rédige l\'objectif d\'abord'); return; }
+  const wk = getWeekKey();
+  const w = ensureWeek(wk);
+  w.schwerpunkt = val;
+  w.deadline = document.getElementById('schwer-date').value;
+  w.ctx = document.getElementById('schwer-ctx').value;
+  autoSave(); renderSchwerpunkt(); toast('Schwerpunkt enregistré ✓');
+}
+
+function setSchwerpunktStatus(val) {
+  const w = ensureWeek(getWeekKey());
+  w.status = val;
+  autoSave(); renderSchwerpunkt();
+  if (val==='oui') toast('Objectif atteint — bien joué.');
+  else if (val==='non') toast('Noté. L\'AAR de vendredi aidera.');
+}
+
+function renderSOPs() {
+  const list = document.getElementById('sop-list');
+  if (!S.sops.length) { list.innerHTML='<div class="empty">Aucune SOP</div>'; return; }
+  list.innerHTML = S.sops.map((s,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
+      <input type="checkbox" id="sop-${i}" onchange="toggleSOP(${i})" style="width:16px;height:16px;cursor:pointer;accent-color:var(--accent)">
+      <label for="sop-${i}" style="flex:1;font-size:13px;color:var(--text);cursor:pointer">${s}</label>
+      <button class="del-btn" onclick="deleteSOP(${i})">×</button>
+    </div>`).join('');
+}
+
+function addSop() {
+  const inp = document.getElementById('sop-input');
+  const val = inp.value.trim();
+  if (!val) return;
+  S.sops.push(val); inp.value='';
+  autoSave(); renderSOPs();
+}
+
+function deleteSOP(i) { S.sops.splice(i,1); autoSave(); renderSOPs(); }
+function toggleSOP() {} // visual only
+
+// ─── Urgences ─────────────────────────────────────────────
+function changeUrgences(delta) {
+  const w = ensureWeek(getWeekKey());
+  w.urgences = Math.max(0, (w.urgences||0) + delta);
+  autoSave(); renderUrgences();
+}
+
+function renderUrgences() {
+  const w = S.weeks[getWeekKey()];
+  const n = w ? (w.urgences||0) : 0;
+  document.getElementById('urgences-count').textContent = n;
+  const pct = Math.min(100, Math.round(n / 5 * 100));
+  const fill = document.getElementById('urgences-fill');
+  fill.style.width = pct + '%';
+  fill.style.background = n <= 2 ? '#2D6A3F' : n <= 4 ? 'var(--amber)' : 'var(--red)';
+  const msg = document.getElementById('urgences-msg');
+  if (n === 0) msg.textContent = 'Aucune urgence — semaine maîtrisée.';
+  else if (n <= 2) msg.textContent = `${n} urgence${n>1?'s':''} — dans l\'objectif.`;
+  else if (n <= 4) msg.textContent = `${n} urgences — au-dessus de l\'objectif. Analyse dans l\'AAR.`;
+  else msg.textContent = `${n} urgences — semaine difficile. Schwerpunkt probablement impacté.`;
+  msg.style.color = n <= 2 ? 'var(--text3)' : n <= 4 ? 'var(--amber-text)' : 'var(--red)';
+}
+
+// ─── AAR ─────────────────────────────────────────────────
+function changeAARWeek(dir) {
+  currentAARWeek += dir;
+  renderAAR();
+}
+
+function renderAAR() {
+  const wk = getWeekKey(currentAARWeek);
+  const label = currentAARWeek === 0 ? 'Semaine en cours' : (currentAARWeek < 0 ? `Semaine passée (${-currentAARWeek})` : `Semaine future (+${currentAARWeek})`);
+  document.getElementById('aar-week-label').textContent = `${label} · ${getWeekLabel(wk)}`;
+  const w = S.weeks[wk];
+  const aar = w ? w.aar : {};
+  document.getElementById('aar-q1').value = aar.q1||'';
+  document.getElementById('aar-q2').value = aar.q2||'';
+  document.getElementById('aar-q3').value = aar.q3||'';
+  document.getElementById('aar-q4').value = aar.q4||'';
+  document.getElementById('aar-schwer-status').value = aar.schwerStatus||'';
+  document.getElementById('aar-sops').value = aar.sops||'';
+  document.getElementById('aar-urgences').value = aar.urgences||'';
+}
+
+function saveAAR() {
+  const q1 = document.getElementById('aar-q1').value.trim();
+  const q2 = document.getElementById('aar-q2').value.trim();
+  const q3 = document.getElementById('aar-q3').value.trim();
+  const q4 = document.getElementById('aar-q4').value.trim();
+  if (!q1 && !q2 && !q3 && !q4) { toast('Remplis au moins une question'); return; }
+  const wk = getWeekKey(currentAARWeek);
+  const w = ensureWeek(wk);
+  w.aar = { q1, q2, q3, q4, schwerStatus: document.getElementById('aar-schwer-status').value, sops: document.getElementById('aar-sops').value, urgences: document.getElementById('aar-urgences').value };
+  // sync status back
+  if (w.aar.schwerStatus==='oui') w.status='oui';
+  else if (w.aar.schwerStatus==='non') w.status='non';
+  // sync urgences back to week counter
+  if (w.aar.urgences !== '') w.urgences = parseInt(w.aar.urgences)||0;
+  autoSave(); toast('AAR enregistré ✓');
+  if (currentAARWeek === 0) renderUrgences();
+}
+
+function exportAARtoSchwerpunkt() {
+  const q4 = document.getElementById('aar-q4').value.trim();
+  if (!q4) { toast('Remplis d\'abord la Q4 (action concrète)'); return; }
+  showTab('schwerpunkt');
+  document.getElementById('schwer-input').value = q4;
+  toast('Action Q4 prête comme Schwerpunkt →');
+}
+
+// ─── OODA ─────────────────────────────────────────────────
+function saveOODA() {
+  const ctx = document.getElementById('ooda-ctx').value.trim();
+  if (!ctx) { toast('Décris la situation d\'abord'); return; }
+  S.oodas.unshift({
+    id: Date.now(),
+    date: new Date().toISOString().slice(0,10),
+    ctx,
+    obs: document.getElementById('ooda-obs').value.trim(),
+    ori: document.getElementById('ooda-ori').value.trim(),
+    dec: document.getElementById('ooda-dec').value.trim(),
+    act: document.getElementById('ooda-act').value.trim(),
+    speed: parseInt(document.getElementById('ooda-speed').value)||3,
+    result: document.getElementById('ooda-result').value
+  });
+  ['ooda-ctx','ooda-obs','ooda-ori','ooda-dec','ooda-act'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ooda-speed').value=3;
+  autoSave(); renderOODA(); toast('Décision OODA capturée ✓');
+}
+
+function renderOODA() {
+  const list = document.getElementById('ooda-list');
+  if (!S.oodas.length) { list.innerHTML='<div class="empty">Aucune décision capturée encore.<br>Les décisions importantes méritent d\'être tracées.</div>'; return; }
+  const resultColor = {bon:'#2D6A3F', moyen:'var(--amber)', mauvais:'var(--red)'};
+  const resultLabel = {bon:'Bon', moyen:'Moyen', mauvais:'À revoir'};
+  list.innerHTML = S.oodas.map((o,i)=>{
+    const dots = Array.from({length:5},(_, j)=>`<div class="speed-dot${j<o.speed?' filled':''}"></div>`).join('');
+    return `<div class="ooda-item">
+      <div class="ooda-item-header" onclick="toggleOODA(${i})">
+        <div>
+          <div class="ooda-context">${o.ctx}</div>
+          <div class="ooda-decision">${o.dec||'—'}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <span style="font-size:11px;font-weight:500;color:${resultColor[o.result]||'var(--text3)'}">${resultLabel[o.result]||''}</span>
+          <span style="font-size:11px;color:var(--text3)">${o.date}</span>
+          <button class="del-btn" onclick="event.stopPropagation();deleteOODA(${i})">×</button>
+        </div>
+      </div>
+      <div class="ooda-detail" id="od-${i}">
+        <div class="ooda-detail-row">
+          <div><div class="ooda-detail-label">Observer</div><div class="ooda-detail-val">${o.obs||'—'}</div></div>
+          <div><div class="ooda-detail-label">Orienter</div><div class="ooda-detail-val">${o.ori||'—'}</div></div>
+          <div><div class="ooda-detail-label">Décider</div><div class="ooda-detail-val">${o.dec||'—'}</div></div>
+          <div><div class="ooda-detail-label">Agir</div><div class="ooda-detail-val">${o.act||'—'}</div></div>
+        </div>
+        <div style="margin-top:8px"><div class="ooda-detail-label">Vitesse de boucle</div><div class="ooda-speed">${dots}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleOODA(i) {
+  document.getElementById('od-'+i).classList.toggle('open');
+}
+function deleteOODA(i) { S.oodas.splice(i,1); autoSave(); renderOODA(); }
+
+// ─── Historique ───────────────────────────────────────────
+function renderHistorique() {
+  const list = document.getElementById('historique-list');
+  const keys = Object.keys(S.weeks).sort().reverse();
+  if (!keys.length) { list.innerHTML='<div class="empty">Aucune semaine enregistrée.</div>'; return; }
+  const statusLabel = {oui:'Atteint', non:'Non atteint', partiel:'Partiel', null:'En cours'};
+  const statusColor = {oui:'pill-teal', non:'pill-amber', partiel:'pill-blue', null:'pill-gray'};
+  list.innerHTML = keys.map(k=>{
+    const w = S.weeks[k];
+    const st = w.status||null;
+    const hasAAR = w.aar && (w.aar.q1||w.aar.q2||w.aar.q3||w.aar.q4);
+    return `<div class="week-card">
+      <div class="week-header" onclick="toggleWeek('${k}')">
+        <div>
+          <div class="week-title">${k} · ${getWeekLabel(k)}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px;max-width:360px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${w.schwerpunkt||'—'}</div>
+        </div>
+        <div class="week-chips">
+          <span class="pill ${statusColor[st]}">${statusLabel[st]||'En cours'}</span>
+          ${hasAAR ? '<span class="pill pill-blue">AAR ✓</span>' : ''}
+          ${(w.urgences||0) > 0 ? `<span class="pill ${w.urgences<=2?'pill-teal':w.urgences<=4?'pill-amber':'pill-gray'}">${w.urgences} urgence${w.urgences>1?'s':''}</span>` : ''}
+          <span class="pill pill-gray">${w.ctx||'perso'}</span>
+        </div>
+      </div>
+      <div class="week-body" id="wb-${k}">
+        ${w.schwerpunkt ? `<div class="week-section"><div class="week-section-label">Schwerpunkt</div><div class="week-section-val">D'ici ${w.deadline||'vendredi'}, ${w.schwerpunkt}</div></div>` : ''}
+        ${hasAAR ? `<div class="week-section"><div class="week-section-label">Q1 — Prévu</div><div class="week-section-val">${w.aar.q1||'—'}</div></div>
+          <div class="week-section"><div class="week-section-label">Q2 — Réel</div><div class="week-section-val">${w.aar.q2||'—'}</div></div>
+          <div class="week-section"><div class="week-section-label">Q3 — Pourquoi</div><div class="week-section-val">${w.aar.q3||'—'}</div></div>
+          <div class="week-section"><div class="week-section-label">Q4 — Action</div><div class="week-section-val">${w.aar.q4||'—'}</div></div>` : '<div class="week-section"><div class="week-section-val" style="color:var(--text3)">AAR non complété pour cette semaine.</div></div>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleWeek(k) {
+  document.getElementById('wb-'+k).classList.toggle('open');
+}
+
+// ─── Agenda ───────────────────────────────────────────────
+let agendaWeekOffset = 0;
+let agendaPendingCell = null; // {wk, day, slot}
+
+const DAYS = ['Lun','Mar','Mer','Jeu','Ven'];
+const SLOTS = ['06h','07h','08h','09h','10h','11h','12h','13h','14h','15h','16h','17h','18h','19h','20h'];
+
+function getWeekDates(offset) {
+  const today = new Date();
+  today.setDate(today.getDate() + offset * 7);
+  const dow = today.getDay() || 7;
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - dow + 1);
+  return Array.from({length:5}, (_,i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return d;
+  });
+}
+
+function isTodayDate(d) {
+  const t = new Date();
+  return d.getDate()===t.getDate() && d.getMonth()===t.getMonth() && d.getFullYear()===t.getFullYear();
+}
+
+function changeAgendaWeek(dir) {
+  if (dir === 0) agendaWeekOffset = 0;
+  else agendaWeekOffset += dir;
+  renderAgenda();
+}
+
+function renderAgenda() {
+  const dates = getWeekDates(agendaWeekOffset);
+  const wk = getWeekKey(agendaWeekOffset);
+  const w = S.weeks[wk];
+
+  // Header
+  const mon = dates[0], fri = dates[4];
+  const fmt = d => d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+  document.getElementById('agenda-week-title').textContent = `Semaine ${wk.split('-W')[1]} · ${fmt(mon)} – ${fmt(fri)}`;
+
+  // Schwerpunkt preview
+  const prev = document.getElementById('agenda-schwer-preview');
+  if (w && w.schwerpunkt) {
+    prev.textContent = '→ ' + w.schwerpunkt;
+    prev.style.color = 'var(--purple-text)';
+  } else {
+    prev.textContent = 'Aucun Schwerpunkt défini';
+    prev.style.color = 'var(--text3)';
+  }
+
+  // Build blocks map: day(0-4) → slot(0-14) → [blocks]
+  const blocksMap = {};
+  const wkBlocks = (S.agendaBlocks && S.agendaBlocks[wk]) ? S.agendaBlocks[wk] : [];
+  wkBlocks.forEach(b => {
+    const key = `${b.day}_${b.slot}`;
+    if (!blocksMap[key]) blocksMap[key] = [];
+    blocksMap[key].push(b);
+  });
+
+  // Render grid
+  let html = '<div class="agenda-grid">';
+  // Header row
+  html += '<div class="ag-head" style="border-right:1px solid var(--border)"></div>';
+  dates.forEach((d,i) => {
+    const isToday = isTodayDate(d);
+    const dayLabel = DAYS[i] + ' ' + d.getDate();
+    html += `<div class="ag-head${isToday?' today-col':''}">${dayLabel}</div>`;
+  });
+
+  // Time rows
+  SLOTS.forEach((slot, si) => {
+    const isLast = si === SLOTS.length - 1;
+    html += `<div class="ag-time" style="${isLast?'border-bottom:none':''}">${slot}</div>`;
+    dates.forEach((d, di) => {
+      const isToday = isTodayDate(d);
+      const key = `${di}_${si}`;
+      const cellBlocks = blocksMap[key] || [];
+      html += `<div class="ag-cell${isToday?' today-col':''}" onclick="openAgendaModal('${wk}',${di},${si})" style="${isLast?'border-bottom:none':''}">`;
+      cellBlocks.forEach((b,bi) => {
+        html += `<div class="ag-block type-${b.type}" onclick="event.stopPropagation();deleteAgendaBlock('${wk}',${b.id})" title="Cliquer pour supprimer">${b.title}${b.end?' <span style=&quot;opacity:.6;font-weight:400&quot;>→'+b.end+'</span>':''}</div>`;
+      });
+      html += `<span class="ag-add">+</span>`;
+      html += '</div>';
+    });
+  });
+
+  html += '</div>';
+  document.getElementById('agenda-grid-container').innerHTML = html;
+}
+
+function openAgendaModal(wk, day, slot) {
+  agendaPendingCell = {wk, day, slot};
+  const dayName = DAYS[day];
+  const slotName = SLOTS[slot];
+  document.getElementById('ag-modal-title').textContent = `Ajouter un bloc — ${dayName} ${slotName}`;
+  document.getElementById('ag-inp-start').value = slotName.replace('h',':00');
+  const nextH = parseInt(slotName) + 1;
+  document.getElementById('ag-inp-end').value = (nextH < 10 ? '0'+nextH : nextH) + ':00';
+  document.getElementById('ag-inp-title').value = '';
+  document.getElementById('ag-modal').classList.add('open');
+  document.getElementById('ag-inp-title').focus();
+}
+
+function closeAgendaModal() {
+  document.getElementById('ag-modal').classList.remove('open');
+  agendaPendingCell = null;
+}
+
+function saveAgendaBlock() {
+  if (!agendaPendingCell) return;
+  const title = document.getElementById('ag-inp-title').value.trim();
+  if (!title) { toast('Donne un titre au bloc'); return; }
+  const {wk, day, slot} = agendaPendingCell;
+  if (!S.agendaBlocks) S.agendaBlocks = {};
+  if (!S.agendaBlocks[wk]) S.agendaBlocks[wk] = [];
+  S.agendaBlocks[wk].push({
+    id: Date.now(),
+    day, slot,
+    title,
+    type: document.getElementById('ag-inp-type').value,
+    end: document.getElementById('ag-inp-end').value
+  });
+  closeAgendaModal();
+  autoSave(); renderAgenda(); toast('Bloc ajouté ✓');
+}
+
+function deleteAgendaBlock(wk, id) {
+  if (!S.agendaBlocks || !S.agendaBlocks[wk]) return;
+  S.agendaBlocks[wk] = S.agendaBlocks[wk].filter(b => b.id !== id);
+  autoSave(); renderAgenda();
+}
+
+// ─── Métriques ────────────────────────────────────────────
+function renderMetriques() {
+  const weeks = Object.values(S.weeks);
+  const total = weeks.length;
+  document.getElementById('m-total-weeks').textContent = total;
+
+  const withStatus = weeks.filter(w=>w.status==='oui'||w.status==='non');
+  const hits = weeks.filter(w=>w.status==='oui').length;
+  if (withStatus.length) {
+    const pct = Math.round(hits/withStatus.length*100);
+    const el = document.getElementById('m-schwer-rate');
+    el.textContent = pct+'%';
+    el.className = 'metric-val ' + (pct>=70?'good':pct>=50?'neutral':'bad');
+  }
+
+  // Trend last 8 weeks
+  const trendEl = document.getElementById('m-schwer-trend');
+  const keys = Object.keys(S.weeks).sort().slice(-8);
+  trendEl.innerHTML = keys.map(k=>{
+    const st = S.weeks[k].status;
+    return `<div class="trend-dot${st==='oui'?' hit':st==='non'?' miss':''}"></div>`;
+  }).join('');
+
+  // SOP average
+  const withSops = weeks.filter(w=>w.aar&&w.aar.sops!=='');
+  if (withSops.length) {
+    const avg = (withSops.reduce((a,w)=>a+parseFloat(w.aar.sops||0),0)/withSops.length).toFixed(1);
+    const el = document.getElementById('m-sop-avg');
+    el.textContent = avg+'/5';
+    el.className = 'metric-val '+(parseFloat(avg)>=4?'good':parseFloat(avg)>=3?'neutral':'bad');
+  }
+
+  // OODA
+  document.getElementById('m-ooda-total').textContent = S.oodas.length;
+  if (S.oodas.length) {
+    const good = S.oodas.filter(o=>o.result==='bon').length;
+    const pct = Math.round(good/S.oodas.length*100);
+    const el = document.getElementById('m-ooda-good');
+    el.textContent = pct+'%';
+    el.className = 'metric-val '+(pct>=70?'good':pct>=50?'neutral':'bad');
+  }
+
+  // Streak AAR
+  const sortedKeys = Object.keys(S.weeks).sort().reverse();
+  let streak = 0;
+  for (const k of sortedKeys) {
+    const aar = S.weeks[k].aar;
+    if (aar && (aar.q1||aar.q2||aar.q3||aar.q4)) streak++;
+    else break;
+  }
+  document.getElementById('m-streak').textContent = streak;
+
+  // Urgences — semaine courante
+  const curWk = S.weeks[getWeekKey()];
+  const urgCur = curWk ? (curWk.urgences||0) : 0;
+  const urgEl = document.getElementById('m-urg-week');
+  urgEl.textContent = urgCur;
+  urgEl.className = 'metric-val ' + (urgCur<=2?'good':urgCur<=4?'neutral':'bad');
+
+  // Urgences — moyenne
+  const weeksWithUrg = weeks.filter(w=>typeof w.urgences==='number');
+  if (weeksWithUrg.length) {
+    const avg = (weeksWithUrg.reduce((a,w)=>a+(w.urgences||0),0)/weeksWithUrg.length).toFixed(1);
+    const avgEl = document.getElementById('m-urg-avg');
+    avgEl.textContent = avg;
+    avgEl.className = 'metric-val '+(parseFloat(avg)<=2?'good':parseFloat(avg)<=4?'neutral':'bad');
+  }
+
+  // Urgences — tendance (8 semaines, bar chart mini)
+  const urgKeys = Object.keys(S.weeks).sort().slice(-8);
+  const trendUrg = document.getElementById('m-urg-trend');
+  const maxUrg = Math.max(1, ...urgKeys.map(k=>S.weeks[k].urgences||0));
+  trendUrg.innerHTML = urgKeys.map(k=>{
+    const u = S.weeks[k].urgences||0;
+    const h = Math.max(2, Math.round(u/maxUrg*14));
+    const col = u<=2?'#2D6A3F':u<=4?'var(--amber)':'var(--red)';
+    return `<div style="width:7px;height:${h}px;border-radius:2px;background:${col};align-self:flex-end"></div>`;
+  }).join('');
+  trendUrg.style.alignItems='flex-end';
+  trendUrg.style.height='18px';
+
+  // tendance texte
+  const trendVals = urgKeys.map(k=>S.weeks[k].urgences||0);
+  const trendEl2 = document.getElementById('m-urg-trend-val');
+  if (trendVals.length >= 2) {
+    const last2avg = (trendVals.slice(-2).reduce((a,b)=>a+b,0)/2);
+    const prev2avg = trendVals.length>=4 ? (trendVals.slice(-4,-2).reduce((a,b)=>a+b,0)/2) : last2avg;
+    trendEl2.textContent = last2avg < prev2avg ? 'En baisse' : last2avg > prev2avg ? 'En hausse' : 'Stable';
+    trendEl2.className = 'metric-val '+(last2avg<=prev2avg?'good':'bad');
+  }
+}
+
+// ─── Import / Export ──────────────────────────────────────
+function exportData() {
+  const blob = new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ops001_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+function triggerImport() { document.getElementById('import-file').click(); }
+function importData(e) {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => { try { S = JSON.parse(ev.target.result); ensureState(); autoSave(); renderAll(); toast('Import réussi ✓'); } catch(err){ toast('Erreur JSON'); } };
+  r.readAsText(f);
+}
+function clearAll() {
+  if (!confirm('Effacer toutes les données ? Cette action est irréversible.')) return;
+  S = {}; ensureState(); autoSave(); renderAll(); toast('Données effacées');
+}
+
+// ─── Render all ───────────────────────────────────────────
+function renderAll() {
+  renderSchwerpunkt();
+}
+
+// ─── Google Drive Sync ────────────────────────────────────
+function driveAuth() {
+  if (!gisReady) { toast('GIS pas encore prêt, attends…'); return; }
+  tokenClient.requestAccessToken();
+}
+function initGIS() {
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID, scope: SCOPES,
+    callback: async (resp) => {
+      if (resp.error) { setSyncBadge('err'); return; }
+      sessionStorage.setItem(TOKK, resp.access_token);
+      document.getElementById('drive-btn').textContent = 'Drive ✓';
+      await drivePull();
+    }
+  });
+  gisReady = true;
+  const tok = sessionStorage.getItem(TOKK);
+  if (tok) { document.getElementById('drive-btn').textContent = 'Drive ✓'; }
+}
+window.addEventListener('load', ()=>{ setTimeout(initGIS, 800); });
+
+async function drivePush() {
+  const tok = sessionStorage.getItem(TOKK); if (!tok) { setSyncBadge('local'); return; }
+  try {
+    const body = JSON.stringify(S);
+    if (!driveFileId) await findOrCreateDriveFile(tok);
+    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`,
+      {method:'PATCH',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body});
+    setSyncBadge('ok');
+  } catch(e){ setSyncBadge('err'); }
+}
+async function drivePull() {
+  const tok = sessionStorage.getItem(TOKK); if (!tok) return;
+  try {
+    if (!driveFileId) await findOrCreateDriveFile(tok);
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`,
+      {headers:{'Authorization':'Bearer '+tok}});
+    if (r.ok) { const d = await r.json(); S = d; ensureState(); localStorage.setItem(SK,JSON.stringify(S)); renderAll(); setSyncBadge('ok'); }
+  } catch(e){ setSyncBadge('err'); }
+}
+async function findOrCreateDriveFile(tok) {
+  const s = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${DRIVE_FILE}'&spaces=drive`,
+    {headers:{'Authorization':'Bearer '+tok}});
+  const d = await s.json();
+  if (d.files && d.files.length) { driveFileId = d.files[0].id; return; }
+  const c = await fetch('https://www.googleapis.com/drive/v3/files',
+    {method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},
+     body:JSON.stringify({name:DRIVE_FILE,mimeType:'application/json'})});
+  const f = await c.json(); driveFileId = f.id;
+}
+
+// ─── Init ─────────────────────────────────────────────────
+applyTheme(localStorage.getItem(TK)||'light');
+
+// Set default date to next Friday
+const today = new Date();
+const daysToFri = (5 - today.getDay() + 7) % 7 || 7;
+const nextFri = new Date(today);
+nextFri.setDate(today.getDate() + daysToFri);
+document.getElementById('schwer-date').value = nextFri.toISOString().slice(0,10);
+
+loadLocal();
+</script>
+</body>
+</html>
