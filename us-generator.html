@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>US Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F7F6F3;--surface:#FFFFFF;--border:#E5E3DE;--text:#1A1917;--muted:#7A7671;--accent:#1A1917;--green:#16A34A;--amber:#D97706;--red:#DC2626;--blue:#2563EB;--radius:6px;--mono:'Geist Mono',monospace;}
+[data-theme="sand"]{--bg:#F8F7FF;--surface:#FFFFFF;--border:#E2E0F0;--text:#1A1830;--muted:#6B6880;--accent:#4F46E5;}
+[data-theme="navy"]{--bg:#161925;--surface:#1F2437;--border:#2D3348;--text:#E8EAF0;--muted:#8890A8;--accent:#818CF8;--green:#34D399;--amber:#FCD34D;--red:#F87171;--blue:#60A5FA;}
+[data-theme="dark"]{--bg:#111113;--surface:#1C1C1E;--border:#2C2C2E;--text:#F5F5F7;--muted:#8E8E93;--accent:#A78BFA;--green:#34D399;--amber:#FCD34D;--red:#F87171;--blue:#60A5FA;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-family:'Geist',sans-serif;font-size:15px;background:var(--bg);color:var(--text);}
+body{min-height:100vh;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;}
+textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text);color-scheme:light;}
+[data-theme="navy"] textarea,[data-theme="navy"] input,[data-theme="dark"] textarea,[data-theme="dark"] input{color-scheme:dark;}
+.header{position:sticky;top:0;z-index:100;background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;height:52px;display:flex;align-items:center;justify-content:space-between;}
+.header-left{display:flex;align-items:center;gap:12px;}
+.app-title{font-size:14px;font-weight:500;letter-spacing:-0.01em;}
+.sync-dot{font-size:12px;color:var(--muted);}
+.header-right{display:flex;align-items:center;gap:8px;}
+.icon-btn{width:32px;height:32px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--muted);transition:background .15s;}
+.icon-btn:hover{background:var(--border);color:var(--text);}
+.tabs{position:sticky;top:52px;z-index:99;background:var(--surface);border-bottom:1px solid var(--border);display:flex;padding:0 16px;}
+.tab{padding:10px 16px;font-size:13px;font-weight:400;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;transition:color .15s;}
+.tab.active{color:var(--text);font-weight:500;border-bottom-color:var(--accent);}
+.page{max-width:1100px;margin:0 auto;padding:20px 16px 80px;}
+.section{display:none;}
+.section.active{display:block;}
+.editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}
+@media(max-width:700px){.editor-grid{grid-template-columns:1fr;}}
+.pane{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.pane-header{padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;font-weight:500;color:var(--muted);display:flex;align-items:center;justify-content:space-between;}
+.pane-header span{letter-spacing:.04em;text-transform:uppercase;}
+.editor-area{width:100%;min-height:480px;padding:14px;font-size:13px;line-height:1.65;font-family:var(--mono);border:none;outline:none;resize:none;background:var(--surface);color:var(--text);}
+.preview-area{padding:14px 16px;min-height:480px;font-size:13px;line-height:1.7;}
+.preview-empty{color:var(--muted);font-size:13px;padding-top:40px;text-align:center;}
+.pr-epic{font-size:11px;color:var(--muted);margin-bottom:4px;font-family:var(--mono);}
+.pr-epic b{color:var(--accent);}
+.pr-id{font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:4px;}
+.pr-title{font-size:16px;font-weight:600;margin-bottom:10px;letter-spacing:-0.02em;}
+.pr-badge{display:inline-flex;align-items:center;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;border:1px solid;margin-left:6px;}
+.pr-badge.est{color:var(--blue);border-color:var(--blue);}
+.pr-badge.type{color:var(--muted);border-color:var(--muted);}
+.pr-badge.prio-must{color:var(--red);border-color:var(--red);}
+.pr-badge.prio-should{color:var(--amber);border-color:var(--amber);}
+.pr-badge.prio-could{color:var(--blue);border-color:var(--blue);}
+.pr-badge.prio-wont{color:var(--muted);border-color:var(--muted);}
+[data-theme="navy"] .pr-badge.est,[data-theme="dark"] .pr-badge.est{color:#60A5FA;border-color:#60A5FA;}
+[data-theme="navy"] .pr-badge.prio-must,[data-theme="dark"] .pr-badge.prio-must{color:#F87171;border-color:#F87171;}
+[data-theme="navy"] .pr-badge.prio-should,[data-theme="dark"] .pr-badge.prio-should{color:#FCD34D;border-color:#FCD34D;}
+[data-theme="navy"] .pr-badge.prio-could,[data-theme="dark"] .pr-badge.prio-could{color:#60A5FA;border-color:#60A5FA;}
+.pr-section{margin-top:14px;}
+.pr-section-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px;}
+.pr-story-block{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;font-size:13px;line-height:1.8;}
+.pr-story-line{margin-bottom:2px;}
+.pr-story-line b{color:var(--text);font-weight:500;}
+.pr-story-line span{color:var(--muted);}
+.pr-ac-list{list-style:none;padding:0;margin:0;}
+.pr-ac-item{display:flex;gap:8px;align-items:flex-start;padding:4px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.pr-ac-item:last-child{border-bottom:none;}
+.pr-ac-check{color:var(--muted);flex-shrink:0;margin-top:1px;}
+.invest-bar{display:none;gap:6px;flex-wrap:wrap;padding:8px 14px;border-top:1px solid var(--border);background:var(--bg);}
+.invest-chip{font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid;font-weight:500;}
+.invest-chip.ok{color:var(--green);border-color:var(--green);}
+.invest-chip.warn{color:var(--amber);border-color:var(--amber);}
+.invest-chip.err{color:var(--red);border-color:var(--red);}
+.btn{padding:7px 14px;border-radius:var(--radius);font-size:13px;font-weight:500;border:1px solid var(--border);color:var(--text);background:var(--surface);transition:background .15s;}
+.btn:hover{background:var(--border);}
+.btn.primary{background:var(--accent);color:var(--bg);border-color:var(--accent);}
+.btn.primary:hover{opacity:.88;}
+.btn.sm{padding:5px 10px;font-size:12px;}
+.history-empty{color:var(--muted);font-size:13px;padding:40px 0;text-align:center;}
+.history-list{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+.history-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;}
+.history-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.history-title{font-size:14px;font-weight:500;flex:1;}
+.history-meta{font-size:12px;color:var(--muted);margin-top:3px;}
+.history-actions{display:flex;gap:6px;flex-shrink:0;}
+.status-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;border:1px solid var(--border);cursor:pointer;transition:opacity .15s;user-select:none;margin-top:6px;}
+.status-badge:hover{opacity:.75;}
+.status-badge.brouillon{color:var(--amber);border-color:var(--amber);}
+.status-badge.finalise{color:var(--green);border-color:var(--green);}
+.status-badge.archive{color:var(--muted);border-color:var(--muted);}
+.filter-bar{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.filter-pill{font-size:12px;padding:4px 12px;border-radius:20px;border:1px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer;transition:all .15s;}
+.filter-pill.active{background:var(--accent);color:var(--bg);border-color:var(--accent);}
+.drive-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;font-size:13px;}
+.drive-status{color:var(--muted);flex:1;}
+.help-section{margin-top:28px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);overflow:hidden;}
+.help-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;padding:11px 16px;cursor:pointer;font-size:12px;font-weight:500;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;background:none;border:none;text-align:left;transition:background .15s;}
+.help-toggle:hover{background:var(--border);}
+.help-toggle .chevron{font-size:10px;transition:transform .2s;}
+.help-toggle.open .chevron{transform:rotate(180deg);}
+.help-body{display:none;padding:16px 20px 20px;border-top:1px solid var(--border);}
+.help-body.open{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+@media(max-width:700px){.help-body.open{grid-template-columns:1fr;}}
+.help-group{display:flex;flex-direction:column;gap:10px;}
+.help-group h3{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;}
+.help-row{display:flex;gap:10px;align-items:baseline;font-size:13px;}
+.help-tag{font-family:var(--mono);font-size:12px;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 6px;color:var(--accent);white-space:nowrap;flex-shrink:0;}
+.help-desc{color:var(--muted);line-height:1.5;}
+.help-note{grid-column:1/-1;font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:12px;margin-top:4px;line-height:1.6;}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--text);color:var(--bg);padding:8px 16px;border-radius:20px;font-size:13px;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <span class="app-title">US Generator</span>
+    <span class="sync-dot" id="sync-dot">&#9899; Local</span>
+  </div>
+  <div class="header-right">
+    <button class="icon-btn" title="Google Drive" onclick="handleDriveBtn()">&#9729;</button>
+    <button class="icon-btn" id="theme-btn" title="Theme" onclick="toggleTheme()">&#9788;&#65038;</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" id="tab-btn-editor" onclick="showEditor()">Editeur</div>
+  <div class="tab" id="tab-btn-history" onclick="showHistory()">Historique</div>
+</div>
+
+<div class="page">
+
+  <div id="tab-editor" class="section active">
+    <div class="editor-grid">
+      <div class="pane">
+        <div class="pane-header">
+          <span>Notes brutes</span>
+          <button class="btn sm" onclick="resetTemplate()">&#8635; Template</button>
+        </div>
+        <textarea class="editor-area" id="raw-input" spellcheck="false" oninput="onEdit()"></textarea>
+      </div>
+      <div class="pane">
+        <div class="pane-header">
+          <span>Apercu</span>
+          <div style="display:flex;gap:6px;">
+            <button class="btn sm" onclick="copyHtml()">&#8690; Email</button>
+            <button class="btn sm" onclick="doDownloadMd()">&#8595; .md</button>
+            <button class="btn sm" onclick="doDownloadTxt()">&#8595; .txt</button>
+            <button class="btn sm primary" onclick="saveUS()">Enregistrer</button>
+          </div>
+        </div>
+        <div class="preview-area" id="preview"></div>
+        <div class="invest-bar" id="invest-bar"></div>
+      </div>
+    </div>
+
+    <div class="help-section">
+      <button class="help-toggle" id="help-toggle" onclick="toggleHelp()">
+        <span>Guide des marqueurs</span>
+        <span class="chevron">&#9660;</span>
+      </button>
+      <div class="help-body" id="help-body">
+        <div class="help-group">
+          <h3>En-tete</h3>
+          <div class="help-row"><span class="help-tag">US:</span><span class="help-desc">Titre court de la user story</span></div>
+          <div class="help-row"><span class="help-tag">ID:</span><span class="help-desc">Identifiant ex US-042 (optionnel)</span></div>
+          <div class="help-row"><span class="help-tag">EPIC:</span><span class="help-desc">Epic parent ex Gestion du panier (optionnel)</span></div>
+          <div class="help-row"><span class="help-tag">PRIO:</span><span class="help-desc">Priorite MoSCoW : Must / Should / Could / Wont</span></div>
+          <div class="help-row"><span class="help-tag">EST:</span><span class="help-desc">Story points : 1 / 2 / 3 / 5 / 8 / 13</span></div>
+          <div class="help-row"><span class="help-tag">TYPE:</span><span class="help-desc">Type : feature / bug / spike (optionnel)</span></div>
+        </div>
+        <div class="help-group">
+          <h3>Story</h3>
+          <div class="help-row"><span class="help-tag">AS:</span><span class="help-desc">Role utilisateur (As a...)</span></div>
+          <div class="help-row"><span class="help-tag">WANT:</span><span class="help-desc">Action souhaitee (I want...)</span></div>
+          <div class="help-row"><span class="help-tag">SO:</span><span class="help-desc">Benefice attendu (So that...)</span></div>
+          <h3 style="margin-top:10px;">Acceptance Criteria</h3>
+          <div class="help-row"><span class="help-tag">AC:</span><span class="help-desc">Critere testable — un par ligne, repetez autant que necessaire</span></div>
+        </div>
+        <div class="help-note">
+          &#128161; Marqueurs obligatoires : <b>US:</b> <b>AS:</b> <b>WANT:</b> <b>SO:</b> et au moins un <b>AC:</b><br>
+          La barre INVEST en bas de l&#39;apercu indique les champs manquants en temps reel.<br>
+          Si vous avez plus de 5 AC, envisagez de splitter la story.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-history" class="section">
+    <div class="drive-bar">
+      <span class="drive-status" id="drive-status-label">Non connecte a Drive</span>
+      <button class="btn sm" id="drive-action-btn" onclick="handleDriveBtn()">Connecter</button>
+      <button class="btn sm" onclick="pullFromDrive()" id="pull-btn" style="display:none;">&#8595; Sync</button>
+    </div>
+    <div id="history-container">
+      <p class="history-empty">Aucune user story enregistree.</p>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+var APP = 'us-generator';
+var SK  = 'td_v4_us-generator';
+var TK  = 'td_theme_us-generator';
+var TOK = 'td_tok_us-generator';
+var CLIENT_ID = '962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com';
+var SCOPE = 'https://www.googleapis.com/auth/drive.file';
+var THEMES = ['light','sand','navy','dark'];
+var ICONS  = {light:'&#9788;&#65038;',sand:'&#9675;',navy:'&#9681;',dark:'&#9790;'};
+var SLABEL = {brouillon:'&#128993; Brouillon',finalise:'&#128994; Finalise',archive:'&#9899; Archive'};
+var SCYCLE = {brouillon:'finalise',finalise:'archive',archive:'brouillon'};
+
+var TMPL = [
+  'US: ','ID: ','EPIC: ','PRIO: Must','EST: ','TYPE: ',
+  '','AS: ','WANT: ','SO: ','','AC: ','AC: ','AC: '
+].join('\n');
+
+var S = {history:[]};
+var driveFileId = null;
+var tokenClient = null;
+var accessToken = sessionStorage.getItem(TOK) || null;
+var saveTimer   = null;
+var curFilter   = 'tous';
+
+function ensureState() { if (!Array.isArray(S.history)) S.history = []; }
+
+function load() {
+  try { var r = localStorage.getItem(SK); if (r) S = JSON.parse(r); } catch(e) {}
+  ensureState();
+  var draft = localStorage.getItem(SK + '_draft');
+  document.getElementById('raw-input').value = draft || TMPL;
+  renderPreview();
+  renderHistory();
+  initDrive();
+}
+
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t === 'light' ? '' : t);
+  document.getElementById('theme-btn').innerHTML = ICONS[t] || ICONS.light;
+  localStorage.setItem(TK, t);
+}
+function toggleTheme() {
+  var cur = localStorage.getItem(TK) || 'light';
+  applyTheme(THEMES[(THEMES.indexOf(cur) + 1) % THEMES.length]);
+}
+
+function showEditor() {
+  document.getElementById('tab-btn-editor').classList.add('active');
+  document.getElementById('tab-btn-history').classList.remove('active');
+  document.getElementById('tab-editor').classList.add('active');
+  document.getElementById('tab-history').classList.remove('active');
+}
+function showHistory() {
+  document.getElementById('tab-btn-history').classList.add('active');
+  document.getElementById('tab-btn-editor').classList.remove('active');
+  document.getElementById('tab-history').classList.add('active');
+  document.getElementById('tab-editor').classList.remove('active');
+}
+
+function resetTemplate() {
+  document.getElementById('raw-input').value = TMPL;
+  renderPreview();
+}
+
+function parse(text) {
+  var us = {titre:'',id:'',epic:'',prio:'',est:'',type:'',as:'',want:'',so:'',ac:[]};
+  var lines = text.split('\n');
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i].trim();
+    if (!line) continue;
+    var m;
+    if      ((m = line.match(/^US\s*:\s*(.+)/i)))   { us.titre = m[1].trim(); }
+    else if ((m = line.match(/^ID\s*:\s*(.+)/i)))   { us.id    = m[1].trim(); }
+    else if ((m = line.match(/^EPIC\s*:\s*(.+)/i))) { us.epic  = m[1].trim(); }
+    else if ((m = line.match(/^PRIO\s*:\s*(.+)/i))) { us.prio  = m[1].trim(); }
+    else if ((m = line.match(/^EST\s*:\s*(.+)/i)))  { us.est   = m[1].trim(); }
+    else if ((m = line.match(/^TYPE\s*:\s*(.+)/i))) { us.type  = m[1].trim(); }
+    else if ((m = line.match(/^AS\s*:\s*(.+)/i)))   { us.as    = m[1].trim(); }
+    else if ((m = line.match(/^WANT\s*:\s*(.+)/i))) { us.want  = m[1].trim(); }
+    else if ((m = line.match(/^SO\s*:\s*(.+)/i)))   { us.so    = m[1].trim(); }
+    else if ((m = line.match(/^AC\s*:\s*(.+)/i)))   { us.ac.push(m[1].trim()); }
+  }
+  return us;
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function prioClass(p) {
+  var k = p.toLowerCase().replace(/[^a-z]/g,'');
+  if (k === 'must')   return 'prio-must';
+  if (k === 'should') return 'prio-should';
+  if (k === 'could')  return 'prio-could';
+  return 'prio-wont';
+}
+
+function renderPreview() {
+  var text = document.getElementById('raw-input').value;
+  var us   = parse(text);
+  var el   = document.getElementById('preview');
+  var bar  = document.getElementById('invest-bar');
+
+  if (!us.titre && !us.as) {
+    el.innerHTML = '<p class="preview-empty">Saisissez vos marqueurs pour voir l&#39;apercu.</p>';
+    bar.style.display = 'none';
+    return;
+  }
+
+  var h = '';
+  if (us.epic) { h += '<div class="pr-epic">Epic : <b>' + esc(us.epic) + '</b></div>'; }
+  if (us.id)   { h += '<div class="pr-id">' + esc(us.id) + '</div>'; }
+
+  h += '<div class="pr-title">' + esc(us.titre || 'User Story');
+  if (us.est)  { h += '<span class="pr-badge est">&#9679; ' + esc(us.est) + ' pts</span>'; }
+  if (us.prio) { h += '<span class="pr-badge ' + prioClass(us.prio) + '">' + esc(us.prio) + '</span>'; }
+  if (us.type) { h += '<span class="pr-badge type">' + esc(us.type) + '</span>'; }
+  h += '</div>';
+
+  if (us.as || us.want || us.so) {
+    h += '<div class="pr-section"><div class="pr-section-label">User Story</div>';
+    h += '<div class="pr-story-block">';
+    if (us.as)   { h += '<div class="pr-story-line"><b>As a</b> <span>' + esc(us.as) + '</span></div>'; }
+    if (us.want) { h += '<div class="pr-story-line"><b>I want</b> <span>' + esc(us.want) + '</span></div>'; }
+    if (us.so)   { h += '<div class="pr-story-line"><b>So that</b> <span>' + esc(us.so) + '</span></div>'; }
+    h += '</div></div>';
+  }
+
+  if (us.ac.length) {
+    h += '<div class="pr-section"><div class="pr-section-label">Acceptance Criteria</div><ul class="pr-ac-list">';
+    for (var i = 0; i < us.ac.length; i++) {
+      h += '<li class="pr-ac-item"><span class="pr-ac-check">&#9744;</span><span>' + esc(us.ac[i]) + '</span></li>';
+    }
+    h += '</ul></div>';
+  }
+  el.innerHTML = h;
+
+  var chips = [
+    {k:'AS',   ok:!!us.as,          w:'Manque AS:'},
+    {k:'WANT', ok:!!us.want,         w:'Manque WANT:'},
+    {k:'SO',   ok:!!us.so,           w:'Manque SO:'},
+    {k:'AC',   ok:us.ac.length > 0,  w:'Aucun AC:'},
+    {k:'AC<=5',ok:us.ac.length > 0 && us.ac.length <= 5, w: us.ac.length > 5 ? 'Plus de 5 AC - splitter ?' : 'Aucun AC:'},
+    {k:'EST',  ok:!!us.est,          w:'Pas d&#39;estimation', warn:true}
+  ];
+  var barH = '';
+  for (var j = 0; j < chips.length; j++) {
+    var c = chips[j];
+    if (c.k === 'AC<=5' && us.ac.length === 0) continue;
+    var cls = c.ok ? 'ok' : (c.warn ? 'warn' : 'err');
+    barH += '<span class="invest-chip ' + cls + '" title="' + (c.ok ? 'OK' : c.w) + '">'
+         + (c.ok ? '&#10003; ' : '&#9888; ') + c.k + '</span>';
+  }
+  bar.innerHTML = barH;
+  bar.style.display = 'flex';
+}
+
+function onEdit() {
+  renderPreview();
+  localStorage.setItem(SK + '_draft', document.getElementById('raw-input').value);
+  setSyncDot('pending');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(autoSave, 2000);
+}
+
+function renderMd(us) {
+  var lines = [];
+  if (us.epic)  { lines.push('**Epic :** ' + us.epic); }
+  if (us.id)    { lines.push('**ID :** ' + us.id); }
+  if (us.prio)  { lines.push('**Priorite :** ' + us.prio); }
+  lines.push('# ' + (us.titre || 'User Story'));
+  if (us.est)   { lines.push('**Estimation :** ' + us.est + ' story points'); }
+  if (us.type)  { lines.push('**Type :** ' + us.type); }
+  lines.push('');
+  lines.push('## User Story');
+  lines.push('');
+  if (us.as)    { lines.push('**As a** ' + us.as); }
+  if (us.want)  { lines.push('**I want** ' + us.want); }
+  if (us.so)    { lines.push('**So that** ' + us.so); }
+  lines.push('');
+  if (us.ac.length) {
+    lines.push('## Acceptance Criteria');
+    lines.push('');
+    for (var i = 0; i < us.ac.length; i++) { lines.push('- [ ] ' + us.ac[i]); }
+  }
+  return lines.join('\n');
+}
+
+function renderTxt(us) {
+  var lines = [];
+  var titre = us.titre || 'User Story';
+  lines.push(us.id ? '[' + us.id + '] ' + titre : titre);
+  lines.push('='.repeat(Math.min(60, titre.length + (us.id ? us.id.length + 3 : 0))));
+  lines.push('');
+  if (us.epic)  { lines.push('Epic      : ' + us.epic); }
+  if (us.prio)  { lines.push('Priorite  : ' + us.prio); }
+  if (us.est)   { lines.push('Estimation: ' + us.est + ' points'); }
+  if (us.type)  { lines.push('Type      : ' + us.type); }
+  if (us.epic || us.prio || us.est || us.type) { lines.push(''); }
+  lines.push('USER STORY');
+  lines.push('----------');
+  if (us.as)    { lines.push('As a    : ' + us.as); }
+  if (us.want)  { lines.push('I want  : ' + us.want); }
+  if (us.so)    { lines.push('So that : ' + us.so); }
+  if (us.ac.length) {
+    lines.push('');
+    lines.push('ACCEPTANCE CRITERIA');
+    lines.push('-------------------');
+    for (var i = 0; i < us.ac.length; i++) { lines.push((i+1) + '. ' + us.ac[i]); }
+  }
+  return lines.join('\n');
+}
+
+function dlFile(content, fmt) {
+  var us   = parse(document.getElementById('raw-input').value);
+  var slug = (us.titre || 'user-story').toLowerCase().normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  var name = slug + '-US.' + fmt;
+  var blob = new Blob([content], {type:'text/plain;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  toast('Telecharge : ' + name);
+}
+function doDownloadMd()  { var us = parse(document.getElementById('raw-input').value); dlFile(renderMd(us), 'md'); }
+function doDownloadTxt() { var us = parse(document.getElementById('raw-input').value); dlFile(renderTxt(us), 'txt'); }
+
+function renderHtmlEmail(us) {
+  var s1 = 'font-family:Arial,sans-serif;font-size:18px;font-weight:600;margin:0 0 8px;color:#1A1917;';
+  var s2 = 'font-family:Arial,sans-serif;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#7A7671;margin:16px 0 6px;';
+  var s3 = 'font-family:Arial,sans-serif;font-size:14px;background:#F7F6F3;padding:10px 12px;border-radius:4px;line-height:1.8;';
+  var s4 = 'font-family:Arial,sans-serif;font-size:13px;color:#1A1917;margin:3px 0;';
+  var h = '<div style="max-width:600px;font-family:Arial,sans-serif;">';
+  if (us.epic) { h += '<div style="font-family:Arial,sans-serif;font-size:11px;color:#7A7671;margin-bottom:4px;">Epic : ' + esc(us.epic) + '</div>'; }
+  h += '<h1 style="' + s1 + '">' + esc(us.titre || 'User Story');
+  if (us.est) { h += ' <span style="font-size:12px;font-weight:500;color:#2563EB;">(' + esc(us.est) + ' pts)</span>'; }
+  h += '</h1>';
+  h += '<p style="' + s2 + '">User Story</p>';
+  h += '<div style="' + s3 + '">';
+  if (us.as)   { h += '<div><b>As a</b> ' + esc(us.as) + '</div>'; }
+  if (us.want) { h += '<div><b>I want</b> ' + esc(us.want) + '</div>'; }
+  if (us.so)   { h += '<div><b>So that</b> ' + esc(us.so) + '</div>'; }
+  h += '</div>';
+  if (us.ac.length) {
+    h += '<p style="' + s2 + '">Acceptance Criteria</p>';
+    for (var i = 0; i < us.ac.length; i++) {
+      h += '<div style="' + s4 + '">' + (i+1) + '. ' + esc(us.ac[i]) + '</div>';
+    }
+  }
+  h += '</div>';
+  return h;
+}
+
+function copyHtml() {
+  var us  = parse(document.getElementById('raw-input').value);
+  var htm = renderHtmlEmail(us);
+  var txt = renderTxt(us);
+  navigator.clipboard.write([new ClipboardItem({
+    'text/html':  new Blob([htm], {type:'text/html'}),
+    'text/plain': new Blob([txt], {type:'text/plain'})
+  })]).then(function() { toast('Copie pour Outlook ou Gmail'); })
+     .catch(function() { navigator.clipboard.writeText(txt).then(function() { toast('Copie texte brut'); }); });
+}
+
+function saveUS() {
+  var raw = document.getElementById('raw-input').value;
+  var us  = parse(raw);
+  if (!us.titre && !us.as) { toast('Rien a enregistrer'); return; }
+  var entry = {
+    id:      Date.now(),
+    titre:   us.titre || '(sans titre)',
+    epic:    us.epic,
+    prio:    us.prio,
+    est:     us.est,
+    acCount: us.ac.length,
+    status:  'brouillon',
+    raw:     raw,
+    savedAt: new Date().toLocaleDateString('fr-FR')
+  };
+  S.history.unshift(entry);
+  if (S.history.length > 50) S.history.pop();
+  persist();
+  renderHistory();
+  toast('User story enregistree');
+}
+
+function deleteEntry(id) {
+  S.history = S.history.filter(function(e) { return e.id !== id; });
+  persist(); renderHistory(); toast('Supprime');
+}
+function loadEntry(id) {
+  var e = S.history.find(function(x) { return x.id === id; });
+  if (!e) return;
+  document.getElementById('raw-input').value = e.raw;
+  renderPreview(); showEditor(); toast('Charge dans l&#39;editeur');
+}
+function cycleStatus(id) {
+  var e = S.history.find(function(x) { return x.id === id; });
+  if (!e) return;
+  e.status = SCYCLE[e.status || 'brouillon'] || 'brouillon';
+  persist(); renderHistory();
+}
+function setFilter(f) {
+  curFilter = f;
+  renderHistory();
+}
+function dlEntry(id, fmt) {
+  var e = S.history.find(function(x) { return x.id === id; });
+  if (!e) return;
+  var us = parse(e.raw);
+  var content = fmt === 'md' ? renderMd(us) : renderTxt(us);
+  var slug = (us.titre || 'user-story').toLowerCase().normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  var blob = new Blob([content], {type:'text/plain;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = slug + '-US.' + fmt;
+  a.click();
+}
+
+function renderHistory() {
+  var el = document.getElementById('history-container');
+  var filtered = curFilter === 'tous'
+    ? S.history
+    : S.history.filter(function(e) { return (e.status || 'brouillon') === curFilter; });
+
+  var filters = ['tous','brouillon','finalise','archive'];
+  var pillsH = '<div class="filter-bar">';
+  for (var fi = 0; fi < filters.length; fi++) {
+    var f = filters[fi];
+    var lbl = f === 'tous' ? 'Tous' : SLABEL[f];
+    var active = curFilter === f ? ' active' : '';
+    pillsH += '<button class="filter-pill' + active + '" data-f="' + f + '">' + lbl + '</button>';
+  }
+  pillsH += '</div>';
+
+  if (!filtered.length) {
+    el.innerHTML = pillsH + '<p class="history-empty">Aucune user story' + (curFilter !== 'tous' ? ' pour ce filtre' : '') + '.</p>';
+    bindHistory(); return;
+  }
+
+  var cardsH = '<div class="history-list">';
+  for (var ci = 0; ci < filtered.length; ci++) {
+    var e = filtered[ci];
+    var st  = e.status || 'brouillon';
+    var meta = (e.epic ? 'Epic: ' + e.epic + ' &middot; ' : '')
+             + (e.est  ? e.est + ' pts &middot; ' : '')
+             + e.acCount + ' AC &middot; ' + e.savedAt;
+    cardsH += '<div class="history-card">'
+      + '<div class="history-card-top">'
+      + '<div style="flex:1;min-width:0;">'
+      + '<div class="history-title">' + esc(e.titre)
+      + (e.prio ? ' <span style="font-size:11px;color:var(--muted);">' + esc(e.prio) + '</span>' : '')
+      + '</div>'
+      + '<div class="history-meta">' + meta + '</div>'
+      + '<span class="status-badge ' + st + '" data-action="status" data-id="' + e.id + '">' + SLABEL[st] + '</span>'
+      + '</div>'
+      + '<div class="history-actions">'
+      + '<button class="btn sm" data-action="load" data-id="' + e.id + '">Editer</button>'
+      + '<button class="btn sm" data-action="dlmd" data-id="' + e.id + '">&#8595; md</button>'
+      + '<button class="btn sm" data-action="dltxt" data-id="' + e.id + '">&#8595; txt</button>'
+      + '<button class="btn sm" style="color:var(--red);" data-action="del" data-id="' + e.id + '">&#10005;</button>'
+      + '</div></div></div>';
+  }
+  cardsH += '</div>';
+  el.innerHTML = pillsH + cardsH;
+  bindHistory();
+}
+
+function bindHistory() {
+  document.getElementById('history-container').onclick = function(ev) {
+    var btn = ev.target.closest('[data-action]');
+    if (!btn) return;
+    var action = btn.dataset.action;
+    var id = btn.dataset.id ? parseInt(btn.dataset.id, 10) : 0;
+    var f  = btn.dataset.f;
+    if      (action === 'filter') { setFilter(f); }
+    else if (action === 'status') { cycleStatus(id); }
+    else if (action === 'load')   { loadEntry(id); }
+    else if (action === 'dlmd')   { dlEntry(id, 'md'); }
+    else if (action === 'dltxt')  { dlEntry(id, 'txt'); }
+    else if (action === 'del')    { deleteEntry(id); }
+  };
+}
+
+function persist() {
+  localStorage.setItem(SK, JSON.stringify(S));
+  setSyncDot('pending');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(autoSave, 2000);
+}
+
+function setSyncDot(state) {
+  var labels = {local:'&#9899; Local',pending:'&#128993; En attente',ok:'&#128994; Sync &#10003;',error:'&#128308; Erreur'};
+  document.getElementById('sync-dot').innerHTML = labels[state] || '&#9899; Local';
+}
+
+var DRIVE_FILE = 'us-generator.json';
+function initDrive() {
+  if (!window.google) { setTimeout(initDrive, 500); return; }
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID, scope: SCOPE,
+    callback: function(resp) {
+      if (resp.error) { setSyncDot('error'); return; }
+      accessToken = resp.access_token;
+      sessionStorage.setItem(TOK, accessToken);
+      updateDriveUI(true);
+      pushToDrive();
+    }
+  });
+  if (accessToken) updateDriveUI(true);
+}
+function handleDriveBtn() {
+  if (!tokenClient) { toast('Drive non initialise'); return; }
+  if (accessToken) { pushToDrive(); toast('Synchronisation...'); }
+  else tokenClient.requestAccessToken();
+}
+function updateDriveUI(connected) {
+  document.getElementById('drive-status-label').textContent = connected ? 'Connecte a Google Drive' : 'Non connecte a Drive';
+  document.getElementById('drive-action-btn').textContent   = connected ? 'Sync maintenant' : 'Connecter';
+  document.getElementById('pull-btn').style.display         = connected ? '' : 'none';
+}
+function pushToDrive() {
+  if (!accessToken) return;
+  setSyncDot('pending');
+  var body = JSON.stringify(S);
+  findDriveFile().then(function(fid) {
+    driveFileId = fid;
+    var url = fid
+      ? 'https://www.googleapis.com/upload/drive/v3/files/' + fid + '?uploadType=media'
+      : null;
+    if (url) {
+      return fetch(url, {method:'PATCH',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:body});
+    }
+    return fetch('https://www.googleapis.com/drive/v3/files', {
+      method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
+      body:JSON.stringify({name:DRIVE_FILE,mimeType:'application/json'})
+    }).then(function(r){return r.json();}).then(function(m){
+      driveFileId = m.id;
+      return fetch('https://www.googleapis.com/upload/drive/v3/files/'+driveFileId+'?uploadType=media',
+        {method:'PATCH',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:body});
+    });
+  }).then(function(){setSyncDot('ok');}).catch(function(){setSyncDot('error');});
+}
+function pullFromDrive() {
+  if (!accessToken) return;
+  findDriveFile().then(function(fid) {
+    if (!fid) { toast('Aucun fichier Drive'); return; }
+    driveFileId = fid;
+    return fetch('https://www.googleapis.com/drive/v3/files/'+fid+'?alt=media',
+      {headers:{Authorization:'Bearer '+accessToken}}).then(function(r){return r.json();});
+  }).then(function(data) {
+    if (!data) return;
+    S = data; ensureState();
+    localStorage.setItem(SK, JSON.stringify(S));
+    renderHistory(); setSyncDot('ok'); toast('Donnees Drive chargees');
+  }).catch(function(){setSyncDot('error');toast('Erreur Drive');});
+}
+function findDriveFile() {
+  var q = encodeURIComponent("name='" + DRIVE_FILE + "' and trashed=false");
+  return fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id)',
+    {headers:{Authorization:'Bearer '+accessToken}})
+    .then(function(r){return r.json();})
+    .then(function(d){return d.files && d.files[0] ? d.files[0].id : null;});
+}
+function autoSave() {
+  if (accessToken) pushToDrive(); else setSyncDot('local');
+}
+
+function toggleHelp() {
+  var t = document.getElementById('help-toggle');
+  var b = document.getElementById('help-body');
+  var open = b.classList.toggle('open');
+  t.classList.toggle('open', open);
+}
+
+function toast(msg) {
+  var el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(function(){el.classList.remove('show');}, 2400);
+}
+
+applyTheme(localStorage.getItem(TK) || 'light');
+load();
+</script>
+</body>
+</html>
