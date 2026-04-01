@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pattern Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── Tokens ── */
+:root {
+  --bg:      #F7F6F3;
+  --surface: #FFFFFF;
+  --border:  #E5E3DE;
+  --text:    #1A1917;
+  --muted:   #7A7671;
+  --accent:  #1A1917;
+  --green:   #16A34A;
+  --amber:   #D97706;
+  --red:     #DC2626;
+  --blue:    #2563EB;
+  --radius:  6px;
+  --mono:    'Geist Mono', monospace;
+}
+[data-theme="sand"] {
+  --bg:#F8F7FF; --surface:#FFFFFF; --border:#E2E0F0;
+  --text:#1A1830; --muted:#6B6880; --accent:#4F46E5;
+}
+[data-theme="navy"] {
+  --bg:#161925; --surface:#1F2437; --border:#2D3348;
+  --text:#E8EAF0; --muted:#8890A8; --accent:#818CF8;
+  --green:#34D399; --amber:#FCD34D; --red:#F87171; --blue:#60A5FA;
+}
+[data-theme="dark"] {
+  --bg:#111113; --surface:#1C1C1E; --border:#2C2C2E;
+  --text:#F5F5F7; --muted:#8E8E93; --accent:#A78BFA;
+  --green:#34D399; --amber:#FCD34D; --red:#F87171; --blue:#60A5FA;
+}
+
+/* ── Freq colors ── */
+.freq-quotidien { color:#16A34A; border-color:#16A34A; }
+.freq-hebdo     { color:#2563EB; border-color:#2563EB; }
+.freq-occasionnel { color:#D97706; border-color:#D97706; }
+[data-theme="navy"] .freq-quotidien,[data-theme="dark"] .freq-quotidien { color:#34D399; border-color:#34D399; }
+[data-theme="navy"] .freq-hebdo,    [data-theme="dark"] .freq-hebdo     { color:#60A5FA; border-color:#60A5FA; }
+[data-theme="navy"] .freq-occasionnel,[data-theme="dark"] .freq-occasionnel { color:#FCD34D; border-color:#FCD34D; }
+
+/* ── Reset ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-family:'Geist',sans-serif;font-size:15px;background:var(--bg);color:var(--text);}
+body{min-height:100vh;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;}
+input,textarea,select{font-family:inherit;background:var(--bg);color:var(--text);color-scheme:light;}
+[data-theme="navy"] input,[data-theme="navy"] textarea,[data-theme="navy"] select,
+[data-theme="dark"] input,[data-theme="dark"] textarea,[data-theme="dark"] select{color-scheme:dark;}
+
+/* ── Header ── */
+.header{
+  position:sticky;top:0;z-index:100;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 16px;height:52px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.header-left{display:flex;align-items:center;gap:12px;}
+.app-title{font-size:14px;font-weight:500;letter-spacing:-0.01em;}
+.sync-dot{font-size:12px;color:var(--muted);}
+.header-right{display:flex;align-items:center;gap:8px;}
+.icon-btn{
+  width:32px;height:32px;border-radius:var(--radius);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;color:var(--muted);transition:background .15s;
+}
+.icon-btn:hover{background:var(--border);color:var(--text);}
+
+/* ── Tabs ── */
+.tabs{
+  position:sticky;top:52px;z-index:99;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;padding:0 16px;
+}
+.tab{
+  padding:10px 16px;font-size:13px;font-weight:400;color:var(--muted);
+  border-bottom:2px solid transparent;cursor:pointer;transition:color .15s;
+}
+.tab.active{color:var(--text);font-weight:500;border-bottom-color:var(--accent);}
+
+/* ── Page ── */
+.page{max-width:900px;margin:0 auto;padding:20px 16px 80px;}
+.section{display:none;}
+.section.active{display:block;}
+
+/* ── Form card ── */
+.form-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px;margin-bottom:20px;
+}
+.form-title{font-size:13px;font-weight:500;margin-bottom:14px;color:var(--text);}
+.field{margin-bottom:12px;}
+.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;font-weight:500;}
+.field input,.field textarea,.field select{
+  width:100%;padding:8px 10px;border:1px solid var(--border);
+  border-radius:var(--radius);font-size:13px;
+  background:var(--bg);color:var(--text);outline:none;
+  transition:border-color .15s;
+}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--accent);}
+.field textarea{resize:vertical;min-height:70px;line-height:1.5;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:600px){.field-row{grid-template-columns:1fr;}}
+
+/* ── Tags input ── */
+.tags-wrap{
+  display:flex;flex-wrap:wrap;gap:6px;align-items:center;
+  padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);
+  background:var(--bg);min-height:38px;cursor:text;
+}
+.tags-wrap:focus-within{border-color:var(--accent);}
+.tag-chip{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:12px;font-family:var(--mono);
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:4px;padding:2px 6px;
+}
+.tag-chip button{font-size:10px;color:var(--muted);padding:0;line-height:1;}
+.tag-chip button:hover{color:var(--red);}
+.tag-input{
+  border:none;outline:none;background:transparent;
+  font-size:13px;color:var(--text);min-width:100px;flex:1;
+  color-scheme:light;
+}
+[data-theme="navy"] .tag-input,[data-theme="dark"] .tag-input{color-scheme:dark;}
+
+/* ── Freq buttons ── */
+.freq-btns{display:flex;gap:8px;flex-wrap:wrap;}
+.freq-btn{
+  padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500;
+  border:1px solid var(--border);color:var(--muted);
+  background:var(--surface);cursor:pointer;transition:all .15s;
+}
+.freq-btn.active-quotidien{color:#16A34A;border-color:#16A34A;background:transparent;}
+.freq-btn.active-hebdo    {color:#2563EB;border-color:#2563EB;background:transparent;}
+.freq-btn.active-occasionnel{color:#D97706;border-color:#D97706;background:transparent;}
+[data-theme="navy"] .freq-btn.active-quotidien,[data-theme="dark"] .freq-btn.active-quotidien{color:#34D399;border-color:#34D399;}
+[data-theme="navy"] .freq-btn.active-hebdo,    [data-theme="dark"] .freq-btn.active-hebdo    {color:#60A5FA;border-color:#60A5FA;}
+[data-theme="navy"] .freq-btn.active-occasionnel,[data-theme="dark"] .freq-btn.active-occasionnel{color:#FCD34D;border-color:#FCD34D;}
+
+/* ── Buttons ── */
+.btn{
+  padding:7px 14px;border-radius:var(--radius);
+  font-size:13px;font-weight:500;border:1px solid var(--border);
+  color:var(--text);background:var(--surface);transition:background .15s;
+}
+.btn:hover{background:var(--border);}
+.btn.primary{background:var(--accent);color:var(--bg);border-color:var(--accent);}
+.btn.primary:hover{opacity:.88;}
+.btn.sm{padding:5px 10px;font-size:12px;}
+.btn-row{display:flex;gap:8px;justify-content:flex-end;margin-top:4px;}
+
+/* ── Filter bar ── */
+.filter-bar{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+.filter-pill{
+  font-size:12px;padding:4px 12px;border-radius:20px;
+  border:1px solid var(--border);color:var(--muted);
+  background:var(--surface);cursor:pointer;transition:all .15s;
+}
+.filter-pill.active{background:var(--accent);color:var(--bg);border-color:var(--accent);}
+.filter-count{font-size:11px;color:var(--muted);margin-left:auto;}
+
+/* ── Pattern cards ── */
+.pattern-list{display:flex;flex-direction:column;gap:10px;}
+.pattern-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px;
+}
+.pattern-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+.pattern-info{flex:1;min-width:0;}
+.pattern-type{font-size:14px;font-weight:500;margin-bottom:4px;}
+.pattern-meta{font-size:12px;color:var(--muted);margin-bottom:8px;}
+.freq-badge{
+  display:inline-flex;align-items:center;font-size:11px;font-weight:500;
+  padding:2px 8px;border-radius:20px;border:1px solid;margin-right:6px;
+}
+.pattern-sections{font-size:12px;color:var(--muted);margin-bottom:6px;}
+.pattern-sections b{color:var(--text);font-weight:500;}
+.marker-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+.marker-chip{
+  font-size:11px;font-family:var(--mono);
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:4px;padding:1px 6px;color:var(--accent);
+}
+.pattern-note{font-size:12px;color:var(--muted);margin-top:8px;font-style:italic;line-height:1.5;}
+.pattern-actions{display:flex;gap:6px;flex-shrink:0;}
+
+/* ── Stats tab ── */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
+@media(max-width:600px){.stats-grid{grid-template-columns:1fr 1fr;}}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px;text-align:center;
+}
+.stat-num{font-size:28px;font-weight:500;letter-spacing:-0.02em;}
+.stat-label{font-size:11px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.04em;}
+.top-list{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.top-list-header{padding:10px 14px;font-size:12px;font-weight:500;color:var(--muted);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.04em;}
+.top-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px;
+}
+.top-item:last-child{border-bottom:none;}
+.top-rank{font-size:12px;color:var(--muted);width:18px;flex-shrink:0;}
+.top-name{flex:1;}
+.top-bar-wrap{width:80px;height:4px;background:var(--border);border-radius:2px;flex-shrink:0;}
+.top-bar{height:4px;border-radius:2px;background:var(--accent);}
+.markers-cloud{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;}
+.cloud-chip{
+  font-size:12px;font-family:var(--mono);
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:4px;padding:3px 8px;color:var(--accent);
+}
+
+/* ── Drive bar ── */
+.drive-bar{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);margin-bottom:16px;font-size:13px;
+}
+.drive-status{color:var(--muted);flex:1;}
+
+/* ── Empty ── */
+.empty{color:var(--muted);font-size:13px;padding:40px 0;text-align:center;}
+
+/* ── Toast ── */
+#toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);
+  background:var(--text);color:var(--bg);padding:8px 16px;border-radius:20px;font-size:13px;
+  opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <span class="app-title">Pattern Tracker</span>
+    <span class="sync-dot" id="sync-dot">&#9899; Local</span>
+  </div>
+  <div class="header-right">
+    <button class="icon-btn" title="Google Drive" onclick="handleDriveBtn()">&#9729;</button>
+    <button class="icon-btn" id="theme-btn" title="Theme" onclick="toggleTheme()">&#9788;&#65038;</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('capture')">Capture</div>
+  <div class="tab" onclick="switchTab('patterns')">Patterns</div>
+  <div class="tab" onclick="switchTab('stats')">Analyse</div>
+</div>
+
+<div class="page">
+
+  <!-- TAB: Capture -->
+  <div id="tab-capture" class="section active">
+    <div class="form-card">
+      <div class="form-title">Nouveau pattern de document</div>
+
+      <div class="field">
+        <label>Type de document *</label>
+        <input type="text" id="f-type" placeholder="ex : Compte rendu de reunion, Brief client, Rapport d'audit..." />
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Sections recurrentes</label>
+          <textarea id="f-sections" placeholder="ex : Contexte, Decisions, Actions, Prochaine reunion..."></textarea>
+        </div>
+        <div class="field">
+          <label>Notes libres</label>
+          <textarea id="f-note" placeholder="Ce qui rend ce document specifique, le contexte d'usage, les destinataires..."></textarea>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Marqueurs naturels <span style="font-weight:400;color:var(--muted)">(tapez et appuyez sur Entree ou virgule)</span></label>
+        <div class="tags-wrap" id="tags-wrap" onclick="document.getElementById('tag-input').focus()">
+          <input class="tag-input" id="tag-input" placeholder="ex : D: A: RISQ: REQ: OBJ:" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Frequence</label>
+        <div class="freq-btns">
+          <button class="freq-btn" data-f="quotidien"  onclick="setFreq('quotidien')">Quotidien</button>
+          <button class="freq-btn" data-f="hebdo"      onclick="setFreq('hebdo')">Hebdomadaire</button>
+          <button class="freq-btn" data-f="occasionnel" onclick="setFreq('occasionnel')">Occasionnel</button>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" onclick="resetForm()">Effacer</button>
+        <button class="btn primary" onclick="savePattern()">Enregistrer le pattern</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Patterns -->
+  <div id="tab-patterns" class="section">
+    <div class="drive-bar">
+      <span class="drive-status" id="drive-status-label">Non connecte a Drive</span>
+      <button class="btn sm" id="drive-action-btn" onclick="handleDriveBtn()">Connecter</button>
+      <button class="btn sm" onclick="pullFromDrive()" id="pull-btn" style="display:none">&#8595; Sync</button>
+    </div>
+    <div class="filter-bar" id="filter-bar">
+      <button class="filter-pill active" data-f="tous" onclick="setFilter('tous')">Tous</button>
+      <button class="filter-pill" data-f="quotidien" onclick="setFilter('quotidien')">Quotidien</button>
+      <button class="filter-pill" data-f="hebdo" onclick="setFilter('hebdo')">Hebdo</button>
+      <button class="filter-pill" data-f="occasionnel" onclick="setFilter('occasionnel')">Occasionnel</button>
+      <span class="filter-count" id="filter-count"></span>
+    </div>
+    <div id="pattern-list">
+      <p class="empty">Aucun pattern enregistre.<br>Commencez par l'onglet <b>Capture</b>.</p>
+    </div>
+  </div>
+
+  <!-- TAB: Stats -->
+  <div id="tab-stats" class="section">
+    <div id="stats-content">
+      <p class="empty">Pas encore de donnees. Capturez vos premiers patterns.</p>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+// ── Constants ─────────────────────────────────────────────────────────────────
+const APP     = 'pattern-tracker';
+const SK      = `td_v4_${APP}`;
+const TK      = `td_theme_${APP}`;
+const TOK_KEY = `td_tok_${APP}`;
+const CLIENT_ID = '962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com';
+const SCOPE   = 'https://www.googleapis.com/auth/drive.file';
+const THEMES  = ['light','sand','navy','dark'];
+const ICONS   = {light:'&#9788;&#65038;',sand:'&#9675;',navy:'&#9681;',dark:'&#9790;'};
+const FREQ_LABEL = { quotidien:'Quotidien', hebdo:'Hebdo', occasionnel:'Occasionnel' };
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let S = { patterns: [] };
+let driveFileId = null;
+let tokenClient = null;
+let accessToken = sessionStorage.getItem(TOK_KEY) || null;
+let saveTimer   = null;
+let currentFilter = 'tous';
+let currentTags = [];
+let currentFreq = '';
+let editingId   = null;
+
+function ensureState() {
+  if (!Array.isArray(S.patterns)) S.patterns = [];
+}
+
+function load() {
+  try { const r = localStorage.getItem(SK); if (r) S = JSON.parse(r); } catch(e) {}
+  ensureState();
+  renderPatterns();
+  renderStats();
+  initDrive();
+}
+
+// ── Theme ─────────────────────────────────────────────────────────────────────
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t==='light' ? '' : t);
+  document.getElementById('theme-btn').innerHTML = ICONS[t] || '&#9788;&#65038;';
+  localStorage.setItem(TK, t);
+}
+function toggleTheme() {
+  const cur = localStorage.getItem(TK) || 'light';
+  applyTheme(THEMES[(THEMES.indexOf(cur)+1) % THEMES.length]);
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach((t,i) =>
+    t.classList.toggle('active', ['capture','patterns','stats'][i] === id));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(`tab-${id}`).classList.add('active');
+  if (id === 'stats') renderStats();
+}
+
+// ── Tags input ────────────────────────────────────────────────────────────────
+function renderTags() {
+  const wrap = document.getElementById('tags-wrap');
+  const input = document.getElementById('tag-input');
+  wrap.querySelectorAll('.tag-chip').forEach(c => c.remove());
+  currentTags.forEach((tag, i) => {
+    const chip = document.createElement('span');
+    chip.className = 'tag-chip';
+    chip.innerHTML = `${esc(tag)}<button onclick="removeTag(${i})" title="Supprimer">x</button>`;
+    wrap.insertBefore(chip, input);
+  });
+}
+
+function addTag(val) {
+  const t = val.trim().replace(/,$/,'').trim();
+  if (t && !currentTags.includes(t)) { currentTags.push(t); renderTags(); }
+}
+
+function removeTag(i) {
+  currentTags.splice(i, 1);
+  renderTags();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('tag-input');
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      addTag(input.value);
+      input.value = '';
+    } else if (e.key === 'Backspace' && !input.value && currentTags.length) {
+      currentTags.pop();
+      renderTags();
+    }
+  });
+  input.addEventListener('blur', () => {
+    if (input.value.trim()) { addTag(input.value); input.value = ''; }
+  });
+});
+
+// ── Freq ──────────────────────────────────────────────────────────────────────
+function setFreq(f) {
+  currentFreq = f;
+  document.querySelectorAll('.freq-btn').forEach(b => {
+    b.className = 'freq-btn' + (b.dataset.f === f ? ` active-${f}` : '');
+  });
+}
+
+// ── Form ──────────────────────────────────────────────────────────────────────
+function resetForm() {
+  document.getElementById('f-type').value = '';
+  document.getElementById('f-sections').value = '';
+  document.getElementById('f-note').value = '';
+  document.getElementById('tag-input').value = '';
+  currentTags = []; currentFreq = ''; editingId = null;
+  renderTags();
+  document.querySelectorAll('.freq-btn').forEach(b => b.className = 'freq-btn');
+  document.querySelector('.form-title').textContent = 'Nouveau pattern de document';
+  document.querySelector('.btn.primary').textContent = 'Enregistrer le pattern';
+}
+
+function savePattern() {
+  const type = document.getElementById('f-type').value.trim();
+  if (!type) { toast('Le type de document est obligatoire'); return; }
+
+  const entry = {
+    id:       editingId || Date.now(),
+    type,
+    sections: document.getElementById('f-sections').value.trim(),
+    note:     document.getElementById('f-note').value.trim(),
+    markers:  [...currentTags],
+    freq:     currentFreq || 'occasionnel',
+    savedAt:  new Date().toLocaleDateString('fr-FR'),
+  };
+
+  if (editingId) {
+    const idx = S.patterns.findIndex(p => p.id === editingId);
+    if (idx !== -1) S.patterns[idx] = entry;
+    toast('Pattern mis a jour');
+  } else {
+    S.patterns.unshift(entry);
+    toast('Pattern enregistre');
+  }
+
+  persist();
+  renderPatterns();
+  renderStats();
+  resetForm();
+  switchTab('patterns');
+}
+
+function editPattern(id) {
+  const p = S.patterns.find(x => x.id === id);
+  if (!p) return;
+  editingId = id;
+  document.getElementById('f-type').value     = p.type;
+  document.getElementById('f-sections').value = p.sections;
+  document.getElementById('f-note').value     = p.note;
+  currentTags = [...p.markers];
+  currentFreq = p.freq;
+  renderTags();
+  setFreq(p.freq);
+  document.querySelector('.form-title').textContent = 'Modifier le pattern';
+  document.querySelector('.btn.primary').textContent = 'Mettre a jour';
+  switchTab('capture');
+  window.scrollTo(0,0);
+}
+
+function deletePattern(id) {
+  S.patterns = S.patterns.filter(p => p.id !== id);
+  persist();
+  renderPatterns();
+  renderStats();
+  toast('Pattern supprime');
+}
+
+// ── Filter ────────────────────────────────────────────────────────────────────
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-pill').forEach(p =>
+    p.classList.toggle('active', p.dataset.f === f));
+  renderPatterns();
+}
+
+// ── Render patterns ───────────────────────────────────────────────────────────
+function renderPatterns() {
+  const el = document.getElementById('pattern-list');
+  const filtered = currentFilter === 'tous'
+    ? S.patterns
+    : S.patterns.filter(p => p.freq === currentFilter);
+
+  document.getElementById('filter-count').textContent =
+    `${filtered.length} / ${S.patterns.length} pattern${S.patterns.length !== 1 ? 's' : ''}`;
+
+  if (!filtered.length) {
+    el.innerHTML = `<p class="empty">${S.patterns.length ? 'Aucun pattern pour ce filtre.' : 'Aucun pattern enregistre.<br>Commencez par l\'onglet <b>Capture</b>.'}</p>`;
+    return;
+  }
+
+  el.innerHTML = `<div class="pattern-list">${filtered.map(p => {
+    const fc = `freq-${p.freq}`;
+    const markers = p.markers.map(m => `<span class="marker-chip">${esc(m)}</span>`).join('');
+    return `<div class="pattern-card">
+      <div class="pattern-card-top">
+        <div class="pattern-info">
+          <div class="pattern-type">${esc(p.type)}</div>
+          <div class="pattern-meta">
+            <span class="freq-badge ${fc}">${FREQ_LABEL[p.freq]||p.freq}</span>
+            Capture le ${p.savedAt}
+          </div>
+          ${p.sections ? `<div class="pattern-sections"><b>Sections :</b> ${esc(p.sections)}</div>` : ''}
+          ${markers ? `<div class="marker-chips">${markers}</div>` : ''}
+          ${p.note ? `<div class="pattern-note">${esc(p.note)}</div>` : ''}
+        </div>
+        <div class="pattern-actions">
+          <button class="btn sm" onclick="editPattern(${p.id})">Editer</button>
+          <button class="btn sm" style="color:var(--red)" onclick="deletePattern(${p.id})">&#10005;</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+// ── Render stats ──────────────────────────────────────────────────────────────
+function renderStats() {
+  const el = document.getElementById('stats-content');
+  if (!S.patterns.length) {
+    el.innerHTML = '<p class="empty">Pas encore de donnees. Capturez vos premiers patterns.</p>';
+    return;
+  }
+
+  const total = S.patterns.length;
+  const byFreq = { quotidien:0, hebdo:0, occasionnel:0 };
+  const markerCount = {};
+  S.patterns.forEach(p => {
+    byFreq[p.freq] = (byFreq[p.freq]||0) + 1;
+    p.markers.forEach(m => { markerCount[m] = (markerCount[m]||0) + 1; });
+  });
+
+  const quotidienPct = Math.round((byFreq.quotidien/total)*100);
+  const topMarkers = Object.entries(markerCount).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const maxCount = S.patterns.length;
+
+  // Top types by frequency score
+  const scored = S.patterns.map(p => ({
+    type: p.type,
+    score: p.freq === 'quotidien' ? 3 : p.freq === 'hebdo' ? 2 : 1
+  }));
+  const typeMap = {};
+  scored.forEach(s => { typeMap[s.type] = (typeMap[s.type]||0) + s.score; });
+  const topTypes = Object.entries(typeMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const maxScore = topTypes[0]?.[1] || 1;
+
+  el.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-num">${total}</div>
+        <div class="stat-label">Patterns captures</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color:var(--green)">${byFreq.quotidien}</div>
+        <div class="stat-label">Quotidiens</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color:var(--amber)">${quotidienPct}%</div>
+        <div class="stat-label">Usage quotidien</div>
+      </div>
+    </div>
+
+    <div class="top-list" style="margin-bottom:16px;">
+      <div class="top-list-header">Documents les plus frequents</div>
+      ${topTypes.map(([type, score], i) => `
+        <div class="top-item">
+          <span class="top-rank">${i+1}</span>
+          <span class="top-name">${esc(type)}</span>
+          <div class="top-bar-wrap"><div class="top-bar" style="width:${Math.round((score/maxScore)*100)}%"></div></div>
+        </div>`).join('')}
+    </div>
+
+    ${topMarkers.length ? `
+    <div class="top-list">
+      <div class="top-list-header">Marqueurs les plus utilises</div>
+      <div style="padding:12px 14px;">
+        <div class="markers-cloud">
+          ${topMarkers.map(([m, n]) => `<span class="cloud-chip">${esc(m)} <span style="color:var(--muted);font-family:inherit;">(${n})</span></span>`).join('')}
+        </div>
+      </div>
+    </div>` : ''}
+  `;
+}
+
+// ── Persist ───────────────────────────────────────────────────────────────────
+function persist() {
+  localStorage.setItem(SK, JSON.stringify(S));
+  setSyncDot('pending');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(autoSave, 2000);
+}
+
+function setSyncDot(state) {
+  const labels = {local:'&#9899; Local',pending:'&#128993; En attente',ok:'&#128994; Sync &#10003;',error:'&#128308; Erreur'};
+  document.getElementById('sync-dot').innerHTML = labels[state] || '&#9899; Local';
+}
+
+// ── Google Drive ──────────────────────────────────────────────────────────────
+const DRIVE_FILE = 'pattern-tracker.json';
+
+function initDrive() {
+  if (!window.google) { setTimeout(initDrive, 500); return; }
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID, scope: SCOPE,
+    callback: (resp) => {
+      if (resp.error) { setSyncDot('error'); return; }
+      accessToken = resp.access_token;
+      sessionStorage.setItem(TOK_KEY, accessToken);
+      updateDriveUI(true);
+      pushToDrive();
+    }
+  });
+  if (accessToken) updateDriveUI(true);
+}
+
+function handleDriveBtn() {
+  if (!tokenClient) { toast('Drive non initialise'); return; }
+  if (accessToken) { pushToDrive(); toast('Synchronisation...'); }
+  else tokenClient.requestAccessToken();
+}
+
+function updateDriveUI(connected) {
+  document.getElementById('drive-status-label').textContent =
+    connected ? 'Connecte a Google Drive' : 'Non connecte a Drive';
+  document.getElementById('drive-action-btn').textContent =
+    connected ? 'Sync maintenant' : 'Connecter';
+  document.getElementById('pull-btn').style.display = connected ? '' : 'none';
+}
+
+async function pushToDrive() {
+  if (!accessToken) return;
+  setSyncDot('pending');
+  try {
+    const body = JSON.stringify(S);
+    if (!driveFileId) driveFileId = await findDriveFile();
+    if (driveFileId) {
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`,
+        {method:'PATCH',headers:{Authorization:`Bearer ${accessToken}`,'Content-Type':'application/json'},body});
+    } else {
+      const m = await fetch('https://www.googleapis.com/drive/v3/files',
+        {method:'POST',headers:{Authorization:`Bearer ${accessToken}`,'Content-Type':'application/json'},
+        body:JSON.stringify({name:DRIVE_FILE,mimeType:'application/json'})}).then(r=>r.json());
+      driveFileId = m.id;
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`,
+        {method:'PATCH',headers:{Authorization:`Bearer ${accessToken}`,'Content-Type':'application/json'},body});
+    }
+    setSyncDot('ok');
+  } catch(e) { setSyncDot('error'); }
+}
+
+async function pullFromDrive() {
+  if (!accessToken) return;
+  try {
+    const id = driveFileId || await findDriveFile();
+    if (!id) { toast('Aucun fichier Drive trouve'); return; }
+    driveFileId = id;
+    const res  = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`,
+      {headers:{Authorization:`Bearer ${accessToken}`}});
+    const data = await res.json();
+    S = data; ensureState();
+    localStorage.setItem(SK, JSON.stringify(S));
+    renderPatterns(); renderStats();
+    setSyncDot('ok');
+    toast('Donnees Drive chargees');
+  } catch(e) { setSyncDot('error'); toast('Erreur Drive'); }
+}
+
+async function findDriveFile() {
+  const res = await fetch(
+    `https://www.googleapis.com/drive/v3/files?q=name='${DRIVE_FILE}' and trashed=false&fields=files(id)`,
+    {headers:{Authorization:`Bearer ${accessToken}`}});
+  const data = await res.json();
+  return data.files?.[0]?.id || null;
+}
+
+function autoSave() {
+  if (accessToken) pushToDrive();
+  else setSyncDot('local');
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+applyTheme(localStorage.getItem(TK) || 'light');
+load();
+</script>
+</body>
+</html>
