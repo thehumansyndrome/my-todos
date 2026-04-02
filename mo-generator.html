@@ -174,27 +174,6 @@ textarea, input { font-family: inherit; background: var(--bg); color: var(--text
 .history-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
 .history-actions { display: flex; gap: 6px; flex-shrink: 0; }
 
-/* ── Status badge ── */
-.status-badge {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: 11px; font-weight: 500; padding: 2px 8px;
-  border-radius: 20px; border: 1px solid var(--border);
-  cursor: pointer; transition: opacity .15s; user-select: none; margin-top: 6px;
-}
-.status-badge:hover { opacity: .75; }
-.status-badge.brouillon { color: var(--amber); border-color: var(--amber); }
-.status-badge.finalise  { color: var(--green); border-color: var(--green); }
-.status-badge.archive   { color: var(--muted); border-color: var(--muted); }
-
-/* ── Filter pills ── */
-.filter-bar { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
-.filter-pill {
-  font-size: 12px; padding: 4px 12px; border-radius: 20px;
-  border: 1px solid var(--border); color: var(--muted);
-  background: var(--surface); cursor: pointer; transition: all .15s;
-}
-.filter-pill.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
-
 /* ── Drive section ── */
 .drive-bar {
   display: flex; align-items: center; gap: 10px;
@@ -349,7 +328,7 @@ textarea, input { font-family: inherit; background: var(--bg); color: var(--text
     <div class="drive-bar">
       <span class="drive-status" id="drive-status-label">Non connecté à Drive</span>
       <button class="btn sm" id="drive-action-btn" onclick="handleDriveBtn()">Connecter</button>
-      <button class="btn sm" onclick="pullFromDrive()" id="pull-btn" style="display:none">↓ Sync</button>
+      <button class="btn sm" onclick="pullFromDrive()" id="pull-btn" style="display:none">Load from Drive</button>
     </div>
     <div id="history-container">
       <p class="history-empty">Aucun mode opératoire enregistré.<br>Rédigez vos notes et cliquez sur <b>Enregistrer</b>.</p>
@@ -369,7 +348,7 @@ const APP       = 'mo-generator';
 const SK        = `td_v4_${APP}`;
 const TK        = `td_theme_${APP}`;
 const TOK_KEY   = `td_tok_${APP}`;
-const CLIENT_ID = '962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com';
+const CLIENT_ID = '396437854818-0csbts6dv9pb8l8u7bnlssk7cqb3njbo.apps.googleusercontent.com';
 const SCOPE     = 'https://www.googleapis.com/auth/drive.file';
 const THEMES    = ['light', 'sand', 'navy', 'dark'];
 const ICONS     = { light:'☀︎', sand:'○', navy:'◑', dark:'☾' };
@@ -608,7 +587,6 @@ function saveMO() {
     auteur:  mo.auteur,
     modifie: mo.modifie,
     etapes:  mo.etapes.length,
-    status:  'brouillon',
     raw,
     savedAt: new Date().toLocaleDateString('fr-FR'),
   };
@@ -635,56 +613,22 @@ function loadEntry(id) {
   toast('MO chargé dans l\'éditeur');
 }
 
-// ── Status ───────────────────────────────────────────────────────────────────
-const STATUS_CYCLE = { brouillon: 'finalise', finalise: 'archive', archive: 'brouillon' };
-const STATUS_LABEL = { brouillon: '🟡 Brouillon', finalise: '🟢 Finalisé', archive: '⚫ Archivé' };
-
-let currentFilter = 'tous';
-
-function cycleStatus(id) {
-  const e = S.history.find(x => x.id === id);
-  if (!e) return;
-  e.status = STATUS_CYCLE[e.status || 'brouillon'] || 'brouillon';
-  persist();
-  renderHistory();
-}
-
-function setFilter(f) {
-  currentFilter = f;
-  document.querySelectorAll('.filter-pill').forEach(p =>
-    p.classList.toggle('active', p.dataset.f === f));
-  renderHistory();
-}
-
 function renderHistory() {
   const el = document.getElementById('history-container');
   if (!S.history.length) {
     el.innerHTML = '<p class="history-empty">Aucun mode opératoire enregistré.<br>Rédigez vos notes et cliquez sur <b>Enregistrer</b>.</p>';
     return;
   }
-  const filtered = currentFilter === 'tous'
-    ? S.history
-    : S.history.filter(e => (e.status || 'brouillon') === currentFilter);
-
-  const pills = ['tous','brouillon','finalise','archive'].map(f =>
-    `<button class="filter-pill${currentFilter===f?' active':''}" data-f="${f}" onclick="setFilter('${f}')">${
-      f==='tous'?'Tous':STATUS_LABEL[f]
-    }</button>`).join('');
-
-  el.innerHTML = `<div class="filter-bar">${pills}</div>` +
-    (filtered.length ? `<div class="history-list">${filtered.map(e => {
-    const st = e.status || 'brouillon';
-    return `
+  el.innerHTML = `<div class="history-list">${S.history.map(e => `
     <div class="history-card">
       <div class="history-card-top">
-        <div style="flex:1;min-width:0;">
+        <div>
           <div class="history-title">${esc(e.titre)}</div>
           <div class="history-meta">
             ${e.auteur ? `${esc(e.auteur)} · ` : ''}
             ${e.modifie ? `modifié ${esc(e.modifie)} · ` : ''}
             ${e.etapes} étape${e.etapes > 1 ? 's' : ''} · enregistré ${e.savedAt}
           </div>
-          <span class="status-badge ${st}" onclick="cycleStatus(${e.id})" title="Cliquer pour changer le statut">${STATUS_LABEL[st]}</span>
         </div>
         <div class="history-actions">
           <button class="btn sm" onclick="loadEntry(${e.id})">Éditer</button>
@@ -694,8 +638,7 @@ function renderHistory() {
           <button class="btn sm" style="color:var(--red)" onclick="deleteEntry(${e.id})">✕</button>
         </div>
       </div>
-    </div>`;}).join('')}</div>`
-    : `<p class="history-empty">Aucun élément pour ce filtre.</p>`);
+    </div>`).join('')}</div>`;
 }
 
 function dlEntry(id, fmt) {
@@ -767,7 +710,7 @@ function initDrive() {
 
 function handleDriveBtn() {
   if (!tokenClient) { toast('Drive non initialisé'); return; }
-  if (accessToken) { pushToDrive(); toast('Synchronisation…'); }
+  if (accessToken) { pushToDrive(); toast('Send to Drive...'); }
   else tokenClient.requestAccessToken();
 }
 
@@ -775,7 +718,7 @@ function updateDriveUI(connected) {
   document.getElementById('drive-status-label').textContent =
     connected ? 'Connecté à Google Drive' : 'Non connecté à Drive';
   document.getElementById('drive-action-btn').textContent =
-    connected ? 'Sync maintenant' : 'Connecter';
+    connected ? 'Send to Drive' : 'Connecter';
   document.getElementById('pull-btn').style.display = connected ? '' : 'none';
 }
 
