@@ -823,6 +823,9 @@ div:hover>.item-img-del{display:block;}
 .attach-btn{background:none;border:none;cursor:pointer;font-size:14px;padding:0 3px;opacity:.4;transition:opacity .15s;flex-shrink:0;margin-top:1px;}
 .attach-btn:hover{opacity:1;}
 .attach-btn.has-attach{opacity:.85;}
+.img-btn{background:none;border:none;cursor:pointer;font-size:13px;padding:0 3px;opacity:.4;transition:opacity .15s;flex-shrink:0;margin-top:1px;}
+.img-btn:hover{opacity:1;}
+.img-btn.has-img{opacity:.85;}
 .attach-add-row{display:flex;gap:6px;margin-top:6px;}
 .attach-add-in{
   flex:1;font-family:var(--sans);font-size:12px;
@@ -2765,6 +2768,8 @@ function todoItemHtml(t){
     </div>
     <button class="attach-btn${t.attachments&&t.attachments.length?' has-attach':''}" onclick="toggleAttachments('${t.id}')" title="Pièces jointes">📎</button>
     <button class="comment-btn${hasComment?' has-comment':''}" onclick="toggleComment('${t.id}')" title="${hasComment?'Voir le commentaire':'Ajouter un commentaire'}">💬</button>
+    <button class="img-btn${t.images&&t.images.length?' has-img':''}" onclick="todoImgPick('${t.id}')" title="Ajouter une image">🖼</button>
+    <input type="file" id="img-pick-${t.id}" accept="image/*" style="display:none" onchange="todoImgPickFile(this,'${t.id}')">
     <button class="edit-btn" onclick="openEdit('${t.id}')" title="Modifier">✎</button>
     <button class="del" onclick="delTodo('${t.id}')">×</button>
   </div>`;
@@ -2855,6 +2860,28 @@ async function archiveDone(){
   autoSave();renderTodos();
   toast('✓ '+doneItems.length+' tâche(s) archivée(s) → projet001-archive.json');
   logA('drive','Archive → '+ARCHIVE_FILENAME+' ('+doneItems.length+' tâches)');
+}
+
+function todoImgPick(id){
+  const inp=document.getElementById('img-pick-'+id);
+  if(inp) inp.click();
+}
+async function todoImgPickFile(input, id){
+  const file=input.files&&input.files[0];
+  if(!file)return;
+  input.value='';
+  const t=S.todos.find(x=>x.id===id);
+  if(!t)return;
+  if(!t.images) t.images=[];
+  const b64=await compressImage(file);
+  const imgObj={type:'base64',src:b64};
+  t.images.push(imgObj);
+  autoSave();renderTodos();
+  toast('📎 Image ajoutée');
+  uploadImgToDrive(b64).then(obj=>{
+    const idx=t.images.indexOf(imgObj);
+    if(idx>=0){ t.images[idx]=obj; autoSave(); }
+  });
 }
 
 function renderTodos(){
