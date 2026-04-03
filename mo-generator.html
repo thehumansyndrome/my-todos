@@ -301,6 +301,7 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
             <button class="btn sm" onclick="downloadFile('txt')">↓ .txt</button>
             <button class="btn sm primary editor-edit-btn" onclick="saveMO()">Enregistrer</button>
             <button class="btn sm editor-edit-btn" style="color:var(--amber);border-color:var(--amber)" onclick="submitMO()">Soumettre</button>
+            <button class="btn sm editor-edit-btn" style="color:var(--green);border-color:var(--green)" onclick="validateMO()">✓ Valider</button>
           </div>
         </div>
         <div class="preview-area" id="preview"></div>
@@ -977,6 +978,17 @@ function submitMO() {
   e.status = 'validation';
   persist(); renderHistory(); renderEditorMeta();
   toast('✓ Enregistré et soumis en validation');
+}
+
+function validateMO() {
+  saveMO();
+  const e = S.history.find(x => x.id === curEntryId);
+  if (!e) return;
+  if (e.status === 'archive') { toast('MO archivé — désarchivez d\'abord'); return; }
+  e.status = 'valide';
+  e.publishedAt = new Date().toLocaleString('fr-FR');
+  persist(); renderHistory(); renderEditorMeta(); updateLockBanner();
+  toast('✓ MO validé et verrouillé');
 }
 
 // ── History render ────────────────────────────────────────────────────────────
