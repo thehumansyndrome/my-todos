@@ -997,9 +997,11 @@ function cycleBlUsStatus(blId, usId) {
   var bl=S.backlogs.find(function(b){return b.id===blId;});
   if (!bl) return;
   if (!bl.usStatus) bl.usStatus={};
+  if (!bl.usUpdatedAt) bl.usUpdatedAt={};
   var cur=bl.usStatus[usId]||'todo';
   var cycle={todo:'inprogress',inprogress:'done',done:'todo'};
   bl.usStatus[String(usId)]=cycle[cur]||'todo';
+  bl.usUpdatedAt[String(usId)]=new Date().toISOString();
   persist(); renderBacklogs();
 }
 
@@ -1637,22 +1639,14 @@ function renderBurndown(bl) {
   if (!el) return;
   if (!bl || !bl.dateCible) { el.innerHTML = ''; return; }
 
+  // Compute total points and per-US estimates
+  var usEst = {};
   var totalPts = 0;
   bl.usIds.forEach(function(uid) {
     var u = S.history.find(function(x){return x.id===uid;});
-    if (u&&u.raw){var up=parse(u.raw);if(up.est&&!isNaN(parseInt(up.est)))totalPts+=parseInt(up.est);}
+    if (u&&u.raw){var up=parse(u.raw);var e=parseInt(up.est);if(!isNaN(e)&&e>0){usEst[String(uid)]=e;totalPts+=e;}}
   });
   if (!totalPts) { el.innerHTML = ''; return; }
-
-  var donePts = 0;
-  bl.usIds.forEach(function(uid) {
-    var st=(bl.usStatus&&(bl.usStatus[uid]||bl.usStatus[String(uid)]))||'todo';
-    if (st==='done') {
-      var u=S.history.find(function(x){return x.id===uid;});
-      if(u&&u.raw){var up=parse(u.raw);if(up.est&&!isNaN(parseInt(up.est)))donePts+=parseInt(up.est);}
-    }
-  });
-  var remainingPts = totalPts - donePts;
 
   var startDate = bl.startDate ? new Date(bl.startDate) : null;
   var endDate   = new Date(bl.dateCible);
@@ -1667,16 +1661,52 @@ function renderBurndown(bl) {
   var totalDays = Math.max(1, Math.round((endDate - startDate) / 86400000));
   var elapsedDays = Math.min(totalDays, Math.max(0, Math.round((today - startDate) / 86400000)));
 
+  // Build completion events from usUpdatedAt timestamps
+  var updatedAt = bl.usUpdatedAt || {};
+  var usStatus  = bl.usStatus    || {};
+  var events = [];
+  bl.usIds.forEach(function(uid) {
+    var st = usStatus[uid] || usStatus[String(uid)] || 'todo';
+    if (st !== 'done') return;
+    var pts = usEst[String(uid)]; if (!pts) return;
+    var ts = updatedAt[uid] || updatedAt[String(uid)];
+    var eventDay;
+    if (ts) {
+      var d = new Date(ts); d.setHours(0,0,0,0);
+      eventDay = Math.round((d - startDate) / 86400000);
+      if (eventDay < 0) eventDay = 0;
+      if (eventDay > elapsedDays) eventDay = elapsedDays;
+    } else {
+      eventDay = elapsedDays; // legacy: no timestamp, credit today
+    }
+    events.push({day: eventDay, pts: pts});
+  });
+
+  // Build actual burndown polyline: remaining pts per significant day
+  events.sort(function(a,b){return a.day-b.day;});
+  var actualPoints = [{day:0, remaining:totalPts}];
+  var cumDone = 0;
+  var eIdx = 0;
+  for (var dd = 1; dd <= elapsedDays; dd++) {
+    var changed = false;
+    while (eIdx < events.length && events[eIdx].day <= dd) {
+      cumDone += events[eIdx].pts;
+      eIdx++;
+      changed = true;
+    }
+    if (changed || dd === elapsedDays) {
+      actualPoints.push({day: dd, remaining: totalPts - cumDone});
+    }
+  }
+
+  var donePts = cumDone;
+  var remainingPts = totalPts - donePts;
+
   var W = 560, H = 180, PL = 36, PR = 12, PT = 12, PB = 28;
   var gW = W - PL - PR, gH = H - PT - PB;
 
   function xOf(day) { return PL + (day / totalDays) * gW; }
-  function yOf(pts) { return PT + (pts / totalPts) * gH; }
-
-  var idealX1 = xOf(0),        idealY1 = yOf(0);
-  var idealX2 = xOf(totalDays), idealY2 = yOf(totalPts);
-  var actualX = xOf(elapsedDays), actualY = yOf(remainingPts);
-  var todayX  = xOf(elapsedDays);
+  function yOf(pts) { return PT + ((totalPts - pts) / totalPts) * gH; }
 
   var pct = Math.round((donePts / totalPts) * 100);
   var behindPts = Math.round(elapsedDays / totalDays * totalPts) - donePts;
@@ -1701,15 +1731,28 @@ function renderBurndown(bl) {
     dayLabels += '<text x="'+lx+'" y="'+(H-PT+2)+'" font-size="9" fill="var(--muted)" text-anchor="middle">'+lbl+'</text>';
   }
 
+  // Ideal line: totalPts at day 0 down to 0 at day totalDays
+  var idealLine = '<line x1="'+xOf(0)+'" y1="'+yOf(totalPts)+'" x2="'+xOf(totalDays)+'" y2="'+yOf(0)+'" stroke="var(--muted)" stroke-width="1" stroke-dasharray="4 3" opacity="0.5"/>';
+
+  // Today vertical line
+  var todayX = xOf(elapsedDays);
+  var todayLine = '<line x1="'+todayX+'" y1="'+PT+'" x2="'+todayX+'" y2="'+(H-PB)+'" stroke="var(--blue)" stroke-width="0.8" stroke-dasharray="3 2" opacity="0.6"/>';
+
+  // Actual burndown as step polyline
+  var polyPts = actualPoints.map(function(p){ return xOf(p.day)+','+yOf(p.remaining); }).join(' ');
+  var actualLine = '<polyline points="'+polyPts+'" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>';
+
+  // Dot + label at last known point
+  var lastPt = actualPoints[actualPoints.length-1];
+  var dotX = xOf(lastPt.day), dotY = yOf(lastPt.remaining);
+  var dot = '<circle cx="'+dotX+'" cy="'+dotY+'" r="4" fill="var(--accent)"/>';
+  var dotLabel = '<text x="'+(dotX+6)+'" y="'+(dotY-6)+'" font-size="10" fill="var(--text)" font-weight="500">'+remainingPts+' pts</text>';
+
   var svg = '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">'
     + gridLines + dayLabels
     + '<line x1="'+PL+'" y1="'+PT+'" x2="'+PL+'" y2="'+(H-PB)+'" stroke="var(--border)" stroke-width="0.5"/>'
     + '<line x1="'+PL+'" y1="'+(H-PB)+'" x2="'+(W-PR)+'" y2="'+(H-PB)+'" stroke="var(--border)" stroke-width="0.5"/>'
-    + '<line x1="'+idealX1+'" y1="'+idealY1+'" x2="'+idealX2+'" y2="'+idealY2+'" stroke="var(--muted)" stroke-width="1" stroke-dasharray="4 3" opacity="0.5"/>'
-    + '<line x1="'+todayX+'" y1="'+PT+'" x2="'+todayX+'" y2="'+(H-PB)+'" stroke="var(--blue)" stroke-width="0.8" stroke-dasharray="3 2" opacity="0.6"/>'
-    + '<line x1="'+xOf(0)+'" y1="'+yOf(0)+'" x2="'+actualX+'" y2="'+actualY+'" stroke="var(--accent)" stroke-width="2"/>'
-    + '<circle cx="'+actualX+'" cy="'+actualY+'" r="4" fill="var(--accent)"/>'
-    + '<text x="'+(actualX+6)+'" y="'+(actualY-6)+'" font-size="10" fill="var(--text)" font-weight="500">'+remainingPts+' pts</text>'
+    + idealLine + todayLine + actualLine + dot + dotLabel
     + '</svg>';
 
   el.innerHTML = '<div class="burndown">'
@@ -1857,8 +1900,10 @@ function bindKanbanEvents(board, blId) {
     var bl2 = S.backlogs.find(function(b) { return b.id === blId2; });
     if (!bl2) return;
     if (!bl2.usStatus) bl2.usStatus = {};
+    if (!bl2.usUpdatedAt) bl2.usUpdatedAt = {};
     var cur = bl2.usStatus[usId] || 'todo';
     bl2.usStatus[String(usId)] = cur === 'todo' ? 'inprogress' : 'done';
+    bl2.usUpdatedAt[String(usId)] = new Date().toISOString();
     persist(); renderKanban(); renderBacklogs();
   };
 
@@ -1901,7 +1946,9 @@ function bindKanbanEvents(board, blId) {
     var bl2 = S.backlogs.find(function(b) { return b.id === blId; });
     if (!bl2) return;
     if (!bl2.usStatus) bl2.usStatus = {};
+    if (!bl2.usUpdatedAt) bl2.usUpdatedAt = {};
     bl2.usStatus[uid] = newStatus;
+    bl2.usUpdatedAt[String(uid)] = new Date().toISOString();
     persist(); renderKanban(); renderBacklogs();
   });
 
@@ -1945,7 +1992,9 @@ function bindKanbanEvents(board, blId) {
       var bl2 = S.backlogs.find(function(b) { return b.id === blId; });
       if (bl2) {
         if (!bl2.usStatus) bl2.usStatus = {};
+        if (!bl2.usUpdatedAt) bl2.usUpdatedAt = {};
         bl2.usStatus[uid] = zone.dataset.col;
+        bl2.usUpdatedAt[String(uid)] = new Date().toISOString();
         persist(); renderKanban(); renderBacklogs();
       }
     }
