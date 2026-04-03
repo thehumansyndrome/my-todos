@@ -367,7 +367,7 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
     <div class="drive-bar">
       <span class="drive-status" id="drive-status-label">Non connecté à Drive</span>
       <button class="btn sm" id="drive-action-btn" onclick="handleDriveBtn()">Connecter</button>
-      <button class="btn sm" onclick="pullFromDrive()" id="pull-btn" style="display:none">↓ Sync</button>
+      <button class="btn sm" onclick="pullFromDrive()" id="pull-btn" style="display:none">Load from Drive</button>
     </div>
 
     <div class="filter-row">
@@ -1513,7 +1513,7 @@ function handleDriveBtn() {
 
 function updateDriveUI(connected) {
   document.getElementById('drive-status-label').textContent = connected ? 'Connecté à Google Drive' : 'Non connecté à Drive';
-  document.getElementById('drive-action-btn').textContent   = connected ? 'Sync maintenant' : 'Connecter';
+  document.getElementById('drive-action-btn').textContent   = connected ? 'Send to Drive' : 'Connecter';
   document.getElementById('pull-btn').style.display         = connected ? '' : 'none';
 }
 
