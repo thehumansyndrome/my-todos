@@ -2390,6 +2390,18 @@ function saveTodo(id){
   }
   // If hz filter is active and new hz doesn't match, switch to 'all' so task stays visible
   if(hzF !== 'all' && newHz !== hzF) hzF = 'all';
+  // Flush any pending pasted images for this item
+  const _pendTodo=pendingItemImgs['tab-todos']||[];
+  if(_pendTodo.length){
+    if(!t.images) t.images=[];
+    _pendTodo.forEach(src=>{
+      const imgObj={type:'base64',src};
+      t.images.push(imgObj);
+      uploadImgToDrive(src).then(obj=>{ const idx=t.images.indexOf(imgObj); if(idx>=0){t.images[idx]=obj;autoSave();} });
+    });
+    pendingItemImgs['tab-todos']=[];
+    renderPendingTabImgs('tab-todos');
+  }
   autoSave();closeEdit(id);renderTodos();logA('todo','Modifié: "'+txt+'"');
 }
 function toggleTodo(id){
@@ -3398,43 +3410,50 @@ document.addEventListener('paste',async function(e){
   for(const ci of clipItems){ if(ci.type.startsWith('image/')){ imgFile=ci.getAsFile(); break; } }
   if(!imgFile)return;
 
-  const activeTab=['tab-notes','tab-todos','tab-courses','tab-reminders'].find(id=>document.getElementById(id)&&document.getElementById(id).classList.contains('active'));
+  const activeTab=['tab-notes','tab-todos','tab-courses','tab-reminders'].find(
+    id=>document.getElementById(id)&&document.getElementById(id).classList.contains('active'));
   if(!activeTab)return;
 
+  e.preventDefault();
+
   if(activeTab==='tab-notes'){
-    e.preventDefault();
     handleNoteImgFiles([imgFile],'new');
     return;
   }
 
-  // For other tabs: find focused item via edit-form or any focused input inside an item
-  e.preventDefault();
+  // Compress first
   const b64=await compressImage(imgFile);
 
-  // Determine target item: look for open edit-form in the active tab
+  // Check if an edit-form is open for a specific item — attach directly to it
   const tabEl=document.getElementById(activeTab);
-  const openEdit=tabEl&&tabEl.querySelector('.edit-form.open, .edit-form[style*="block"]');
-  const itemEl=openEdit?openEdit.closest('[data-id]'):document.activeElement&&document.activeElement.closest('[data-id]');
-  const itemId=itemEl&&itemEl.dataset.id;
+  const openForm=tabEl&&tabEl.querySelector('.edit-form.open');
+  const openItemId=openForm?openForm.dataset.id:null;
 
-  const collectionMap={
-    'tab-todos':'todos',
-    'tab-courses':'courses',
-    'tab-reminders':'reminders'
-  };
+  const collectionMap={'tab-todos':'todos','tab-courses':'courses','tab-reminders':'reminders'};
   const collection=collectionMap[activeTab];
 
-  if(itemId&&collection){
-    // Attach to specific item
-    await attachImgToItem(b64, collection, itemId);
-    toast('📎 Image ajoutée');
-  } else {
-    // No specific item focused — store as pending for next add
-    if(!pendingItemImgs[activeTab]) pendingItemImgs[activeTab]=[];
-    pendingItemImgs[activeTab].push(b64);
-    toast('📎 Image copiée — elle sera attachée au prochain ajout');
-    renderPendingTabImgs(activeTab);
+  if(openItemId && collection){
+    // Attach directly to the item being edited
+    const item=S[collection].find(x=>x.id===openItemId);
+    if(item){
+      if(!item.images) item.images=[];
+      const imgObj={type:'base64',src:b64};
+      item.images.push(imgObj);
+      autoSave();renderAll();
+      uploadImgToDrive(b64).then(obj=>{
+        const idx=item.images.indexOf(imgObj);
+        if(idx>=0){ item.images[idx]=obj; autoSave(); }
+      });
+      toast('📎 Image ajoutée à la tâche');
+      return;
+    }
   }
+
+  // Otherwise: pending — shown in preview strip, attached on next Add
+  if(!pendingItemImgs[activeTab]) pendingItemImgs[activeTab]=[];
+  pendingItemImgs[activeTab].push(b64);
+  toast('📎 Image en attente — sera attachée au prochain ajout');
+  renderPendingTabImgs(activeTab);
 });
 
 function renderPendingTabImgs(tabKey){
@@ -3497,6 +3516,17 @@ function saveReminder(id){
   r.text=txt;
   r.date=document.getElementById('erd-'+id).value||null;
   r.recur=document.getElementById('err-'+id).value;
+  const _pendRem=pendingItemImgs['tab-reminders']||[];
+  if(_pendRem.length){
+    if(!r.images) r.images=[];
+    _pendRem.forEach(src=>{
+      const imgObj={type:'base64',src};
+      r.images.push(imgObj);
+      uploadImgToDrive(src).then(obj=>{ const idx=r.images.indexOf(imgObj); if(idx>=0){r.images[idx]=obj;autoSave();} });
+    });
+    pendingItemImgs['tab-reminders']=[];
+    renderPendingTabImgs('tab-reminders');
+  }
   autoSave();closeEdit(id);renderReminders();logA('reminder','Modifié: "'+txt+'"');
 }
 function toggleRem(id){
