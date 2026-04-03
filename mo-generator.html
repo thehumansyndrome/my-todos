@@ -3,237 +3,199 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MO Generator</title>
+<title>MO Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* ── Tokens ── */
 :root {
-  --bg:       #F7F6F3;
-  --surface:  #FFFFFF;
-  --border:   #E5E3DE;
-  --text:     #1A1917;
-  --muted:    #7A7671;
-  --accent:   #1A1917;
-  --green:    #16A34A;
-  --amber:    #D97706;
-  --red:      #DC2626;
-  --blue:     #2563EB;
-  --radius:   6px;
-  --mono:     'Geist Mono', monospace;
+  --bg:#F7F6F3; --surface:#FFFFFF; --border:#E5E3DE;
+  --text:#1A1917; --muted:#7A7671; --accent:#1A1917;
+  --green:#16A34A; --amber:#D97706; --red:#DC2626; --blue:#2563EB;
+  --radius:6px; --mono:'Geist Mono',monospace;
 }
 [data-theme="sand"] {
-  --bg: #F8F7FF; --surface: #FFFFFF; --border: #E2E0F0;
-  --text: #1A1830; --muted: #6B6880; --accent: #4F46E5;
+  --bg:#F8F7FF; --surface:#FFFFFF; --border:#E2E0F0;
+  --text:#1A1830; --muted:#6B6880; --accent:#4F46E5;
 }
 [data-theme="navy"] {
-  --bg: #161925; --surface: #1F2437; --border: #2D3348;
-  --text: #E8EAF0; --muted: #8890A8; --accent: #818CF8;
-  --green: #34D399; --amber: #FCD34D; --red: #F87171; --blue: #60A5FA;
+  --bg:#161925; --surface:#1F2437; --border:#2D3348;
+  --text:#E8EAF0; --muted:#8890A8; --accent:#818CF8;
+  --green:#34D399; --amber:#FCD34D; --red:#F87171; --blue:#60A5FA;
 }
 [data-theme="dark"] {
-  --bg: #111113; --surface: #1C1C1E; --border: #2C2C2E;
-  --text: #F5F5F7; --muted: #8E8E93; --accent: #A78BFA;
-  --green: #34D399; --amber: #FCD34D; --red: #F87171; --blue: #60A5FA;
+  --bg:#111113; --surface:#1C1C1E; --border:#2C2C2E;
+  --text:#F5F5F7; --muted:#8E8E93; --accent:#A78BFA;
+  --green:#34D399; --amber:#FCD34D; --red:#F87171; --blue:#60A5FA;
 }
 
-/* ── Reset ── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-family: 'Geist', sans-serif; font-size: 15px; background: var(--bg); color: var(--text); }
-body { min-height: 100vh; }
-button { font-family: inherit; cursor: pointer; border: none; background: none; }
-textarea, input { font-family: inherit; background: var(--bg); color: var(--text); color-scheme: light; }
-[data-theme="navy"] textarea, [data-theme="navy"] input,
-[data-theme="dark"]  textarea, [data-theme="dark"]  input { color-scheme: dark; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-family:'Geist',sans-serif;font-size:15px;background:var(--bg);color:var(--text);}
+body{min-height:100vh;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;}
+textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text);color-scheme:light;border:1px solid var(--border);border-radius:var(--radius);}
+[data-theme="navy"] textarea,[data-theme="navy"] input,[data-theme="navy"] select,
+[data-theme="dark"]  textarea,[data-theme="dark"]  input,[data-theme="dark"]  select{color-scheme:dark;}
 
-/* ── Layout ── */
-.header {
-  position: sticky; top: 0; z-index: 100;
-  background: var(--surface); border-bottom: 1px solid var(--border);
-  padding: 0 16px; height: 52px;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.header-left { display: flex; align-items: center; gap: 12px; }
-.app-title { font-size: 14px; font-weight: 500; letter-spacing: -0.01em; }
-.sync-dot { font-size: 12px; color: var(--muted); }
+/* ── Header ── */
+.header{position:sticky;top:0;z-index:100;background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;height:52px;display:flex;align-items:center;justify-content:space-between;}
+.header-left{display:flex;align-items:center;gap:12px;}
+.app-title{font-size:14px;font-weight:500;letter-spacing:-.01em;}
+.sync-dot{font-size:12px;color:var(--muted);}
+.header-right{display:flex;align-items:center;gap:8px;}
+.icon-btn{width:32px;height:32px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--muted);transition:background .15s;}
+.icon-btn:hover{background:var(--border);color:var(--text);}
 
-.header-right { display: flex; align-items: center; gap: 8px; }
-.icon-btn {
-  width: 32px; height: 32px; border-radius: var(--radius);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 14px; color: var(--muted); transition: background .15s;
-}
-.icon-btn:hover { background: var(--border); color: var(--text); }
+/* ── Tabs ── */
+.tabs{position:sticky;top:52px;z-index:99;background:var(--surface);border-bottom:1px solid var(--border);display:flex;padding:0 16px;gap:0;overflow-x:auto;}
+.tab{padding:10px 16px;font-size:13px;font-weight:400;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;transition:color .15s;white-space:nowrap;}
+.tab.active{color:var(--text);font-weight:500;border-bottom-color:var(--accent);}
 
-.tabs {
-  position: sticky; top: 52px; z-index: 99;
-  background: var(--surface); border-bottom: 1px solid var(--border);
-  display: flex; padding: 0 16px; gap: 0;
-}
-.tab {
-  padding: 10px 16px; font-size: 13px; font-weight: 400; color: var(--muted);
-  border-bottom: 2px solid transparent; cursor: pointer; transition: color .15s;
-}
-.tab.active { color: var(--text); font-weight: 500; border-bottom-color: var(--accent); }
+/* ── Page ── */
+.page{max-width:1100px;margin:0 auto;padding:20px 16px 80px;}
+.section{display:none;}
+.section.active{display:block;}
 
-.page { max-width: 1100px; margin: 0 auto; padding: 20px 16px 80px; }
-.section { display: none; }
-.section.active { display: block; }
+/* ── Editor ── */
+.editor-meta-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;}
+.meta-field{display:flex;flex-direction:column;gap:4px;min-width:160px;flex:1;}
+.meta-label{font-size:11px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.04em;}
+.meta-select{padding:6px 10px;font-size:13px;width:100%;}
+.chips-input-wrap{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);min-height:34px;background:var(--bg);cursor:pointer;}
+.chips-input-wrap:focus-within{border-color:var(--accent);}
 
-/* ── Editor layout ── */
-.editor-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  align-items: start;
-}
-@media (max-width: 700px) {
-  .editor-grid { grid-template-columns: 1fr; }
-}
+.editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}
+@media(max-width:700px){.editor-grid{grid-template-columns:1fr;}}
+.pane{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.pane-header{padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;font-weight:500;color:var(--muted);display:flex;align-items:center;justify-content:space-between;}
+.pane-header span{letter-spacing:.04em;text-transform:uppercase;}
+.editor-area{width:100%;min-height:480px;padding:14px;font-size:13px;line-height:1.65;font-family:var(--mono);border:none;outline:none;resize:none;background:var(--surface);color:var(--text);}
+.preview-area{padding:14px 16px;min-height:480px;font-size:13px;line-height:1.7;}
+.preview-area h1{font-size:16px;font-weight:600;margin-bottom:10px;letter-spacing:-.02em;}
+.preview-area h2{font-size:13px;font-weight:600;margin:16px 0 8px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);}
+.preview-meta{font-size:12px;color:var(--muted);margin-bottom:4px;}
+.preview-meta b{color:var(--text);font-weight:500;}
+.preview-steps{list-style:none;margin:0;padding:0;}
+.preview-steps li{padding:3px 0;}
+.preview-steps li.sub{padding-left:18px;color:var(--muted);font-size:12px;}
+.preview-steps li.sub::before{content:"– ";}
+.preview-result,.preview-error{margin-top:12px;font-size:13px;padding:8px 10px;border-radius:var(--radius);border:1px solid var(--border);}
+.preview-result{color:var(--green);border-color:var(--green);}
+.preview-error{color:var(--amber);border-color:var(--amber);}
+.preview-empty{color:var(--muted);font-size:13px;padding-top:40px;text-align:center;}
+.preview-assign-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center;}
 
-.pane {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-.pane-header {
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--border);
-  font-size: 12px; font-weight: 500; color: var(--muted);
-  display: flex; align-items: center; justify-content: space-between;
-}
-.pane-header span { letter-spacing: .04em; text-transform: uppercase; }
+/* ── Buttons ── */
+.btn{padding:7px 14px;border-radius:var(--radius);font-size:13px;font-weight:500;border:1px solid var(--border);color:var(--text);background:var(--surface);transition:background .15s;}
+.btn:hover{background:var(--border);}
+.btn.primary{background:var(--accent);color:var(--bg);border-color:var(--accent);}
+.btn.primary:hover{opacity:.88;}
+.btn.sm{padding:5px 10px;font-size:12px;}
+.btn.danger{color:var(--red);border-color:var(--red);}
+.btn.danger:hover{background:var(--red);color:#fff;}
 
-.editor-area {
-  width: 100%; min-height: 520px;
-  padding: 14px; font-size: 13px; line-height: 1.65;
-  font-family: var(--mono);
-  border: none; outline: none; resize: none;
-  background: var(--surface); color: var(--text);
-}
+/* ── Drive bar ── */
+.drive-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;font-size:13px;}
+.drive-status{color:var(--muted);flex:1;}
 
-/* ── Preview ── */
-.preview-area {
-  padding: 14px 16px; min-height: 520px;
-  font-size: 13px; line-height: 1.7;
-}
-.preview-area h1 {
-  font-size: 16px; font-weight: 600; margin-bottom: 10px;
-  letter-spacing: -0.02em;
-}
-.preview-area h2 {
-  font-size: 13px; font-weight: 600; margin: 16px 0 8px;
-  text-transform: uppercase; letter-spacing: .04em; color: var(--muted);
-}
-.preview-meta { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
-.preview-meta b { color: var(--text); font-weight: 500; }
-.preview-steps { list-style: none; margin: 0; padding: 0; }
-.preview-steps li { padding: 3px 0; }
-.preview-steps li.step { font-weight: 400; }
-.preview-steps li.sub {
-  padding-left: 18px; color: var(--muted); font-size: 12px;
-}
-.preview-steps li.sub::before { content: "– "; }
-.preview-result, .preview-error {
-  margin-top: 12px; font-size: 13px; padding: 8px 10px;
-  border-radius: var(--radius); border: 1px solid var(--border);
-}
-.preview-result { color: var(--green); border-color: var(--green); }
-.preview-error  { color: var(--amber); border-color: var(--amber); }
-.preview-empty { color: var(--muted); font-size: 13px; padding-top: 40px; text-align: center; }
+/* ── History ── */
+.filter-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;align-items:center;}
+.pill{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all .15s;}
+.pill.active{background:var(--accent);color:var(--bg);border-color:var(--accent);}
+.history-empty{color:var(--muted);font-size:13px;padding:40px 0;text-align:center;}
+.history-list{display:flex;flex-direction:column;gap:10px;}
+.history-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;cursor:pointer;transition:border-color .15s;}
+.history-card:hover{border-color:var(--accent);}
+.history-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+.history-title{font-size:14px;font-weight:500;flex:1;}
+.history-meta{font-size:12px;color:var(--muted);margin-top:3px;}
+.history-actions{display:flex;gap:6px;flex-shrink:0;}
+.history-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center;}
 
-/* ── Action bar ── */
-.action-bar {
-  display: flex; gap: 8px; flex-wrap: wrap;
-  margin-top: 12px;
-}
-.btn {
-  padding: 7px 14px; border-radius: var(--radius);
-  font-size: 13px; font-weight: 500; border: 1px solid var(--border);
-  color: var(--text); background: var(--surface); transition: background .15s;
-}
-.btn:hover { background: var(--border); }
-.btn.primary {
-  background: var(--accent); color: var(--bg); border-color: var(--accent);
-}
-.btn.primary:hover { opacity: .88; }
-.btn.sm { padding: 5px 10px; font-size: 12px; }
+/* ── Avatar chip ── */
+.avatar{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;flex-shrink:0;}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;font-size:12px;font-weight:500;border:1px solid transparent;}
+.chip .remove{cursor:pointer;opacity:.6;font-size:10px;margin-left:2px;}
+.chip .remove:hover{opacity:1;}
 
-/* ── History tab ── */
-.history-empty { color: var(--muted); font-size: 13px; padding: 40px 0; text-align: center; }
-.history-list { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
-.history-card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 12px 14px;
-}
-.history-card-top {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
-}
-.history-title { font-size: 14px; font-weight: 500; flex: 1; }
-.history-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
-.history-actions { display: flex; gap: 6px; flex-shrink: 0; }
+/* ── Status badge ── */
+.status-badge{padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid;user-select:none;}
+.status-brouillon{color:var(--muted);border-color:var(--muted);}
+.status-validation{color:var(--amber);border-color:var(--amber);}
+.status-valide{color:var(--green);border-color:var(--green);}
+.status-archive{color:var(--blue);border-color:var(--blue);}
+.status-renvoye{color:var(--red);border-color:var(--red);}
 
-/* ── Drive section ── */
-.drive-bar {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 14px;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); margin-bottom: 16px;
-  font-size: 13px;
-}
-.drive-status { color: var(--muted); flex: 1; }
+/* ── Projets / Equipe ── */
+.crud-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.crud-header h2{font-size:15px;font-weight:500;}
+.crud-form{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;}
+.form-field{display:flex;flex-direction:column;gap:4px;flex:1;min-width:140px;}
+.form-label{font-size:11px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.04em;}
+.form-input{padding:7px 10px;font-size:13px;}
+.color-picker-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.color-dot{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border-color .15s;}
+.color-dot.selected{border-color:var(--text);}
+.crud-list{display:flex;flex-direction:column;gap:8px;}
+.crud-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:center;gap:12px;}
+.crud-card-info{flex:1;}
+.crud-card-title{font-size:14px;font-weight:500;}
+.crud-card-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.crud-card-actions{display:flex;gap:6px;flex-shrink:0;}
+.role-toggle{display:flex;gap:6px;}
+.role-btn{padding:4px 10px;border-radius:12px;font-size:12px;font-weight:500;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all .15s;}
+.role-btn.active.red-role{background:var(--red);color:#fff;border-color:var(--red);}
+.role-btn.active.green-role{background:var(--green);color:#fff;border-color:var(--green);}
 
-/* ── Help section ── */
-.help-section {
-  margin-top: 28px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  overflow: hidden;
-}
-.help-toggle {
-  width: 100%; display: flex; align-items: center; justify-content: space-between;
-  padding: 11px 16px; cursor: pointer;
-  font-size: 12px; font-weight: 500; color: var(--muted);
-  letter-spacing: .04em; text-transform: uppercase;
-  background: none; border: none; text-align: left;
-  transition: background .15s;
-}
-.help-toggle:hover { background: var(--border); }
-.help-toggle .chevron { font-size: 10px; transition: transform .2s; }
-.help-toggle.open .chevron { transform: rotate(180deg); }
-.help-body {
-  display: none; padding: 16px 20px 20px;
-  border-top: 1px solid var(--border);
-}
-.help-body.open { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-@media (max-width: 700px) { .help-body.open { grid-template-columns: 1fr; } }
-.help-group { display: flex; flex-direction: column; gap: 10px; }
-.help-group h3 { font-size: 11px; font-weight: 600; color: var(--muted);
-  text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
-.help-row { display: flex; gap: 10px; align-items: baseline; font-size: 13px; }
-.help-tag {
-  font-family: var(--mono); font-size: 12px;
-  background: var(--bg); border: 1px solid var(--border);
-  border-radius: 4px; padding: 1px 6px;
-  color: var(--accent); white-space: nowrap; flex-shrink: 0;
-}
-.help-desc { color: var(--muted); line-height: 1.5; }
-.help-note {
-  grid-column: 1 / -1; font-size: 12px; color: var(--muted);
-  border-top: 1px solid var(--border); padding-top: 12px; margin-top: 4px;
-  line-height: 1.6;
-}
+/* ── Drawer MO content ── */
+.drawer-mo-title{font-size:15px;font-weight:600;margin-bottom:10px;letter-spacing:-.01em;}
+.drawer-mo-meta{font-size:12px;color:var(--muted);margin-bottom:3px;}
+.drawer-mo-meta b{color:var(--text);font-weight:500;}
+.drawer-mo-steps{list-style:none;margin:10px 0 0;padding:0;border-top:1px solid var(--border);padding-top:10px;}
+.drawer-mo-step{padding:5px 0;font-size:13px;line-height:1.5;display:flex;gap:8px;}
+.drawer-mo-step-num{font-weight:600;color:var(--accent);flex-shrink:0;min-width:18px;}
+.drawer-mo-substep{padding:3px 0 3px 26px;font-size:12px;color:var(--muted);}
+.drawer-mo-substep::before{content:"– ";}
+.drawer-mo-result{margin-top:10px;font-size:13px;padding:7px 10px;border-radius:var(--radius);color:var(--green);border:1px solid var(--green);}
+.drawer-mo-error{margin-top:6px;font-size:13px;padding:7px 10px;border-radius:var(--radius);color:var(--amber);border:1px solid var(--amber);}
+
+/* ── Drawer ── */
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;opacity:0;pointer-events:none;transition:opacity .2s;}
+.drawer-overlay.open{opacity:1;pointer-events:all;}
+.drawer{position:fixed;top:0;right:0;width:min(480px,100vw);height:100vh;background:var(--surface);border-left:1px solid var(--border);z-index:201;transform:translateX(100%);transition:transform .25s;display:flex;flex-direction:column;overflow:hidden;}
+.drawer.open{transform:translateX(0);}
+.drawer-header{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;}
+.drawer-title{font-size:15px;font-weight:500;flex:1;line-height:1.4;}
+.drawer-close{width:28px;height:28px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0;}
+.drawer-close:hover{background:var(--border);}
+.drawer-body{flex:1;overflow-y:auto;padding:16px;}
+.drawer-section{margin-bottom:20px;}
+.drawer-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px;}
+.version-item{padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;display:flex;align-items:center;gap:10px;}
+.version-date{font-size:12px;color:var(--muted);flex:1;}
+.version-tag{font-size:11px;font-weight:500;color:var(--accent);}
+.comment-item{padding:8px 10px;background:var(--bg);border-radius:var(--radius);margin-bottom:6px;}
+.comment-text{font-size:13px;line-height:1.5;}
+.comment-meta{font-size:11px;color:var(--muted);margin-top:3px;}
+.comment-add{display:flex;gap:8px;margin-top:8px;}
+.comment-add textarea{flex:1;padding:7px 10px;font-size:13px;resize:none;min-height:34px;}
+
+/* ── Empty states ── */
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty-state .icon{font-size:32px;margin-bottom:12px;}
+.empty-state p{font-size:14px;line-height:1.6;}
 
 /* ── Toast ── */
-#toast {
-  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(8px);
-  background: var(--text); color: var(--bg);
-  padding: 8px 16px; border-radius: 20px; font-size: 13px;
-  opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; z-index: 999;
-}
-#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--text);color:var(--bg);padding:8px 16px;border-radius:20px;font-size:13px;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999;display:flex;align-items:center;gap:10px;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:all;}
+#toast-undo{font-size:12px;font-weight:600;text-decoration:underline;cursor:pointer;opacity:.85;background:none;border:none;color:inherit;font-family:inherit;padding:0;}
+
+/* ── Dropdown ── */
+.dropdown-wrap{position:relative;}
+.dropdown-menu{position:absolute;top:calc(100% + 4px);left:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);min-width:180px;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,.1);max-height:220px;overflow-y:auto;}
+.dropdown-item{padding:8px 12px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;}
+.dropdown-item:hover{background:var(--border);}
+.dropdown-item.checked::after{content:'✓';margin-left:auto;color:var(--accent);}
 </style>
 </head>
 <body>
@@ -241,7 +203,7 @@ textarea, input { font-family: inherit; background: var(--bg); color: var(--text
 <!-- Header -->
 <div class="header">
   <div class="header-left">
-    <span class="app-title">MO Generator</span>
+    <span class="app-title">MO Hub</span>
     <span class="sync-dot" id="sync-dot">⚫ Local</span>
   </div>
   <div class="header-right">
@@ -252,18 +214,41 @@ textarea, input { font-family: inherit; background: var(--bg); color: var(--text
 
 <!-- Tabs -->
 <div class="tabs">
-  <div class="tab active" onclick="switchTab('editor')">Éditeur</div>
-  <div class="tab" onclick="switchTab('history')">Historique</div>
+  <div class="tab active"  onclick="switchTab('editor')">Éditeur</div>
+  <div class="tab"         onclick="switchTab('projets')">Projets</div>
+  <div class="tab"         onclick="switchTab('equipe')">Équipe</div>
+  <div class="tab"         onclick="switchTab('history')">Historique</div>
 </div>
 
-<!-- Page -->
 <div class="page">
 
-  <!-- TAB: Editor -->
+  <!-- ═══════════════════════════════════════ TAB ÉDITEUR ═══════════════════════════════════════ -->
   <div id="tab-editor" class="section active">
 
+    <!-- Métadonnées projet + assignés -->
+    <div class="editor-meta-bar">
+      <div class="meta-field">
+        <span class="meta-label">Projet</span>
+        <select class="meta-select" id="meta-projet" onchange="onMetaChange()">
+          <option value="">— Aucun projet —</option>
+        </select>
+      </div>
+      <div class="meta-field" style="flex:2">
+        <span class="meta-label">Rédacteur(s)</span>
+        <div class="chips-input-wrap" id="chips-red" onclick="openDropdown('red')"></div>
+      </div>
+      <div class="meta-field" style="flex:2">
+        <span class="meta-label">Valideur(s)</span>
+        <div class="chips-input-wrap" id="chips-val" onclick="openDropdown('val')"></div>
+      </div>
+    </div>
+
+    <!-- Dropdown membres (shared, repositioned by JS) -->
+    <div class="dropdown-wrap" id="dd-wrap" style="display:none;position:fixed;z-index:200;">
+      <div class="dropdown-menu" id="dd-menu"></div>
+    </div>
+
     <div class="editor-grid">
-      <!-- Notes brutes -->
       <div class="pane">
         <div class="pane-header">
           <span>Notes brutes</span>
@@ -273,12 +258,10 @@ textarea, input { font-family: inherit; background: var(--bg); color: var(--text
           oninput="onEdit()" placeholder="Commencez à taper vos notes ici…"></textarea>
       </div>
 
-      <!-- Aperçu -->
       <div class="pane">
         <div class="pane-header">
           <span>Aperçu</span>
           <div style="display:flex;gap:6px">
-            <button class="btn sm" onclick="copyHtml()" title="Copier le MO formaté — à coller dans Outlook ou Gmail">⎘ Email</button>
             <button class="btn sm" onclick="downloadFile('md')">↓ .md</button>
             <button class="btn sm" onclick="downloadFile('txt')">↓ .txt</button>
             <button class="btn sm primary" onclick="saveMO()">Enregistrer</button>
@@ -286,82 +269,173 @@ textarea, input { font-family: inherit; background: var(--bg); color: var(--text
         </div>
         <div class="preview-area" id="preview"></div>
       </div>
-    </div><!-- /editor-grid -->
-
-    <!-- Zone aide -->
-    <div class="help-section">
-      <button class="help-toggle" id="help-toggle" onclick="toggleHelp()">
-        <span>Guide des marqueurs</span>
-        <span class="chevron">▼</span>
-      </button>
-      <div class="help-body" id="help-body">
-
-        <div class="help-group">
-          <h3>En-tête</h3>
-          <div class="help-row"><span class="help-tag">titre:</span><span class="help-desc">Titre du mode opératoire</span></div>
-          <div class="help-row"><span class="help-tag">quand:</span><span class="help-desc">Contexte d'utilisation — quand déclencher ce MO ?</span></div>
-          <div class="help-row"><span class="help-tag">duree:</span><span class="help-desc">Durée estimée (ex : 5 min)</span></div>
-          <div class="help-row"><span class="help-tag">auteur:</span><span class="help-desc">Auteur ou responsable du MO</span></div>
-          <div class="help-row"><span class="help-tag">modifie:</span><span class="help-desc">Date de dernière modification — format JJ-MM-AAAA</span></div>
-        </div>
-
-        <div class="help-group">
-          <h3>Étapes</h3>
-          <div class="help-row"><span class="help-tag">E:</span><span class="help-desc">Étape principale — numérotée automatiquement</span></div>
-          <div class="help-row"><span class="help-tag">SE:</span><span class="help-desc">Sous-étape — rattachée à l'étape E: précédente, indentée en sortie</span></div>
-          <h3 style="margin-top:8px">Résultat &amp; erreur</h3>
-          <div class="help-row"><span class="help-tag">resultat:</span><span class="help-desc">Résultat attendu — affiché avec ✅</span></div>
-          <div class="help-row"><span class="help-tag">erreur:</span><span class="help-desc">Erreur fréquente à éviter — affichée avec ⚠️</span></div>
-        </div>
-
-        <div class="help-note">
-          💡 Tout ce qui n'est pas un marqueur reconnu est ignoré — vos notes libres restent telles quelles dans la zone de saisie.<br>
-          La casse est ignorée : <code style="font-family:var(--mono);font-size:11px">Titre:</code> = <code style="font-family:var(--mono);font-size:11px">titre:</code> = <code style="font-family:var(--mono);font-size:11px">TITRE:</code>.<br>
-          Seuls <code style="font-family:var(--mono);font-size:11px">titre:</code> et au moins une étape <code style="font-family:var(--mono);font-size:11px">E:</code> sont requis. Tous les autres marqueurs sont optionnels.
-        </div>
-
-      </div>
-    </div>
-
-  </div><!-- /tab-editor -->
-  <div id="tab-history" class="section">
-    <div class="drive-bar">
-      <span class="drive-status" id="drive-status-label">Non connecté à Drive</span>
-      <button class="btn sm" id="drive-action-btn" onclick="handleDriveBtn()">Connecter</button>
-      <button class="btn sm" onclick="pullFromDrive()" id="pull-btn" style="display:none">Load from Drive</button>
-    </div>
-    <div id="history-container">
-      <p class="history-empty">Aucun mode opératoire enregistré.<br>Rédigez vos notes et cliquez sur <b>Enregistrer</b>.</p>
     </div>
   </div>
 
+  <!-- ═══════════════════════════════════════ TAB PROJETS ═══════════════════════════════════════ -->
+  <div id="tab-projets" class="section">
+    <div class="crud-header">
+      <h2>Projets</h2>
+    </div>
+
+    <div class="crud-form" id="projet-form">
+      <div class="form-field">
+        <span class="form-label">Nom du projet</span>
+        <input class="form-input" type="text" id="p-nom" placeholder="ex: Migration ERP" maxlength="60">
+      </div>
+      <div class="form-field" style="flex:2">
+        <span class="form-label">Description courte</span>
+        <input class="form-input" type="text" id="p-desc" placeholder="Optionnelle" maxlength="120">
+      </div>
+      <div class="form-field" style="flex:0 0 auto">
+        <span class="form-label">Couleur</span>
+        <div class="color-picker-row" id="p-colors"></div>
+      </div>
+      <button class="btn primary" onclick="saveProjet()" style="align-self:flex-end">Ajouter</button>
+    </div>
+
+    <div class="crud-list" id="projets-list"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ TAB ÉQUIPE ═══════════════════════════════════════ -->
+  <div id="tab-equipe" class="section">
+    <div class="crud-header">
+      <h2>Équipe</h2>
+    </div>
+
+    <div class="crud-form" id="membre-form">
+      <div class="form-field">
+        <span class="form-label">Nom complet</span>
+        <input class="form-input" type="text" id="m-nom" placeholder="ex: Marie Dupont" maxlength="50">
+      </div>
+      <div class="form-field">
+        <span class="form-label">Initiales</span>
+        <input class="form-input" type="text" id="m-init" placeholder="MD" maxlength="3" style="max-width:80px">
+      </div>
+      <div class="form-field" style="flex:0 0 auto">
+        <span class="form-label">Couleur avatar</span>
+        <div class="color-picker-row" id="m-colors"></div>
+      </div>
+      <div class="form-field">
+        <span class="form-label">Rôles</span>
+        <div class="role-toggle">
+          <button class="role-btn red-role active" id="rb-red" onclick="toggleRoleBtn('red')">Rédacteur</button>
+          <button class="role-btn green-role" id="rb-val" onclick="toggleRoleBtn('val')">Valideur</button>
+        </div>
+      </div>
+      <button class="btn primary" onclick="saveMembre()" style="align-self:flex-end">Ajouter</button>
+    </div>
+
+    <div class="crud-list" id="membres-list"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ TAB HISTORIQUE ═══════════════════════════════════════ -->
+  <div id="tab-history" class="section">
+
+    <div class="drive-bar">
+      <span class="drive-status" id="drive-status-label">Non connecté à Drive</span>
+      <button class="btn sm" id="drive-action-btn" onclick="handleDriveBtn()">Connecter</button>
+      <button class="btn sm" onclick="pullFromDrive()" id="pull-btn" style="display:none">↓ Sync</button>
+    </div>
+
+    <div class="filter-row">
+      <span style="font-size:12px;color:var(--muted);font-weight:500">Statut :</span>
+      <div class="pill active" data-filter-status="all" onclick="setFilterStatus('all',this)">Tous</div>
+      <div class="pill" data-filter-status="brouillon" onclick="setFilterStatus('brouillon',this)">Brouillon</div>
+      <div class="pill" data-filter-status="validation" onclick="setFilterStatus('validation',this)">En validation</div>
+      <div class="pill" data-filter-status="valide" onclick="setFilterStatus('valide',this)">Validé</div>
+      <div class="pill" data-filter-status="renvoye" onclick="setFilterStatus('renvoye',this)">Renvoyé</div>
+      <div class="pill" data-filter-status="archive" onclick="setFilterStatus('archive',this)">Archivé</div>
+    </div>
+    <div class="filter-row" id="projet-filters">
+      <span style="font-size:12px;color:var(--muted);font-weight:500">Projet :</span>
+      <div class="pill active" data-filter-projet="all" onclick="setFilterProjet('all',this)">Tous</div>
+    </div>
+
+    <div id="history-container"></div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- ═══════════════════════════════════════ DRAWER ═══════════════════════════════════════ -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div style="flex:1">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:4px;" id="drawer-breadcrumb"></div>
+      <div class="drawer-title" id="drawer-title"></div>
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;" id="drawer-badges"></div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body">
+
+    <div class="drawer-section">
+      <div class="drawer-section-title">Contenu du MO</div>
+      <div id="drawer-content"></div>
+    </div>
+
+    <div class="drawer-section">
+      <div class="drawer-section-title">Assignés</div>
+      <div id="drawer-assignes"></div>
+    </div>
+
+    <div class="drawer-section">
+      <div class="drawer-section-title">Versions précédentes</div>
+      <div id="drawer-versions"></div>
+    </div>
+
+    <div class="drawer-section">
+      <div class="drawer-section-title">Commentaires</div>
+      <div id="drawer-comments"></div>
+      <div class="comment-add" style="flex-direction:column;gap:6px">
+        <select id="comment-author" style="font-size:12px;padding:5px 8px;width:100%">
+          <option value="">— Auteur du commentaire —</option>
+        </select>
+        <div style="display:flex;gap:8px">
+          <textarea id="comment-input" rows="2" placeholder="Ajouter un commentaire…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addComment();}"></textarea>
+          <button class="btn sm primary" onclick="addComment()">Envoyer</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="drawer-section" style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn sm" onclick="editFromDrawer()">✎ Éditer</button>
+      <button class="btn sm" onclick="dlFromDrawer('md')">↓ .md</button>
+      <button class="btn sm" onclick="dlFromDrawer('txt')">↓ .txt</button>
+      <button class="btn sm danger" onclick="deleteFromDrawer()">Supprimer</button>
+    </div>
+
+  </div>
 </div>
 
-<div id="toast"></div>
-
-<!-- GIS -->
+<div id="toast"><span></span></div>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <script>
 // ── Constants ──────────────────────────────────────────────────────────────────
-const APP       = 'mo-generator';
-const SK        = `td_v4_${APP}`;
-const TK        = `td_theme_${APP}`;
-const TOK_KEY   = `td_tok_${APP}`;
+const APP     = 'mo-generator';
+const SK      = `td_v4_${APP}`;
+const TK      = `td_theme_${APP}`;
+const TOK_KEY = `td_tok_${APP}`;
 const CLIENT_ID = '396437854818-0csbts6dv9pb8l8u7bnlssk7cqb3njbo.apps.googleusercontent.com';
-const SCOPE     = 'https://www.googleapis.com/auth/drive.file';
-const THEMES    = ['light', 'sand', 'navy', 'dark'];
-const ICONS     = { light:'☀︎', sand:'○', navy:'◑', dark:'☾' };
+const SCOPE   = 'https://www.googleapis.com/auth/drive.file';
+const THEMES  = ['light','sand','navy','dark'];
+const ICONS   = {light:'☀︎',sand:'○',navy:'◑',dark:'☾'};
+
+const PROJECT_COLORS = ['#E53E3E','#DD6B20','#D69E2E','#38A169','#3182CE','#6B46C1','#D53F8C','#2C7A7B'];
+const AVATAR_COLORS  = ['#E53E3E','#DD6B20','#38A169','#3182CE','#6B46C1','#D53F8C','#2C7A7B','#718096'];
+const STATUS_CYCLE   = ['brouillon','validation','valide','renvoye','archive'];
+const STATUS_LABELS  = {brouillon:'Brouillon',validation:'En validation',valide:'Validé ✓',renvoye:'Renvoyé ✗',archive:'Archivé'};
+const STATUS_CLASS   = {brouillon:'status-brouillon',validation:'status-validation',valide:'status-valide',renvoye:'status-renvoye',archive:'status-archive'};
 
 const TEMPLATE = `titre: 
 quand: 
 duree: 
-auteur: 
 modifie: 
 
 Notes libres (ignorées) — contexte, liens, références…
 
-E: 
 E: 
 SE: 
 E: 
@@ -371,28 +445,78 @@ resultat:
 erreur: `;
 
 // ── State ──────────────────────────────────────────────────────────────────────
-let S = { history: [] };
+let S = { history:[], projets:[], membres:[] };
 let driveFileId = null;
 let tokenClient = null;
 let accessToken = sessionStorage.getItem(TOK_KEY) || null;
-let saveTimer = null;
+let saveTimer   = null;
+let undoStack   = [];  // [{entry, index}] — suppression annulable
+let undoTimer   = null;
 
-// ── Init ──────────────────────────────────────────────────────────────────────
+// Editor meta state
+let curProjet    = '';
+let curRedact    = [];  // member ids
+let curValid     = [];  // member ids
+let curEntryId   = null; // editing existing entry (upsert)
+
+// Filter state
+let filterStatus = 'all';
+let filterProjet = 'all';
+
+// Drawer state
+let drawerEntryId = null;
+
+// Form state
+let editingProjetId  = null;
+let editingMembreId  = null;
+let selectedPColor   = PROJECT_COLORS[4];
+let selectedMColor   = AVATAR_COLORS[3];
+let roleRedacteur    = true;
+let roleValideur     = false;
+let ddTarget         = null; // 'red' | 'val'
+
+// ── ensureState ────────────────────────────────────────────────────────────────
 function ensureState() {
-  if (!Array.isArray(S.history)) S.history = [];
+  if (!Array.isArray(S.history))  S.history  = [];
+  if (!Array.isArray(S.projets))  S.projets  = [];
+  if (!Array.isArray(S.membres))  S.membres  = [];
+  S.history.forEach(e => {
+    if (!e.status)    e.status    = 'brouillon';
+    if (!e.redacteurs) e.redacteurs = [];
+    if (!e.valideurs)  e.valideurs  = [];
+    if (!e.versions)   e.versions   = [];
+    if (!e.comments)   e.comments   = [];
+    if (e.projet === undefined) e.projet = '';
+  });
 }
 
+// ── Boot ──────────────────────────────────────────────────────────────────────
 function load() {
-  try {
-    const raw = localStorage.getItem(SK);
-    if (raw) S = JSON.parse(raw);
-  } catch(e) {}
+  try { const r = localStorage.getItem(SK); if (r) S = JSON.parse(r); } catch(e) {}
   ensureState();
-  const saved = localStorage.getItem(`${SK}_draft`);
-  document.getElementById('raw-input').value = saved || TEMPLATE;
+  const draft = localStorage.getItem(`${SK}_draft`);
+  document.getElementById('raw-input').value = draft || TEMPLATE;
+  try {
+    const meta = JSON.parse(localStorage.getItem(`${SK}_meta`) || '{}');
+    curProjet = meta.projet || '';
+    curRedact = meta.redact || [];
+    curValid  = meta.valid  || [];
+    curEntryId = meta.entryId || null;
+  } catch(e) {}
   renderPreview();
-  renderHistory();
+  renderAll();
   initDrive();
+  buildColorPickers();
+  renderRoleBtns();
+}
+
+function renderAll() {
+  renderProjetsDropdown();
+  renderProjetFilters();
+  renderProjetsList();
+  renderMembresList();
+  renderHistory();
+  renderEditorMeta();
 }
 
 // ── Theme ──────────────────────────────────────────────────────────────────────
@@ -407,28 +531,24 @@ function toggleTheme() {
 }
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
+const TAB_IDS = ['editor','projets','equipe','history'];
 function switchTab(id) {
-  document.querySelectorAll('.tab').forEach((t,i) => {
-    const ids = ['editor','history'];
-    t.classList.toggle('active', ids[i] === id);
-  });
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', TAB_IDS[i] === id));
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById(`tab-${id}`).classList.add('active');
+  closeDropdown();
 }
 
-// ── Template reset ────────────────────────────────────────────────────────────
+// ── Template ──────────────────────────────────────────────────────────────────
 function resetTemplate() {
   document.getElementById('raw-input').value = TEMPLATE;
+  curProjet = ''; curRedact = []; curValid = []; curEntryId = null;
+  renderEditorMeta();
   renderPreview();
 }
 
-// ── Parsing (port JS de mo.py) ─────────────────────────────────────────────────
-const MOIS = {
-  '01':'janvier','02':'février','03':'mars','04':'avril',
-  '05':'mai','06':'juin','07':'juillet','08':'août',
-  '09':'septembre','10':'octobre','11':'novembre','12':'décembre'
-};
-
+// ── Parsing ───────────────────────────────────────────────────────────────────
+const MOIS = {'01':'janvier','02':'février','03':'mars','04':'avril','05':'mai','06':'juin','07':'juillet','08':'août','09':'septembre','10':'octobre','11':'novembre','12':'décembre'};
 function formatDate(raw) {
   let m = raw.match(/^(\d{2})-(\d{2})-(\d{4})$/);
   if (m) return `${parseInt(m[1])} ${MOIS[m[2]]||m[2]} ${m[3]}`;
@@ -436,82 +556,664 @@ function formatDate(raw) {
   if (m) return `${parseInt(m[3])} ${MOIS[m[2]]||m[2]} ${m[1]}`;
   return raw;
 }
-
 function parse(text) {
-  const mo = { titre:'', quand:'', duree:'', auteur:'', modifie:'', etapes:[], resultat:'', erreur:'' };
+  const mo = {titre:'',quand:'',duree:'',auteur:'',modifie:'',etapes:[],resultat:'',erreur:''};
   let cur = null;
   for (const raw of text.split('\n')) {
-    const line = raw.trim();
-    if (!line) continue;
-    let m;
-    if      (m = line.match(/^titre\s*:\s*(.+)/i))             mo.titre    = m[1].trim();
-    else if (m = line.match(/^quand\s*:\s*(.+)/i))             mo.quand    = m[1].trim();
-    else if (m = line.match(/^dur[eé]e\s*:\s*(.+)/i))          mo.duree    = m[1].trim();
-    else if (m = line.match(/^auteur\s*:\s*(.+)/i))            mo.auteur   = m[1].trim();
-    else if (m = line.match(/^modifi[eé]\s*:\s*(.+)/i))        mo.modifie  = formatDate(m[1].trim());
-    else if (m = line.match(/^r[eé]sultat\s*:\s*(.+)/i))       mo.resultat = m[1].trim();
-    else if (m = line.match(/^erreur\s*:\s*(.+)/i))            mo.erreur   = m[1].trim();
-    else if (m = line.match(/^E\s*:\s*(.+)/))  { cur = { texte: m[1].trim(), sous_etapes:[] }; mo.etapes.push(cur); }
-    else if (m = line.match(/^SE\s*:\s*(.+)/)) {
-      if (!cur) { cur = { texte:'', sous_etapes:[] }; mo.etapes.push(cur); }
-      cur.sous_etapes.push(m[1].trim());
-    }
+    const line = raw.trim(); if (!line) continue; let m;
+    if      (m = line.match(/^titre\s*:\s*(.+)/i))          mo.titre    = m[1].trim();
+    else if (m = line.match(/^quand\s*:\s*(.+)/i))          mo.quand    = m[1].trim();
+    else if (m = line.match(/^dur[eé]e\s*:\s*(.+)/i))       mo.duree    = m[1].trim();
+    else if (m = line.match(/^auteur\s*:\s*(.+)/i))         mo.auteur   = m[1].trim();
+    else if (m = line.match(/^modifi[eé]\s*:\s*(.+)/i))     mo.modifie  = formatDate(m[1].trim());
+    else if (m = line.match(/^r[eé]sultat\s*:\s*(.+)/i))    mo.resultat = m[1].trim();
+    else if (m = line.match(/^erreur\s*:\s*(.+)/i))         mo.erreur   = m[1].trim();
+    else if (m = line.match(/^E\s*:\s*(.+)/))  { cur = {texte:m[1].trim(),sous_etapes:[]}; mo.etapes.push(cur); }
+    else if (m = line.match(/^SE\s*:\s*(.+)/)) { if (!cur){cur={texte:'',sous_etapes:[]};mo.etapes.push(cur);} cur.sous_etapes.push(m[1].trim()); }
   }
   return mo;
 }
 
-// ── Render preview ─────────────────────────────────────────────────────────────
+// ── Preview ───────────────────────────────────────────────────────────────────
 function renderPreview() {
   const text = document.getElementById('raw-input').value;
   const mo   = parse(text);
   const el   = document.getElementById('preview');
-
   const hasContent = mo.titre || mo.etapes.length;
-  if (!hasContent) {
-    el.innerHTML = '<p class="preview-empty">L\'aperçu apparaîtra ici au fil de la saisie.</p>';
-    return;
-  }
+  if (!hasContent) { el.innerHTML = '<p class="preview-empty">L\'aperçu apparaîtra ici au fil de la saisie.</p>'; return; }
 
   let html = '';
   if (mo.titre) html += `<h1>${esc(mo.titre)}</h1>`;
-
   const metas = [
-    mo.quand    && ['Quand l\'utiliser', mo.quand],
-    mo.duree    && ['Durée estimée',     mo.duree],
-    mo.auteur   && ['Auteur',            mo.auteur],
-    mo.modifie  && ['Dernière modification', mo.modifie],
+    mo.quand   && ['Quand l\'utiliser', mo.quand],
+    mo.duree   && ['Durée estimée',     mo.duree],
+    mo.auteur  && ['Auteur',            mo.auteur],
+    mo.modifie && ['Dernière modification', mo.modifie],
   ].filter(Boolean);
-  for (const [k,v] of metas)
-    html += `<p class="preview-meta"><b>${esc(k)} :</b> ${esc(v)}</p>`;
-
+  for (const [k,v] of metas) html += `<p class="preview-meta"><b>${esc(k)} :</b> ${esc(v)}</p>`;
   if (mo.etapes.length) {
     html += '<h2>Étapes</h2><ol class="preview-steps">';
     let n = 0;
     for (const e of mo.etapes) {
       if (e.texte) { n++; html += `<li class="step">${n}. ${esc(e.texte)}</li>`; }
-      for (const se of e.sous_etapes)
-        html += `<li class="sub">${esc(se)}</li>`;
+      for (const se of e.sous_etapes) html += `<li class="sub">${esc(se)}</li>`;
     }
     html += '</ol>';
   }
-
   if (mo.resultat) html += `<div class="preview-result">✅ <b>Résultat attendu :</b> ${esc(mo.resultat)}</div>`;
   if (mo.erreur)   html += `<div class="preview-error">⚠️ <b>Erreur fréquente :</b> ${esc(mo.erreur)}</div>`;
 
+  // assignés dans aperçu
+  const reds = curRedact.map(id => S.membres.find(m => m.id === id)).filter(Boolean);
+  const vals = curValid.map(id  => S.membres.find(m => m.id === id)).filter(Boolean);
+  const proj = S.projets.find(p => p.id === curProjet);
+  if (proj || reds.length || vals.length) {
+    html += '<div class="preview-assign-row">';
+    if (proj) html += chipHTML(proj.nom, proj.color);
+    if (reds.length) { html += `<span style="font-size:12px;color:var(--muted)">Rédacteur :</span>`; reds.forEach(m => html += avatarHTML(m)); }
+    if (vals.length) { html += `<span style="font-size:12px;color:var(--muted)">Valideur :</span>`;  vals.forEach(m => html += avatarHTML(m)); }
+    html += '</div>';
+  }
   el.innerHTML = html;
 }
 
-function esc(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+// ── Editor meta ───────────────────────────────────────────────────────────────
+function renderEditorMeta() {
+  // projet select
+  const sel = document.getElementById('meta-projet');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Aucun projet —</option>' +
+    S.projets.map(p => `<option value="${p.id}" ${p.id === curProjet ? 'selected':''}>${esc(p.nom)}</option>`).join('');
+  if (curProjet) sel.value = curProjet;
+
+  // chips
+  renderChips('chips-red', curRedact, 'red');
+  renderChips('chips-val', curValid, 'val');
 }
 
-// ── On edit ───────────────────────────────────────────────────────────────────
-function onEdit() {
+function renderChips(containerId, ids, type) {
+  const el = document.getElementById(containerId);
+  const members = ids.map(id => S.membres.find(m => m.id === id)).filter(Boolean);
+  if (members.length === 0) {
+    el.innerHTML = `<span style="font-size:12px;color:var(--muted)">${type === 'red' ? 'Ajouter rédacteurs…' : 'Ajouter valideurs…'}</span>`;
+  } else {
+    el.innerHTML = members.map(m =>
+      `<span class="chip" style="background:${m.color}22;color:${m.color};border-color:${m.color}44">
+        ${esc(m.initiales)} ${esc(m.nom.split(' ')[0])}
+        <span class="remove" onclick="removeAssigne(event,'${type}','${m.id}')">✕</span>
+      </span>`
+    ).join('');
+  }
+}
+
+function removeAssigne(e, type, id) {
+  e.stopPropagation();
+  if (type === 'red') curRedact = curRedact.filter(x => x !== id);
+  else                curValid  = curValid.filter(x  => x !== id);
+  saveMetaState();
+  renderChips(type === 'red' ? 'chips-red' : 'chips-val', type === 'red' ? curRedact : curValid, type);
   renderPreview();
-  localStorage.setItem(`${SK}_draft`, document.getElementById('raw-input').value);
-  setSyncDot('pending');
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(autoSave, 2000);
+}
+
+function onMetaChange() {
+  curProjet = document.getElementById('meta-projet').value;
+  saveMetaState();
+  renderPreview();
+}
+
+function saveMetaState() {
+  localStorage.setItem(`${SK}_meta`, JSON.stringify({projet:curProjet,redact:curRedact,valid:curValid,entryId:curEntryId}));
+}
+
+
+// ── Dropdown membres ──────────────────────────────────────────────────────────
+function openDropdown(type) {
+  ddTarget = type;
+  const refEl = document.getElementById(type === 'red' ? 'chips-red' : 'chips-val');
+  const rect   = refEl.getBoundingClientRect();
+  const wrap   = document.getElementById('dd-wrap');
+  wrap.style.display = 'block';
+  wrap.style.top    = (rect.bottom + window.scrollY + 4) + 'px';
+  wrap.style.left   = rect.left + 'px';
+  wrap.style.width  = Math.max(rect.width, 200) + 'px';
+
+  const curIds = type === 'red' ? curRedact : curValid;
+  const compatible = S.membres.filter(m => type === 'red' ? m.roles.includes('redacteur') : m.roles.includes('valideur'));
+  if (compatible.length === 0) {
+    document.getElementById('dd-menu').innerHTML = `<div class="dropdown-item" style="color:var(--muted)">Aucun membre avec ce rôle</div>`;
+  } else {
+    document.getElementById('dd-menu').innerHTML = compatible.map(m =>
+      `<div class="dropdown-item ${curIds.includes(m.id) ? 'checked' : ''}" onclick="toggleAssigne('${m.id}')">
+        ${avatarHTML(m)} ${esc(m.nom)}
+      </div>`
+    ).join('');
+  }
+  setTimeout(() => document.addEventListener('click', onDocClick), 0);
+}
+
+function toggleAssigne(id) {
+  const arr = ddTarget === 'red' ? curRedact : curValid;
+  const idx = arr.indexOf(id);
+  if (idx >= 0) arr.splice(idx, 1); else arr.push(id);
+  saveMetaState();
+  renderChips(ddTarget === 'red' ? 'chips-red' : 'chips-val', ddTarget === 'red' ? curRedact : curValid, ddTarget);
+  renderPreview();
+  openDropdown(ddTarget); // refresh checked state
+}
+
+function closeDropdown() {
+  document.getElementById('dd-wrap').style.display = 'none';
+  document.removeEventListener('click', onDocClick);
+}
+
+function onDocClick(e) {
+  if (!document.getElementById('dd-wrap').contains(e.target) &&
+      !document.getElementById('chips-red').contains(e.target) &&
+      !document.getElementById('chips-val').contains(e.target)) {
+    closeDropdown();
+  }
+}
+
+// ── Save MO (upsert) ──────────────────────────────────────────────────────────
+function saveMO() {
+  const raw = document.getElementById('raw-input').value;
+  const mo  = parse(raw);
+  if (!mo.titre && !mo.etapes.length) { toast('Rien à enregistrer'); return; }
+
+  if (curEntryId) {
+    // upsert — on garde l'ancienne version
+    const existing = S.history.find(e => e.id === curEntryId);
+    if (existing) {
+      existing.versions = existing.versions || [];
+      if (existing.versions.length >= 10) existing.versions.pop();
+      existing.versions.unshift({raw: existing.raw, savedAt: existing.savedAt});
+      existing.titre    = mo.titre || '(sans titre)';
+      existing.auteur   = mo.auteur;
+      existing.modifie  = mo.modifie;
+      existing.etapes   = mo.etapes.length;
+      existing.raw      = raw;
+      existing.savedAt  = new Date().toLocaleDateString('fr-FR');
+      existing.projet   = curProjet;
+      existing.redacteurs = [...curRedact];
+      existing.valideurs  = [...curValid];
+      persist(); renderHistory();
+      toast('✓ MO mis à jour (v' + (existing.versions.length + 1) + ')');
+      return;
+    }
+  }
+
+  // new entry
+  const entry = {
+    id: Date.now(),
+    titre:    mo.titre || '(sans titre)',
+    auteur:   mo.auteur,
+    modifie:  mo.modifie,
+    etapes:   mo.etapes.length,
+    raw,
+    savedAt:  new Date().toLocaleDateString('fr-FR'),
+    status:   'brouillon',
+    projet:   curProjet,
+    redacteurs: [...curRedact],
+    valideurs:  [...curValid],
+    versions: [],
+    comments: [],
+  };
+  S.history.unshift(entry);
+  if (S.history.length > 100) S.history.pop();
+  curEntryId = entry.id;
+  saveMetaState();
+  persist();
+  renderHistory();
+  toast('✓ MO enregistré');
+}
+
+// ── History render ────────────────────────────────────────────────────────────
+function renderHistory() {
+  const el = document.getElementById('history-container');
+  let entries = [...S.history];
+  if (filterStatus !== 'all') entries = entries.filter(e => e.status === filterStatus);
+  if (filterProjet !== 'all') entries = entries.filter(e => e.projet === filterProjet);
+
+  if (!entries.length) {
+    el.innerHTML = '<p class="history-empty">Aucun mode opératoire correspond aux filtres.</p>';
+    return;
+  }
+  el.innerHTML = `<div class="history-list">${entries.map(e => {
+    const proj  = S.projets.find(p => p.id === e.projet);
+    const reds  = (e.redacteurs||[]).map(id => S.membres.find(m => m.id === id)).filter(Boolean);
+    const vals  = (e.valideurs||[]).map(id  => S.membres.find(m => m.id === id)).filter(Boolean);
+    const isEditing = e.id === curEntryId;
+    return `
+    <div class="history-card" onclick="openDrawer(${e.id})" style="${isEditing ? 'border-color:var(--accent)' : ''}">
+      <div class="history-card-top">
+        <div style="flex:1">
+          <div class="history-title">${esc(e.titre)}${isEditing ? ' <span style="font-size:11px;color:var(--accent)">● en cours</span>' : ''}</div>
+          <div class="history-meta">
+            ${e.auteur ? esc(e.auteur) + ' · ' : ''}
+            ${e.etapes} étape${e.etapes > 1 ? 's' : ''} · ${e.savedAt}
+            ${e.versions && e.versions.length ? ` · v${e.versions.length + 1}` : ''}
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-shrink:0" onclick="event.stopPropagation()">
+          <span class="status-badge ${STATUS_CLASS[e.status]||'status-brouillon'}"
+            onclick="cycleStatus(${e.id})">${STATUS_LABELS[e.status]||'Brouillon'}</span>
+          <button class="btn sm" style="color:var(--red);padding:4px 8px;" title="Supprimer" onclick="deleteEntryFromHistory(${e.id})">✕</button>
+        </div>
+      </div>
+      <div class="history-tags">
+        ${proj ? chipHTML(proj.nom, proj.color) : ''}
+        ${reds.map(m => avatarHTML(m)).join('')}
+        ${vals.length ? '<span style="font-size:10px;color:var(--muted);margin-left:2px">✓</span>' + vals.map(m => avatarHTML(m)).join('') : ''}
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function deleteEntryFromHistory(id) {
+  const idx = S.history.findIndex(x => x.id === id);
+  if (idx < 0) return;
+  const entry = S.history[idx];
+  // push undo stack (max 1 entrée — suffisant)
+  undoStack = [{ entry, index: idx }];
+  S.history.splice(idx, 1);
+  if (curEntryId === id) { curEntryId = null; saveMetaState(); }
+  persist();
+  renderHistory();
+  toastUndo(`"${entry.titre}" supprimé`, undoDelete);
+}
+
+function undoDelete() {
+  if (!undoStack.length) return;
+  const { entry, index } = undoStack.pop();
+  S.history.splice(Math.min(index, S.history.length), 0, entry);
+  persist();
+  renderHistory();
+  toast('✓ Suppression annulée');
+}
+
+function cycleStatus(id) {
+  const e = S.history.find(x => x.id === id);
+  if (!e) return;
+  const idx = STATUS_CYCLE.indexOf(e.status || 'brouillon');
+  e.status = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
+  persist(); renderHistory();
+  if (drawerEntryId === id) refreshDrawer();
+}
+
+function setFilterStatus(val, el) {
+  filterStatus = val;
+  document.querySelectorAll('[data-filter-status]').forEach(p => p.classList.toggle('active', p.dataset.filterStatus === val));
+  renderHistory();
+}
+
+function setFilterProjet(val, el) {
+  filterProjet = val;
+  document.querySelectorAll('[data-filter-projet]').forEach(p => p.classList.toggle('active', p.dataset.filterProjet === val));
+  renderHistory();
+}
+
+function renderProjetFilters() {
+  const row = document.getElementById('projet-filters');
+  row.innerHTML = `<span style="font-size:12px;color:var(--muted);font-weight:500">Projet :</span>
+    <div class="pill ${filterProjet==='all'?'active':''}" data-filter-projet="all" onclick="setFilterProjet('all',this)">Tous</div>
+    ${S.projets.map(p => `<div class="pill ${filterProjet===p.id?'active':''}" data-filter-projet="${p.id}" onclick="setFilterProjet('${p.id}',this)">${esc(p.nom)}</div>`).join('')}`;
+}
+
+// ── Drawer ────────────────────────────────────────────────────────────────────
+function openDrawer(id) {
+  drawerEntryId = id;
+  refreshDrawer();
+  populateCommentAuthorSelect();
+  document.getElementById('drawer-overlay').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+}
+
+function refreshDrawer() {
+  const e = S.history.find(x => x.id === drawerEntryId);
+  if (!e) return;
+  const proj = S.projets.find(p => p.id === e.projet);
+  const reds = (e.redacteurs||[]).map(id => S.membres.find(m => m.id === id)).filter(Boolean);
+  const vals = (e.valideurs||[]).map(id  => S.membres.find(m => m.id === id)).filter(Boolean);
+
+  document.getElementById('drawer-breadcrumb').textContent = proj ? proj.nom : '';
+  document.getElementById('drawer-title').textContent = e.titre;
+
+  // badges
+  const badgesEl = document.getElementById('drawer-badges');
+  badgesEl.innerHTML = `<span class="status-badge ${STATUS_CLASS[e.status]||'status-brouillon'}" onclick="cycleStatus(${e.id})">${STATUS_LABELS[e.status]||'Brouillon'}</span>`;
+  if (proj) badgesEl.innerHTML += chipHTML(proj.nom, proj.color);
+
+  // contenu MO
+  const mo = parse(e.raw);
+  const contentEl = document.getElementById('drawer-content');
+  let moHTML = '';
+  const metas = [
+    mo.quand   && ['Quand l\'utiliser', mo.quand],
+    mo.duree   && ['Durée estimée',     mo.duree],
+    mo.auteur  && ['Auteur',            mo.auteur],
+    mo.modifie && ['Dernière modification', mo.modifie],
+  ].filter(Boolean);
+  for (const [k,v] of metas) moHTML += `<p class="drawer-mo-meta"><b>${esc(k)} :</b> ${esc(v)}</p>`;
+  if (mo.etapes.length) {
+    moHTML += '<ul class="drawer-mo-steps">';
+    let n = 0;
+    for (const etape of mo.etapes) {
+      if (etape.texte) { n++; moHTML += `<li class="drawer-mo-step"><span class="drawer-mo-step-num">${n}.</span><span>${esc(etape.texte)}</span></li>`; }
+      for (const se of etape.sous_etapes) moHTML += `<li class="drawer-mo-substep">${esc(se)}</li>`;
+    }
+    moHTML += '</ul>';
+  }
+  if (mo.resultat) moHTML += `<div class="drawer-mo-result">✅ <b>Résultat attendu :</b> ${esc(mo.resultat)}</div>`;
+  if (mo.erreur)   moHTML += `<div class="drawer-mo-error">⚠️ <b>Erreur fréquente :</b> ${esc(mo.erreur)}</div>`;
+  contentEl.innerHTML = moHTML || '<span style="font-size:13px;color:var(--muted)">Contenu vide</span>';
+
+  // assignés
+  const assEl = document.getElementById('drawer-assignes');
+  if (!reds.length && !vals.length) {
+    assEl.innerHTML = '<span style="font-size:13px;color:var(--muted)">Aucun assigné</span>';
+  } else {
+    assEl.innerHTML =
+      (reds.length ? `<div style="margin-bottom:6px"><span style="font-size:12px;color:var(--muted)">Rédacteur(s) : </span>${reds.map(m=>avatarHTML(m, true)).join(' ')}</div>` : '') +
+      (vals.length ? `<div><span style="font-size:12px;color:var(--muted)">Valideur(s) : </span>${vals.map(m=>avatarHTML(m, true)).join(' ')}</div>` : '');
+  }
+
+  // versions
+  const versEl = document.getElementById('drawer-versions');
+  if (!e.versions || !e.versions.length) {
+    versEl.innerHTML = '<span style="font-size:13px;color:var(--muted)">Aucune version précédente</span>';
+  } else {
+    versEl.innerHTML = e.versions.map((v, i) => {
+      const vmo = parse(v.raw);
+      return `<div class="version-item">
+        <span class="version-tag">v${e.versions.length - i}</span>
+        <span class="version-date">${v.savedAt} · ${vmo.etapes ? vmo.etapes.length : '?'} étapes</span>
+        <button class="btn sm" onclick="restoreVersion(${e.id},${i})">Restaurer</button>
+      </div>`;
+    }).join('');
+  }
+
+  // comments
+  renderDrawerComments(e);
+}
+
+function renderDrawerComments(e) {
+  const el = document.getElementById('drawer-comments');
+  if (!e.comments || !e.comments.length) {
+    el.innerHTML = '<span style="font-size:13px;color:var(--muted)">Aucun commentaire</span>';
+    return;
+  }
+  el.innerHTML = e.comments.map((c, i) => {
+    const author = c.authorId ? S.membres.find(m => m.id === c.authorId) : null;
+    const authorHTML = author
+      ? `<span class="avatar" style="background:${author.color};width:20px;height:20px;font-size:9px;flex-shrink:0">${esc(author.initiales)}</span><b style="color:var(--text)">${esc(author.nom)}</b>`
+      : `<span style="color:var(--muted)">Anonyme</span>`;
+    return `<div class="comment-item">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">${authorHTML}</div>
+      <div class="comment-text">${esc(c.text)}</div>
+      <div class="comment-meta">${c.date} <button class="btn sm" style="padding:2px 6px;color:var(--red)" onclick="deleteComment(${e.id},${i})">✕</button></div>
+    </div>`;
+  }).join('');
+}
+
+function addComment() {
+  const inp  = document.getElementById('comment-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  const e = S.history.find(x => x.id === drawerEntryId);
+  if (!e) return;
+  const authorId = document.getElementById('comment-author').value || null;
+  e.comments = e.comments || [];
+  e.comments.push({text, date: new Date().toLocaleString('fr-FR'), authorId});
+  inp.value = '';
+  persist();
+  renderDrawerComments(e);
+}
+
+function populateCommentAuthorSelect() {
+  const sel = document.getElementById('comment-author');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— Auteur du commentaire —</option>' +
+    S.membres.map(m => `<option value="${m.id}" ${m.id === prev ? 'selected':''}>${esc(m.nom)}</option>`).join('');
+}
+
+function deleteComment(entryId, idx) {
+  const e = S.history.find(x => x.id === entryId);
+  if (!e) return;
+  e.comments.splice(idx, 1);
+  persist();
+  renderDrawerComments(e);
+}
+
+function restoreVersion(entryId, vIdx) {
+  const e = S.history.find(x => x.id === entryId);
+  if (!e) return;
+  const v = e.versions[vIdx];
+  // save current as new version
+  e.versions.unshift({raw:e.raw, savedAt:e.savedAt});
+  e.raw     = v.raw;
+  e.savedAt = new Date().toLocaleDateString('fr-FR');
+  const mo  = parse(v.raw);
+  e.titre   = mo.titre || e.titre;
+  e.etapes  = mo.etapes.length;
+  if (e.versions.length > 10) e.versions = e.versions.slice(0, 10);
+  persist();
+  refreshDrawer();
+  renderHistory();
+  toast('Version restaurée');
+}
+
+function editFromDrawer() {
+  const e = S.history.find(x => x.id === drawerEntryId);
+  if (!e) return;
+  document.getElementById('raw-input').value = e.raw;
+  curProjet = e.projet || '';
+  curRedact = [...(e.redacteurs||[])];
+  curValid  = [...(e.valideurs||[])];
+  curEntryId = e.id;
+  saveMetaState();
+  renderEditorMeta();
+  renderPreview();
+  closeDrawer();
+  switchTab('editor');
+  toast('MO chargé dans l\'éditeur');
+}
+
+function dlFromDrawer(fmt) {
+  const e = S.history.find(x => x.id === drawerEntryId);
+  if (!e) return;
+  dlEntry(e.id, fmt);
+}
+
+function deleteFromDrawer() {
+  if (!confirm('Supprimer ce MO définitivement ?')) return;
+  S.history = S.history.filter(e => e.id !== drawerEntryId);
+  if (curEntryId === drawerEntryId) { curEntryId = null; saveMetaState(); }
+  persist(); renderHistory();
+  closeDrawer();
+  toast('Supprimé');
+}
+
+function closeDrawer() {
+  document.getElementById('drawer-overlay').classList.remove('open');
+  document.getElementById('drawer').classList.remove('open');
+  drawerEntryId = null;
+}
+
+// ── Projets CRUD ──────────────────────────────────────────────────────────────
+const PROJ_EDIT_KEY = '__editProjId__';
+
+function buildColorPickers() {
+  // Projets
+  document.getElementById('p-colors').innerHTML = PROJECT_COLORS.map(c =>
+    `<div class="color-dot ${c===selectedPColor?'selected':''}" style="background:${c}" onclick="selectPColor('${c}')"></div>`
+  ).join('');
+  // Membres
+  document.getElementById('m-colors').innerHTML = AVATAR_COLORS.map(c =>
+    `<div class="color-dot ${c===selectedMColor?'selected':''}" style="background:${c}" onclick="selectMColor('${c}')"></div>`
+  ).join('');
+}
+
+function selectPColor(c) {
+  selectedPColor = c;
+  document.querySelectorAll('#p-colors .color-dot').forEach(d => d.classList.toggle('selected', d.style.background === c));
+}
+function selectMColor(c) {
+  selectedMColor = c;
+  document.querySelectorAll('#m-colors .color-dot').forEach(d => d.classList.toggle('selected', d.style.background === c));
+}
+
+function saveProjet() {
+  const nom  = document.getElementById('p-nom').value.trim();
+  const desc = document.getElementById('p-desc').value.trim();
+  if (!nom) { toast('Nom requis'); return; }
+
+  if (editingProjetId) {
+    const p = S.projets.find(x => x.id === editingProjetId);
+    if (p) { p.nom = nom; p.desc = desc; p.color = selectedPColor; }
+    editingProjetId = null;
+    document.querySelector('#projet-form .btn.primary').textContent = 'Ajouter';
+  } else {
+    S.projets.push({id: 'p_' + Date.now(), nom, desc, color: selectedPColor});
+  }
+  document.getElementById('p-nom').value = '';
+  document.getElementById('p-desc').value = '';
+  persist(); renderAll();
+  toast('Projet enregistré');
+}
+
+function editProjet(id) {
+  const p = S.projets.find(x => x.id === id);
+  if (!p) return;
+  editingProjetId = id;
+  document.getElementById('p-nom').value  = p.nom;
+  document.getElementById('p-desc').value = p.desc || '';
+  selectPColor(p.color);
+  buildColorPickers();
+  document.querySelector('#projet-form .btn.primary').textContent = 'Mettre à jour';
+  document.getElementById('p-nom').focus();
+}
+
+function deleteProjet(id) {
+  if (!confirm('Supprimer ce projet ? Les MO rattachés seront détachés.')) return;
+  S.projets = S.projets.filter(p => p.id !== id);
+  S.history.forEach(e => { if (e.projet === id) e.projet = ''; });
+  if (curProjet === id) { curProjet = ''; saveMetaState(); }
+  persist(); renderAll();
+  toast('Projet supprimé');
+}
+
+function renderProjetsList() {
+  const el = document.getElementById('projets-list');
+  if (!S.projets.length) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">📁</div><p>Aucun projet créé.<br>Ajoutez votre premier projet ci-dessus.</p></div>';
+    return;
+  }
+  el.innerHTML = S.projets.map(p => {
+    const count = S.history.filter(e => e.projet === p.id).length;
+    return `<div class="crud-card">
+      <div style="width:14px;height:36px;border-radius:4px;background:${p.color};flex-shrink:0"></div>
+      <div class="crud-card-info">
+        <div class="crud-card-title">${esc(p.nom)}</div>
+        <div class="crud-card-sub">${p.desc ? esc(p.desc) + ' · ' : ''}${count} MO rattaché${count>1?'s':''}</div>
+      </div>
+      <div class="crud-card-actions">
+        <button class="btn sm" onclick="editProjet('${p.id}')">✎</button>
+        <button class="btn sm danger" onclick="deleteProjet('${p.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderProjetsDropdown() {
+  const sel = document.getElementById('meta-projet');
+  const val = curProjet;
+  sel.innerHTML = '<option value="">— Aucun projet —</option>' +
+    S.projets.map(p => `<option value="${p.id}" ${p.id === val ? 'selected':''}>${esc(p.nom)}</option>`).join('');
+}
+
+// ── Membres CRUD ──────────────────────────────────────────────────────────────
+function toggleRoleBtn(role) {
+  if (role === 'red') roleRedacteur = !roleRedacteur;
+  else                roleValideur  = !roleValideur;
+  renderRoleBtns();
+}
+
+function renderRoleBtns() {
+  document.getElementById('rb-red').classList.toggle('active', roleRedacteur);
+  document.getElementById('rb-val').classList.toggle('active', roleValideur);
+}
+
+function saveMembre() {
+  const nom  = document.getElementById('m-nom').value.trim();
+  const init = document.getElementById('m-init').value.trim().toUpperCase() || nom.split(' ').map(w=>w[0]).join('').slice(0,3);
+  const roles = [];
+  if (roleRedacteur) roles.push('redacteur');
+  if (roleValideur)  roles.push('valideur');
+  if (!nom) { toast('Nom requis'); return; }
+  if (!roles.length) { toast('Au moins un rôle requis'); return; }
+
+  if (editingMembreId) {
+    const m = S.membres.find(x => x.id === editingMembreId);
+    if (m) { m.nom = nom; m.initiales = init; m.color = selectedMColor; m.roles = roles; }
+    editingMembreId = null;
+    document.querySelector('#membre-form .btn.primary').textContent = 'Ajouter';
+  } else {
+    S.membres.push({id: 'm_' + Date.now(), nom, initiales: init, color: selectedMColor, roles});
+  }
+  document.getElementById('m-nom').value  = '';
+  document.getElementById('m-init').value = '';
+  persist(); renderAll();
+  toast('Membre enregistré');
+}
+
+function editMembre(id) {
+  const m = S.membres.find(x => x.id === id);
+  if (!m) return;
+  editingMembreId = id;
+  document.getElementById('m-nom').value  = m.nom;
+  document.getElementById('m-init').value = m.initiales;
+  selectMColor(m.color); buildColorPickers();
+  roleRedacteur = m.roles.includes('redacteur');
+  roleValideur  = m.roles.includes('valideur');
+  renderRoleBtns();
+  document.querySelector('#membre-form .btn.primary').textContent = 'Mettre à jour';
+  document.getElementById('m-nom').focus();
+}
+
+function deleteMembre(id) {
+  if (!confirm('Supprimer ce membre ?')) return;
+  S.membres = S.membres.filter(m => m.id !== id);
+  S.history.forEach(e => {
+    e.redacteurs = (e.redacteurs||[]).filter(x => x !== id);
+    e.valideurs  = (e.valideurs||[]).filter(x  => x !== id);
+  });
+  curRedact = curRedact.filter(x => x !== id);
+  curValid  = curValid.filter(x  => x !== id);
+  saveMetaState();
+  persist(); renderAll();
+  toast('Membre supprimé');
+}
+
+function renderMembresList() {
+  const el = document.getElementById('membres-list');
+  if (!S.membres.length) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">👥</div><p>Aucun membre dans l\'équipe.<br>Ajoutez vos premiers collaborateurs ci-dessus.</p></div>';
+    return;
+  }
+  el.innerHTML = S.membres.map(m => {
+    const roleLabels = [m.roles.includes('redacteur')?'Rédacteur':'',m.roles.includes('valideur')?'Valideur':''].filter(Boolean).join(' + ');
+    return `<div class="crud-card">
+      <div class="avatar" style="background:${m.color};width:36px;height:36px;font-size:12px;flex-shrink:0">${esc(m.initiales)}</div>
+      <div class="crud-card-info">
+        <div class="crud-card-title">${esc(m.nom)}</div>
+        <div class="crud-card-sub">${roleLabels}</div>
+      </div>
+      <div class="crud-card-actions">
+        <button class="btn sm" onclick="editMembre('${m.id}')">✎</button>
+        <button class="btn sm danger" onclick="deleteMembre('${m.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ── Download ──────────────────────────────────────────────────────────────────
@@ -561,84 +1263,12 @@ function renderTxt(mo) {
 }
 
 function downloadFile(fmt) {
-  const mo      = parse(document.getElementById('raw-input').value);
+  const mo = parse(document.getElementById('raw-input').value);
   const content = fmt === 'md' ? renderMd(mo) : renderTxt(mo);
-  const slug    = (mo.titre || 'mode-operatoire')
-    .toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-    .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-  const name = `${slug}-MO.${fmt}`;
-  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = name;
-  a.click();
-  toast(`↓ ${name}`);
-}
-
-// ── Save to history ───────────────────────────────────────────────────────────
-function saveMO() {
-  const raw = document.getElementById('raw-input').value;
-  const mo  = parse(raw);
-  if (!mo.titre && !mo.etapes.length) { toast('Rien à enregistrer'); return; }
-
-  const entry = {
-    id:      Date.now(),
-    titre:   mo.titre || '(sans titre)',
-    auteur:  mo.auteur,
-    modifie: mo.modifie,
-    etapes:  mo.etapes.length,
-    raw,
-    savedAt: new Date().toLocaleDateString('fr-FR'),
-  };
-  S.history.unshift(entry);
-  if (S.history.length > 50) S.history.pop();
-  persist();
-  renderHistory();
-  toast('✓ MO enregistré');
-}
-
-function deleteEntry(id) {
-  S.history = S.history.filter(e => e.id !== id);
-  persist();
-  renderHistory();
-  toast('Supprimé');
-}
-
-function loadEntry(id) {
-  const e = S.history.find(x => x.id === id);
-  if (!e) return;
-  document.getElementById('raw-input').value = e.raw;
-  renderPreview();
-  switchTab('editor');
-  toast('MO chargé dans l\'éditeur');
-}
-
-function renderHistory() {
-  const el = document.getElementById('history-container');
-  if (!S.history.length) {
-    el.innerHTML = '<p class="history-empty">Aucun mode opératoire enregistré.<br>Rédigez vos notes et cliquez sur <b>Enregistrer</b>.</p>';
-    return;
-  }
-  el.innerHTML = `<div class="history-list">${S.history.map(e => `
-    <div class="history-card">
-      <div class="history-card-top">
-        <div>
-          <div class="history-title">${esc(e.titre)}</div>
-          <div class="history-meta">
-            ${e.auteur ? `${esc(e.auteur)} · ` : ''}
-            ${e.modifie ? `modifié ${esc(e.modifie)} · ` : ''}
-            ${e.etapes} étape${e.etapes > 1 ? 's' : ''} · enregistré ${e.savedAt}
-          </div>
-        </div>
-        <div class="history-actions">
-          <button class="btn sm" onclick="loadEntry(${e.id})">Éditer</button>
-          <button class="btn sm" onclick="copyHtmlEntry(${e.id})" title="Copier pour Outlook ou Gmail">⎘ Email</button>
-          <button class="btn sm" onclick="dlEntry(${e.id},'md')">↓ md</button>
-          <button class="btn sm" onclick="dlEntry(${e.id},'txt')">↓ txt</button>
-          <button class="btn sm" style="color:var(--red)" onclick="deleteEntry(${e.id})">✕</button>
-        </div>
-      </div>
-    </div>`).join('')}</div>`;
+  const slug = (mo.titre || 'mode-operatoire').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  const blob = new Blob([content], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${slug}-MO.${fmt}`; a.click();
+  toast(`↓ ${slug}-MO.${fmt}`);
 }
 
 function dlEntry(id, fmt) {
@@ -646,34 +1276,18 @@ function dlEntry(id, fmt) {
   if (!e) return;
   const mo = parse(e.raw);
   const content = fmt === 'md' ? renderMd(mo) : renderTxt(mo);
-  const slug = (mo.titre || 'mode-operatoire')
-    .toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-    .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `${slug}-MO.${fmt}`;
-  a.click();
+  const slug = (mo.titre || 'mode-operatoire').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  const blob = new Blob([content], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${slug}-MO.${fmt}`; a.click();
 }
 
-async function copyHtmlEntry(id) {
-  const e = S.history.find(x => x.id === id);
-  if (!e) return;
-  const mo      = parse(e.raw);
-  const htmlStr = renderHtmlEmail(mo);
-  const textStr = renderTxt(mo);
-  try {
-    await navigator.clipboard.write([
-      new ClipboardItem({
-        'text/html':  new Blob([htmlStr], { type: 'text/html' }),
-        'text/plain': new Blob([textStr], { type: 'text/plain' }),
-      })
-    ]);
-    toast('⎘ Copié — collez dans Outlook ou Gmail');
-  } catch(err) {
-    await navigator.clipboard.writeText(textStr);
-    toast('⎘ Copié en texte brut (navigateur limité)');
-  }
+// ── on edit ───────────────────────────────────────────────────────────────────
+function onEdit() {
+  renderPreview();
+  localStorage.setItem(`${SK}_draft`, document.getElementById('raw-input').value);
+  setSyncDot('pending');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(autoSave, 2000);
 }
 
 // ── Persist ───────────────────────────────────────────────────────────────────
@@ -686,11 +1300,11 @@ function persist() {
 
 function setSyncDot(state) {
   const el = document.getElementById('sync-dot');
-  const labels = { local:'⚫ Local', pending:'🟡 En attente', ok:'🟢 Sync ✓', error:'🔴 Erreur' };
+  const labels = {local:'⚫ Local',pending:'🟡 En attente',ok:'🟢 Sync ✓',error:'🔴 Erreur'};
   el.textContent = labels[state] || '⚫ Local';
 }
 
-// ── Google Drive ───────────────────────────────────────────────────────────────
+// ── Google Drive ──────────────────────────────────────────────────────────────
 const DRIVE_FILE = 'mo-generator.json';
 
 function initDrive() {
@@ -710,16 +1324,14 @@ function initDrive() {
 
 function handleDriveBtn() {
   if (!tokenClient) { toast('Drive non initialisé'); return; }
-  if (accessToken) { pushToDrive(); toast('Send to Drive...'); }
+  if (accessToken) { pushToDrive(); toast('Synchronisation…'); }
   else tokenClient.requestAccessToken();
 }
 
 function updateDriveUI(connected) {
-  document.getElementById('drive-status-label').textContent =
-    connected ? 'Connecté à Google Drive' : 'Non connecté à Drive';
-  document.getElementById('drive-action-btn').textContent =
-    connected ? 'Send to Drive' : 'Connecter';
-  document.getElementById('pull-btn').style.display = connected ? '' : 'none';
+  document.getElementById('drive-status-label').textContent = connected ? 'Connecté à Google Drive' : 'Non connecté à Drive';
+  document.getElementById('drive-action-btn').textContent   = connected ? 'Sync maintenant' : 'Connecter';
+  document.getElementById('pull-btn').style.display         = connected ? '' : 'none';
 }
 
 async function pushToDrive() {
@@ -730,21 +1342,16 @@ async function pushToDrive() {
     if (!driveFileId) driveFileId = await findDriveFile();
     if (driveFileId) {
       await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-        body
+        method:'PATCH', headers:{Authorization:`Bearer ${accessToken}`,'Content-Type':'application/json'}, body
       });
     } else {
       const meta = await fetch('https://www.googleapis.com/drive/v3/files', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: DRIVE_FILE, mimeType: 'application/json' })
-      }).then(r => r.json());
+        method:'POST', headers:{Authorization:`Bearer ${accessToken}`,'Content-Type':'application/json'},
+        body: JSON.stringify({name:DRIVE_FILE,mimeType:'application/json'})
+      }).then(r=>r.json());
       driveFileId = meta.id;
       await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-        body
+        method:'PATCH', headers:{Authorization:`Bearer ${accessToken}`,'Content-Type':'application/json'}, body
       });
     }
     setSyncDot('ok');
@@ -757,113 +1364,56 @@ async function pullFromDrive() {
     const id = driveFileId || await findDriveFile();
     if (!id) { toast('Aucun fichier Drive trouvé'); return; }
     driveFileId = id;
-    const res  = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
+    const res  = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, {headers:{Authorization:`Bearer ${accessToken}`}});
     const data = await res.json();
     S = data; ensureState();
     localStorage.setItem(SK, JSON.stringify(S));
-    renderHistory();
-    setSyncDot('ok');
+    renderAll(); setSyncDot('ok');
     toast('↓ Données Drive chargées');
   } catch(e) { setSyncDot('error'); toast('Erreur Drive'); }
 }
 
 async function findDriveFile() {
-  const res = await fetch(
-    `https://www.googleapis.com/drive/v3/files?q=name='${DRIVE_FILE}' and trashed=false&fields=files(id)`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
-  );
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${DRIVE_FILE}' and trashed=false&fields=files(id)`,
+    {headers:{Authorization:`Bearer ${accessToken}`}});
   const data = await res.json();
   return data.files?.[0]?.id || null;
 }
 
 function autoSave() {
-  if (accessToken) pushToDrive();
-  else setSyncDot('local');
+  if (accessToken) pushToDrive(); else setSyncDot('local');
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function avatarHTML(m, withName = false) {
+  if (!m) return '';
+  return `<span class="avatar" style="background:${m.color}" title="${esc(m.nom)}">${esc(m.initiales)}</span>${withName ? ' <span style="font-size:13px">'+esc(m.nom)+'</span>' : ''}`;
+}
+
+function chipHTML(nom, color) {
+  return `<span class="chip" style="background:${color}22;color:${color};border-color:${color}44">${esc(nom)}</span>`;
 }
 
 // ── Toast ──────────────────────────────────────────────────────────────────────
 function toast(msg) {
+  clearTimeout(undoTimer);
   const el = document.getElementById('toast');
-  el.textContent = msg; el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2200);
+  el.innerHTML = `<span>${msg}</span>`;
+  el.classList.add('show');
+  undoTimer = setTimeout(() => el.classList.remove('show'), 2200);
 }
 
-// ── Copy HTML for email ───────────────────────────────────────────────────────
-function renderHtmlEmail(mo) {
-  const s = {
-    h1:    'font-family:Arial,sans-serif;font-size:18px;font-weight:600;margin:0 0 8px;color:#1A1917;',
-    meta:  'font-family:Arial,sans-serif;font-size:13px;color:#7A7671;margin:2px 0;',
-    metab: 'font-weight:600;color:#1A1917;',
-    h2:    'font-family:Arial,sans-serif;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#7A7671;margin:18px 0 6px;',
-    ol:    'font-family:Arial,sans-serif;font-size:14px;line-height:1.7;margin:0;padding-left:20px;color:#1A1917;',
-    li:    'margin:2px 0;',
-    sub:   'font-family:Arial,sans-serif;font-size:13px;color:#7A7671;margin:1px 0 1px 16px;list-style:none;',
-    ok:    'font-family:Arial,sans-serif;font-size:13px;color:#16A34A;border:1px solid #16A34A;border-radius:4px;padding:7px 10px;margin-top:14px;display:block;',
-    warn:  'font-family:Arial,sans-serif;font-size:13px;color:#D97706;border:1px solid #D97706;border-radius:4px;padding:7px 10px;margin-top:8px;display:block;',
-  };
-
-  let html = `<div style="max-width:600px;font-family:Arial,sans-serif;">`;
-
-  if (mo.titre)   html += `<h1 style="${s.h1}">${esc(mo.titre)}</h1>`;
-
-  const metas = [
-    mo.quand   && ['Quand l\'utiliser', mo.quand],
-    mo.duree   && ['Durée estimée',     mo.duree],
-    mo.auteur  && ['Auteur',            mo.auteur],
-    mo.modifie && ['Dernière modification', mo.modifie],
-  ].filter(Boolean);
-  for (const [k,v] of metas)
-    html += `<p style="${s.meta}"><span style="${s.metab}">${esc(k)} :</span> ${esc(v)}</p>`;
-
-  if (mo.etapes.length) {
-    html += `<p style="${s.h2}">Étapes</p><ol style="${s.ol}">`;
-    for (const e of mo.etapes) {
-      if (e.texte) html += `<li style="${s.li}">${esc(e.texte)}`;
-      if (e.sous_etapes.length) {
-        html += `<ul style="margin:2px 0;padding-left:16px;">`;
-        for (const se of e.sous_etapes)
-          html += `<li style="${s.sub}">${esc(se)}</li>`;
-        html += `</ul>`;
-      }
-      if (e.texte) html += `</li>`;
-    }
-    html += `</ol>`;
-  }
-
-  if (mo.resultat) html += `<span style="${s.ok}">✅ <strong>Résultat attendu :</strong> ${esc(mo.resultat)}</span>`;
-  if (mo.erreur)   html += `<span style="${s.warn}">⚠️ <strong>Erreur fréquente :</strong> ${esc(mo.erreur)}</span>`;
-
-  html += `</div>`;
-  return html;
-}
-
-async function copyHtml() {
-  const mo       = parse(document.getElementById('raw-input').value);
-  const htmlStr  = renderHtmlEmail(mo);
-  const textStr  = renderTxt(mo);
-  try {
-    await navigator.clipboard.write([
-      new ClipboardItem({
-        'text/html':  new Blob([htmlStr],  { type: 'text/html' }),
-        'text/plain': new Blob([textStr],  { type: 'text/plain' }),
-      })
-    ]);
-    toast('⎘ Copié — collez dans Outlook ou Gmail');
-  } catch(e) {
-    // Fallback : copie texte brut si ClipboardItem non supporté
-    await navigator.clipboard.writeText(textStr);
-    toast('⎘ Copié en texte brut (navigateur limité)');
-  }
-}
-
-// ── Help toggle ───────────────────────────────────────────────────────────────
-function toggleHelp() {
-  const toggle = document.getElementById('help-toggle');
-  const body   = document.getElementById('help-body');
-  const open   = body.classList.toggle('open');
-  toggle.classList.toggle('open', open);
+function toastUndo(msg, cb) {
+  clearTimeout(undoTimer);
+  const el = document.getElementById('toast');
+  el.innerHTML = `<span>${msg}</span><button id="toast-undo" onclick="(${cb.toString()})()">Annuler</button>`;
+  el.classList.add('show');
+  undoTimer = setTimeout(() => el.classList.remove('show'), 10000);
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
