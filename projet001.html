@@ -204,6 +204,8 @@ body{
 .hbtn.orange{background:var(--accent);color:#fff;border-color:var(--accent);}
 .hbtn.orange:hover{opacity:.9;}
 .hbtn.green{background:var(--green-bg);color:var(--green);border-color:currentColor;}
+.hbtn.warn{background:transparent;color:var(--accent);border-color:var(--accent);font-weight:600;}
+.hbtn.warn:hover{background:var(--accent);color:#fff;}
 .gdot{width:6px;height:6px;border-radius:50%;background:var(--text3);transition:background .2s;}
 .gdot.on{background:var(--green);}
 
@@ -1008,7 +1010,9 @@ body{
   <div class="header-inner">
     <div class="header-left">
       <span class="wordmark">todos</span>
-      <span class="proj-tag">projet001</span>
+      <button class="hbtn" id="hbtn-drive" onclick="switchTab('log');setTimeout(()=>document.getElementById('drive-anchor').scrollIntoView({behavior:'smooth'}),120)">
+        <span class="gdot" id="gdot"></span>Drive
+      </button>
     </div>
     <div class="hbtns-scroll">
       <button class="hbtn" id="save-status-btn" onclick="forcePush()" title="Forcer la sync Drive">
@@ -1016,12 +1020,8 @@ body{
         <span id="save-label">Sync</span>
       </button>
       <button class="hbtn" id="undo-btn" onclick="undoLast()" title="Annuler la dernière suppression" style="display:none">↩ Undo</button>
-      <button class="hbtn green" onclick="openImp()">Import</button>
       <button class="hbtn" id="btn-refresh" onclick="drivePull()" style="display:none" title="Charger depuis Drive">↻ Refresh</button>
       <span class="live-badge" id="live-badge"><span class="live-dot"></span>Live</span>
-      <button class="hbtn" onclick="switchTab('log');setTimeout(()=>document.getElementById('drive-anchor').scrollIntoView({behavior:'smooth'}),120)">
-        <span class="gdot" id="gdot"></span>Drive
-      </button>
     </div>
     <button class="hbtn hbtn-fixed" id="theme-btn" onclick="toggleTheme()">☀︎</button>
   </div>
@@ -1864,6 +1864,21 @@ function updateDriveUI(){
   document.getElementById('btn-disc').style.display=c?'':'none';
   const r=document.getElementById('btn-refresh');
   if(r)r.style.display=c?'':'none';
+  // Header Drive button: quick-connect when disconnected
+  const hd=document.getElementById('hbtn-drive');
+  if(hd){
+    if(!c){
+      hd.className='hbtn warn';
+      hd.onclick=driveAuth;
+      hd.title='Connecter Google Drive';
+      hd.innerHTML='<span class="gdot" id="gdot"></span>☁ Connecter';
+    } else {
+      hd.className='hbtn';
+      hd.onclick=function(){switchTab('log');setTimeout(()=>document.getElementById('drive-anchor').scrollIntoView({behavior:'smooth'}),120);};
+      hd.title='';
+      hd.innerHTML='<span class="gdot on" id="gdot"></span>Drive';
+    }
+  }
 }
 
 function loadGIS(cb){if(window.google&&window.google.accounts){cb();return;}const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';s.onload=cb;document.head.appendChild(s);}
