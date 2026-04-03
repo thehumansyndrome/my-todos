@@ -436,7 +436,9 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
       <button class="btn sm" onclick="editFromDrawer()">✎ Éditer</button>
       <button class="btn sm" onclick="dlFromDrawer('md')">↓ .md</button>
       <button class="btn sm" onclick="dlFromDrawer('txt')">↓ .txt</button>
+      <button class="btn sm" id="drawer-validate-btn" style="color:var(--green);border-color:var(--green)" onclick="validateFromDrawer()">✓ Valider</button>
       <button class="btn sm" id="drawer-unlock-btn" style="display:none;color:var(--green);border-color:var(--green)" onclick="unlockFromDrawer()">🔓 Déverrouiller</button>
+      <button class="btn sm" id="drawer-archive-btn" style="color:var(--blue);border-color:var(--blue)" onclick="archiveFromDrawer()">⬜ Archiver</button>
       <button class="btn sm danger" onclick="deleteFromDrawer()">Supprimer</button>
     </div>
 
@@ -459,7 +461,7 @@ const ICONS   = {light:'☀︎',sand:'○',navy:'◑',dark:'☾'};
 
 const PROJECT_COLORS = ['#E53E3E','#DD6B20','#D69E2E','#38A169','#3182CE','#6B46C1','#D53F8C','#2C7A7B'];
 const AVATAR_COLORS  = ['#E53E3E','#DD6B20','#38A169','#3182CE','#6B46C1','#D53F8C','#2C7A7B','#718096'];
-const STATUS_CYCLE   = ['brouillon','validation','valide','renvoye','archive'];
+const STATUS_CYCLE   = ['brouillon','validation','renvoye','valide'];
 const STATUS_LABELS  = {brouillon:'Brouillon',validation:'En validation',valide:'Validé ✓',renvoye:'Renvoyé ✗',archive:'Archivé'};
 const STATUS_CLASS   = {brouillon:'status-brouillon',validation:'status-validation',valide:'status-valide',renvoye:'status-renvoye',archive:'status-archive'};
 
@@ -681,6 +683,32 @@ function setEditorLocked(locked) {
 
 // unlockFromDrawer → délégué à unlockMO
 function unlockFromDrawer() { unlockMO(); }
+
+function validateFromDrawer() {
+  const e = S.history.find(x => x.id === drawerEntryId);
+  if (!e) return;
+  e.status = 'valide';
+  e.publishedAt = new Date().toLocaleString('fr-FR');
+  persist(); renderHistory(); refreshDrawer();
+  if (curEntryId === drawerEntryId) updateLockBanner();
+  toast('✓ MO validé — verrouillé en lecture seule');
+}
+
+function archiveFromDrawer() {
+  const e = S.history.find(x => x.id === drawerEntryId);
+  if (!e) return;
+  if (e.status === 'archive') {
+    // Désarchiver → repasse en brouillon
+    e.status = 'brouillon';
+    persist(); renderHistory(); refreshDrawer();
+    toast('MO désarchivé — statut remis en Brouillon');
+  } else {
+    if (!confirm('Archiver ce MO ? Il ne sera plus dans le cycle de validation.')) return;
+    e.status = 'archive';
+    persist(); renderHistory(); refreshDrawer();
+    toast('MO archivé');
+  }
+}
 
 function renderEditorMeta() {
   // projet select
@@ -990,6 +1018,8 @@ function undoDelete() {
 function cycleStatus(id) {
   const e = S.history.find(x => x.id === id);
   if (!e) return;
+  // Les MO archivés ne participent plus au cycle via le badge
+  if (e.status === 'archive') return;
   // Sortir de Validé nécessite confirmation
   if (e.status === 'valide') {
     if (!confirm('Ce MO est validé et verrouillé.\nChanger son statut le déverrouillera pour modification.\nContinuer ?')) return;
@@ -1053,8 +1083,20 @@ function refreshDrawer() {
   if (proj) badgesEl.innerHTML += chipHTML(proj.nom, proj.color);
   if (e.publishedAt) badgesEl.innerHTML += `<span style="font-size:11px;color:var(--green);margin-left:4px">🔒 Validé le ${esc(e.publishedAt)}</span>`;
   // bouton déverrouiller dans le drawer
+  const validateBtn = document.getElementById('drawer-validate-btn');
+  if (validateBtn) validateBtn.style.display = (e.status === 'valide' || e.status === 'archive') ? 'none' : '';
   const unlockBtn = document.getElementById('drawer-unlock-btn');
   if (unlockBtn) unlockBtn.style.display = (e.status === 'valide') ? '' : 'none';
+  const archiveBtn = document.getElementById('drawer-archive-btn');
+  if (archiveBtn) {
+    if (e.status === 'archive') {
+      archiveBtn.textContent = '↩ Désarchiver';
+      archiveBtn.style.color = archiveBtn.style.borderColor = 'var(--muted)';
+    } else {
+      archiveBtn.textContent = '⬜ Archiver';
+      archiveBtn.style.color = archiveBtn.style.borderColor = 'var(--blue)';
+    }
+  }
 
   // contenu MO
   const mo = parse(e.raw);
