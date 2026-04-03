@@ -105,6 +105,14 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
 .btn.primary{background:var(--accent);color:var(--bg);border-color:var(--accent);}
 .btn.primary:hover{opacity:.88;}
 .btn.sm{padding:5px 10px;font-size:12px;}
+.btn-group{display:flex;align-items:center;gap:4px;}
+.btn-divider{width:1px;height:18px;background:var(--border);margin:0 4px;flex-shrink:0;}
+.btn.action-save{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600;}
+.btn.action-save:hover{opacity:.85;}
+.btn.action-submit{background:transparent;color:var(--amber);border-color:var(--amber);font-weight:500;}
+.btn.action-submit:hover{background:var(--amber);color:#fff;}
+.btn.action-validate{background:transparent;color:var(--green);border-color:var(--green);font-weight:500;}
+.btn.action-validate:hover{background:var(--green);color:#fff;}
 .btn.danger{color:var(--red);border-color:var(--red);}
 .btn.danger:hover{background:var(--red);color:#fff;}
 
@@ -296,12 +304,13 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
             <span>Aperçu</span>
             <span id="editor-status-badge"></span>
           </div>
-          <div style="display:flex;gap:6px">
-            <button class="btn sm" onclick="downloadFile('md')">↓ .md</button>
-            <button class="btn sm" onclick="downloadFile('txt')">↓ .txt</button>
-            <button class="btn sm primary editor-edit-btn" onclick="saveMO()">Enregistrer</button>
-            <button class="btn sm editor-edit-btn" style="color:var(--amber);border-color:var(--amber)" onclick="submitMO()">Soumettre</button>
-            <button class="btn sm editor-edit-btn" style="color:var(--green);border-color:var(--green)" onclick="validateMO()">✓ Valider</button>
+          <div class="btn-group">
+            <button class="btn sm" onclick="downloadFile('md')" title="Télécharger .md">↓ .md</button>
+            <button class="btn sm" onclick="downloadFile('txt')" title="Télécharger .txt">↓ .txt</button>
+            <div class="btn-divider"></div>
+            <button class="btn sm action-save editor-edit-btn" onclick="saveMO()" title="Enregistrer le brouillon">Enregistrer</button>
+            <button class="btn sm action-submit editor-edit-btn" onclick="submitMO()" title="Enregistrer et soumettre en validation">Soumettre →</button>
+            <button class="btn sm action-validate editor-edit-btn" onclick="validateMO()" title="Valider directement">✓ Valider</button>
           </div>
         </div>
         <div class="preview-area" id="preview"></div>
