@@ -56,6 +56,20 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
 .section{display:none;}
 .section.active{display:block;}
 
+/* ── Lock banner ── */
+.lock-banner{display:none;align-items:center;gap:10px;padding:10px 14px;margin-bottom:14px;background:var(--green);color:#fff;border-radius:var(--radius);font-size:13px;font-weight:500;}
+.lock-banner.visible{display:flex;}
+.lock-banner .lock-icon{font-size:16px;flex-shrink:0;}
+.lock-banner .lock-meta{flex:1;font-size:12px;opacity:.88;}
+.lock-banner .unlock-btn{padding:5px 12px;border-radius:var(--radius);background:rgba(255,255,255,.2);color:#fff;font-size:12px;font-weight:600;border:1px solid rgba(255,255,255,.4);cursor:pointer;white-space:nowrap;}
+.lock-banner .unlock-btn:hover{background:rgba(255,255,255,.35);}
+.editor-area:read-only{opacity:.7;cursor:not-allowed;}
+
+/* ── Lock banner ── */
+
+.editor-area:read-only{opacity:.6;cursor:not-allowed;}
+.editor-area:read-only:focus{outline:none;}
+
 /* ── Editor ── */
 .editor-meta-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;}
 .meta-field{display:flex;flex-direction:column;gap:4px;min-width:160px;flex:1;}
@@ -232,6 +246,16 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
   <!-- ═══════════════════════════════════════ TAB ÉDITEUR ═══════════════════════════════════════ -->
   <div id="tab-editor" class="section active">
 
+    <!-- Bannière verrouillage -->
+    <div class="lock-banner" id="lock-banner">
+      <span class="lock-icon">🔒</span>
+      <div style="flex:1">
+        <div>MO validé — lecture seule</div>
+        <div class="lock-meta" id="lock-meta"></div>
+      </div>
+      <button class="unlock-btn" onclick="unlockMO()" style="flex-shrink:0">🔓 Déverrouiller</button>
+    </div>
+
     <!-- Métadonnées projet + assignés -->
     <div class="editor-meta-bar">
       <div class="meta-field">
@@ -255,11 +279,12 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
       <div class="dropdown-menu" id="dd-menu"></div>
     </div>
 
+
     <div class="editor-grid">
       <div class="pane">
         <div class="pane-header">
           <span>Notes brutes</span>
-          <button class="btn sm" onclick="resetTemplate()">↺ Template</button>
+          <button class="btn sm editor-edit-btn" onclick="resetTemplate()">↺ Template</button>
         </div>
         <textarea class="editor-area" id="raw-input" spellcheck="false"
           oninput="onEdit()" placeholder="Commencez à taper vos notes ici…"></textarea>
@@ -271,7 +296,7 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
           <div style="display:flex;gap:6px">
             <button class="btn sm" onclick="downloadFile('md')">↓ .md</button>
             <button class="btn sm" onclick="downloadFile('txt')">↓ .txt</button>
-            <button class="btn sm primary" onclick="saveMO()">Enregistrer</button>
+            <button class="btn sm primary editor-edit-btn" onclick="saveMO()">Enregistrer</button>
           </div>
         </div>
         <div class="preview-area" id="preview"></div>
@@ -371,6 +396,7 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
     <div style="flex:1">
       <div style="font-size:11px;color:var(--muted);margin-bottom:4px;" id="drawer-breadcrumb"></div>
       <div class="drawer-title" id="drawer-title"></div>
+      <div id="drawer-published" style="font-size:11px;color:var(--green);margin-top:4px;"></div>
       <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;" id="drawer-badges"></div>
     </div>
     <button class="drawer-close" onclick="closeDrawer()">✕</button>
@@ -410,6 +436,7 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
       <button class="btn sm" onclick="editFromDrawer()">✎ Éditer</button>
       <button class="btn sm" onclick="dlFromDrawer('md')">↓ .md</button>
       <button class="btn sm" onclick="dlFromDrawer('txt')">↓ .txt</button>
+      <button class="btn sm" id="drawer-unlock-btn" style="display:none;color:var(--green);border-color:var(--green)" onclick="unlockFromDrawer()">🔓 Déverrouiller</button>
       <button class="btn sm danger" onclick="deleteFromDrawer()">Supprimer</button>
     </div>
 
@@ -492,8 +519,10 @@ function ensureState() {
     if (!e.redacteurs) e.redacteurs = [];
     if (!e.valideurs)  e.valideurs  = [];
     if (!e.versions)   e.versions   = [];
+    if (e.publishedAt === undefined) e.publishedAt = null;
     if (!e.comments)   e.comments   = [];
     if (e.projet === undefined) e.projet = '';
+    if (e.publishedAt === undefined) e.publishedAt = null;
   });
 }
 
@@ -512,6 +541,7 @@ function load() {
   } catch(e) {}
   renderPreview();
   renderAll();
+  updateLockBanner();
   initDrive();
   buildColorPickers();
   renderRoleBtns();
@@ -625,6 +655,33 @@ function renderPreview() {
 }
 
 // ── Editor meta ───────────────────────────────────────────────────────────────
+function syncEditorLock() {
+  if (!curEntryId) { setEditorLocked(false); return; }
+  const e = S.history.find(x => x.id === curEntryId);
+  setEditorLocked(e && e.status === 'valide');
+  const dateEl = document.getElementById('lock-date');
+  if (e && e.publishedAt) dateEl.textContent = ' · validé le ' + e.publishedAt;
+  else dateEl.textContent = '';
+}
+
+function setEditorLocked(locked) {
+  const ta   = document.getElementById('raw-input');
+  const banner = document.getElementById('lock-banner');
+  const saveBtn = document.querySelector('.btn.primary[onclick="saveMO()"]');
+  const tplBtn  = document.querySelector('.btn.sm[onclick="resetTemplate()"]');
+  const selProj = document.getElementById('meta-projet');
+  ta.readOnly = locked;
+  banner.classList.toggle('visible', locked);
+  if (saveBtn)  saveBtn.disabled = locked;
+  if (tplBtn)   tplBtn.disabled  = locked;
+  if (selProj)  selProj.disabled = locked;
+  document.getElementById('chips-red').style.pointerEvents = locked ? 'none' : '';
+  document.getElementById('chips-val').style.pointerEvents = locked ? 'none' : '';
+}
+
+// unlockFromDrawer → délégué à unlockMO
+function unlockFromDrawer() { unlockMO(); }
+
 function renderEditorMeta() {
   // projet select
   const sel = document.getElementById('meta-projet');
@@ -772,6 +829,7 @@ function saveMO() {
   const raw = document.getElementById('raw-input').value;
   const mo  = parse(raw);
   if (!mo.titre && !mo.etapes.length) { toast('Rien à enregistrer'); return; }
+  if (isLocked()) { toast('🔒 MO verrouillé — déverrouillez d\'abord'); return; }
 
   if (curEntryId) {
     // upsert — on garde l'ancienne version
@@ -819,6 +877,50 @@ function saveMO() {
   persist();
   renderHistory();
   toast('✓ MO enregistré');
+}
+
+// ── Lock / Unlock ────────────────────────────────────────────────────────────
+function isLocked() {
+  if (!curEntryId) return false;
+  const e = S.history.find(x => x.id === curEntryId);
+  return e && e.status === 'valide';
+}
+
+function updateLockBanner() {
+  const banner  = document.getElementById('lock-banner');
+  const metaEl  = document.getElementById('lock-meta');
+  const ta      = document.getElementById('raw-input');
+  const locked  = isLocked();
+  banner.classList.toggle('visible', locked);
+  ta.readOnly = locked;
+  // désactiver les contrôles
+  ['meta-projet'].forEach(id => { const el = document.getElementById(id); if(el) el.disabled = locked; });
+  document.getElementById('chips-red').style.pointerEvents = locked ? 'none' : '';
+  document.getElementById('chips-val').style.pointerEvents = locked ? 'none' : '';
+  if (locked) {
+    const e = S.history.find(x => x.id === curEntryId);
+    metaEl.textContent = e && e.publishedAt ? 'Validé le ' + e.publishedAt : '';
+    // masquer boutons d'édition
+    document.querySelectorAll('.editor-edit-btn').forEach(b => b.style.display = 'none');
+  } else {
+    metaEl.textContent = '';
+    document.querySelectorAll('.editor-edit-btn').forEach(b => b.style.display = '');
+  }
+}
+
+function unlockMO() {
+  // Fonctionne depuis la bannière (curEntryId) OU depuis le drawer (drawerEntryId)
+  const id = curEntryId || drawerEntryId;
+  if (!id) { toast('Aucun MO sélectionné'); return; }
+  const e = S.history.find(x => x.id === id);
+  if (!e) return;
+  if (!confirm('Déverrouiller ce MO validé pour le modifier ?\nSon statut repassera en Brouillon.')) return;
+  e.status = 'brouillon';
+  e.publishedAt = null;
+  persist(); renderHistory();
+  if (curEntryId === id) updateLockBanner();
+  if (drawerEntryId === id) refreshDrawer();
+  toast('MO déverrouillé — statut remis en Brouillon');
 }
 
 // ── History render ────────────────────────────────────────────────────────────
@@ -888,10 +990,20 @@ function undoDelete() {
 function cycleStatus(id) {
   const e = S.history.find(x => x.id === id);
   if (!e) return;
+  // Sortir de Validé nécessite confirmation
+  if (e.status === 'valide') {
+    if (!confirm('Ce MO est validé et verrouillé.\nChanger son statut le déverrouillera pour modification.\nContinuer ?')) return;
+    e.publishedAt = null;
+  }
   const idx = STATUS_CYCLE.indexOf(e.status || 'brouillon');
-  e.status = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
+  const next = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
+  // Passage en Validé → horodatage
+  if (next === 'valide') e.publishedAt = new Date().toLocaleString('fr-FR');
+  e.status = next;
   persist(); renderHistory();
   if (drawerEntryId === id) refreshDrawer();
+  // Mettre à jour le verrou dans l'éditeur si ce MO est en cours d'édition
+  if (curEntryId === id) updateLockBanner();
 }
 
 function setFilterStatus(val, el) {
@@ -930,12 +1042,19 @@ function refreshDrawer() {
   const vals = (e.valideurs||[]).map(id  => S.membres.find(m => m.id === id)).filter(Boolean);
 
   document.getElementById('drawer-breadcrumb').textContent = proj ? proj.nom : '';
+  // publishedAt sous le titre
+  const pubEl = document.getElementById('drawer-published');
+  if (pubEl) pubEl.textContent = e.publishedAt ? '🔒 Validé le ' + e.publishedAt : '';
   document.getElementById('drawer-title').textContent = e.titre;
 
   // badges
   const badgesEl = document.getElementById('drawer-badges');
   badgesEl.innerHTML = `<span class="status-badge ${STATUS_CLASS[e.status]||'status-brouillon'}" onclick="cycleStatus(${e.id})">${STATUS_LABELS[e.status]||'Brouillon'}</span>`;
   if (proj) badgesEl.innerHTML += chipHTML(proj.nom, proj.color);
+  if (e.publishedAt) badgesEl.innerHTML += `<span style="font-size:11px;color:var(--green);margin-left:4px">🔒 Validé le ${esc(e.publishedAt)}</span>`;
+  // bouton déverrouiller dans le drawer
+  const unlockBtn = document.getElementById('drawer-unlock-btn');
+  if (unlockBtn) unlockBtn.style.display = (e.status === 'valide') ? '' : 'none';
 
   // contenu MO
   const mo = parse(e.raw);
@@ -1076,6 +1195,7 @@ function editFromDrawer() {
   saveMetaState();
   renderEditorMeta();
   renderPreview();
+  updateLockBanner();
   closeDrawer();
   switchTab('editor');
   toast('MO chargé dans l\'éditeur');
