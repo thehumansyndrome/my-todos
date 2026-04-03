@@ -113,6 +113,25 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
 .btn.action-submit:hover{background:var(--amber);color:#fff;}
 .btn.action-validate{background:transparent;color:var(--green);border-color:var(--green);font-weight:500;}
 .btn.action-validate:hover{background:var(--green);color:#fff;}
+
+/* Preview pane header responsive */
+.preview-pane-header{flex-wrap:wrap;gap:6px;height:auto;min-height:42px;padding:8px 14px;}
+.preview-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+.preview-exports{display:flex;gap:4px;}
+.preview-edits{display:flex;gap:4px;}
+@media(max-width:600px){
+  .preview-pane-header{flex-direction:column;align-items:flex-start;}
+  .preview-actions{width:100%;justify-content:flex-start;}
+  .preview-edits{flex-wrap:wrap;}
+}
+.btn-group{display:flex;align-items:center;gap:4px;}
+.btn-divider{width:1px;height:18px;background:var(--border);margin:0 4px;flex-shrink:0;}
+.btn.action-save{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600;}
+.btn.action-save:hover{opacity:.85;}
+.btn.action-submit{background:transparent;color:var(--amber);border-color:var(--amber);font-weight:500;}
+.btn.action-submit:hover{background:var(--amber);color:#fff;}
+.btn.action-validate{background:transparent;color:var(--green);border-color:var(--green);font-weight:500;}
+.btn.action-validate:hover{background:var(--green);color:#fff;}
 .btn.danger{color:var(--red);border-color:var(--red);}
 .btn.danger:hover{background:var(--red);color:#fff;}
 
@@ -190,7 +209,7 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
 .drawer-title{font-size:15px;font-weight:500;flex:1;line-height:1.4;}
 .drawer-close{width:28px;height:28px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0;}
 .drawer-close:hover{background:var(--border);}
-.drawer-body{flex:1;overflow-y:auto;padding:16px;}
+.drawer-body{flex:1;overflow-y:auto;padding:16px;padding-bottom:env(safe-area-inset-bottom,24px);-webkit-overflow-scrolling:touch;}
 .drawer-section{margin-bottom:20px;}
 .drawer-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px;}
 .version-item{padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;}
@@ -299,18 +318,21 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
       </div>
 
       <div class="pane">
-        <div class="pane-header">
-          <div style="display:flex;align-items:center;gap:8px">
+        <div class="pane-header preview-pane-header">
+          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
             <span>Aperçu</span>
             <span id="editor-status-badge"></span>
           </div>
-          <div class="btn-group">
-            <button class="btn sm" onclick="downloadFile('md')" title="Télécharger .md">↓ .md</button>
-            <button class="btn sm" onclick="downloadFile('txt')" title="Télécharger .txt">↓ .txt</button>
-            <div class="btn-divider"></div>
-            <button class="btn sm action-save editor-edit-btn" onclick="saveMO()" title="Enregistrer le brouillon">Enregistrer</button>
-            <button class="btn sm action-submit editor-edit-btn" onclick="submitMO()" title="Enregistrer et soumettre en validation">Soumettre →</button>
-            <button class="btn sm action-validate editor-edit-btn" onclick="validateMO()" title="Valider directement">✓ Valider</button>
+          <div class="preview-actions">
+            <div class="preview-exports">
+              <button class="btn sm" onclick="downloadFile('md')" title="Télécharger .md">↓ .md</button>
+              <button class="btn sm" onclick="downloadFile('txt')" title="Télécharger .txt">↓ .txt</button>
+            </div>
+            <div class="preview-edits editor-edit-btn-group">
+              <button class="btn sm action-save editor-edit-btn" onclick="saveMO()">Enregistrer</button>
+              <button class="btn sm action-submit editor-edit-btn" onclick="submitMO()">Soumettre →</button>
+              <button class="btn sm action-validate editor-edit-btn" onclick="validateMO()">✓ Valider</button>
+            </div>
           </div>
         </div>
         <div class="preview-area" id="preview"></div>
@@ -446,7 +468,7 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
       </div>
     </div>
 
-    <div class="drawer-section" style="display:flex;gap:8px;flex-wrap:wrap;">
+    <div class="drawer-section" style="display:flex;gap:8px;flex-wrap:wrap;padding-bottom:32px;">
       <button class="btn sm" onclick="editFromDrawer()">✎ Éditer</button>
       <button class="btn sm" onclick="dlFromDrawer('md')">↓ .md</button>
       <button class="btn sm" onclick="dlFromDrawer('txt')">↓ .txt</button>
@@ -955,9 +977,11 @@ function updateLockBanner() {
     metaEl.textContent = e && e.publishedAt ? 'Validé le ' + e.publishedAt : '';
     // masquer boutons d'édition
     document.querySelectorAll('.editor-edit-btn').forEach(b => b.style.display = 'none');
+    document.querySelectorAll('.editor-edit-btn-group').forEach(g => g.style.display = 'none');
   } else {
     metaEl.textContent = '';
     document.querySelectorAll('.editor-edit-btn').forEach(b => b.style.display = '');
+    document.querySelectorAll('.editor-edit-btn-group').forEach(g => g.style.display = '');
   }
 }
 
