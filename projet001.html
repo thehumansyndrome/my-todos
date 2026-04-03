@@ -3232,55 +3232,13 @@ let pendingItemImgs={};
 /* Upload a base64 image to Drive as a standalone JPEG file.
    Returns {type:'drive', src: url, driveId} on success,
    or {type:'base64', src: base64} if no token yet. */
-async function uploadImgToDrive(base64){
-  if(!drTok) return {type:'base64', src:base64};
-  try{
-    const blob=await (await fetch(base64)).blob();
-    const bd='---IMG'+Date.now();
-    const meta=JSON.stringify({name:'img_'+uid()+'.jpg',mimeType:'image/jpeg'});
-    const arrBuf=await blob.arrayBuffer();
-    const bytes=new Uint8Array(arrBuf);
-    let binary='';bytes.forEach(b=>binary+=String.fromCharCode(b));
-    const b64=btoa(binary);
-    const body='--'+bd+'\r\nContent-Type: application/json\r\n\r\n'+meta+
-      '\r\n--'+bd+'\r\nContent-Type: image/jpeg\r\nContent-Transfer-Encoding: base64\r\n\r\n'+b64+'\r\n--'+bd+'--';
-    const r=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
-      {method:'POST',headers:{Authorization:'Bearer '+drTok,'Content-Type':'multipart/related; boundary="'+bd+'"'},body});
-    const d=await r.json();
-    if(!d.id) throw new Error('No ID');
-    // Make publicly readable
-    await fetch('https://www.googleapis.com/drive/v3/files/'+d.id+'/permissions',
-      {method:'POST',headers:{Authorization:'Bearer '+drTok,'Content-Type':'application/json'},
-       body:JSON.stringify({role:'reader',type:'anyone'})});
-    const src='https://drive.google.com/thumbnail?id='+d.id+'&sz=w800';
-    return {type:'drive', src, driveId:d.id};
-  }catch(e){
-    console.warn('[img-upload]',e.message);
-    return {type:'base64', src:base64};
-  }
+/* Images stored as base64 in the main JSON — synced to Drive automatically */
+function uploadImgToDrive(base64){
+  return Promise.resolve({type:'base64', src:base64});
 }
 
-/* Upload all base64 images still pending on all items (called after Drive connects) */
-async function uploadDeferredImgs(){
-  const collections=[
-    {arr:S.todos}, {arr:S.notes}, {arr:S.reminders}, {arr:S.courses}
-  ];
-  let count=0;
-  for(const col of collections){
-    for(const item of col.arr){
-      if(!item.images) continue;
-      for(let i=0;i<item.images.length;i++){
-        const img=item.images[i];
-        if(img && img.type==='base64'){
-          const uploaded=await uploadImgToDrive(img.src);
-          item.images[i]=uploaded;
-          count++;
-        }
-      }
-    }
-  }
-  if(count>0){ autoSave(); renderAll(); toast('✓ '+count+' image(s) uploadée(s) sur Drive'); }
-}
+/* Images stored as base64 — no deferred upload needed */
+function uploadDeferredImgs(){ return Promise.resolve(); }
 
 /* Compress + attach image to any item type */
 async function attachImgToItem(base64, collection, itemId){
