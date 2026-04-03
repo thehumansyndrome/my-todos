@@ -207,6 +207,11 @@ body{
 .hbtn.warn{background:transparent;color:var(--accent);border-color:var(--accent);font-weight:600;}
 .hbtn.warn:hover{background:var(--accent);color:#fff;}
 .gdot{width:6px;height:6px;border-radius:50%;background:var(--text3);transition:background .2s;}
+.item-imgs{display:flex;flex-wrap:wrap;gap:5px;margin:5px 0 3px 0;}
+.item-thumb{max-width:72px;max-height:56px;border-radius:4px;border:1px solid var(--line);object-fit:cover;cursor:pointer;transition:opacity .15s;}
+.item-thumb:hover{opacity:.85;}
+.item-img-del{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;line-height:1;padding:0;display:none;}
+div:hover>.item-img-del{display:block;}
 .gdot.on{background:var(--green);}
 
 /* ── TABS ── */
@@ -1064,6 +1069,7 @@ body{
       </select>
       <button class="add-btn" onclick="addTodo()">+ Add</button>
     </div>
+    <div id="pending-imgs-tab-todos" style="display:none;flex-wrap:wrap;gap:6px;margin:4px 0 2px 0;"></div>
     <div class="filters" id="todo-filters"></div>
     <div class="filters" id="todo-hz-filters" style="margin-top:4px;"></div>
     <div class="list" id="todo-list"></div>
@@ -1167,6 +1173,7 @@ body{
       </select>
       <button class="add-btn" onclick="addReminder()">+ Add</button>
     </div>
+    <div id="pending-imgs-tab-reminders" style="display:none;flex-wrap:wrap;gap:6px;margin:4px 0 2px 0;"></div>
     <div class="filters" id="rem-filters"></div>
     <div class="list" id="rem-list"></div>
   </div>
@@ -1242,6 +1249,7 @@ body{
       <input class="main-in" type="text" id="courses-in" placeholder="Ajouter un article…" onkeydown="if(event.key==='Enter')addCourse()">
       <button class="add-btn" onclick="addCourse()">+ Add</button>
     </div>
+    <div id="pending-imgs-tab-courses" style="display:none;flex-wrap:wrap;gap:6px;margin:4px 0 2px 0;"></div>
     <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
       <button class="courses-clear" onclick="clearBought()">✓ Supprimer les achetés</button>
     </div>
@@ -1437,9 +1445,12 @@ function ensureState(){
     if(t.subtasks && t.subtasks.length)
       t.subtasks=t.subtasks.filter(sid=>allIds.has(sid));
   });
+  if(!S.todos) S.todos=[];
+  S.todos.forEach(t=>{ if(!t.images) t.images=[]; });
   if(!S.notes) S.notes=[];
   S.notes.forEach(n=>{ if(!n.images) n.images=[]; if(n.large===undefined) n.large=true; });
   if(!S.reminders) S.reminders=[];
+  S.reminders.forEach(r=>{ if(!r.images) r.images=[]; });
   if(!S.habits) S.habits=[];
   if(!S.habitLogs) S.habitLogs={};
   if(!S.categories || !Array.isArray(S.categories)) S.categories=[];
@@ -1455,6 +1466,7 @@ function ensureState(){
   if(persoCat && !persoCat.darkColor) persoCat.darkColor='#60A5FA';
   if(!S.challenges) S.challenges=[];
   if(!S.courses) S.courses=[];
+  S.courses.forEach(c=>{ if(!c.images) c.images=[]; });
 }
 
 function save(){try{localStorage.setItem(SK,JSON.stringify(S));}catch(e){}}
@@ -1885,7 +1897,7 @@ function loadGIS(cb){if(window.google&&window.google.accounts){cb();return;}cons
 function driveAuth(){
   const cid=document.getElementById('drive-cid').value.trim();if(!cid){toast('⚠ Entre ton Client ID');return;}
   drCfg.clientId=cid;saveDriveConf();setDS(null,'Connexion…');
-  loadGIS(()=>{try{const cl=google.accounts.oauth2.initTokenClient({client_id:cid,scope:'https://www.googleapis.com/auth/drive.file',callback:(r)=>{if(r.error){setDS(false,'Erreur: '+r.error);toast('❌ '+r.error);return;}drTok=r.access_token;drFid=null;setDS(true,'Connecté ✓');setSaveStatus('ok');updateDriveUI();sessionStorage.setItem('td_tok_'+P,r.access_token);toast('✓ Drive connecté');logA('drive','Connecté à Google Drive');drLoadTemplates();if(pollSecs>0)startPolling();}});cl.requestAccessToken();}catch(e){setDS(false,'Erreur: '+e.message);toast('❌ '+e.message);}});
+  loadGIS(()=>{try{const cl=google.accounts.oauth2.initTokenClient({client_id:cid,scope:'https://www.googleapis.com/auth/drive.file',callback:(r)=>{if(r.error){setDS(false,'Erreur: '+r.error);toast('❌ '+r.error);return;}drTok=r.access_token;drFid=null;setDS(true,'Connecté ✓');setSaveStatus('ok');updateDriveUI();sessionStorage.setItem('td_tok_'+P,r.access_token);toast('✓ Drive connecté');logA('drive','Connecté à Google Drive');drLoadTemplates();if(pollSecs>0)startPolling();uploadDeferredImgs();}});cl.requestAccessToken();}catch(e){setDS(false,'Erreur: '+e.message);toast('❌ '+e.message);}});
 }
 function driveDisc(){drTok=null;drFid=null;lastModifiedKnown=null;stopPolling();sessionStorage.removeItem('td_tok_'+P);setDS(null,'Déconnecté');setSaveStatus('local');updateDriveUI();toast('Drive déconnecté');}
 
@@ -2342,6 +2354,14 @@ function addTodo(){
 
   const t={id:parentId,text:v,cat,pri,hz,done:false,ts:Date.now(),
     comment:'',subtasks:subtaskIds,parentId:null,type:typeKey||null};
+  // Attach pending pasted images
+  if(pendingItemImgs['tab-todos']&&pendingItemImgs['tab-todos'].length){
+    t.images=[...pendingItemImgs['tab-todos']];
+    pendingItemImgs['tab-todos']=[];
+    renderPendingTabImgs('tab-todos');
+    // Kick off Drive upload asynchronously
+    t.images.forEach((src,i)=>{ if(typeof src==='string'){ uploadImgToDrive(src).then(obj=>{ t.images[i]=obj; autoSave(); }); } });
+  }
   S.todos.push(t);
   document.getElementById('todo-in').value='';
   document.getElementById('todo-hz').value='later';
@@ -2680,6 +2700,7 @@ function todoItemHtml(t){
         ${subtaskBadgeHtml}
         <span class="meta-date">${fd(t.ts)}</span>
       </div>
+      ${itemImgsHtml(t,'todos')}
       <div class="todo-comment" id="tc-${t.id}">
         <textarea id="tca-${t.id}" rows="2" placeholder="Instructions, contexte…"
           oninput="autoResizeComment(this);saveTodoComment('${t.id}',this.value)"
@@ -3165,6 +3186,119 @@ function loadYtEmbed(el){
 /* ══ NOTE IMAGES ══ */
 let pendingNoteImgs=[];
 let pendingEditImgs={};
+// Generic pending images for todos / courses / reminders
+// key = itemId, value = [{src:base64, type:'base64'|'drive', driveId?:''}]
+let pendingItemImgs={};
+
+/* Upload a base64 image to Drive as a standalone JPEG file.
+   Returns {type:'drive', src: url, driveId} on success,
+   or {type:'base64', src: base64} if no token yet. */
+async function uploadImgToDrive(base64){
+  if(!drTok) return {type:'base64', src:base64};
+  try{
+    const blob=await (await fetch(base64)).blob();
+    const bd='---IMG'+Date.now();
+    const meta=JSON.stringify({name:'img_'+uid()+'.jpg',mimeType:'image/jpeg'});
+    const arrBuf=await blob.arrayBuffer();
+    const bytes=new Uint8Array(arrBuf);
+    let binary='';bytes.forEach(b=>binary+=String.fromCharCode(b));
+    const b64=btoa(binary);
+    const body='--'+bd+'\r\nContent-Type: application/json\r\n\r\n'+meta+
+      '\r\n--'+bd+'\r\nContent-Type: image/jpeg\r\nContent-Transfer-Encoding: base64\r\n\r\n'+b64+'\r\n--'+bd+'--';
+    const r=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
+      {method:'POST',headers:{Authorization:'Bearer '+drTok,'Content-Type':'multipart/related; boundary="'+bd+'"'},body});
+    const d=await r.json();
+    if(!d.id) throw new Error('No ID');
+    // Make publicly readable
+    await fetch('https://www.googleapis.com/drive/v3/files/'+d.id+'/permissions',
+      {method:'POST',headers:{Authorization:'Bearer '+drTok,'Content-Type':'application/json'},
+       body:JSON.stringify({role:'reader',type:'anyone'})});
+    const src='https://drive.google.com/thumbnail?id='+d.id+'&sz=w800';
+    return {type:'drive', src, driveId:d.id};
+  }catch(e){
+    console.warn('[img-upload]',e.message);
+    return {type:'base64', src:base64};
+  }
+}
+
+/* Upload all base64 images still pending on all items (called after Drive connects) */
+async function uploadDeferredImgs(){
+  const collections=[
+    {arr:S.todos}, {arr:S.notes}, {arr:S.reminders}, {arr:S.courses}
+  ];
+  let count=0;
+  for(const col of collections){
+    for(const item of col.arr){
+      if(!item.images) continue;
+      for(let i=0;i<item.images.length;i++){
+        const img=item.images[i];
+        if(img && img.type==='base64'){
+          const uploaded=await uploadImgToDrive(img.src);
+          item.images[i]=uploaded;
+          count++;
+        }
+      }
+    }
+  }
+  if(count>0){ autoSave(); renderAll(); toast('✓ '+count+' image(s) uploadée(s) sur Drive'); }
+}
+
+/* Compress + attach image to any item type */
+async function attachImgToItem(base64, collection, itemId){
+  const arr = S[collection];
+  if(!arr) return;
+  const item = arr.find(x=>x.id===itemId);
+  if(!item) return;
+  if(!item.images) item.images=[];
+  const imgObj = await uploadImgToDrive(base64);
+  item.images.push(imgObj);
+  autoSave();
+  renderAll();
+}
+
+/* Generic thumbnail strip HTML for any item */
+function itemImgsHtml(item, collection){
+  if(!item.images || !item.images.length) return '';
+  const col=collection, iid=item.id;
+  return '<div class="item-imgs">'+item.images.map((img,i)=>{
+    const src=img?(img.src||img):'';
+    if(!src) return '';
+    return '<div style="position:relative;display:inline-block;">'
+      +'<img src="'+src+'" class="item-thumb" onclick="event.stopPropagation();openItemImgViewer(\'' +col+ '\',\'' +iid+ '\',' +i+ ')">'
+      +'<button class="item-img-del" onclick="event.stopPropagation();delItemImg(\'' +col+ '\',\'' +iid+ '\',' +i+ ')">\u{1F5D1}</button>'
+      +'</div>';
+  }).join('')+'</div>';
+}
+function delItemImg(collection, itemId, idx){
+  const arr=S[collection]; if(!arr) return;
+  const item=arr.find(x=>x.id===itemId); if(!item||!item.images) return;
+  item.images.splice(idx,1);
+  autoSave(); renderAll(); logA(collection,'Image supprimée');
+}
+
+function openItemImgViewer(collection, itemId, startIdx){
+  const arr=S[collection]; if(!arr) return;
+  const item=arr.find(x=>x.id===itemId); if(!item||!item.images) return;
+  let cur=startIdx;
+  const imgs=item.images;
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  const render=()=>{
+    const src=imgs[cur]?(imgs[cur].src||imgs[cur]):'';
+    ov.innerHTML='<img src="'+src+'" style="max-width:92vw;max-height:88vh;border-radius:6px;object-fit:contain;">'
+      +(imgs.length>1?'<button onclick="event.stopPropagation();ivNav(-1)" style="position:fixed;left:16px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:#fff;font-size:22px;width:40px;height:40px;border-radius:50%;cursor:pointer;">‹</button>'
+        +'<button onclick="event.stopPropagation();ivNav(1)" style="position:fixed;right:16px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:#fff;font-size:22px;width:40px;height:40px;border-radius:50%;cursor:pointer;">›</button>'
+        +'<div style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.6);font-family:var(--mono);font-size:12px;">'+(cur+1)+' / '+imgs.length+'</div>':'')
+      +'<button onclick="ivClose()" style="position:fixed;top:14px;right:16px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:18px;width:34px;height:34px;border-radius:50%;cursor:pointer;">×</button>';
+  };
+  window.ivNav=(d)=>{ cur=(cur+d+imgs.length)%imgs.length; render(); };
+  window.ivClose=()=>{ document.body.removeChild(ov); document.removeEventListener('keydown',ivKey); };
+  const ivKey=(e)=>{ if(e.key==='Escape')ivClose(); else if(e.key==='ArrowLeft')ivNav(-1); else if(e.key==='ArrowRight')ivNav(1); };
+  document.addEventListener('keydown',ivKey);
+  ov.addEventListener('click',ivClose);
+  render();
+  document.body.appendChild(ov);
+}
 
 // Compress image via canvas: max 1200px wide/tall, JPEG 82%
 // GIF/SVG are stored as-is (no canvas manipulation needed)
@@ -3256,18 +3390,71 @@ function delNoteImg(noteId,imgIdx){
   autoSave();renderNotes();logA('note','Image supprimée');
 }
 
-// Ctrl+V paste anywhere on Notes tab
-document.addEventListener('paste',function(e){
-  if(!document.getElementById('tab-notes').classList.contains('active'))return;
-  const items=e.clipboardData&&e.clipboardData.items;
-  if(!items)return;
-  for(const item of items){
-    if(item.type.startsWith('image/')){
-      e.preventDefault();
-      handleNoteImgFiles([item.getAsFile()],'new');
-    }
+// Ctrl+V paste image — works on notes, todos, courses, reminders
+document.addEventListener('paste',async function(e){
+  const clipItems=e.clipboardData&&e.clipboardData.items;
+  if(!clipItems)return;
+  let imgFile=null;
+  for(const ci of clipItems){ if(ci.type.startsWith('image/')){ imgFile=ci.getAsFile(); break; } }
+  if(!imgFile)return;
+
+  const activeTab=['tab-notes','tab-todos','tab-courses','tab-reminders'].find(id=>document.getElementById(id)&&document.getElementById(id).classList.contains('active'));
+  if(!activeTab)return;
+
+  if(activeTab==='tab-notes'){
+    e.preventDefault();
+    handleNoteImgFiles([imgFile],'new');
+    return;
+  }
+
+  // For other tabs: find focused item via edit-form or any focused input inside an item
+  e.preventDefault();
+  const b64=await compressImage(imgFile);
+
+  // Determine target item: look for open edit-form in the active tab
+  const tabEl=document.getElementById(activeTab);
+  const openEdit=tabEl&&tabEl.querySelector('.edit-form.open, .edit-form[style*="block"]');
+  const itemEl=openEdit?openEdit.closest('[data-id]'):document.activeElement&&document.activeElement.closest('[data-id]');
+  const itemId=itemEl&&itemEl.dataset.id;
+
+  const collectionMap={
+    'tab-todos':'todos',
+    'tab-courses':'courses',
+    'tab-reminders':'reminders'
+  };
+  const collection=collectionMap[activeTab];
+
+  if(itemId&&collection){
+    // Attach to specific item
+    await attachImgToItem(b64, collection, itemId);
+    toast('📎 Image ajoutée');
+  } else {
+    // No specific item focused — store as pending for next add
+    if(!pendingItemImgs[activeTab]) pendingItemImgs[activeTab]=[];
+    pendingItemImgs[activeTab].push(b64);
+    toast('📎 Image copiée — elle sera attachée au prochain ajout');
+    renderPendingTabImgs(activeTab);
   }
 });
+
+function renderPendingTabImgs(tabKey){
+  const previewId='pending-imgs-'+tabKey;
+  let el=document.getElementById(previewId);
+  if(!el)return;
+  const imgs=pendingItemImgs[tabKey]||[];
+  el.innerHTML=imgs.map((src,i)=>
+    '<div style="position:relative;display:inline-block;">'
+    +'<img src="'+src+'" style="max-width:70px;max-height:52px;border-radius:4px;border:1px solid var(--line);object-fit:cover;">'
+    +'<button onclick="removePendingTabImg(\''+tabKey+'\','+i+')" style="position:absolute;top:1px;right:1px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:16px;height:16px;font-size:9px;cursor:pointer;line-height:1;padding:0;">×</button>'
+    +'</div>'
+  ).join('');
+  el.style.display=imgs.length?'flex':'none';
+}
+
+function removePendingTabImg(tabKey,i){
+  if(pendingItemImgs[tabKey]) pendingItemImgs[tabKey].splice(i,1);
+  renderPendingTabImgs(tabKey);
+}
 
 // Lightbox viewer
 function openImgViewer(noteId,idx){
@@ -3298,7 +3485,10 @@ function openImgViewer(noteId,idx){
 /* ══ REMINDERS ══ */
 function addReminder(){
   const v=document.getElementById('rem-in').value.trim();if(!v)return;
-  const r={id:uid(),text:v,date:document.getElementById('rem-date').value||null,recur:document.getElementById('rem-recur').value,done:false,ts:Date.now()};
+  const rimgs=(pendingItemImgs['tab-reminders']||[]).map(s=>({type:'base64',src:s}));
+  if(rimgs.length){ pendingItemImgs['tab-reminders']=[]; renderPendingTabImgs('tab-reminders'); }
+  const r={id:uid(),text:v,date:document.getElementById('rem-date').value||null,recur:document.getElementById('rem-recur').value,done:false,images:rimgs,ts:Date.now()};
+  if(rimgs.length) rimgs.forEach((img,i)=>{ if(img.type==='base64'){ uploadImgToDrive(img.src).then(obj=>{ r.images[i]=obj; autoSave(); }); } });
   S.reminders.push(r);document.getElementById('rem-in').value='';document.getElementById('rem-date').value='';autoSave();renderReminders();logA('reminder','Ajouté: "'+v+'"');
 }
 function saveReminder(id){
@@ -3344,6 +3534,7 @@ function renderReminders(){
       <input type="checkbox" class="item-check" ${r.done?'checked':''} onchange="toggleRem('${r.id}')">
       <div class="item-body">
         <div class="item-text">${esc(r.text)}</div>
+        ${itemImgsHtml(r,'reminders')}
         <div class="item-meta" style="margin-top:4px">
           <span class="tag ${bc[r._s]}">${rSL[r._s]}</span>
           ${r.date?`<span class="meta-date">${r.date.split('-').reverse().join('/')}</span>`:''}
@@ -3804,7 +3995,12 @@ function renderChStats(){
 function addCourse(){
   const inp=document.getElementById('courses-in');
   const txt=inp.value.trim();if(!txt)return;
-  S.courses.push({id:uid(),text:txt,bought:false,ts:Date.now()});
+  const cid2=uid();
+  const cimgs=(pendingItemImgs['tab-courses']||[]).map(s=>({type:'base64',src:s}));
+  if(cimgs.length){ pendingItemImgs['tab-courses']=[]; renderPendingTabImgs('tab-courses'); }
+  const course={id:cid2,text:txt,bought:false,images:cimgs,ts:Date.now()};
+  if(cimgs.length) cimgs.forEach((img,i)=>{ if(img.type==='base64'){ uploadImgToDrive(img.src).then(obj=>{ course.images[i]=obj; autoSave(); }); } });
+  S.courses.push(course);
   inp.value='';autoSave();renderCourses();
 }
 
@@ -3838,6 +4034,7 @@ function renderCourses(){
     <div class="courses-item${c.bought?' bought':''}">
       <input type="checkbox" class="courses-check" ${c.bought?'checked':''} onchange="toggleCourse('${c.id}')">
       <span class="courses-text">${esc(c.text)}</span>
+      ${itemImgsHtml(c,'courses')}
       <button class="del" onclick="delCourse('${c.id}')" title="Supprimer">×</button>
     </div>`).join('');
 }
