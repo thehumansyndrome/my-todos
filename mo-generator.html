@@ -171,7 +171,14 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
 .drawer-body{flex:1;overflow-y:auto;padding:16px;}
 .drawer-section{margin-bottom:20px;}
 .drawer-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px;}
-.version-item{padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;display:flex;align-items:center;gap:10px;}
+.version-item{padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;}
+.version-item-top{display:flex;align-items:center;gap:10px;}
+.version-changes{margin-top:6px;padding-top:6px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:3px;}
+.diff-line{font-size:11px;line-height:1.5;color:var(--muted);display:flex;gap:5px;align-items:baseline;}
+.diff-add{color:var(--green);}
+.diff-remove{color:var(--red);}
+.diff-change{color:var(--amber);}
+.diff-tag{font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.04em;flex-shrink:0;}
 .version-date{font-size:12px;color:var(--muted);flex:1;}
 .version-tag{font-size:11px;font-weight:500;color:var(--accent);}
 .comment-item{padding:8px 10px;background:var(--bg);border-radius:var(--radius);margin-bottom:6px;}
@@ -714,6 +721,52 @@ function onDocClick(e) {
   }
 }
 
+// ── Diff MO ───────────────────────────────────────────────────────────────────
+function diffMO(oldRaw, newRaw) {
+  const o = parse(oldRaw);
+  const n = parse(newRaw);
+  const changes = [];
+
+  // Champs scalaires
+  const fields = [
+    ['titre',   'Titre'],
+    ['quand',   'Quand'],
+    ['duree',   'Durée'],
+    ['modifie', 'Modifié le'],
+    ['resultat','Résultat'],
+    ['erreur',  'Erreur'],
+  ];
+  for (const [key, label] of fields) {
+    const ov = (o[key]||'').trim();
+    const nv = (n[key]||'').trim();
+    if (ov === nv) continue;
+    if (!ov && nv)       changes.push({type:'add',    label, value: nv});
+    else if (ov && !nv)  changes.push({type:'remove', label, value: ov});
+    else                 changes.push({type:'change', label, from: ov, to: nv});
+  }
+
+  // Étapes — comparaison par texte
+  const oldSteps = o.etapes.filter(e => e.texte).map(e => e.texte);
+  const newSteps = n.etapes.filter(e => e.texte).map(e => e.texte);
+  const addedSteps   = newSteps.filter(s => !oldSteps.includes(s));
+  const removedSteps = oldSteps.filter(s => !newSteps.includes(s));
+  for (const s of addedSteps)   changes.push({type:'add',    label:'Étape ajoutée',    value: s});
+  for (const s of removedSteps) changes.push({type:'remove', label:'Étape supprimée',  value: s});
+  if (oldSteps.length !== newSteps.length && addedSteps.length === 0 && removedSteps.length === 0)
+    changes.push({type:'change', label:'Étapes', from: oldSteps.length + ' étapes', to: newSteps.length + ' étapes'});
+
+  // Sous-étapes
+  const oldSubs = o.etapes.flatMap(e => e.sous_etapes);
+  const newSubs = n.etapes.flatMap(e => e.sous_etapes);
+  const addedSubs   = newSubs.filter(s => !oldSubs.includes(s));
+  const removedSubs = oldSubs.filter(s => !newSubs.includes(s));
+  for (const s of addedSubs)   changes.push({type:'add',    label:'Sous-étape ajoutée',   value: s});
+  for (const s of removedSubs) changes.push({type:'remove', label:'Sous-étape supprimée', value: s});
+
+  if (!changes.length) changes.push({type:'change', label:'Modification mineure', value:''});
+  return changes;
+}
+
 // ── Save MO (upsert) ──────────────────────────────────────────────────────────
 function saveMO() {
   const raw = document.getElementById('raw-input').value;
@@ -725,8 +778,9 @@ function saveMO() {
     const existing = S.history.find(e => e.id === curEntryId);
     if (existing) {
       existing.versions = existing.versions || [];
-      if (existing.versions.length >= 10) existing.versions.pop();
-      existing.versions.unshift({raw: existing.raw, savedAt: existing.savedAt});
+      if (existing.versions.length >= 5) existing.versions.pop();
+      const changes = diffMO(existing.raw, raw);
+      existing.versions.unshift({raw: existing.raw, savedAt: existing.savedAt, changes});
       existing.titre    = mo.titre || '(sans titre)';
       existing.auteur   = mo.auteur;
       existing.modifie  = mo.modifie;
@@ -924,10 +978,19 @@ function refreshDrawer() {
   } else {
     versEl.innerHTML = e.versions.map((v, i) => {
       const vmo = parse(v.raw);
+      const diffHTML = (v.changes || []).map(c => {
+        if (c.type === 'add')    return `<div class="diff-line"><span class="diff-tag diff-add">+ ${esc(c.label)}</span><span>${esc(c.value)}</span></div>`;
+        if (c.type === 'remove') return `<div class="diff-line"><span class="diff-tag diff-remove">− ${esc(c.label)}</span><span>${esc(c.value)}</span></div>`;
+        if (c.value)             return `<div class="diff-line"><span class="diff-tag diff-change">~ ${esc(c.label)}</span><span>${esc(c.value)}</span></div>`;
+        return `<div class="diff-line"><span class="diff-tag diff-change">~ ${esc(c.label)}</span><span>${esc(c.from)} → ${esc(c.to)}</span></div>`;
+      }).join('');
       return `<div class="version-item">
-        <span class="version-tag">v${e.versions.length - i}</span>
-        <span class="version-date">${v.savedAt} · ${vmo.etapes ? vmo.etapes.length : '?'} étapes</span>
-        <button class="btn sm" onclick="restoreVersion(${e.id},${i})">Restaurer</button>
+        <div class="version-item-top">
+          <span class="version-tag">v${e.versions.length - i}</span>
+          <span class="version-date">${v.savedAt} · ${vmo.etapes ? vmo.etapes.length : '?'} étapes</span>
+          <button class="btn sm" onclick="restoreVersion(${e.id},${i})" style="margin-left:auto">Restaurer</button>
+        </div>
+        ${diffHTML ? `<div class="version-changes">${diffHTML}</div>` : ''}
       </div>`;
     }).join('');
   }
@@ -995,7 +1058,7 @@ function restoreVersion(entryId, vIdx) {
   const mo  = parse(v.raw);
   e.titre   = mo.titre || e.titre;
   e.etapes  = mo.etapes.length;
-  if (e.versions.length > 10) e.versions = e.versions.slice(0, 10);
+  if (e.versions.length > 5) e.versions = e.versions.slice(0, 5);
   persist();
   refreshDrawer();
   renderHistory();
