@@ -292,11 +292,15 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
 
       <div class="pane">
         <div class="pane-header">
-          <span>Aperçu</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span>Aperçu</span>
+            <span id="editor-status-badge"></span>
+          </div>
           <div style="display:flex;gap:6px">
             <button class="btn sm" onclick="downloadFile('md')">↓ .md</button>
             <button class="btn sm" onclick="downloadFile('txt')">↓ .txt</button>
             <button class="btn sm primary editor-edit-btn" onclick="saveMO()">Enregistrer</button>
+            <button class="btn sm editor-edit-btn" style="color:var(--amber);border-color:var(--amber)" onclick="submitMO()">Soumettre</button>
           </div>
         </div>
         <div class="preview-area" id="preview"></div>
@@ -690,7 +694,7 @@ function validateFromDrawer() {
   e.status = 'valide';
   e.publishedAt = new Date().toLocaleString('fr-FR');
   persist(); renderHistory(); refreshDrawer();
-  if (curEntryId === drawerEntryId) updateLockBanner();
+  if (curEntryId === drawerEntryId) { updateLockBanner(); renderEditorMeta(); }
   toast('✓ MO validé — verrouillé en lecture seule');
 }
 
@@ -713,10 +717,21 @@ function archiveFromDrawer() {
 function renderEditorMeta() {
   // projet select
   const sel = document.getElementById('meta-projet');
-  const cur = sel.value;
   sel.innerHTML = '<option value="">— Aucun projet —</option>' +
     S.projets.map(p => `<option value="${p.id}" ${p.id === curProjet ? 'selected':''}>${esc(p.nom)}</option>`).join('');
   if (curProjet) sel.value = curProjet;
+
+  // badge statut (lecture seule)
+  const badgeEl = document.getElementById('editor-status-badge');
+  if (badgeEl) {
+    if (curEntryId) {
+      const e = S.history.find(x => x.id === curEntryId);
+      const st = e ? (e.status || 'brouillon') : 'brouillon';
+      badgeEl.innerHTML = `<span class="status-badge ${STATUS_CLASS[st]||'status-brouillon'}" style="cursor:default">${STATUS_LABELS[st]||'Brouillon'}</span>`;
+    } else {
+      badgeEl.innerHTML = '<span style="font-size:12px;color:var(--muted)">—</span>';
+    }
+  }
 
   // chips
   renderChips('chips-red', curRedact, 'red');
@@ -951,6 +966,19 @@ function unlockMO() {
   toast('MO déverrouillé — statut remis en Brouillon');
 }
 
+// ── Submit MO ─────────────────────────────────────────────────────────────────
+function submitMO() {
+  saveMO(); // enregistre d'abord
+  // récupère l'entrée (curEntryId vient d'être mis à jour par saveMO)
+  const e = S.history.find(x => x.id === curEntryId);
+  if (!e) return;
+  if (e.status === 'valide') { toast('🔒 MO déjà validé'); return; }
+  if (e.status === 'archive') { toast('MO archivé — désarchivez d\'abord'); return; }
+  e.status = 'validation';
+  persist(); renderHistory(); renderEditorMeta();
+  toast('✓ Enregistré et soumis en validation');
+}
+
 // ── History render ────────────────────────────────────────────────────────────
 function renderHistory() {
   const el = document.getElementById('history-container');
@@ -1032,8 +1060,8 @@ function cycleStatus(id) {
   e.status = next;
   persist(); renderHistory();
   if (drawerEntryId === id) refreshDrawer();
-  // Mettre à jour le verrou dans l'éditeur si ce MO est en cours d'édition
-  if (curEntryId === id) updateLockBanner();
+  // Mettre à jour le verrou et le badge statut dans l'éditeur si ce MO est en cours d'édition
+  if (curEntryId === id) { updateLockBanner(); renderEditorMeta(); }
 }
 
 function setFilterStatus(val, el) {
