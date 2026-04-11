@@ -523,6 +523,28 @@ div:hover>.item-img-del{display:block;}
 .dot-d{font-family:var(--mono);font-size:8px;color:var(--text3);line-height:1;}
 .dot.done .dot-d{color:var(--bg);opacity:.6;}
 
+/* ── DAY PICKER ── */
+.day-pick-btn{
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  padding:4px 7px;border:1px solid var(--line2);border-radius:var(--r);
+  background:var(--bg);color:var(--text3);cursor:pointer;transition:all .1s;min-width:32px;
+}
+.day-pick-btn.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+[data-theme="dark"] .day-pick-btn.on{background:var(--accent);color:#fff;}
+.hfreq-custom{
+  font-family:var(--mono);font-size:9px;color:var(--text3);
+  padding:1px 5px;border-radius:2px;background:var(--bg2);
+  border:1px solid var(--line2);
+}
+/* in-card day-picker for edit */
+.hcard-day-picker{display:flex;gap:4px;flex-wrap:wrap;padding:0 0 8px;}
+.hcard-day-btn{
+  font-family:var(--mono);font-size:10px;
+  padding:3px 6px;border:1px solid var(--line2);border-radius:var(--r);
+  background:var(--bg);color:var(--text3);cursor:pointer;transition:all .1s;
+}
+.hcard-day-btn.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+
 /* ── KAIZEN ── */
 .kaizen-bar{
   display:flex;align-items:center;gap:8px;padding:6px 0 10px;flex-wrap:wrap;
@@ -1251,9 +1273,10 @@ div:hover>.item-img-del{display:block;}
         <option value="travail">Work</option>
         <option value="perso">Personal</option>
       </select>
-      <select id="hab-freq">
+      <select id="hab-freq" onchange="toggleDayPicker(this.value)" style="font-family:var(--mono);font-size:11px;padding:4px 6px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text2);cursor:pointer;">
         <option value="daily">Daily</option>
         <option value="weekly">Weekly</option>
+        <option value="custom">Custom…</option>
       </select>
       <select id="hab-dur" title="Durée cible (micro-habitude)" style="font-family:var(--mono);font-size:11px;padding:4px 6px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text2);cursor:pointer;">
         <option value="2">2 min</option>
@@ -1264,6 +1287,10 @@ div:hover>.item-img-del{display:block;}
         <option value="0">Libre</option>
       </select>
       <button class="add-btn" onclick="addHabit()">+ Add</button>
+    </div>
+    <div id="hab-day-picker" style="display:none;padding:6px 0 2px;display:none;gap:5px;flex-wrap:wrap;">
+      <span style="font-family:var(--mono);font-size:10px;color:var(--text3);align-self:center;">Jours :</span>
+      ${['Lu','Ma','Me','Je','Ve','Sa','Di'].map((d,i)=>`<button class="day-pick-btn" data-day="${i+1}" onclick="toggleDayBtn(this)">${d}</button>`).join('')}
     </div>
     <div class="week-nav">
       <button class="wnbtn" onclick="shiftW(-1)">← Prev</button>
@@ -1540,9 +1567,10 @@ function ensureState(){
   // Kaizen migration — add missing fields to existing habits
   S.habits.forEach(h=>{
     if(h.duration===undefined) h.duration=5;
-    if(!h.kaizen) h.kaizen={level:1,thresholdDays:7,history:[]};
+    if(!h.kaizen) h.kaizen={level:1,thresholdDays:3,history:[]};
     if(!h.kaizen.history) h.kaizen.history=[];
-    if(!h.kaizen.thresholdDays) h.kaizen.thresholdDays=7;
+    if(!h.kaizen.thresholdDays) h.kaizen.thresholdDays=3;
+    if(!h.days) h.days=[];
   });
   if(!S.habitLogs) S.habitLogs={};
   if(!S.categories || !Array.isArray(S.categories)) S.categories=[];
@@ -3845,14 +3873,36 @@ function renderReminders(){
 /* ══ HABITS ══ */
 const HC={sante:'Health',sport:'Sport',mental:'Mental',travail:'Work',perso:'Personal'};
 const DAYS=['Su','Mo','Tu','We','Th','Fr','Sa'];
+function toggleDayPicker(val){
+  const el=document.getElementById('hab-day-picker');
+  if(el) el.style.display=val==='custom'?'flex':'none';
+}
+function toggleDayBtn(btn){btn.classList.toggle('on');}
+function getSelectedDays(){
+  return [...document.querySelectorAll('#hab-day-picker .day-pick-btn.on')].map(b=>parseInt(b.dataset.day));
+}
 function addHabit(){
   const v=document.getElementById('hab-in').value.trim();if(!v)return;
   const dur=parseInt(document.getElementById('hab-dur').value)||5;
-  const h={id:uid(),name:v,cat:document.getElementById('hab-cat').value,freq:document.getElementById('hab-freq').value,
+  const freq=document.getElementById('hab-freq').value;
+  const days=freq==='custom'?getSelectedDays():[];
+  if(freq==='custom'&&!days.length){toast('⚠ Sélectionne au moins un jour');return;}
+  const h={id:uid(),name:v,cat:document.getElementById('hab-cat').value,freq,days,
     duration:dur,
-    kaizen:{level:1,thresholdDays:7,history:[]},
+    kaizen:{level:1,thresholdDays:3,history:[]},
     typo:'neutral',laws:{signal:'',envie:'',reponse:'',recompense:''},ts:Date.now()};
-  S.habits.push(h);document.getElementById('hab-in').value='';autoSave();renderHabits();logA('habit','Ajouté: "'+v+'" (Niv.1 · '+_durLabel(dur)+')');
+  S.habits.push(h);
+  document.getElementById('hab-in').value='';
+  document.querySelectorAll('#hab-day-picker .day-pick-btn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('hab-freq').value='daily';
+  toggleDayPicker('daily');
+  autoSave();renderHabits();logA('habit','Ajouté: "'+v+'" (Niv.1 · '+_durLabel(dur)+')');
+}
+function saveHabitDays(id,btn){
+  const h=S.habits.find(x=>x.id===id);if(!h)return;
+  btn.classList.toggle('on');
+  h.days=[...document.querySelectorAll('#hcard-days-'+id+' .hcard-day-btn.on')].map(b=>parseInt(b.dataset.day));
+  autoSave();
 }
 function delHabit(id){
   const h=S.habits.find(x=>x.id===id);if(!h)return;
@@ -3888,7 +3938,7 @@ function levelUpHabit(id){
   const oldDur=h.duration||5;
   h.kaizen.level++;
   // Increase threshold slightly each level (7→10→14…)
-  h.kaizen.thresholdDays=Math.min(7+Math.floor(h.kaizen.level/2)*3,21);
+  h.kaizen.thresholdDays=Math.min(3+Math.floor(h.kaizen.level/2)*3,21);
   // Log history
   const newDur=_kaizenDurForLevel(oldDur,h.kaizen.level);
   h.kaizen.history.push({
@@ -3906,7 +3956,18 @@ function toggleKaizenHistory(id){
   const el=document.getElementById('kh-'+id);
   if(el)el.classList.toggle('open');
 }
-function calcStreak(h){let s=0;const td=today();for(let i=0;i<90;i++){const d=new Date(td);d.setDate(d.getDate()-i);if(h.freq==='weekly'&&d.getDay()!==1&&i>0)continue;if(isLogged(h.id,isoDate(d)))s++;else if(i>0)break;}return s;}
+function calcStreak(h){
+  let s=0;const td=today();
+  for(let i=0;i<90;i++){
+    const d=new Date(td);d.setDate(d.getDate()-i);
+    const dow=d.getDay()===0?7:d.getDay();
+    if(h.freq==='weekly'){if(dow!==1&&i>0)continue;}
+    else if(h.freq==='custom'){const days=h.days||[];if(!days.includes(dow))continue;}
+    if(isLogged(h.id,isoDate(d)))s++;
+    else if(i>0)break;
+  }
+  return s;
+}
 function getWeekDates(){const b=today();b.setDate(b.getDate()+wOff*7);const m=new Date(b);const dw=m.getDay();m.setDate(m.getDate()-(dw===0?6:dw-1));return Array.from({length:7},(_,i)=>{const d=new Date(m);d.setDate(d.getDate()+i);return d;});}
 function shiftW(n){wOff+=n;renderHabits();}
 function goToday(){wOff=0;renderHabits();}
@@ -3952,15 +4013,25 @@ function renderHabits(){
     </div>
     ${histCount>0?`<div class="kaizen-history" id="kh-${h.id}">${histHtml}</div>`:''}`;
 
+    // ── Freq label & inline day-picker ──
+    const DAY_LABELS=['Lu','Ma','Me','Je','Ve','Sa','Di'];
+    const freqLabel=h.freq==='daily'?'Daily':h.freq==='weekly'?'Weekly':
+      (h.days&&h.days.length?h.days.map(d=>DAY_LABELS[d-1]).join(' '):'Custom');
+    const inlineDayPicker=h.freq==='custom'?`
+      <div class="hcard-day-picker" id="hcard-days-${h.id}">
+        ${DAY_LABELS.map((dl,i)=>{const d=i+1;const on=(h.days||[]).includes(d);return`<button class="hcard-day-btn${on?' on':''}" data-day="${d}" onclick="saveHabitDays('${h.id}',this)">${dl}</button>`;}).join('')}
+      </div>`:'';
+
     return`<div class="hcard" style="${ba}">
       <div class="hcard-head">
         <span class="hname">${esc(h.name)}</span>
         <span class="hcat-tag">${HC[h.cat]||h.cat}</span>
-        <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">${h.freq==='daily'?'Daily':'Weekly'}</span>
+        <span class="hfreq-custom">${freqLabel}</span>
         <span class="hstreak${streak===0?' zero':''}">🔥 ${streak}d</span>
         <button class="laws-btn" id="lb-${h.id}" onclick="toggleLaws('${h.id}')">▼ 4 lois${lf>0?' ('+lf+'/4)':''}</button>
         <button class="del" onclick="delHabit('${h.id}')">×</button>
       </div>
+      ${inlineDayPicker}
       ${kaizenBarHtml}
       <div class="typo-bar">
         <span class="typo-lbl">Type</span>
