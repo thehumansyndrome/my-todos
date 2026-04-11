@@ -610,7 +610,20 @@ div:hover>.item-img-del{display:block;}
 .drive-desc{font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.6;}
 .drive-desc a{color:var(--accent);}
 
-/* Activity log */
+/* ── ARCHIVE ── */
+.arch-group-header{font-family:var(--mono);font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);padding:16px 0 6px;border-bottom:1px solid var(--line);margin-bottom:6px;}
+.arch-item{background:var(--card);border:1px solid var(--line);border-radius:var(--r2);padding:10px 12px;display:flex;align-items:flex-start;gap:10px;}
+.arch-item-text{flex:1;font-size:13px;color:var(--text);line-height:1.4;word-break:break-word;}
+.arch-item-meta{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:3px;}
+.arch-item-actions{display:flex;gap:5px;flex-shrink:0;align-items:center;}
+.arch-restore-btn{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:var(--r);border:1px solid var(--line2);background:var(--bg);color:var(--text3);cursor:pointer;transition:all .12s;white-space:nowrap;}
+.arch-restore-btn:hover{background:var(--green-bg);color:var(--green);border-color:var(--green);}
+.arch-del-btn{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:var(--r);border:1px solid var(--line2);background:var(--bg);color:var(--text3);cursor:pointer;transition:all .12s;}
+.arch-del-btn:hover{background:var(--red-bg);color:var(--red);border-color:var(--red);}
+[data-theme="dark"] .arch-restore-btn:hover{background:#0a2a0a;color:#4ade80;border-color:#4ade80;}
+[data-theme="dark"] .arch-del-btn:hover{background:#2a0a0a;color:#f87171;border-color:#f87171;}
+
+
 .act-list{display:flex;flex-direction:column;gap:3px;max-height:240px;overflow-y:auto;}
 .act-item{
   font-family:var(--mono);font-size:10px;color:var(--text2);
@@ -1043,6 +1056,7 @@ div:hover>.item-img-del{display:block;}
     <button class="tab" onclick="switchTab('reminders')">Reminders</button>
     <button class="tab" onclick="switchTab('habits')">Habits</button>
     <button class="tab" onclick="switchTab('challenges')">Challenges</button>
+    <button class="tab" onclick="switchTab('archive')">Archive</button>
     <button class="tab" onclick="switchTab('log')">Log</button>
     <button class="tab" onclick="switchTab('templates')">Templates</button>
   </div>
@@ -1259,6 +1273,22 @@ div:hover>.item-img-del{display:block;}
     <div class="list" id="courses-list"></div>
   </div>
 
+  <!-- ══ ARCHIVE ══ -->
+  <div id="tab-archive" class="section" style="display:none;">
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 0 8px;flex-wrap:wrap;">
+      <span id="arch-count" style="font-family:var(--mono);font-size:11px;color:var(--text3);"></span>
+      <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;">
+        <select id="arch-filter-cat" onchange="renderArchive()"
+          style="font-family:var(--mono);font-size:11px;padding:4px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text2);cursor:pointer;">
+          <option value="all">Toutes catégories</option>
+        </select>
+        <button class="lbtn" onclick="loadArchive(true)">⟳ Recharger</button>
+      </div>
+    </div>
+    <div id="arch-status" style="font-family:var(--mono);font-size:12px;color:var(--text3);padding:40px 0;text-align:center;display:none;"></div>
+    <div id="arch-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+  </div>
+
   <!-- ══ LOG ══ -->
   <div id="tab-log" class="section">
 
@@ -1417,7 +1447,7 @@ div:hover>.item-img-del{display:block;}
 /* ══ CONSTANTS ══ */
 const P='projet001';
 const SK='td_v4_'+P, AK='td_act_'+P, TK='td_theme_'+P, DK='td_drive_'+P;
-const TABS=['todos','courses','notes','reminders','habits','challenges','log','templates'];
+const TABS=['todos','courses','notes','reminders','habits','challenges','archive','log','templates'];
 
 /* ══ DEFAULT CATEGORIES ══ */
 const DEFAULT_CATS = [
@@ -1729,6 +1759,7 @@ function switchTab(t){
   const el=document.getElementById('tab-'+t);
   el.classList.add('active'); el.style.display='';
   if(t==='log'){renderLog();renderAL();loadDriveConf();renderCatManager();}
+  if(t==='archive')loadArchive(false);
   if(t==='habits')renderHabits();
   if(t==='challenges')renderChallenges();
   if(t==='templates')renderTemplates();
@@ -2783,6 +2814,171 @@ function toggleDoneSection(){
   if(chev){chev.classList.toggle('open',doneSectionOpen);}
 }
 
+/* ══ ARCHIVE TAB ══ */
+let archiveData = null; // cached {archives:[]} from Drive
+
+async function loadArchive(force){
+  const statusEl = document.getElementById('arch-status');
+  const listEl   = document.getElementById('arch-list');
+  if(!drTok){
+    statusEl.style.display='';
+    statusEl.textContent='⚠ Connecte Google Drive pour accéder aux archives.';
+    listEl.innerHTML='';
+    document.getElementById('arch-count').textContent='';
+    return;
+  }
+  if(archiveData && !force){ renderArchive(); return; }
+  statusEl.style.display='';
+  statusEl.textContent='Chargement…';
+  listEl.innerHTML='';
+  try {
+    const fid = await drFindOrCreateArchive();
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fid}?alt=media`,
+      {headers:{Authorization:'Bearer '+drTok}});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    archiveData = await r.json();
+    if(!archiveData.archives) archiveData.archives=[];
+    statusEl.style.display='none';
+    populateArchiveCatFilter();
+    renderArchive();
+  } catch(e){
+    statusEl.textContent='❌ Erreur chargement : '+e.message;
+    console.warn('[archive]',e);
+  }
+}
+
+function populateArchiveCatFilter(){
+  const sel = document.getElementById('arch-filter-cat');
+  const prev = sel.value;
+  const cats = [...new Set((archiveData.archives||[]).map(a=>a.catLabel||a.cat||'—'))].sort();
+  sel.innerHTML = '<option value="all">Toutes catégories</option>';
+  cats.forEach(c=>{
+    const o=document.createElement('option');
+    o.value=c; o.textContent=c;
+    sel.appendChild(o);
+  });
+  if(prev && [...sel.options].some(o=>o.value===prev)) sel.value=prev;
+}
+
+function renderArchive(){
+  const listEl   = document.getElementById('arch-list');
+  const countEl  = document.getElementById('arch-count');
+  const catFilter = document.getElementById('arch-filter-cat').value;
+  if(!archiveData){ listEl.innerHTML=''; countEl.textContent=''; return; }
+
+  let items = archiveData.archives.slice().reverse();
+  if(catFilter !== 'all') items = items.filter(a=>(a.catLabel||a.cat||'—')===catFilter);
+
+  if(!items.length){
+    listEl.innerHTML='<div style="font-family:var(--mono);font-size:12px;color:var(--text3);padding:40px 0;text-align:center;">Aucune tâche archivée.</div>';
+    countEl.textContent='';
+    return;
+  }
+
+  countEl.textContent = archiveData.archives.length + ' tâche' + (archiveData.archives.length>1?'s':'') + ' archivée' + (archiveData.archives.length>1?'s':'');
+
+  // Group by week
+  const groups = {};
+  items.forEach(a=>{
+    const d = a.archivedAt ? new Date(a.archivedAt) : new Date(0);
+    const jan4 = new Date(d.getFullYear(),0,4);
+    const wk = Math.ceil(((d - jan4)/86400000 + jan4.getDay()+1)/7);
+    const key = d.getFullYear()+'-W'+String(wk).padStart(2,'0');
+    const weekStart = new Date(d);
+    weekStart.setDate(d.getDate() - d.getDay() + 1);
+    const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate()+6);
+    const fmt = dt => dt.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+    const label = fmt(weekStart) + ' – ' + fmt(weekEnd) + ' ' + d.getFullYear();
+    if(!groups[key]) groups[key]={label, items:[]};
+    groups[key].items.push(a);
+  });
+
+  let html = '';
+  Object.keys(groups).sort().reverse().forEach(key=>{
+    const g = groups[key];
+    html += `<div class="arch-group-header">Semaine du ${g.label} <span style="font-weight:400;opacity:.6;">(${g.items.length})</span></div>`;
+    g.items.forEach(a=>{
+      const realIdx = archiveData.archives.indexOf(a);
+      const cat = a.catLabel||a.cat||'';
+      const priStr = a.pri ? a.pri.toUpperCase() : '';
+      const dateStr = a.archivedAt ? new Date(a.archivedAt).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+      const subtaskCount = (a.subtasks||[]).length;
+      const metaParts = [cat, priStr, dateStr, subtaskCount ? subtaskCount+' sous-tâche'+(subtaskCount>1?'s':'') : ''].filter(Boolean).join(' · ');
+      html += `<div class="arch-item">
+        <div style="flex:1;min-width:0;">
+          <div class="arch-item-text">${escapeHtml(a.text||'')}</div>
+          <div class="arch-item-meta">${metaParts}</div>
+        </div>
+        <div class="arch-item-actions">
+          <button class="arch-restore-btn" onclick="restoreArchiveItem(${realIdx})" title="Restaurer dans les todos">↩</button>
+          <button class="arch-del-btn" onclick="deleteArchiveItem(${realIdx})" title="Supprimer définitivement">✕</button>
+        </div>
+      </div>`;
+    });
+  });
+  listEl.innerHTML = html;
+}
+
+async function saveArchiveToDrive(){
+  try {
+    const fid = await drFindOrCreateArchive();
+    const wr = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fid}?uploadType=media`,
+      {method:'PATCH', headers:{Authorization:'Bearer '+drTok,'Content-Type':'application/json'},
+       body:JSON.stringify(archiveData,null,2)});
+    if(!wr.ok) throw new Error('HTTP '+wr.status);
+    return true;
+  } catch(e){
+    toast('⚠ Erreur sauvegarde archive : '+e.message);
+    return false;
+  }
+}
+
+async function restoreArchiveItem(idx){
+  if(!archiveData) return;
+  const a = archiveData.archives[idx];
+  if(!a) return;
+  const restored = {
+    id: 'r'+Date.now(),
+    text: a.text||'',
+    cat: a.cat||'perso',
+    pri: a.pri||'p2',
+    hz: a.hz||'later',
+    done: false,
+    comment: a.comment||'',
+    subtasks: [],
+    parentId: null,
+    type: null,
+    attachments: a.attachments||[]
+  };
+  S.todos.unshift(restored);
+  autoSave();
+  renderTodos();
+  archiveData.archives.splice(idx,1);
+  const ok = await saveArchiveToDrive();
+  if(ok){
+    toast('↩ Tâche restaurée dans les Todos');
+    logA('todo','↩ Restauré depuis archive : "'+restored.text+'"');
+    renderArchive();
+    populateArchiveCatFilter();
+  }
+}
+
+async function deleteArchiveItem(idx){
+  if(!archiveData) return;
+  const a = archiveData.archives[idx];
+  if(!a) return;
+  if(!confirm('Supprimer définitivement "'+a.text+'" ?\nCette action est irréversible.')) return;
+  archiveData.archives.splice(idx,1);
+  const ok = await saveArchiveToDrive();
+  if(ok){
+    toast('✕ Supprimé définitivement');
+    renderArchive();
+    populateArchiveCatFilter();
+  }
+}
+
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
 const ARCHIVE_FILENAME = 'projet001-archive.json';
 let archFid = null;
 
@@ -2857,6 +3053,7 @@ async function archiveDone(){
     logA('todo','✓ Archivé: "'+t.text+'" ('+getCatById(t.cat).label+' · '+t.pri.toUpperCase()+')');
   });
   S.todos=S.todos.filter(x=>!x.done);
+  archiveData=null; // invalidate cache so Archive tab reloads fresh
   autoSave();renderTodos();
   toast('✓ '+doneItems.length+' tâche(s) archivée(s) → projet001-archive.json');
   logA('drive','Archive → '+ARCHIVE_FILENAME+' ('+doneItems.length+' tâches)');
