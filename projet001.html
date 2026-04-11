@@ -523,6 +523,50 @@ div:hover>.item-img-del{display:block;}
 .dot-d{font-family:var(--mono);font-size:8px;color:var(--text3);line-height:1;}
 .dot.done .dot-d{color:var(--bg);opacity:.6;}
 
+/* ── KAIZEN ── */
+.kaizen-bar{
+  display:flex;align-items:center;gap:8px;padding:6px 0 10px;flex-wrap:wrap;
+}
+.kaizen-level-badge{
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  padding:2px 8px;border-radius:2px;
+  background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue);
+  cursor:default;
+}
+[data-theme="dark"] .kaizen-level-badge{background:#0d1a2e;color:#6ba3f5;border-color:#6ba3f5;}
+.kaizen-duration{
+  font-family:var(--mono);font-size:10px;color:var(--text3);
+  padding:2px 7px;border:1px solid var(--line);border-radius:2px;background:var(--bg);
+}
+.kaizen-up-btn{
+  font-family:var(--mono);font-size:10px;
+  padding:2px 9px;border:1px solid var(--green);border-radius:2px;
+  background:var(--green-bg);color:var(--green);cursor:pointer;transition:all .1s;
+}
+.kaizen-up-btn:hover{background:var(--green);color:var(--bg);}
+[data-theme="dark"] .kaizen-up-btn{background:#0a2a0a;color:#4ade80;border-color:#4ade80;}
+[data-theme="dark"] .kaizen-up-btn:hover{background:#4ade80;color:#111;}
+.kaizen-progress{
+  flex:1;min-width:80px;height:4px;background:var(--line);border-radius:2px;overflow:hidden;
+}
+.kaizen-progress-fill{
+  height:100%;background:var(--green);border-radius:2px;transition:width .3s;
+}
+.kaizen-hint{
+  font-family:var(--mono);font-size:10px;color:var(--amber);
+  padding:2px 7px;border:1px solid var(--amber);border-radius:2px;background:var(--amber-bg);
+  cursor:pointer;animation:pulse-hint 1.5s ease-in-out infinite;
+}
+[data-theme="dark"] .kaizen-hint{background:#1a1100;color:#fbbf24;border-color:#fbbf24;}
+@keyframes pulse-hint{0%,100%{opacity:1;}50%{opacity:.6;}}
+.kaizen-history{
+  font-family:var(--mono);font-size:10px;color:var(--text3);
+  border-top:1px solid var(--line);padding:8px 0 4px;margin-top:2px;
+  display:none;
+}
+.kaizen-history.open{display:block;}
+.kaizen-history-item{padding:2px 0;border-bottom:1px solid var(--line);margin-bottom:2px;}
+
 .laws-panel{display:none;border-top:1px solid var(--line);}
 .laws-panel.open{display:block;}
 .laws-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px;}
@@ -1211,6 +1255,14 @@ div:hover>.item-img-del{display:block;}
         <option value="daily">Daily</option>
         <option value="weekly">Weekly</option>
       </select>
+      <select id="hab-dur" title="Durée cible (micro-habitude)" style="font-family:var(--mono);font-size:11px;padding:4px 6px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text2);cursor:pointer;">
+        <option value="2">2 min</option>
+        <option value="5" selected>5 min</option>
+        <option value="10">10 min</option>
+        <option value="20">20 min</option>
+        <option value="30">30 min</option>
+        <option value="0">Libre</option>
+      </select>
       <button class="add-btn" onclick="addHabit()">+ Add</button>
     </div>
     <div class="week-nav">
@@ -1485,6 +1537,13 @@ function ensureState(){
   if(!S.reminders) S.reminders=[];
   S.reminders.forEach(r=>{ if(!r.images) r.images=[]; });
   if(!S.habits) S.habits=[];
+  // Kaizen migration — add missing fields to existing habits
+  S.habits.forEach(h=>{
+    if(h.duration===undefined) h.duration=5;
+    if(!h.kaizen) h.kaizen={level:1,thresholdDays:7,history:[]};
+    if(!h.kaizen.history) h.kaizen.history=[];
+    if(!h.kaizen.thresholdDays) h.kaizen.thresholdDays=7;
+  });
   if(!S.habitLogs) S.habitLogs={};
   if(!S.categories || !Array.isArray(S.categories)) S.categories=[];
   if(!S.categories.length) S.categories=JSON.parse(JSON.stringify(DEFAULT_CATS));
@@ -3788,8 +3847,12 @@ const HC={sante:'Health',sport:'Sport',mental:'Mental',travail:'Work',perso:'Per
 const DAYS=['Su','Mo','Tu','We','Th','Fr','Sa'];
 function addHabit(){
   const v=document.getElementById('hab-in').value.trim();if(!v)return;
-  const h={id:uid(),name:v,cat:document.getElementById('hab-cat').value,freq:document.getElementById('hab-freq').value,typo:'neutral',laws:{signal:'',envie:'',reponse:'',recompense:''},ts:Date.now()};
-  S.habits.push(h);document.getElementById('hab-in').value='';autoSave();renderHabits();logA('habit','Ajouté: "'+v+'"');
+  const dur=parseInt(document.getElementById('hab-dur').value)||5;
+  const h={id:uid(),name:v,cat:document.getElementById('hab-cat').value,freq:document.getElementById('hab-freq').value,
+    duration:dur,
+    kaizen:{level:1,thresholdDays:7,history:[]},
+    typo:'neutral',laws:{signal:'',envie:'',reponse:'',recompense:''},ts:Date.now()};
+  S.habits.push(h);document.getElementById('hab-in').value='';autoSave();renderHabits();logA('habit','Ajouté: "'+v+'" (Niv.1 · '+_durLabel(dur)+')');
 }
 function delHabit(id){
   const h=S.habits.find(x=>x.id===id);if(!h)return;
@@ -3805,6 +3868,44 @@ function isLogged(hid,ds){return!!S.habitLogs[hid+':'+ds];}
 function toggleLaws(id){const el=document.getElementById('lp-'+id);el.classList.toggle('open');const h=S.habits.find(x=>x.id===id);const n=h&&h.laws?[h.laws.signal,h.laws.envie,h.laws.reponse,h.laws.recompense].filter(Boolean).length:0;document.getElementById('lb-'+id).textContent=el.classList.contains('open')?'▲ Masquer':('▼ 4 lois'+(n>0?' ('+n+'/4)':''));}
 function saveLaw(hid,f,v){const h=S.habits.find(x=>x.id===hid);if(!h)return;if(!h.laws)h.laws={};h.laws[f]=v;save();}
 function setTypo(hid,t){const h=S.habits.find(x=>x.id===hid);if(!h)return;h.typo=t;autoSave();renderHabits();logA('habit','"'+h.name+'" → '+t);}
+function _durLabel(min){if(!min||min===0)return'Libre';return min+'min';}
+function _kaizenLabel(level,dur){
+  const LEVEL_DURS=[2,5,10,20,30,45,60];
+  // compute duration for this level: start from dur, scale by level
+  return 'Niv.'+level;
+}
+function _kaizenDurForLevel(baseDur,level){
+  if(!baseDur||baseDur===0)return 0;
+  // Each level adds ~50% of base, capped at reasonable max
+  const steps=[1,1.5,2,3,4,5,6,8,10];
+  const mult=steps[Math.min(level-1,steps.length-1)]||level;
+  return Math.round(baseDur*mult);
+}
+function levelUpHabit(id){
+  const h=S.habits.find(x=>x.id===id);if(!h)return;
+  if(!h.kaizen)h.kaizen={level:1,thresholdDays:7,history:[]};
+  const oldLevel=h.kaizen.level;
+  const oldDur=h.duration||5;
+  h.kaizen.level++;
+  // Increase threshold slightly each level (7→10→14…)
+  h.kaizen.thresholdDays=Math.min(7+Math.floor(h.kaizen.level/2)*3,21);
+  // Log history
+  const newDur=_kaizenDurForLevel(oldDur,h.kaizen.level);
+  h.kaizen.history.push({
+    date:isoDate(today()),
+    from:{level:oldLevel,dur:oldDur},
+    to:{level:h.kaizen.level,dur:newDur},
+    streak:calcStreak(h)
+  });
+  h.duration=newDur;
+  autoSave();renderHabits();
+  toast('🎯 "'+h.name+'" → Niv.'+h.kaizen.level+' · '+_durLabel(newDur));
+  logA('habit','⬆ Kaizen "'+h.name+'" Niv.'+oldLevel+' → Niv.'+h.kaizen.level+' ('+_durLabel(newDur)+')');
+}
+function toggleKaizenHistory(id){
+  const el=document.getElementById('kh-'+id);
+  if(el)el.classList.toggle('open');
+}
 function calcStreak(h){let s=0;const td=today();for(let i=0;i<90;i++){const d=new Date(td);d.setDate(d.getDate()-i);if(h.freq==='weekly'&&d.getDay()!==1&&i>0)continue;if(isLogged(h.id,isoDate(d)))s++;else if(i>0)break;}return s;}
 function getWeekDates(){const b=today();b.setDate(b.getDate()+wOff*7);const m=new Date(b);const dw=m.getDay();m.setDate(m.getDate()-(dw===0?6:dw-1));return Array.from({length:7},(_,i)=>{const d=new Date(m);d.setDate(d.getDate()+i);return d;});}
 function shiftW(n){wOff+=n;renderHabits();}
@@ -3824,6 +3925,33 @@ function renderHabits(){
     const isDark = document.documentElement.getAttribute('data-theme')==='dark';
     const ba='';
     const dots=dates.map(d=>{const ds=isoDate(d),lg=isLogged(h.id,ds),it=ds===ts,fut=ds>ts;return`<div class="dot${lg?' done':''}${it?' tod':''}${fut?' fut':''}" ${fut?'':'onclick="toggleLog(\''+h.id+'\',\''+ds+'\')"'}><span class="dot-n">${d.getDate()}</span><span class="dot-d">${DAYS[d.getDay()]}</span></div>`;}).join('');
+
+    // ── Kaizen bar ──
+    const kz=h.kaizen||{level:1,thresholdDays:7,history:[]};
+    const level=kz.level||1;
+    const threshold=kz.thresholdDays||7;
+    const dur=h.duration||5;
+    const durLabel=dur===0?'Libre':dur+'min';
+    const progressPct=Math.min(Math.round((streak/threshold)*100),100);
+    const canLevelUp=streak>=threshold;
+    const histCount=(kz.history||[]).length;
+    const histHtml=(kz.history||[]).slice().reverse().map(e=>`<div class="kaizen-history-item">📅 ${e.date} — Niv.${e.from.level}→${e.to.level} · streak ${e.streak}j</div>`).join('');
+
+    const kaizenBarHtml=`<div class="kaizen-bar">
+      <span class="kaizen-level-badge">Niv.${level}</span>
+      <span class="kaizen-duration">⏱ ${durLabel}</span>
+      <div class="kaizen-progress" title="${streak}/${threshold} jours pour monter de niveau">
+        <div class="kaizen-progress-fill" style="width:${progressPct}%"></div>
+      </div>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--text3);">${streak}/${threshold}j</span>
+      ${canLevelUp
+        ? `<button class="kaizen-hint" onclick="levelUpHabit('${h.id}')" title="Seuil atteint ! Monte d'un niveau">⬆ Level up !</button>`
+        : `<button class="kaizen-up-btn" onclick="levelUpHabit('${h.id}')" title="Monter manuellement d'un niveau">⬆</button>`
+      }
+      ${histCount>0?`<button class="laws-btn" onclick="toggleKaizenHistory('${h.id}')" style="margin-left:0;">📈 Hist. (${histCount})</button>`:''}
+    </div>
+    ${histCount>0?`<div class="kaizen-history" id="kh-${h.id}">${histHtml}</div>`:''}`;
+
     return`<div class="hcard" style="${ba}">
       <div class="hcard-head">
         <span class="hname">${esc(h.name)}</span>
@@ -3833,6 +3961,7 @@ function renderHabits(){
         <button class="laws-btn" id="lb-${h.id}" onclick="toggleLaws('${h.id}')">▼ 4 lois${lf>0?' ('+lf+'/4)':''}</button>
         <button class="del" onclick="delHabit('${h.id}')">×</button>
       </div>
+      ${kaizenBarHtml}
       <div class="typo-bar">
         <span class="typo-lbl">Type</span>
         <button class="tbtn${typo==='good'?' good':''}" onclick="setTypo('${h.id}','good')">${tl.good}</button>
