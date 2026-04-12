@@ -365,7 +365,43 @@ div:hover>.item-img-del{display:block;}
 }
 .del:hover{color:var(--red);}
 
-/* ── LIVE BADGE ── */
+/* ── MOBILE 2-LINE ITEM LAYOUT ── */
+@media(max-width:600px){
+  .item{flex-wrap:wrap;gap:6px 8px;padding:12px 0;}
+  /* Line 1: reorder + checkbox + text — full width */
+  .item > .reorder-btns{order:1;flex-shrink:0;align-self:flex-start;margin-top:2px;}
+  .item > .item-check{order:2;margin-top:3px;}
+  .item-body{order:3;flex:1;min-width:0;}
+  /* Hide action buttons from their original position on mobile */
+  .item > .attach-btn,
+  .item > .comment-btn,
+  .item > .img-btn,
+  .item > .edit-btn,
+  .item > .del{display:none;}
+  /* Line 2: meta row with actions pinned right — injected inside item-body */
+  .item-meta-row{
+    display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:5px;
+  }
+  .item-meta-row .item-meta{margin-top:0;flex:1;min-width:0;}
+  .mobile-actions{
+    display:flex;align-items:center;gap:1px;flex-shrink:0;margin-left:auto;
+  }
+  .mobile-actions button{
+    background:none;border:none;cursor:pointer;
+    font-size:14px;padding:3px 4px;opacity:.5;transition:opacity .15s;
+    line-height:1;
+  }
+  .mobile-actions button:hover,.mobile-actions button.has-attach,.mobile-actions button.has-comment,.mobile-actions button.has-img{opacity:1;}
+  .mobile-actions .del{font-size:16px;color:var(--text3);}
+  .mobile-actions .del:hover{color:var(--red);}
+  /* Hide desktop drag handle on mobile (already hidden, just reinforce) */
+  .item > .dh{display:none;}
+}
+@media(min-width:601px){
+  .mobile-actions{display:none;}
+  .item-meta-row{display:contents;}
+  .item-meta-row .item-meta{display:flex;}
+}
 .live-badge{
   display:none;align-items:center;gap:5px;
   font-family:var(--mono);font-size:10px;font-weight:500;
@@ -2857,12 +2893,21 @@ function todoItemHtml(t){
     <input type="checkbox" class="item-check" ${t.done?'checked':''} onchange="toggleTodo('${t.id}')">
     <div class="item-body">
       <div class="item-text">${esc(t.text)}</div>
-      <div class="item-meta">
-        <span class="tag ${pl[t.pri]||'p2'}">${t.pri.toUpperCase()}</span>
-        ${catBadge}
-        ${hzBadge}
-        ${subtaskBadgeHtml}
-        <span class="meta-date">${fd(t.ts)}</span>
+      <div class="item-meta-row">
+        <div class="item-meta">
+          <span class="tag ${pl[t.pri]||'p2'}">${t.pri.toUpperCase()}</span>
+          ${catBadge}
+          ${hzBadge}
+          ${subtaskBadgeHtml}
+          <span class="meta-date">${fd(t.ts)}</span>
+        </div>
+        <div class="mobile-actions">
+          <button class="attach-btn${t.attachments&&t.attachments.length?' has-attach':''}" onclick="toggleAttachments('${t.id}')" title="Pièces jointes">📎</button>
+          <button class="comment-btn${hasComment?' has-comment':''}" onclick="toggleComment('${t.id}')" title="${hasComment?'Voir':'Ajouter'} commentaire">💬</button>
+          <button class="img-btn${t.images&&t.images.length?' has-img':''}" onclick="todoImgPick('${t.id}')" title="Image">🖼</button>
+          <button onclick="openEdit('${t.id}')" title="Modifier" style="background:none;border:none;cursor:pointer;font-size:13px;padding:3px 4px;opacity:.5;line-height:1;">✎</button>
+          <button class="del" onclick="delTodo('${t.id}')">×</button>
+        </div>
       </div>
       ${itemImgsHtml(t,'todos')}
       <div class="todo-comment" id="tc-${t.id}">
