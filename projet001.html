@@ -1573,6 +1573,7 @@ div:hover>.item-img-del{display:block;}
 <script>
 /* ══ CONSTANTS ══ */
 const P='projet001';
+const IS_TOUCH = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 const SK='td_v4_'+P, AK='td_act_'+P, TK='td_theme_'+P, DK='td_drive_'+P;
 const TABS=['todos','courses','notes','reminders','habits','challenges','archive','log','templates'];
 
@@ -2883,7 +2884,7 @@ function todoItemHtml(t){
   }
 
   return `
-  <div class="item${t.done?' done':''}${isSubtask?' is-subtask':''}" ${isSubtask?'':'draggable="true"'} data-id="${t.id}">
+  <div class="item${t.done?' done':''}${isSubtask?' is-subtask':''}" ${isSubtask||IS_TOUCH?'':'draggable="true"'} data-id="${t.id}">
     ${isSubtask
       ? `<div class="dh" style="visibility:hidden"><span></span><span></span><span></span></div>
          <div class="reorder-btns" style="display:flex;">
@@ -3910,7 +3911,7 @@ function renderReminders(){
   const bc={overdue:'ts-overdue',today:'ts-today',soon:'ts-soon',upcoming:'ts-upcoming',done:'ts-done'};
   const el=document.getElementById('rem-list');
   el.innerHTML=items.length?items.map(r=>`
-    <div class="item${r._s==='overdue'?' rem-overdue':r._s==='today'?' rem-today':''}${r.done?' done':''}" draggable="true" data-id="${r.id}">
+    <div class="item${r._s==='overdue'?' rem-overdue':r._s==='today'?' rem-today':''}${r.done?' done':''}" ${IS_TOUCH?'':'draggable="true"'} data-id="${r.id}">
       <div class="dh"><span></span><span></span><span></span></div>
       <div class="reorder-btns">
         <button class="rb" onclick="moveItem('reminders','${r.id}',-1,renderReminders)">↑</button>
@@ -4108,7 +4109,7 @@ function renderHabits(){
         ${DAY_LABELS.map((dl,i)=>{const d=i+1;const on=(h.days||[]).includes(d);return`<button class="hcard-day-btn${on?' on':''}" data-day="${d}" onclick="saveHabitDays('${h.id}',this)">${dl}</button>`;}).join('')}
       </div>`:'';
 
-    return`<div class="hcard" draggable="true" data-id="${h.id}">
+    return`<div class="hcard" ${IS_TOUCH?'':'draggable="true"'} data-id="${h.id}">
       <div class="hcard-head">
         <span class="hname">${esc(h.name)}</span>
         <span class="hcat-tag">${HC[h.cat]||h.cat}</span>
