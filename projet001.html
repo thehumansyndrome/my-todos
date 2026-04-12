@@ -2565,36 +2565,33 @@ function addTodo(){
 }
 function quickEditText(id){
   const t=S.todos.find(x=>x.id===id);if(!t)return;
-  // If full edit already open, do nothing
   if(document.getElementById('ef-'+id).classList.contains('open'))return;
+  quickEditInline(id,'todos',renderTodos);
+}
+function quickEditInline(id, collection, renderFn){
+  const item=S[collection].find(x=>x.id===id);if(!item)return;
   const el=document.getElementById('qtext-'+id);
-  if(!el)return;
-  // Already in quick edit mode
-  if(el.tagName==='TEXTAREA')return;
-  const orig=t.text;
+  if(!el||el.tagName==='TEXTAREA')return;
+  const orig=item.text;
   const ta=document.createElement('textarea');
   ta.value=orig;
   ta.rows=2;
   ta.style.cssText='width:100%;font-family:var(--sans);font-size:13px;line-height:1.45;padding:4px 6px;border:1px solid var(--accent);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;resize:none;overflow:hidden;box-sizing:border-box;';
   ta.setAttribute('id','qtext-'+id);
-  // Auto-height
+  let committed=false;
   setTimeout(()=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';ta.focus();ta.selectionStart=ta.selectionEnd=ta.value.length;},0);
   ta.oninput=()=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';};
   ta.onkeydown=e=>{
-    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();commitQuickEdit(id,ta,orig);}
-    if(e.key==='Escape'){e.preventDefault();cancelQuickEdit(id,ta,orig);}
+    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(!committed){committed=true;doCommit();}}
+    if(e.key==='Escape'){e.preventDefault();if(!committed){committed=true;renderFn();}}
   };
-  ta.onblur=()=>commitQuickEdit(id,ta,orig);
+  ta.onblur=()=>{if(!committed){committed=true;doCommit();}};
+  function doCommit(){
+    const val=ta.value.trim();
+    if(val&&val!==orig){item.text=val;autoSave();logA(collection,'Modifié: "'+val+'"');}
+    renderFn();
+  }
   el.replaceWith(ta);
-}
-function commitQuickEdit(id,ta,orig){
-  const t=S.todos.find(x=>x.id===id);if(!t)return;
-  const val=ta.value.trim();
-  if(val&&val!==orig){t.text=val;autoSave();logA('todo','Modifié: "'+val+'"');}
-  renderTodos();
-}
-function cancelQuickEdit(id,ta,orig){
-  renderTodos();
 }
 
 function saveTodo(id){
@@ -3557,9 +3554,9 @@ function renderNotes(){
     const expanded=expandedNotes.has(n.id);
     const imgs=n.images||[];
     const {auto,manual,all}=noteTags(n);
-    const titleHtml=n.title?`<div class="note-card-title">${highlightQ(esc(n.title),q)}</div>`:'';
+    const titleHtml=n.title?`<div class="note-card-title" ${IS_TOUCH?`onclick="event.stopPropagation();openNoteEdit('${n.id}')" style="cursor:pointer;"`:''} >${highlightQ(esc(n.title),q)}</div>`:'';
     const rawBody=n.body?n.body:'';
-    const bodyHtml=rawBody?`<div class="note-card-body${expanded?'':' clamped'}">${highlightQ(linkify(rawBody).replace(/\n/g,'<br>'),q)}</div>`:'';
+    const bodyHtml=rawBody?`<div class="note-card-body${expanded?'':' clamped'}" ${IS_TOUCH?`onclick="event.stopPropagation();openNoteEdit('${n.id}')" style="cursor:pointer;"`:''} >${highlightQ(linkify(rawBody).replace(/\n/g,'<br>'),q)}</div>`:'';
     const imgsHtml=imgs.length?`<div class="note-card-imgs">${imgs.map((src,i)=>`
       <div style="position:relative;">
         <img src="${src}" style="max-width:${expanded?'100%':'72px'};max-height:${expanded?'200px':'56px'};border-radius:4px;border:1px solid rgba(0,0,0,.08);cursor:pointer;object-fit:cover;" onclick="event.stopPropagation();openImgViewer('${n.id}',${i})">
@@ -3953,7 +3950,7 @@ function renderReminders(){
       </div>
       <input type="checkbox" class="item-check" ${r.done?'checked':''} onchange="toggleRem('${r.id}')">
       <div class="item-body">
-        <div class="item-text">${esc(r.text)}</div>
+        <div class="item-text" id="qtext-${r.id}" ${IS_TOUCH?`onclick="if(!document.getElementById('ef-${r.id}').classList.contains('open'))quickEditInline('${r.id}','reminders',renderReminders)" style="cursor:pointer;"`:''} >${esc(r.text)}</div>
         ${itemImgsHtml(r,'reminders')}
         <div class="item-meta" style="margin-top:4px">
           <span class="tag ${bc[r._s]}">${rSL[r._s]}</span>
@@ -4571,7 +4568,7 @@ function renderCourses(){
   el.innerHTML=sorted.map(c=>`
     <div class="courses-item${c.bought?' bought':''}">
       <input type="checkbox" class="courses-check" ${c.bought?'checked':''} onchange="toggleCourse('${c.id}')">
-      <span class="courses-text">${esc(c.text)}</span>
+      <span class="courses-text" id="qtext-${c.id}" ${IS_TOUCH?`onclick="quickEditInline('${c.id}','courses',renderCourses)" style="cursor:pointer;"`:''} >${esc(c.text)}</span>
       ${itemImgsHtml(c,'courses')}
       <button class="del" onclick="delCourse('${c.id}')" title="Supprimer">×</button>
     </div>`).join('');
