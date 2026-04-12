@@ -406,6 +406,25 @@ div:hover>.item-img-del{display:block;}
   .item-meta-row{display:contents;}
   .item-meta-row .item-meta{display:flex;}
 }
+/* ── CAMERA BUTTON ── */
+.cam-btn{
+  font-size:18px;cursor:pointer;padding:3px 6px;
+  border-radius:var(--r);border:1px solid var(--line2);
+  background:var(--bg);display:flex;align-items:center;
+  flex-shrink:0;transition:border-color .12s;line-height:1;
+}
+.cam-btn:hover{border-color:var(--accent);}
+.qa-photo-thumb{
+  position:relative;width:56px;height:56px;border-radius:var(--r);
+  border:1px solid var(--line);overflow:hidden;flex-shrink:0;
+}
+.qa-photo-thumb img{width:100%;height:100%;object-fit:cover;}
+.qa-photo-thumb .rm{
+  position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);
+  color:#fff;border:none;border-radius:50%;width:16px;height:16px;
+  font-size:9px;cursor:pointer;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;
+}
+
 .live-badge{
   display:none;align-items:center;gap:5px;
   font-family:var(--mono);font-size:10px;font-weight:500;
@@ -1193,6 +1212,7 @@ div:hover>.item-img-del{display:block;}
         <option value="">— type —</option>
       </select>
       <button class="add-btn" onclick="addTodo()">+ Add</button>
+      <label class="cam-btn" title="Prendre une photo" style="cursor:pointer;">📷<input type="file" accept="image/*" capture="environment" style="display:none" onchange="handleAddRowPhoto(this,'tab-todos')"></label>
     </div>
     <div id="pending-imgs-tab-todos" style="display:none;flex-wrap:wrap;gap:6px;margin:4px 0 2px 0;"></div>
     <div class="filters" id="todo-filters"></div>
@@ -1251,6 +1271,16 @@ div:hover>.item-img-del{display:block;}
       </div>
 
       <button class="qamodal-add" onclick="submitQA()">Ajouter</button>
+      <!-- Camera — touch only -->
+      <div id="qa-photo-row" style="display:none;margin-top:8px;gap:8px;align-items:center;flex-wrap:wrap;">
+        <label style="display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--text3);cursor:pointer;border:1px solid var(--line2);border-radius:var(--r);padding:5px 10px;background:var(--bg);transition:all .12s;"
+          onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--line2)'">
+          📷 Photo
+          <input type="file" accept="image/*" capture="environment" id="qa-camera-input"
+            style="display:none" onchange="handleQAPhoto(this)">
+        </label>
+        <div id="qa-photo-preview" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+      </div>
     </div>
   </div>
   <!-- ══ NOTES ══ -->
@@ -1264,6 +1294,7 @@ div:hover>.item-img-del{display:block;}
         <input class="main-in" type="text" id="notes-title-in" placeholder="Titre (optionnel)…" style="flex:1;min-width:120px;" onkeydown="if(event.key==='Enter')document.getElementById('notes-body-in').focus()">
         <input class="main-in" type="text" id="notes-tags-in" placeholder="#tag1 #tag2…" style="width:130px;" title="Tags manuels — séparés par des espaces">
         <button class="add-btn" onclick="addNote()">+ Add</button>
+        <label class="cam-btn" title="Prendre une photo">📷<input type="file" accept="image/*" capture="environment" style="display:none" onchange="handleNoteImgFiles(this.files,'new')"></label>
       </div>
       <textarea id="notes-body-in" rows="3" placeholder="Note… (#hashtags reconnus auto · Ctrl+Entrée pour sauvegarder)" onkeydown="if(event.ctrlKey&&event.key==='Enter'){event.preventDefault();addNote();}" style="width:100%;font-family:var(--sans);font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;resize:vertical;line-height:1.5;"></textarea>
       <div id="notes-img-drop" onclick="document.getElementById('notes-img-input').click()"
@@ -1297,6 +1328,7 @@ div:hover>.item-img-del{display:block;}
         <option value="monthly">Monthly</option>
       </select>
       <button class="add-btn" onclick="addReminder()">+ Add</button>
+      <label class="cam-btn" title="Prendre une photo">📷<input type="file" accept="image/*" capture="environment" style="display:none" onchange="handleAddRowPhoto(this,'tab-reminders')"></label>
     </div>
     <div id="pending-imgs-tab-reminders" style="display:none;flex-wrap:wrap;gap:6px;margin:4px 0 2px 0;"></div>
     <div class="filters" id="rem-filters"></div>
@@ -2471,6 +2503,12 @@ function openQA(){
     document.getElementById('qa-rem-date').value = new Date().toISOString().slice(0,10);
   }
 
+  // Show camera button on touch devices
+  const photoRow = document.getElementById('qa-photo-row');
+  if(photoRow) photoRow.style.display = IS_TOUCH ? 'flex' : 'none';
+  qaPendingPhotos = [];
+  renderQAPhotoPreview();
+
   document.getElementById('qa-modal').classList.add('open');
   setTimeout(()=>document.getElementById('qa-text').focus(),100);
 }
@@ -2484,12 +2522,13 @@ function closeQA(){
 function submitQA(){
   const text=document.getElementById('qa-text').value.trim();
   if(!text && qaCurrentTab!=='notes') return;
+  const photos=[...qaPendingPhotos];
 
   if(qaCurrentTab==='todos'){
     const cat=document.getElementById('qa-cat').value;
     const pri=document.getElementById('qa-pri').value;
     const hz=document.getElementById('qa-hz').value;
-    const t={id:uid(),text,cat,pri,hz,done:false,ts:Date.now(),comment:'',subtasks:[],parentId:null,type:null};
+    const t={id:uid(),text,cat,pri,hz,done:false,ts:Date.now(),comment:'',subtasks:[],parentId:null,type:null,images:photos,attachments:[]};
     S.todos.push(t);
     autoSave();renderTodos();
     logA('todo','Ajouté (FAB): "'+text+'"');
@@ -2497,24 +2536,26 @@ function submitQA(){
   } else if(qaCurrentTab==='notes'){
     const body=document.getElementById('qa-note-body').value.trim();
     if(!text&&!body) return;
-    const n={id:uid(),title:text,body,tags:[],images:[],ts:Date.now(),large:true};
+    const n={id:uid(),title:text,body,tags:[],images:photos,ts:Date.now(),large:true};
     S.notes.unshift(n);
     autoSave();renderNotes();
     logA('note','Ajouté (FAB): "'+(text||body.slice(0,40))+'"');
 
   } else if(qaCurrentTab==='courses'){
-    S.courses.push({id:uid(),text,bought:false,ts:Date.now()});
+    S.courses.push({id:uid(),text,bought:false,ts:Date.now(),images:photos});
     autoSave();renderCourses();
     logA('course','Ajouté (FAB): "'+text+'"');
 
   } else if(qaCurrentTab==='reminders'){
     const date=document.getElementById('qa-rem-date').value||null;
     const recur=document.getElementById('qa-rem-recur').value;
-    S.reminders.push({id:uid(),text,date,recur,done:false,ts:Date.now()});
+    S.reminders.push({id:uid(),text,date,recur,done:false,ts:Date.now(),images:photos});
     autoSave();renderReminders();
     logA('reminder','Ajouté (FAB): "'+text+'"');
   }
 
+  qaPendingPhotos=[];
+  renderQAPhotoPreview();
   closeQA();
   toast('✓ "'+text.slice(0,30)+(text.length>30?'…':'')+'" ajouté');
 }
@@ -2563,6 +2604,43 @@ function addTodo(){
   autoSave();renderTodos();
   logA('todo','Ajouté: "'+v+'"'+(subtaskIds.length?' ('+subtaskIds.length+' sous-tâches)':''));
 }
+/* ── CAMERA / PHOTO ── */
+let qaPendingPhotos = []; // base64 strings for QA modal
+
+async function handleQAPhoto(input){
+  const file = input.files && input.files[0];
+  if(!file) return;
+  try {
+    const b64 = await compressImage(file);
+    qaPendingPhotos.push(b64);
+    renderQAPhotoPreview();
+  } catch(e){ toast('⚠ Erreur photo'); }
+  input.value='';
+}
+
+function renderQAPhotoPreview(){
+  const el = document.getElementById('qa-photo-preview');
+  if(!el) return;
+  el.innerHTML = qaPendingPhotos.map((src,i)=>`
+    <div class="qa-photo-thumb">
+      <img src="${src}">
+      <button class="rm" onclick="qaPendingPhotos.splice(${i},1);renderQAPhotoPreview()">×</button>
+    </div>`).join('');
+}
+
+async function handleAddRowPhoto(input, tabKey){
+  const file = input.files && input.files[0];
+  if(!file) return;
+  try {
+    const b64 = await compressImage(file);
+    if(!pendingItemImgs[tabKey]) pendingItemImgs[tabKey]=[];
+    pendingItemImgs[tabKey].push(b64);
+    renderPendingTabImgs(tabKey);
+    toast('📷 Photo prête — clique + Add pour ajouter');
+  } catch(e){ toast('⚠ Erreur photo'); }
+  input.value='';
+}
+
 function quickEditText(id){
   const t=S.todos.find(x=>x.id===id);if(!t)return;
   if(document.getElementById('ef-'+id).classList.contains('open'))return;
