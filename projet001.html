@@ -2642,6 +2642,8 @@ function delTodo(id){
     // Remove all subtasks (no undo for cascade)
     S.todos=S.todos.filter(x=>!t.subtasks.includes(x.id));
     logA('todo',`Supprimé en cascade: "${t.text}" + ${n} sous-tâche${n>1?'s':''}`);
+  } else {
+    if(!confirm(`Supprimer "${t.text.length>50?t.text.slice(0,50)+'…':t.text}" ?`))return;
   }
   // If it's a subtask, remove its ID from parent.subtasks
   if(t.parentId){
