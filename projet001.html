@@ -1431,6 +1431,17 @@ div:hover>.item-img-del{display:block;}
       <button class="add-btn" onclick="addCourse()">+ Add</button>
     </div>
     <div id="pending-imgs-tab-courses" style="display:none;flex-wrap:wrap;gap:6px;margin:4px 0 2px 0;"></div>
+
+    <!-- Template bar -->
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+      <select id="courses-tmpl-sel" onchange="document.getElementById('courses-tmpl-del').style.display=this.value?'':'none'" style="font-family:var(--mono);font-size:11px;padding:4px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text2);cursor:pointer;flex:1;min-width:120px;">
+        <option value="">— Modèle —</option>
+      </select>
+      <button class="lbtn" onclick="applyCourseTemplate()" title="Charger le modèle sélectionné">↓ Charger</button>
+      <button class="lbtn success" onclick="saveCourseTemplate()" title="Sauver la liste actuelle comme modèle">💾 Sauver liste</button>
+      <button class="lbtn danger" id="courses-tmpl-del" onclick="deleteCourseTemplate()" style="display:none" title="Supprimer ce modèle">✕</button>
+    </div>
+
     <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
       <button class="courses-clear" onclick="clearBought()">✓ Supprimer les achetés</button>
     </div>
@@ -1681,6 +1692,7 @@ function ensureState(){
   if(!S.challenges) S.challenges=[];
   if(!S.courses) S.courses=[];
   S.courses.forEach(c=>{ if(!c.images) c.images=[]; });
+  if(!S.courseTemplates) S.courseTemplates=[];
 }
 
 function save(){try{localStorage.setItem(SK,JSON.stringify(S));}catch(e){}}
@@ -4714,6 +4726,15 @@ function renderCourses(){
     <div class="stat"><div class="stat-n">${total}</div><div class="stat-l">Total</div></div>
     <div class="stat"><div class="stat-n">${remaining}</div><div class="stat-l">Restants</div></div>
     <div class="stat"><div class="stat-n">${bought}</div><div class="stat-l">Achetés</div></div>`;
+  // Populate template select
+  const sel=document.getElementById('courses-tmpl-sel');
+  if(sel){
+    const prev=sel.value;
+    sel.innerHTML='<option value="">— Modèle —</option>'+
+      (S.courseTemplates||[]).map(t=>`<option value="${t.id}">${esc(t.name)} (${t.items.length})</option>`).join('');
+    if(prev) sel.value=prev;
+    document.getElementById('courses-tmpl-del').style.display=sel.value?'':'none';
+  }
   const el=document.getElementById('courses-list');
   if(!total){el.innerHTML='<div class="empty">Liste vide</div>';return;}
   const sorted=[...S.courses].sort((a,b)=>a.bought-b.bought||a.ts-b.ts);
@@ -4726,6 +4747,53 @@ function renderCourses(){
       <label style="cursor:pointer;font-size:16px;padding:2px 4px;opacity:.4;display:flex;align-items:center;flex-shrink:0;line-height:1;">🖼<input type="file" accept="image/*" style="display:none" onchange="genericItemImgPickFile(this,'${c.id}','courses',renderCourses)"></label>
       <button class="del" onclick="delCourse('${c.id}')" title="Supprimer">×</button>
     </div>`).join('');
+}
+
+/* ══ COURSE TEMPLATES ══ */
+function saveCourseTemplate(){
+  const items=S.courses.filter(x=>!x.bought).map(x=>x.text);
+  if(!items.length){toast('⚠ Aucun article non acheté à sauvegarder');return;}
+  const name=prompt('Nom du modèle :','Ma liste habituelle');
+  if(!name||!name.trim())return;
+  if(!S.courseTemplates)S.courseTemplates=[];
+  S.courseTemplates.push({id:uid(),name:name.trim(),items,ts:Date.now()});
+  autoSave();renderCourses();
+  toast('✓ Modèle "'+name.trim()+'" sauvegardé ('+items.length+' articles)');
+  logA('course','Modèle créé : "'+name.trim()+'"');
+}
+
+function applyCourseTemplate(){
+  const sel=document.getElementById('courses-tmpl-sel');
+  const id=sel&&sel.value;
+  if(!id){toast('⚠ Sélectionne un modèle');return;}
+  const tmpl=(S.courseTemplates||[]).find(t=>t.id===id);
+  if(!tmpl)return;
+  // Add only items not already in the list
+  const existing=new Set(S.courses.map(c=>c.text.toLowerCase()));
+  let added=0;
+  tmpl.items.forEach(text=>{
+    if(!existing.has(text.toLowerCase())){
+      S.courses.push({id:uid(),text,bought:false,ts:Date.now(),images:[]});
+      added++;
+    }
+  });
+  autoSave();renderCourses();
+  toast('✓ '+added+' article'+(added>1?'s':'')+' ajouté'+(added>1?'s':'')+' depuis "'+tmpl.name+'"'+(added<tmpl.items.length?' (doublons ignorés)':''));
+  logA('course','Modèle appliqué : "'+tmpl.name+'" (+'+added+')');
+}
+
+function deleteCourseTemplate(){
+  const sel=document.getElementById('courses-tmpl-sel');
+  const id=sel&&sel.value;
+  if(!id)return;
+  const tmpl=(S.courseTemplates||[]).find(t=>t.id===id);
+  if(!tmpl)return;
+  if(!confirm('Supprimer le modèle "'+tmpl.name+'" ?'))return;
+  S.courseTemplates=S.courseTemplates.filter(t=>t.id!==id);
+  sel.value='';
+  autoSave();renderCourses();
+  toast('✓ Modèle supprimé');
+  logA('course','Modèle supprimé : "'+tmpl.name+'"');
 }
 
 /* ══ FONT SIZE ══ */
