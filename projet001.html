@@ -406,7 +406,12 @@ div:hover>.item-img-del{display:block;}
   .item-meta-row{display:contents;}
   .item-meta-row .item-meta{display:flex;}
 }
-/* ── CAMERA BUTTON ── */
+@media(max-width:600px){
+  /* Hide text field in edit form — edited inline via tap */
+  .edit-form .edit-row textarea.edit-in:first-child{display:none;}
+  /* Hide reminder text input too */
+  .edit-form .edit-row .rem-text-field{display:none;}
+}
 .cam-btn{
   font-size:18px;cursor:pointer;padding:3px 6px;
   border-radius:var(--r);border:1px solid var(--line2);
@@ -3020,8 +3025,8 @@ function todoItemHtml(t){
         <div class="mobile-actions">
           <button class="attach-btn${t.attachments&&t.attachments.length?' has-attach':''}" onclick="toggleAttachments('${t.id}')" title="Pièces jointes">📎</button>
           <button class="comment-btn${hasComment?' has-comment':''}" onclick="toggleComment('${t.id}')" title="${hasComment?'Voir':'Ajouter'} commentaire">💬</button>
-          <button class="img-btn${t.images&&t.images.length?' has-img':''}" onclick="todoImgPick('${t.id}')" title="Image">🖼</button>
-          <button onclick="openEdit('${t.id}')" title="Modifier" style="background:none;border:none;cursor:pointer;font-size:13px;padding:3px 4px;opacity:.5;line-height:1;">✎</button>
+          <label class="img-btn${t.images&&t.images.length?' has-img':''}" title="Photo / image" style="cursor:pointer;background:none;border:none;font-size:14px;padding:3px 4px;opacity:.5;line-height:1;display:flex;align-items:center;">📷<input type="file" accept="image/*" capture="environment" style="display:none" onchange="todoImgPickFile(this,'${t.id}')"></label>
+          <button onclick="openEdit('${t.id}')" title="Modifier cat/pri/hz" style="background:none;border:none;cursor:pointer;font-size:13px;padding:3px 4px;opacity:.5;line-height:1;">✎</button>
           ${!isSubtask ? `<div class="mobile-reorder">
             <button class="rb" onclick="moveItem('todos','${t.id}',-1,renderTodos)">↑</button>
             <button class="rb" onclick="moveItem('todos','${t.id}',1,renderTodos)">↓</button>
@@ -3357,11 +3362,25 @@ async function todoImgPickFile(input, id){
   const imgObj={type:'base64',src:b64};
   t.images.push(imgObj);
   autoSave();renderTodos();
-  toast('📎 Image ajoutée');
+  toast('📷 Photo ajoutée');
   uploadImgToDrive(b64).then(obj=>{
     const idx=t.images.indexOf(imgObj);
     if(idx>=0){ t.images[idx]=obj; autoSave(); }
   });
+}
+
+async function genericItemImgPickFile(input, id, collection, renderFn){
+  const file=input.files&&input.files[0];
+  if(!file)return;
+  input.value='';
+  const item=S[collection].find(x=>x.id===id);
+  if(!item)return;
+  if(!item.images) item.images=[];
+  const b64=await compressImage(file);
+  const imgObj={type:'base64',src:b64};
+  item.images.push(imgObj);
+  autoSave();renderFn();
+  toast('📷 Photo ajoutée');
 }
 
 function renderTodos(){
@@ -3676,6 +3695,7 @@ function renderNotes(){
       </div>
       <div class="note-card-actions">
         <button class="note-card-btn" onclick="event.stopPropagation();openNoteEdit('${n.id}')">✎ Modifier</button>
+        <label class="note-card-btn" onclick="event.stopPropagation()" style="cursor:pointer;">📷 Photo<input type="file" accept="image/*" capture="environment" style="display:none" onchange="handleNoteImgFiles(this.files,'${n.id}')"></label>
         <button class="note-card-btn danger" onclick="event.stopPropagation();delNote('${n.id}')">× Supprimer</button>
       </div>
       ${editOverlay}
@@ -4030,14 +4050,25 @@ function renderReminders(){
       <div class="item-body">
         <div class="item-text" id="qtext-${r.id}" ${IS_TOUCH?`onclick="if(!document.getElementById('ef-${r.id}').classList.contains('open'))quickEditInline('${r.id}','reminders',renderReminders)" style="cursor:pointer;"`:''} >${esc(r.text)}</div>
         ${itemImgsHtml(r,'reminders')}
-        <div class="item-meta" style="margin-top:4px">
-          <span class="tag ${bc[r._s]}">${rSL[r._s]}</span>
-          ${r.date?`<span class="meta-date">${r.date.split('-').reverse().join('/')}</span>`:''}
-          ${r.recur!=='none'?`<span class="tag" style="background:var(--bg2);color:var(--text3)">${rRL[r.recur]}</span>`:''}
+        <div class="item-meta-row">
+          <div class="item-meta" style="margin-top:4px">
+            <span class="tag ${bc[r._s]}">${rSL[r._s]}</span>
+            ${r.date?`<span class="meta-date">${r.date.split('-').reverse().join('/')}</span>`:''}
+            ${r.recur!=='none'?`<span class="tag" style="background:var(--bg2);color:var(--text3)">${rRL[r.recur]}</span>`:''}
+          </div>
+          <div class="mobile-actions">
+            <label class="img-btn${r.images&&r.images.length?' has-img':''}" title="Photo" style="cursor:pointer;background:none;border:none;font-size:14px;padding:3px 4px;opacity:.5;line-height:1;display:flex;align-items:center;">📷<input type="file" accept="image/*" capture="environment" style="display:none" onchange="genericItemImgPickFile(this,'${r.id}','reminders',renderReminders)"></label>
+            <button onclick="openEdit('${r.id}')" title="Modifier date/récurrence" style="background:none;border:none;cursor:pointer;font-size:13px;padding:3px 4px;opacity:.5;line-height:1;">✎</button>
+            <div class="mobile-reorder">
+              <button class="rb" onclick="moveItem('reminders','${r.id}',-1,renderReminders)">↑</button>
+              <button class="rb" onclick="moveItem('reminders','${r.id}',1,renderReminders)">↓</button>
+            </div>
+            <button class="del" onclick="delRem('${r.id}')">×</button>
+          </div>
         </div>
         <div class="edit-form" id="ef-${r.id}" data-id="${r.id}">
           <div class="edit-row">
-            <input class="edit-in" id="ert-${r.id}" type="text" value="${esc(r.text)}" onkeydown="if(event.key==='Escape')closeEdit('${r.id}')">
+            <input class="edit-in rem-text-field" id="ert-${r.id}" type="text" value="${esc(r.text)}" onkeydown="if(event.key==='Escape')closeEdit('${r.id}')">
           </div>
           <div class="edit-row">
             <input class="edit-in sm" id="erd-${r.id}" type="date" value="${r.date||''}">
@@ -4648,6 +4679,7 @@ function renderCourses(){
       <input type="checkbox" class="courses-check" ${c.bought?'checked':''} onchange="toggleCourse('${c.id}')">
       <span class="courses-text" id="qtext-${c.id}" ${IS_TOUCH?`onclick="quickEditInline('${c.id}','courses',renderCourses)" style="cursor:pointer;"`:''} >${esc(c.text)}</span>
       ${itemImgsHtml(c,'courses')}
+      <label title="Photo" style="cursor:pointer;font-size:16px;padding:2px 4px;opacity:.4;display:flex;align-items:center;flex-shrink:0;line-height:1;">📷<input type="file" accept="image/*" capture="environment" style="display:none" onchange="genericItemImgPickFile(this,'${c.id}','courses',renderCourses)"></label>
       <button class="del" onclick="delCourse('${c.id}')" title="Supprimer">×</button>
     </div>`).join('');
 }
