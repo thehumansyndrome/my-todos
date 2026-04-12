@@ -2563,6 +2563,40 @@ function addTodo(){
   autoSave();renderTodos();
   logA('todo','Ajouté: "'+v+'"'+(subtaskIds.length?' ('+subtaskIds.length+' sous-tâches)':''));
 }
+function quickEditText(id){
+  const t=S.todos.find(x=>x.id===id);if(!t)return;
+  // If full edit already open, do nothing
+  if(document.getElementById('ef-'+id).classList.contains('open'))return;
+  const el=document.getElementById('qtext-'+id);
+  if(!el)return;
+  // Already in quick edit mode
+  if(el.tagName==='TEXTAREA')return;
+  const orig=t.text;
+  const ta=document.createElement('textarea');
+  ta.value=orig;
+  ta.rows=2;
+  ta.style.cssText='width:100%;font-family:var(--sans);font-size:13px;line-height:1.45;padding:4px 6px;border:1px solid var(--accent);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;resize:none;overflow:hidden;box-sizing:border-box;';
+  ta.setAttribute('id','qtext-'+id);
+  // Auto-height
+  setTimeout(()=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';ta.focus();ta.selectionStart=ta.selectionEnd=ta.value.length;},0);
+  ta.oninput=()=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';};
+  ta.onkeydown=e=>{
+    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();commitQuickEdit(id,ta,orig);}
+    if(e.key==='Escape'){e.preventDefault();cancelQuickEdit(id,ta,orig);}
+  };
+  ta.onblur=()=>commitQuickEdit(id,ta,orig);
+  el.replaceWith(ta);
+}
+function commitQuickEdit(id,ta,orig){
+  const t=S.todos.find(x=>x.id===id);if(!t)return;
+  const val=ta.value.trim();
+  if(val&&val!==orig){t.text=val;autoSave();logA('todo','Modifié: "'+val+'"');}
+  renderTodos();
+}
+function cancelQuickEdit(id,ta,orig){
+  renderTodos();
+}
+
 function saveTodo(id){
   const t=S.todos.find(x=>x.id===id);if(!t)return;
   const txt=document.getElementById('et-'+id).value.trim();
@@ -2899,7 +2933,7 @@ function todoItemHtml(t){
     }
     <input type="checkbox" class="item-check" ${t.done?'checked':''} onchange="toggleTodo('${t.id}')">
     <div class="item-body">
-      <div class="item-text" ${IS_TOUCH?`onclick="if(!document.getElementById('ef-${t.id}').classList.contains('open'))openEdit('${t.id}')"style="cursor:pointer;"`:''} >${esc(t.text)}</div>
+      <div class="item-text" id="qtext-${t.id}" ${IS_TOUCH?`onclick="quickEditText('${t.id}')" style="cursor:pointer;"`:''} >${esc(t.text)}</div>
       <div class="item-meta-row">
         <div class="item-meta">
           <span class="tag ${pl[t.pri]||'p2'}">${t.pri.toUpperCase()}</span>
