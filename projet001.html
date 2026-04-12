@@ -3025,7 +3025,8 @@ function todoItemHtml(t){
         <div class="mobile-actions">
           <button class="attach-btn${t.attachments&&t.attachments.length?' has-attach':''}" onclick="toggleAttachments('${t.id}')" title="Pièces jointes">📎</button>
           <button class="comment-btn${hasComment?' has-comment':''}" onclick="toggleComment('${t.id}')" title="${hasComment?'Voir':'Ajouter'} commentaire">💬</button>
-          <label class="img-btn${t.images&&t.images.length?' has-img':''}" title="Photo / image" style="cursor:pointer;background:none;border:none;font-size:14px;padding:3px 4px;opacity:.5;line-height:1;display:flex;align-items:center;">📷<input type="file" accept="image/*" style="display:none" onchange="todoImgPickFile(this,'${t.id}')"></label>
+          <label class="img-btn${t.images&&t.images.length?' has-img':''}" title="Caméra" style="cursor:pointer;background:none;border:none;font-size:14px;padding:3px 4px;opacity:.5;line-height:1;display:flex;align-items:center;">📷<input type="file" accept="image/*" capture="environment" style="display:none" onchange="todoImgPickFile(this,'${t.id}')"></label>
+          <label class="img-btn${t.images&&t.images.length?' has-img':''}" title="Galerie" style="cursor:pointer;background:none;border:none;font-size:14px;padding:3px 4px;opacity:.5;line-height:1;display:flex;align-items:center;">🖼<input type="file" accept="image/*" style="display:none" onchange="todoImgPickFile(this,'${t.id}')"></label>
           <button onclick="openEdit('${t.id}')" title="Modifier cat/pri/hz" style="background:none;border:none;cursor:pointer;font-size:13px;padding:3px 4px;opacity:.5;line-height:1;">✎</button>
           ${!isSubtask ? `<div class="mobile-reorder">
             <button class="rb" onclick="moveItem('todos','${t.id}',-1,renderTodos)">↑</button>
@@ -3695,7 +3696,8 @@ function renderNotes(){
       </div>
       <div class="note-card-actions">
         <button class="note-card-btn" onclick="event.stopPropagation();openNoteEdit('${n.id}')">✎ Modifier</button>
-        <label class="note-card-btn" onclick="event.stopPropagation()" style="cursor:pointer;">📷 Photo<input type="file" accept="image/*" style="display:none" onchange="handleNoteImgFiles(this.files,'${n.id}')"></label>
+        <label class="note-card-btn" onclick="event.stopPropagation()" style="cursor:pointer;">📷 Caméra<input type="file" accept="image/*" capture="environment" style="display:none" onchange="handleNoteImgFiles(this.files,'${n.id}')"></label>
+        <label class="note-card-btn" onclick="event.stopPropagation()" style="cursor:pointer;">🖼 Galerie<input type="file" accept="image/*" multiple style="display:none" onchange="handleNoteImgFiles(this.files,'${n.id}')"></label>
         <button class="note-card-btn danger" onclick="event.stopPropagation();delNote('${n.id}')">× Supprimer</button>
       </div>
       ${editOverlay}
@@ -4057,7 +4059,8 @@ function renderReminders(){
             ${r.recur!=='none'?`<span class="tag" style="background:var(--bg2);color:var(--text3)">${rRL[r.recur]}</span>`:''}
           </div>
           <div class="mobile-actions">
-            <label class="img-btn${r.images&&r.images.length?' has-img':''}" title="Photo / image" style="cursor:pointer;background:none;border:none;font-size:14px;padding:3px 4px;opacity:.5;line-height:1;display:flex;align-items:center;">📷<input type="file" accept="image/*" style="display:none" onchange="genericItemImgPickFile(this,'${r.id}','reminders',renderReminders)"></label>
+            <label class="img-btn${r.images&&r.images.length?' has-img':''}" title="Caméra" style="cursor:pointer;background:none;border:none;font-size:14px;padding:3px 4px;opacity:.5;line-height:1;display:flex;align-items:center;">📷<input type="file" accept="image/*" capture="environment" style="display:none" onchange="genericItemImgPickFile(this,'${r.id}','reminders',renderReminders)"></label>
+            <label class="img-btn${r.images&&r.images.length?' has-img':''}" title="Galerie" style="cursor:pointer;background:none;border:none;font-size:14px;padding:3px 4px;opacity:.5;line-height:1;display:flex;align-items:center;">🖼<input type="file" accept="image/*" style="display:none" onchange="genericItemImgPickFile(this,'${r.id}','reminders',renderReminders)"></label>
             <button onclick="openEdit('${r.id}')" title="Modifier date/récurrence" style="background:none;border:none;cursor:pointer;font-size:13px;padding:3px 4px;opacity:.5;line-height:1;">✎</button>
             <div class="mobile-reorder">
               <button class="rb" onclick="moveItem('reminders','${r.id}',-1,renderReminders)">↑</button>
@@ -4679,7 +4682,8 @@ function renderCourses(){
       <input type="checkbox" class="courses-check" ${c.bought?'checked':''} onchange="toggleCourse('${c.id}')">
       <span class="courses-text" id="qtext-${c.id}" ${IS_TOUCH?`onclick="quickEditInline('${c.id}','courses',renderCourses)" style="cursor:pointer;"`:''} >${esc(c.text)}</span>
       ${itemImgsHtml(c,'courses')}
-      <label title="Photo" style="cursor:pointer;font-size:16px;padding:2px 4px;opacity:.4;display:flex;align-items:center;flex-shrink:0;line-height:1;">📷<input type="file" accept="image/*" style="display:none" onchange="genericItemImgPickFile(this,'${c.id}','courses',renderCourses)"></label>
+      <label title="Photo" style="cursor:pointer;font-size:16px;padding:2px 4px;opacity:.4;display:flex;align-items:center;flex-shrink:0;line-height:1;">📷<input type="file" accept="image/*" capture="environment" style="display:none" onchange="genericItemImgPickFile(this,'${c.id}','courses',renderCourses)"></label>
+      <label style="cursor:pointer;font-size:16px;padding:2px 4px;opacity:.4;display:flex;align-items:center;flex-shrink:0;line-height:1;">🖼<input type="file" accept="image/*" style="display:none" onchange="genericItemImgPickFile(this,'${c.id}','courses',renderCourses)"></label>
       <button class="del" onclick="delCourse('${c.id}')" title="Supprimer">×</button>
     </div>`).join('');
 }
