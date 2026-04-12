@@ -311,6 +311,8 @@ div:hover>.item-img-del{display:block;}
 .item.done{opacity:.45;}
 .item.drag-over{background:var(--bg2);}
 .item.dragging{opacity:.2;}
+.hcard.drag-over{background:var(--bg2);border-bottom:2px solid var(--accent);}
+.hcard.dragging{opacity:.25;}
 
 /* drag handle — desktop */
 .dh{
@@ -2102,7 +2104,30 @@ function setupDrag(el,key,renderFn){
   });
 }
 
-/* Mobile reorder */
+/* ══ HABIT DRAG & DROP ══ */
+let hDgId=null;
+function setupHabitDrag(el){
+  el.addEventListener('dragstart',e=>{
+    const hc=e.target.closest('.hcard[draggable]');if(!hc)return;
+    hDgId=hc.dataset.id;hc.classList.add('dragging');e.dataTransfer.effectAllowed='move';
+  });
+  el.addEventListener('dragend',()=>{
+    document.querySelectorAll('.hcard').forEach(h=>h.classList.remove('dragging','drag-over'));hDgId=null;
+  });
+  el.addEventListener('dragover',e=>{
+    e.preventDefault();
+    const hc=e.target.closest('.hcard[draggable]');if(!hc||hc.dataset.id===hDgId)return;
+    document.querySelectorAll('.hcard').forEach(h=>h.classList.remove('drag-over'));hc.classList.add('drag-over');
+  });
+  el.addEventListener('drop',e=>{
+    e.preventDefault();
+    const hc=e.target.closest('.hcard[draggable]');if(!hc||hc.dataset.id===hDgId)return;
+    const fi=S.habits.findIndex(x=>x.id===hDgId),ti=S.habits.findIndex(x=>x.id===hc.dataset.id);
+    if(fi===-1||ti===-1)return;
+    const[m]=S.habits.splice(fi,1);S.habits.splice(ti,0,m);
+    save();renderHabits();logA('habit','Réordonné');
+  });
+}
 function moveItem(key,id,dir,renderFn){
   const arr=S[key];const i=arr.findIndex(x=>x.id===id);if(i===-1)return;const ni=i+dir;if(ni<0||ni>=arr.length)return;[arr[i],arr[ni]]=[arr[ni],arr[i]];save();renderFn();}
 
@@ -4028,13 +4053,17 @@ function renderHabits(){
         ${DAY_LABELS.map((dl,i)=>{const d=i+1;const on=(h.days||[]).includes(d);return`<button class="hcard-day-btn${on?' on':''}" data-day="${d}" onclick="saveHabitDays('${h.id}',this)">${dl}</button>`;}).join('')}
       </div>`:'';
 
-    return`<div class="hcard" style="${ba}">
+    return`<div class="hcard" draggable="true" data-id="${h.id}">
       <div class="hcard-head">
         <span class="hname">${esc(h.name)}</span>
         <span class="hcat-tag">${HC[h.cat]||h.cat}</span>
         <span class="hfreq-custom">${freqLabel}</span>
         <span class="hstreak${streak===0?' zero':''}">🔥 ${streak}d</span>
         <button class="laws-btn" id="lb-${h.id}" onclick="toggleLaws('${h.id}')">▼ 4 lois${lf>0?' ('+lf+'/4)':''}</button>
+        <div class="reorder-btns">
+          <button class="rb" onclick="moveItem('habits','${h.id}',-1,renderHabits)" title="Monter">▲</button>
+          <button class="rb" onclick="moveItem('habits','${h.id}',1,renderHabits)" title="Descendre">▼</button>
+        </div>
         <button class="del" onclick="delHabit('${h.id}')">×</button>
       </div>
       ${inlineDayPicker}
@@ -4062,6 +4091,7 @@ function renderHabits(){
     <div class="stat"><div class="stat-n">${dt}/${total}</div><div class="stat-l">Done today</div></div>
     <div class="stat"><div class="stat-n" style="${bad>0?'color:var(--red)':''}">${bad}</div><div class="stat-l">To fix</div></div>
     <div class="stat"><div class="stat-n">${best}</div><div class="stat-l">Best streak</div></div>`;
+  setupHabitDrag(document.getElementById('hab-list'));
 }
 
 /* ══ DRIVE POLLING ══ */
