@@ -2899,7 +2899,7 @@ function todoItemHtml(t){
     }
     <input type="checkbox" class="item-check" ${t.done?'checked':''} onchange="toggleTodo('${t.id}')">
     <div class="item-body">
-      <div class="item-text">${esc(t.text)}</div>
+      <div class="item-text" ${IS_TOUCH?`onclick="if(!document.getElementById('ef-${t.id}').classList.contains('open'))openEdit('${t.id}')"style="cursor:pointer;"`:''} >${esc(t.text)}</div>
       <div class="item-meta-row">
         <div class="item-meta">
           <span class="tag ${pl[t.pri]||'p2'}">${t.pri.toUpperCase()}</span>
