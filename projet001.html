@@ -1288,9 +1288,15 @@ div:hover>.item-img-del{display:block;}
       </select>
       <button class="add-btn" onclick="addHabit()">+ Add</button>
     </div>
-    <div id="hab-day-picker" style="display:none;padding:6px 0 2px;display:none;gap:5px;flex-wrap:wrap;">
+    <div id="hab-day-picker" style="display:none;padding:6px 0 2px;gap:5px;flex-wrap:wrap;align-items:center;">
       <span style="font-family:var(--mono);font-size:10px;color:var(--text3);align-self:center;">Jours :</span>
-      ${['Lu','Ma','Me','Je','Ve','Sa','Di'].map((d,i)=>`<button class="day-pick-btn" data-day="${i+1}" onclick="toggleDayBtn(this)">${d}</button>`).join('')}
+      <button class="day-pick-btn" data-day="1" onclick="toggleDayBtn(this)">Lu</button>
+      <button class="day-pick-btn" data-day="2" onclick="toggleDayBtn(this)">Ma</button>
+      <button class="day-pick-btn" data-day="3" onclick="toggleDayBtn(this)">Me</button>
+      <button class="day-pick-btn" data-day="4" onclick="toggleDayBtn(this)">Je</button>
+      <button class="day-pick-btn" data-day="5" onclick="toggleDayBtn(this)">Ve</button>
+      <button class="day-pick-btn" data-day="6" onclick="toggleDayBtn(this)">Sa</button>
+      <button class="day-pick-btn" data-day="7" onclick="toggleDayBtn(this)">Di</button>
     </div>
     <div class="week-nav">
       <button class="wnbtn" onclick="shiftW(-1)">← Prev</button>
