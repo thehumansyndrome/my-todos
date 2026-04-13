@@ -412,6 +412,33 @@ div:hover>.item-img-del{display:block;}
   /* Hide reminder text input too */
   .edit-form .edit-row .rem-text-field{display:none;}
 }
+/* ── REVIEWS ── */
+.rv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:4px;}
+@media(max-width:500px){.rv-grid{grid-template-columns:1fr;}}
+.rv-card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r2);
+  padding:14px;display:flex;flex-direction:column;gap:8px;position:relative;
+  transition:box-shadow .15s;
+}
+.rv-card:hover{box-shadow:0 2px 10px rgba(0,0,0,.07);}
+.rv-card-header{display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;}
+.rv-name{font-size:14px;font-weight:500;color:var(--text);flex:1;min-width:0;word-break:break-word;}
+.rv-cat-badge{font-family:var(--mono);font-size:9px;font-weight:500;padding:2px 6px;border-radius:2px;text-transform:uppercase;letter-spacing:.04em;background:var(--bg2);color:var(--text3);border:1px solid var(--line2);flex-shrink:0;}
+.rv-stars{display:flex;gap:2px;align-items:center;}
+.rv-star{font-size:22px;cursor:pointer;line-height:1;color:var(--line2);transition:color .1s;user-select:none;}
+.rv-star.on{color:#f59e0b;}
+[data-theme="dark"] .rv-star.on{color:#fbbf24;}
+.rv-stars-display .rv-star{cursor:default;font-size:16px;}
+.rv-comment{font-size:13px;color:var(--text2);line-height:1.5;white-space:pre-wrap;word-break:break-word;}
+.rv-meta{font-family:var(--mono);font-size:10px;color:var(--text3);display:flex;gap:8px;flex-wrap:wrap;}
+.rv-actions{display:flex;gap:5px;flex-wrap:wrap;}
+.rv-edit-form{display:none;flex-direction:column;gap:8px;margin-top:4px;border-top:1px solid var(--line);padding-top:10px;}
+.rv-edit-form.open{display:flex;}
+.rv-img-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;}
+.rv-img-thumb{width:72px;height:72px;border-radius:var(--r);object-fit:cover;border:1px solid var(--line);cursor:pointer;}
+.rv-score-big{font-family:var(--mono);font-size:28px;font-weight:500;color:var(--amber);line-height:1;}
+[data-theme="dark"] .rv-score-big{color:#fbbf24;}
+
 .cam-btn{
   font-size:18px;cursor:pointer;padding:3px 6px;
   border-radius:var(--r);border:1px solid var(--line2);
@@ -1188,6 +1215,7 @@ div:hover>.item-img-del{display:block;}
     <button class="tab" onclick="switchTab('reminders')">Reminders</button>
     <button class="tab" onclick="switchTab('habits')">Habits</button>
     <button class="tab" onclick="switchTab('challenges')">Challenges</button>
+    <button class="tab" onclick="switchTab('reviews')">Reviews</button>
     <button class="tab" onclick="switchTab('archive')">Archive</button>
     <button class="tab" onclick="switchTab('log')">Log</button>
     <button class="tab" onclick="switchTab('templates')">Templates</button>
@@ -1448,6 +1476,56 @@ div:hover>.item-img-del{display:block;}
     <div class="list" id="courses-list"></div>
   </div>
 
+  <!-- ══ REVIEWS ══ -->
+  <div id="tab-reviews" class="section" style="display:none;">
+    <div class="stats" id="rv-stats"></div>
+
+    <!-- Add form -->
+    <div class="add-row" style="flex-direction:column;align-items:stretch;gap:8px;">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        <input class="main-in" type="text" id="rv-in" placeholder="Nom (restaurant, film, livre…)" style="flex:1;min-width:160px;" onkeydown="if(event.key==='Enter')addReview()">
+        <select id="rv-cat" style="font-family:var(--mono);font-size:11px;padding:4px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text2);cursor:pointer;">
+          <option value="resto">🍽 Resto</option>
+          <option value="hotel">🏨 Hôtel</option>
+          <option value="film">🎬 Film</option>
+          <option value="serie">📺 Série</option>
+          <option value="livre">📚 Livre</option>
+          <option value="musique">🎵 Musique</option>
+          <option value="autre">• Autre</option>
+        </select>
+        <button class="add-btn" onclick="addReview()">+ Add</button>
+      </div>
+      <!-- Star picker for new review -->
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div class="rv-stars" id="rv-new-stars" data-val="0">
+          <span class="rv-star" data-i="1" onclick="setNewRvStar(1)">★</span>
+          <span class="rv-star" data-i="2" onclick="setNewRvStar(2)">★</span>
+          <span class="rv-star" data-i="3" onclick="setNewRvStar(3)">★</span>
+          <span class="rv-star" data-i="4" onclick="setNewRvStar(4)">★</span>
+          <span class="rv-star" data-i="5" onclick="setNewRvStar(5)">★</span>
+        </div>
+        <span id="rv-new-score" style="font-family:var(--mono);font-size:12px;color:var(--text3);">— /5</span>
+        <input class="main-in" type="text" id="rv-comment-in" placeholder="Commentaire (optionnel)…" style="flex:1;min-width:160px;">
+        <label class="cam-btn" title="Photo">📷<input type="file" accept="image/*" capture="environment" style="display:none" onchange="handleRvNewPhoto(this)"></label>
+        <label class="cam-btn" title="Galerie">🖼<input type="file" accept="image/*" multiple style="display:none" onchange="handleRvNewPhoto(this)"></label>
+      </div>
+      <div id="rv-new-photo-preview" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+    </div>
+
+    <!-- Filters & sort -->
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:10px 0 6px;">
+      <div class="filters" id="rv-filters" style="margin:0;flex:1;"></div>
+      <select id="rv-sort" onchange="renderReviews()" style="font-family:var(--mono);font-size:11px;padding:4px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text2);cursor:pointer;">
+        <option value="date">Plus récent</option>
+        <option value="score_desc">Meilleures notes</option>
+        <option value="score_asc">Moins bonnes</option>
+        <option value="name">A→Z</option>
+      </select>
+    </div>
+
+    <div class="rv-grid" id="rv-list"></div>
+  </div>
+
   <!-- ══ ARCHIVE ══ -->
   <div id="tab-archive" class="section" style="display:none;">
     <div style="display:flex;align-items:center;gap:10px;padding:12px 0 8px;flex-wrap:wrap;">
@@ -1631,7 +1709,7 @@ div:hover>.item-img-del{display:block;}
 const P='projet001';
 const IS_TOUCH = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 const SK='td_v4_'+P, AK='td_act_'+P, TK='td_theme_'+P, DK='td_drive_'+P;
-const TABS=['todos','courses','notes','reminders','habits','challenges','archive','log','templates'];
+const TABS=['todos','courses','notes','reminders','habits','challenges','reviews','archive','log','templates'];
 
 /* ══ DEFAULT CATEGORIES ══ */
 const DEFAULT_CATS = [
@@ -1693,6 +1771,7 @@ function ensureState(){
   if(!S.courses) S.courses=[];
   S.courses.forEach(c=>{ if(!c.images) c.images=[]; });
   if(!S.courseTemplates) S.courseTemplates=[];
+  if(!S.reviews) S.reviews=[];
 }
 
 function save(){try{localStorage.setItem(SK,JSON.stringify(S));}catch(e){}}
@@ -1953,6 +2032,7 @@ function switchTab(t){
   el.classList.add('active'); el.style.display='';
   if(t==='log'){renderLog();renderAL();loadDriveConf();renderCatManager();}
   if(t==='archive')loadArchive(false);
+  if(t==='reviews')renderReviews();
   if(t==='habits')renderHabits();
   if(t==='challenges')renderChallenges();
   if(t==='templates')renderTemplates();
@@ -2086,7 +2166,7 @@ function confirmImp(){
   catch(e){toast('❌ JSON invalide');}
 }
 function clearAll(){if(!confirm('Tout effacer ?'))return;S={todos:[],notes:[],reminders:[],habits:[],habitLogs:{},challenges:[],categories:JSON.parse(JSON.stringify(DEFAULT_CATS))};save();renderCatSelects();renderAll();renderLog();toast('Données effacées');logA('drive','Tout effacé');}
-function renderAll(){renderTodos();renderNotes();renderReminders();renderHabits();renderChallenges();renderCourses();}
+function renderAll(){renderTodos();renderNotes();renderReminders();renderHabits();renderChallenges();renderCourses();renderReviews();}
 document.getElementById('imp-modal').addEventListener('click',function(e){if(e.target===this)closeImp();});
 
 /* ══ GOOGLE DRIVE ══ */
@@ -4794,6 +4874,190 @@ function deleteCourseTemplate(){
   autoSave();renderCourses();
   toast('✓ Modèle supprimé');
   logA('course','Modèle supprimé : "'+tmpl.name+'"');
+}
+
+/* ══ REVIEWS ══ */
+const RV_CATS={resto:'🍽 Resto',hotel:'🏨 Hôtel',film:'🎬 Film',serie:'📺 Série',livre:'📚 Livre',musique:'🎵 Musique',autre:'• Autre'};
+let rvFilter='all', rvNewPhotos=[];
+
+function setNewRvStar(n){
+  const el=document.getElementById('rv-new-stars');
+  el.dataset.val=n;
+  el.querySelectorAll('.rv-star').forEach((s,i)=>s.classList.toggle('on',i<n));
+  document.getElementById('rv-new-score').textContent=n+'/5';
+}
+
+async function handleRvNewPhoto(input){
+  for(const f of Array.from(input.files||[])){
+    if(!f.type.startsWith('image/'))continue;
+    const b64=await compressImage(f);
+    rvNewPhotos.push(b64);
+  }
+  input.value='';
+  renderRvNewPreview();
+}
+
+function renderRvNewPreview(){
+  const el=document.getElementById('rv-new-photo-preview');
+  if(!el)return;
+  el.innerHTML=rvNewPhotos.map((src,i)=>`
+    <div class="qa-photo-thumb">
+      <img src="${src}">
+      <button class="rm" onclick="rvNewPhotos.splice(${i},1);renderRvNewPreview()">×</button>
+    </div>`).join('');
+  el.style.display=rvNewPhotos.length?'flex':'none';
+}
+
+function addReview(){
+  const name=document.getElementById('rv-in').value.trim();
+  if(!name){toast('⚠ Donne un nom');return;}
+  const cat=document.getElementById('rv-cat').value;
+  const score=parseInt(document.getElementById('rv-new-stars').dataset.val)||0;
+  const comment=document.getElementById('rv-comment-in').value.trim();
+  const rv={id:uid(),name,cat,score,comment,images:[...rvNewPhotos],ts:Date.now(),edited:null};
+  if(!S.reviews)S.reviews=[];
+  S.reviews.unshift(rv);
+  document.getElementById('rv-in').value='';
+  document.getElementById('rv-comment-in').value='';
+  document.getElementById('rv-new-stars').dataset.val=0;
+  document.getElementById('rv-new-stars').querySelectorAll('.rv-star').forEach(s=>s.classList.remove('on'));
+  document.getElementById('rv-new-score').textContent='— /5';
+  rvNewPhotos=[];renderRvNewPreview();
+  autoSave();renderReviews();
+  toast('✓ Review ajoutée : "'+name+'"');
+  logA('review','Ajouté: "'+name+'" ('+score+'/5)');
+}
+
+function delReview(id){
+  const rv=S.reviews.find(x=>x.id===id);if(!rv)return;
+  if(!confirm('Supprimer la review "'+rv.name+'" ?'))return;
+  S.reviews=S.reviews.filter(x=>x.id!==id);
+  autoSave();renderReviews();
+  logA('review','Supprimé: "'+rv.name+'"');
+}
+
+function openRvEdit(id){
+  document.querySelectorAll('.rv-edit-form.open').forEach(f=>{
+    if(f.id!=='rvef-'+id)f.classList.remove('open');
+  });
+  document.getElementById('rvef-'+id).classList.toggle('open');
+}
+
+function setRvStar(id,n){
+  const rv=S.reviews.find(x=>x.id===id);if(!rv)return;
+  rv.score=n;rv.edited=Date.now();
+  autoSave();renderReviews();
+}
+
+function saveRvEdit(id){
+  const rv=S.reviews.find(x=>x.id===id);if(!rv)return;
+  const name=document.getElementById('rvn-'+id).value.trim();
+  if(!name)return;
+  rv.name=name;
+  rv.cat=document.getElementById('rvc-'+id).value;
+  rv.comment=document.getElementById('rvco-'+id).value.trim();
+  rv.edited=Date.now();
+  autoSave();renderReviews();
+  toast('✓ Review modifiée');
+  logA('review','Modifié: "'+name+'"');
+}
+
+async function addRvPhoto(input,id){
+  const rv=S.reviews.find(x=>x.id===id);if(!rv)return;
+  if(!rv.images)rv.images=[];
+  for(const f of Array.from(input.files||[])){
+    if(!f.type.startsWith('image/'))continue;
+    rv.images.push(await compressImage(f));
+  }
+  input.value='';
+  rv.edited=Date.now();
+  autoSave();renderReviews();
+}
+
+function delRvImg(id,i){
+  const rv=S.reviews.find(x=>x.id===id);if(!rv)return;
+  rv.images.splice(i,1);rv.edited=Date.now();
+  autoSave();renderReviews();
+}
+
+function starsHtml(score,id,interactive){
+  if(interactive){
+    return `<div class="rv-stars" id="rvs-${id}">`+
+      [1,2,3,4,5].map(n=>`<span class="rv-star${score>=n?' on':''}" onclick="setRvStar('${id}',${n})">★</span>`).join('')+
+    `</div>`;
+  }
+  return `<div class="rv-stars rv-stars-display">`+
+    [1,2,3,4,5].map(n=>`<span class="rv-star${score>=n?' on':''}">★</span>`).join('')+
+  `</div>`;
+}
+
+function renderReviews(){
+  if(!S.reviews)S.reviews=[];
+  // Stats
+  const total=S.reviews.length;
+  const avg=total?Math.round(S.reviews.reduce((a,r)=>a+r.score,0)/total*10)/10:0;
+  const cats=[...new Set(S.reviews.map(r=>r.cat))];
+  document.getElementById('rv-stats').innerHTML=total?`
+    <div class="stat"><div class="stat-n">${total}</div><div class="stat-l">Reviews</div></div>
+    <div class="stat"><div class="stat-n" style="color:var(--amber);">${avg}</div><div class="stat-l">Moy. /5</div></div>
+    <div class="stat"><div class="stat-n">${S.reviews.filter(r=>r.score>=4).length}</div><div class="stat-l">≥ 4★</div></div>`:'';
+
+  // Filters
+  const fk=['all',...Object.keys(RV_CATS).filter(k=>cats.includes(k))];
+  document.getElementById('rv-filters').innerHTML=fk.map(k=>`
+    <button class="fb${rvFilter===k?' on':''}" onclick="rvFilter='${k}';renderReviews()">
+      ${k==='all'?'All':RV_CATS[k]}
+    </button>`).join('');
+
+  let items=[...S.reviews];
+  if(rvFilter!=='all')items=items.filter(r=>r.cat===rvFilter);
+  const sort=document.getElementById('rv-sort')?.value||'date';
+  if(sort==='score_desc')items.sort((a,b)=>b.score-a.score||b.ts-a.ts);
+  else if(sort==='score_asc')items.sort((a,b)=>a.score-b.score||b.ts-a.ts);
+  else if(sort==='name')items.sort((a,b)=>a.name.localeCompare(b.name));
+  else items.sort((a,b)=>b.ts-a.ts);
+
+  const el=document.getElementById('rv-list');
+  if(!items.length){el.innerHTML='<div class="empty">Aucune review</div>';return;}
+
+  el.innerHTML=items.map(rv=>{
+    const imgsHtml=(rv.images||[]).length?`<div class="rv-img-grid">${(rv.images||[]).map((src,i)=>`
+      <div style="position:relative;">
+        <img class="rv-img-thumb" src="${src}" onclick="openImgViewer('rv-${rv.id}',${i})">
+        <button onclick="delRvImg('${rv.id}',${i})" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;width:16px;height:16px;font-size:9px;cursor:pointer;line-height:1;padding:0;">×</button>
+      </div>`).join('')}</div>`:'';
+    return`<div class="rv-card">
+      <div class="rv-card-header">
+        <span class="rv-name">${esc(rv.name)}</span>
+        <span class="rv-cat-badge">${RV_CATS[rv.cat]||rv.cat}</span>
+      </div>
+      ${starsHtml(rv.score,rv.id,false)}
+      ${rv.comment?`<div class="rv-comment">${esc(rv.comment)}</div>`:''}
+      ${imgsHtml}
+      <div class="rv-meta">
+        <span>${fd(rv.ts)}</span>
+        ${rv.edited?`<span>modifié ${fd(rv.edited)}</span>`:''}
+      </div>
+      <div class="rv-actions">
+        <button class="lbtn" onclick="openRvEdit('${rv.id}')">✎ Modifier</button>
+        <label class="lbtn" style="cursor:pointer;">📷<input type="file" accept="image/*" capture="environment" multiple style="display:none" onchange="addRvPhoto(this,'${rv.id}')"></label>
+        <label class="lbtn" style="cursor:pointer;">🖼<input type="file" accept="image/*" multiple style="display:none" onchange="addRvPhoto(this,'${rv.id}')"></label>
+        <button class="lbtn danger" onclick="delReview('${rv.id}')">× Suppr.</button>
+      </div>
+      <div class="rv-edit-form" id="rvef-${rv.id}">
+        <input class="edit-in" id="rvn-${rv.id}" type="text" value="${esc(rv.name)}" placeholder="Nom…">
+        <select class="edit-in sm" id="rvc-${rv.id}">
+          ${Object.entries(RV_CATS).map(([k,v])=>`<option value="${k}"${rv.cat===k?' selected':''}>${v}</option>`).join('')}
+        </select>
+        ${starsHtml(rv.score,rv.id,true)}
+        <textarea class="edit-in" id="rvco-${rv.id}" rows="3" placeholder="Commentaire…" style="resize:vertical;">${esc(rv.comment||'')}</textarea>
+        <div style="display:flex;gap:6px;">
+          <button class="save-btn" onclick="saveRvEdit('${rv.id}')">Enregistrer</button>
+          <button class="cancel-btn" onclick="openRvEdit('${rv.id}')">Annuler</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 /* ══ FONT SIZE ══ */
