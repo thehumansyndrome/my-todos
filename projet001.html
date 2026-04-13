@@ -331,8 +331,7 @@ div:hover>.item-img-del{display:block;}
   display:none;flex-direction:column;gap:2px;flex-shrink:0;margin-top:1px;
 }
 @media(max-width:600px){.reorder-btns{display:flex;}}
-/* subtask reorder — always visible on all screen sizes */
-.is-subtask .reorder-btns{display:flex !important;}
+/* subtask reorder — removed */
 .rb{
   width:20px;height:20px;border:1px solid var(--line);border-radius:2px;
   background:var(--bg);color:var(--text3);
@@ -452,14 +451,18 @@ div:hover>.item-img-del{display:block;}
   margin-bottom:6px;display:flex;align-items:center;gap:6px;
 }
 .tdpanel-sub-item{
-  display:flex;align-items:center;gap:8px;
-  padding:6px 0;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:10px;
+  padding:9px 0;border-bottom:1px solid var(--line);
 }
 .tdpanel-sub-item:last-child{border-bottom:none;}
+.tdpanel-sub-item .del{opacity:0;transition:opacity .15s;}
+.tdpanel-sub-item:hover .del{opacity:.4;}
+.tdpanel-sub-item .del:hover{opacity:1;color:var(--red);}
 .tdpanel-sub-text{
-  flex:1;font-size:13px;color:var(--text);line-height:1.4;word-break:break-word;
+  flex:1;font-size:14px;color:var(--text);line-height:1.4;
+  word-break:break-word;cursor:text;
 }
-.tdpanel-sub-text.done-sub{text-decoration:line-through;opacity:.5;}
+.tdpanel-sub-text.done-sub{text-decoration:line-through;opacity:.4;}
 .tdpanel-add-sub{
   display:flex;gap:6px;margin-top:8px;
 }
@@ -1207,7 +1210,7 @@ div:hover>.item-img-del{display:block;}
 .subtask-badge{font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:2px;background:var(--bg2);color:var(--text3);border:1px solid var(--line);letter-spacing:.04em;}
 .subtask-progress{font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:4px;}
 .subtask-progress.done{color:var(--green);}
-.item.is-subtask{margin-left:18px;border-left:2px solid var(--line);padding-left:6px;}
+.item.is-subtask{margin-left:18px;border-left:2px solid var(--line);padding-left:6px;padding-top:6px;padding-bottom:6px;}
 .hz-now{color:#e85d04;}
 .hz-today{color:#f4a261;}
 .hz-later{color:#457b9d;}
@@ -2982,6 +2985,13 @@ function delTodo(id){
   logA('todo','Supprimé: "'+t.text+'"', undoId);
 }
 let collapsedParents = new Set(); // IDs of parents whose subtasks are hidden
+
+function collapseAllParents(){
+  S.todos.forEach(t=>{
+    if(!t.parentId && t.subtasks && t.subtasks.length)
+      collapsedParents.add(t.id);
+  });
+}
 function applyHzEscalation(){
   const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
   const now = Date.now();
@@ -3201,21 +3211,10 @@ function todoItemHtml(t){
 
   const isSubtask = !!t.parentId;
 
-  // For subtasks: compute position within parent's subtasks array for disabling ↑↓
-  let subIdx=-1, subTotal=0;
-  if(isSubtask){
-    const parent=S.todos.find(x=>x.id===t.parentId);
-    if(parent&&parent.subtasks){ subIdx=parent.subtasks.indexOf(t.id); subTotal=parent.subtasks.length; }
-  }
-
   return `
   <div class="item${t.done?' done':''}${isSubtask?' is-subtask':''}" ${isSubtask||IS_TOUCH?'':'draggable="true"'} data-id="${t.id}">
     ${isSubtask
-      ? `<div class="dh" style="visibility:hidden"><span></span><span></span><span></span></div>
-         <div class="reorder-btns" style="display:flex;">
-           <button class="rb" onclick="moveSubtask('${t.parentId}','${t.id}',-1)" ${subIdx===0?'disabled':''}>↑</button>
-           <button class="rb" onclick="moveSubtask('${t.parentId}','${t.id}',1)" ${subIdx===subTotal-1?'disabled':''}>↓</button>
-         </div>`
+      ? ''
       : `<div class="dh"><span></span><span></span><span></span></div>
          <div class="reorder-btns">
            <button class="rb" onclick="moveItem('todos','${t.id}',-1,renderTodos)">↑</button>
@@ -3229,7 +3228,7 @@ function todoItemHtml(t){
           ? `onclick="quickEditText('${t.id}')" style="cursor:pointer;"`
           : `onclick="openTDP('${t.id}')" style="cursor:pointer;" title="Ouvrir le détail"`
         }>${esc(t.text)}</div>
-      <div class="item-meta-row">
+      ${isSubtask ? '' : `<div class="item-meta-row">
         <div class="item-meta">
           <span class="tag ${pl[t.pri]||'p2'}">${t.pri.toUpperCase()}</span>
           ${catBadge}
@@ -3238,28 +3237,28 @@ function todoItemHtml(t){
           <span class="meta-date">${fd(t.ts)}</span>
         </div>
         <div class="mobile-actions">
-          ${!isSubtask ? `<button onclick="openTDP('${t.id}')" title="Détail & sous-tâches" style="background:none;border:1px solid var(--line2);border-radius:var(--r);cursor:pointer;font-size:13px;padding:3px 7px;color:var(--text3);line-height:1;">→</button>` : ''}
+          <button onclick="openTDP('${t.id}')" title="Détail & sous-tâches" style="background:none;border:1px solid var(--line2);border-radius:var(--r);cursor:pointer;font-size:13px;padding:3px 7px;color:var(--text3);line-height:1;">→</button>
           <button class="attach-btn${t.attachments&&t.attachments.length?' has-attach':''}" onclick="toggleAttachments('${t.id}')" title="Pièces jointes">📎</button>
           <button class="comment-btn${hasComment?' has-comment':''}" onclick="toggleComment('${t.id}')" title="${hasComment?'Voir':'Ajouter'} commentaire">💬</button>
           <label class="img-btn${t.images&&t.images.length?' has-img':''}" title="Caméra" style="cursor:pointer;background:none;border:none;font-size:14px;padding:3px 4px;opacity:.5;line-height:1;display:flex;align-items:center;">📷<input type="file" accept="image/*" capture="environment" style="display:none" onchange="todoImgPickFile(this,'${t.id}')"></label>
           <label class="img-btn${t.images&&t.images.length?' has-img':''}" title="Galerie" style="cursor:pointer;background:none;border:none;font-size:14px;padding:3px 4px;opacity:.5;line-height:1;display:flex;align-items:center;">🖼<input type="file" accept="image/*" style="display:none" onchange="todoImgPickFile(this,'${t.id}')"></label>
           <button onclick="openEdit('${t.id}')" title="Modifier cat/pri/hz" style="background:none;border:none;cursor:pointer;font-size:13px;padding:3px 4px;opacity:.5;line-height:1;">✎</button>
-          ${!isSubtask ? `<div class="mobile-reorder">
+          <div class="mobile-reorder">
             <button class="rb" onclick="moveItem('todos','${t.id}',-1,renderTodos)">↑</button>
             <button class="rb" onclick="moveItem('todos','${t.id}',1,renderTodos)">↓</button>
-          </div>` : ''}
+          </div>
           <button class="del" onclick="delTodo('${t.id}')">×</button>
         </div>
-      </div>
-      ${itemImgsHtml(t,'todos')}
-      <div class="todo-comment" id="tc-${t.id}">
+      </div>`}
+      ${isSubtask ? '' : itemImgsHtml(t,'todos')}
+      ${isSubtask ? '' : `<div class="todo-comment" id="tc-${t.id}">
         <textarea id="tca-${t.id}" rows="2" placeholder="Instructions, contexte…"
           oninput="autoResizeComment(this);saveTodoComment('${t.id}',this.value)"
           onclick="event.stopPropagation()"
           onkeydown="if(event.key==='Escape')toggleComment('${t.id}')"
         >${esc(t.comment||'')}</textarea>
-      </div>
-      <div id="tatts-${t.id}" style="display:${t.attachments&&t.attachments.length?'block':'none'};">
+      </div>`}
+      ${isSubtask ? '' : `<div id="tatts-${t.id}" style="display:${t.attachments&&t.attachments.length?'block':'none'};">
         ${attachHtml(t)}
         <div class="attach-add-row">
           <input class="attach-add-in" id="eatt-${t.id}" type="url" placeholder="Coller une URL (image, PDF, YouTube, Drive…)"
@@ -3267,8 +3266,8 @@ function todoItemHtml(t){
             onkeydown="if(event.key==='Enter'){event.preventDefault();addAttach('${t.id}');}if(event.key==='Escape')toggleAttachments('${t.id}')">
           <button class="save-btn" onclick="event.stopPropagation();addAttach('${t.id}')">+</button>
         </div>
-      </div>
-      <div class="edit-form" id="ef-${t.id}" data-id="${t.id}">
+      </div>`}
+      ${isSubtask ? '' : `<div class="edit-form" id="ef-${t.id}" data-id="${t.id}">
         <div class="edit-row">
           <textarea class="edit-in" id="et-${t.id}" rows="2" style="resize:none;overflow:hidden;line-height:1.45;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();saveTodo('${t.id}');}if(event.key==='Escape')closeEdit('${t.id}');" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'">${esc(t.text)}</textarea>
           <select class="edit-in sm" id="ec-${t.id}">${catOptions}</select>
@@ -3287,11 +3286,10 @@ function todoItemHtml(t){
         <div class="eact">
           <button class="save-btn" onclick="saveTodo('${t.id}')">Enregistrer</button>
           <button class="cancel-btn" onclick="closeEdit('${t.id}')">Annuler</button>
-          ${!t.parentId ? `<button class="cancel-btn" onclick="toggleAddSubtask('${t.id}')" title="Ajouter une sous-tâche" style="margin-left:auto;">+ sous-tâche</button>` : ''}
-          ${!t.parentId && t.subtasks && t.subtasks.length ? `<button class="cancel-btn" onclick="saveAsTemplate('${t.id}')" title="Créer un template depuis cette tâche" style="color:var(--accent);border-color:var(--accent);">⊕ template</button>` : ''}
+          <button class="cancel-btn" onclick="toggleAddSubtask('${t.id}')" title="Ajouter une sous-tâche" style="margin-left:auto;">+ sous-tâche</button>
+          ${t.subtasks && t.subtasks.length ? `<button class="cancel-btn" onclick="saveAsTemplate('${t.id}')" title="Créer un template depuis cette tâche" style="color:var(--accent);border-color:var(--accent);">⊕ template</button>` : ''}
         </div>
-        ${!t.parentId ? `
-        <div id="esub-${t.id}" style="display:none;margin-top:6px;display:none;">
+        <div id="esub-${t.id}" style="display:none;margin-top:6px;">
           <div style="display:flex;gap:6px;align-items:center;">
             <input type="text" id="esubin-${t.id}" placeholder="Texte de la sous-tâche…"
               style="flex:1;font-family:var(--sans);font-size:12px;padding:5px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;"
@@ -3299,15 +3297,17 @@ function todoItemHtml(t){
               onkeydown="if(event.key==='Enter'){event.preventDefault();addSubtaskInline('${t.id}');}if(event.key==='Escape')toggleAddSubtask('${t.id}')">
             <button class="save-btn" onclick="addSubtaskInline('${t.id}')">Ajouter</button>
           </div>
-        </div>` : ''}
-      </div>
+        </div>
+      </div>`}
     </div>
-    <button class="attach-btn${t.attachments&&t.attachments.length?' has-attach':''}" onclick="toggleAttachments('${t.id}')" title="Pièces jointes">📎</button>
+    ${isSubtask
+      ? `<button class="del" onclick="delTodo('${t.id}')" style="opacity:.3;transition:opacity .15s;" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=.3">×</button>`
+      : `<button class="attach-btn${t.attachments&&t.attachments.length?' has-attach':''}" onclick="toggleAttachments('${t.id}')" title="Pièces jointes">📎</button>
     <button class="comment-btn${hasComment?' has-comment':''}" onclick="toggleComment('${t.id}')" title="${hasComment?'Voir le commentaire':'Ajouter un commentaire'}">💬</button>
     <button class="img-btn${t.images&&t.images.length?' has-img':''}" onclick="todoImgPick('${t.id}')" title="Ajouter une image">🖼</button>
     <input type="file" id="img-pick-${t.id}" accept="image/*" style="display:none" onchange="todoImgPickFile(this,'${t.id}')">
     <button class="edit-btn" onclick="openEdit('${t.id}')" title="Modifier">✎</button>
-    <button class="del" onclick="delTodo('${t.id}')">×</button>
+    <button class="del" onclick="delTodo('${t.id}')">×</button>`}
   </div>`;
 }
 
@@ -3374,9 +3374,7 @@ function renderTDP(){
           <div class="tdpanel-sub-item" data-sid="${s.id}">
             <input type="checkbox" class="item-check" ${s.done?'checked':''} onchange="tdpToggleSub('${s.id}')">
             <span class="tdpanel-sub-text${s.done?' done-sub':''}" id="tdpst-${s.id}" onclick="tdpQuickEditSub('${s.id}')">${esc(s.text)}</span>
-            <button class="rb" onclick="tdpMoveSub('${s.id}',-1)" title="Monter" ${t.subtasks.indexOf(s.id)===0?'disabled':''}>↑</button>
-            <button class="rb" onclick="tdpMoveSub('${s.id}',1)" title="Descendre" ${t.subtasks.indexOf(s.id)===t.subtasks.length-1?'disabled':''}>↓</button>
-            <button class="del" onclick="tdpDelSub('${s.id}')">×</button>
+            <button class="del" onclick="tdpDelSub('${s.id}')" style="opacity:.3;">×</button>
           </div>`).join('')}
       </div>
       <div class="tdpanel-add-sub">
@@ -3427,6 +3425,7 @@ function tdpAddSub(){
   S.todos.push(sub);
   if(!t.subtasks) t.subtasks=[];
   t.subtasks.push(sid);
+  collapsedParents.add(tdpId); // keep subtasks hidden in main list
   if(inp) inp.value='';
   autoSave();
   renderTDP();
@@ -5416,6 +5415,7 @@ function changeFontSize(dir){
 
 applyFontSize(currentFsIdx);
 
+collapseAllParents();
 renderAll();
 updateUndoBtn();
 
