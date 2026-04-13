@@ -1319,17 +1319,15 @@ div:hover>.item-img-del{display:block;}
   <!-- ══ NOTES ══ -->
   <div id="tab-notes" class="section">
     <div class="stats" id="notes-stats"></div>
-    <div style="margin-bottom:8px;">
-      <input class="main-in" type="search" id="notes-search" style="width:100%;box-sizing:border-box;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:var(--r);padding:6px 10px;font-family:var(--sans);font-size:13px;outline:none;-webkit-appearance:none;" placeholder="Rechercher…" oninput="notesQ=this.value.toLowerCase();renderNotes()" autocomplete="off">
-    </div>
     <div class="add-row" style="flex-direction:column;align-items:stretch;gap:6px;">
+      <textarea id="notes-body-in" rows="3" placeholder="Note… (#hashtags reconnus auto · Ctrl+Entrée pour sauvegarder)" onkeydown="if(event.ctrlKey&&event.key==='Enter'){event.preventDefault();addNote();}" style="width:100%;font-family:var(--sans);font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;resize:vertical;line-height:1.5;box-sizing:border-box;"></textarea>
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-        <input class="main-in" type="text" id="notes-title-in" placeholder="Titre (optionnel)…" style="flex:1;min-width:120px;" onkeydown="if(event.key==='Enter')document.getElementById('notes-body-in').focus()">
-        <input class="main-in" type="text" id="notes-tags-in" placeholder="#tag1 #tag2…" style="width:130px;" title="Tags manuels — séparés par des espaces">
+        <input class="main-in" type="text" id="notes-title-in" placeholder="Titre (optionnel)…" style="flex:1;min-width:100px;" onkeydown="if(event.key==='Enter')addNote()">
+        <input class="main-in" type="text" id="notes-tags-in" placeholder="#tags…" style="width:110px;" title="Tags manuels">
         <button class="add-btn" onclick="addNote()">+ Add</button>
-        <label class="cam-btn" title="Prendre une photo">📷<input type="file" accept="image/*" capture="environment" style="display:none" onchange="handleNoteImgFiles(this.files,'new')"></label>
+        <label class="cam-btn" title="Photo">📷<input type="file" accept="image/*" capture="environment" style="display:none" onchange="handleNoteImgFiles(this.files,'new')"></label>
+        <label class="cam-btn" title="Galerie">🖼<input type="file" accept="image/*" multiple style="display:none" onchange="handleNoteImgFiles(this.files,'new')"></label>
       </div>
-      <textarea id="notes-body-in" rows="3" placeholder="Note… (#hashtags reconnus auto · Ctrl+Entrée pour sauvegarder)" onkeydown="if(event.ctrlKey&&event.key==='Enter'){event.preventDefault();addNote();}" style="width:100%;font-family:var(--sans);font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;resize:vertical;line-height:1.5;"></textarea>
       <div id="notes-img-drop" onclick="document.getElementById('notes-img-input').click()"
         ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
         ondragleave="this.style.borderColor='var(--line)'"
@@ -1340,9 +1338,14 @@ div:hover>.item-img-del{display:block;}
       <input type="file" id="notes-img-input" accept="image/*" multiple style="display:none" onchange="handleNoteImgFiles(this.files,'new')">
       <div id="notes-img-preview" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;"></div>
     </div>
-    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
-      <div class="notes-tag-filters" id="notes-tag-filters" style="display:inline-flex;flex-wrap:wrap;gap:4px;margin-bottom:0;"></div>
+    <!-- Filter bar with search toggle -->
+    <div style="display:flex;align-items:center;gap:6px;margin:8px 0 6px;flex-wrap:wrap;">
+      <div class="notes-tag-filters" id="notes-tag-filters" style="display:inline-flex;flex-wrap:wrap;gap:4px;margin-bottom:0;flex:1;"></div>
       <div id="notes-read-filter" style="display:flex;gap:4px;"></div>
+      <button id="notes-search-toggle" onclick="toggleNotesSearch()" title="Rechercher" style="background:none;border:1px solid var(--line);border-radius:var(--r);padding:4px 8px;cursor:pointer;font-size:14px;color:var(--text3);line-height:1;transition:all .12s;">🔍</button>
+    </div>
+    <div id="notes-search-bar" style="display:none;margin-bottom:8px;">
+      <input class="main-in" type="search" id="notes-search" style="width:100%;box-sizing:border-box;background:var(--bg);color:var(--text);border:1px solid var(--accent);border-radius:var(--r);padding:6px 10px;font-family:var(--sans);font-size:13px;outline:none;-webkit-appearance:none;" placeholder="Rechercher dans les notes…" oninput="notesQ=this.value.toLowerCase();renderNotes()" autocomplete="off">
     </div>
     <div class="notes-grid" id="notes-list"></div>
   </div>
@@ -3602,6 +3605,18 @@ function noteTags(n){
 
 let noteTagFilter = null; // currently active tag filter
 
+function toggleNotesSearch(){
+  const bar=document.getElementById('notes-search-bar');
+  const btn=document.getElementById('notes-search-toggle');
+  const input=document.getElementById('notes-search');
+  const open=bar.style.display==='none';
+  bar.style.display=open?'':'none';
+  btn.style.borderColor=open?'var(--accent)':'var(--line)';
+  btn.style.color=open?'var(--accent)':'var(--text3)';
+  if(open){input.focus();}
+  else{input.value='';notesQ='';renderNotes();}
+}
+
 function addNote(){
   const title=document.getElementById('notes-title-in').value.trim();
   const body=document.getElementById('notes-body-in').value.trim();
@@ -4946,7 +4961,10 @@ function openRvEdit(id){
 function setRvStar(id,n){
   const rv=S.reviews.find(x=>x.id===id);if(!rv)return;
   rv.score=n;rv.edited=Date.now();
-  autoSave();renderReviews();
+  // Update stars visually without full re-render
+  const container=document.getElementById('rvs-'+id);
+  if(container) container.querySelectorAll('.rv-star').forEach((s,i)=>s.classList.toggle('on',i<n));
+  autoSave();
 }
 
 function saveRvEdit(id){
