@@ -412,6 +412,86 @@ div:hover>.item-img-del{display:block;}
   /* Hide reminder text input too */
   .edit-form .edit-row .rem-text-field{display:none;}
 }
+/* ── TASK DETAIL PANEL ── */
+.tdpanel{
+  display:none;position:fixed;inset:0;z-index:300;
+  align-items:flex-end;justify-content:center;
+}
+.tdpanel.open{display:flex;}
+.tdpanel-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45);}
+.tdpanel-sheet{
+  position:relative;z-index:1;
+  width:100%;max-width:620px;
+  max-height:90vh;
+  background:var(--card);
+  border-radius:16px 16px 0 0;
+  display:flex;flex-direction:column;
+  animation:slideup .2s ease;
+  overflow:hidden;
+}
+.tdpanel-header{
+  padding:14px 16px 10px;
+  border-bottom:1px solid var(--line);
+  flex-shrink:0;
+}
+.tdpanel-handle{width:36px;height:4px;border-radius:2px;background:var(--line2);margin:0 auto 12px;}
+.tdpanel-title{
+  font-size:16px;font-weight:500;color:var(--text);
+  line-height:1.4;word-break:break-word;
+}
+.tdpanel-meta{
+  display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;align-items:center;
+}
+.tdpanel-body{
+  flex:1;overflow-y:auto;padding:14px 16px;
+  display:flex;flex-direction:column;gap:14px;
+}
+.tdpanel-section-title{
+  font-family:var(--mono);font-size:10px;font-weight:500;
+  text-transform:uppercase;letter-spacing:.06em;color:var(--text3);
+  margin-bottom:6px;display:flex;align-items:center;gap:6px;
+}
+.tdpanel-sub-item{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 0;border-bottom:1px solid var(--line);
+}
+.tdpanel-sub-item:last-child{border-bottom:none;}
+.tdpanel-sub-text{
+  flex:1;font-size:13px;color:var(--text);line-height:1.4;word-break:break-word;
+}
+.tdpanel-sub-text.done-sub{text-decoration:line-through;opacity:.5;}
+.tdpanel-add-sub{
+  display:flex;gap:6px;margin-top:8px;
+}
+.tdpanel-add-sub input{
+  flex:1;font-family:var(--sans);font-size:13px;
+  padding:8px 10px;border:1px solid var(--line2);border-radius:var(--r);
+  background:var(--bg);color:var(--text);outline:none;
+  transition:border-color .12s;
+}
+.tdpanel-add-sub input:focus{border-color:var(--accent);}
+.tdpanel-comment{
+  width:100%;font-family:var(--sans);font-size:13px;
+  padding:8px 10px;border:1px solid var(--line2);border-radius:var(--r);
+  background:var(--bg);color:var(--text);outline:none;
+  resize:vertical;min-height:64px;line-height:1.5;
+  transition:border-color .12s;box-sizing:border-box;
+}
+.tdpanel-comment:focus{border-color:var(--accent);}
+.tdpanel-fields{display:flex;gap:6px;flex-wrap:wrap;}
+.tdpanel-fields select{
+  font-family:var(--mono);font-size:11px;
+  padding:5px 8px;border:1px solid var(--line);border-radius:var(--r);
+  background:var(--bg);color:var(--text2);cursor:pointer;outline:none;
+  transition:border-color .12s;
+}
+.tdpanel-fields select:focus{border-color:var(--accent);}
+.tdpanel-footer{
+  padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--line);
+  display:flex;gap:8px;flex-shrink:0;
+}
+
 /* ── REVIEWS ── */
 .rv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:4px;}
 @media(max-width:500px){.rv-grid{grid-template-columns:1fr;}}
@@ -1691,6 +1771,23 @@ div:hover>.item-img-del{display:block;}
     <span id="tmpl-drive-status" style="font-family:var(--mono);font-size:11px;color:var(--text3);"></span>
   </div>
 </div>
+</div>
+
+<!-- TASK DETAIL PANEL -->
+<div class="tdpanel" id="tdpanel" onclick="if(event.target===this||event.target.classList.contains('tdpanel-backdrop'))closeTDP()">
+  <div class="tdpanel-backdrop"></div>
+  <div class="tdpanel-sheet">
+    <div class="tdpanel-header">
+      <div class="tdpanel-handle"></div>
+      <div class="tdpanel-title" id="tdp-title"></div>
+      <div class="tdpanel-meta" id="tdp-meta"></div>
+    </div>
+    <div class="tdpanel-body" id="tdp-body"></div>
+    <div class="tdpanel-footer">
+      <button class="save-btn" onclick="saveTDP()" style="flex:1;">✓ Enregistrer</button>
+      <button class="cancel-btn" onclick="closeTDP()">Fermer</button>
+    </div>
+  </div>
 </div>
 
 <!-- MODAL -->
@@ -3127,7 +3224,11 @@ function todoItemHtml(t){
     }
     <input type="checkbox" class="item-check" ${t.done?'checked':''} onchange="toggleTodo('${t.id}')">
     <div class="item-body">
-      <div class="item-text" id="qtext-${t.id}" ${IS_TOUCH?`onclick="quickEditText('${t.id}')" style="cursor:pointer;"`:''} >${esc(t.text)}</div>
+      <div class="item-text" id="qtext-${t.id}"
+        ${IS_TOUCH
+          ? `onclick="quickEditText('${t.id}')" style="cursor:pointer;"`
+          : `onclick="openTDP('${t.id}')" style="cursor:pointer;" title="Ouvrir le détail"`
+        }>${esc(t.text)}</div>
       <div class="item-meta-row">
         <div class="item-meta">
           <span class="tag ${pl[t.pri]||'p2'}">${t.pri.toUpperCase()}</span>
@@ -3137,6 +3238,7 @@ function todoItemHtml(t){
           <span class="meta-date">${fd(t.ts)}</span>
         </div>
         <div class="mobile-actions">
+          ${!isSubtask ? `<button onclick="openTDP('${t.id}')" title="Détail & sous-tâches" style="background:none;border:1px solid var(--line2);border-radius:var(--r);cursor:pointer;font-size:13px;padding:3px 7px;color:var(--text3);line-height:1;">→</button>` : ''}
           <button class="attach-btn${t.attachments&&t.attachments.length?' has-attach':''}" onclick="toggleAttachments('${t.id}')" title="Pièces jointes">📎</button>
           <button class="comment-btn${hasComment?' has-comment':''}" onclick="toggleComment('${t.id}')" title="${hasComment?'Voir':'Ajouter'} commentaire">💬</button>
           <label class="img-btn${t.images&&t.images.length?' has-img':''}" title="Caméra" style="cursor:pointer;background:none;border:none;font-size:14px;padding:3px 4px;opacity:.5;line-height:1;display:flex;align-items:center;">📷<input type="file" accept="image/*" capture="environment" style="display:none" onchange="todoImgPickFile(this,'${t.id}')"></label>
@@ -3215,6 +3317,196 @@ function toggleDoneSection(){
   const chev=document.getElementById('done-chevron');
   if(list){list.classList.toggle('open',doneSectionOpen);}
   if(chev){chev.classList.toggle('open',doneSectionOpen);}
+}
+
+/* ══ TASK DETAIL PANEL ══ */
+let tdpId = null; // current task id in panel
+
+function openTDP(id){
+  const t = S.todos.find(x=>x.id===id);
+  if(!t || t.parentId) return; // only top-level tasks
+  tdpId = id;
+  renderTDP();
+  document.getElementById('tdpanel').classList.add('open');
+  // Focus the subtask input after animation
+  setTimeout(()=>{
+    const inp = document.getElementById('tdp-sub-in');
+    if(inp) inp.focus();
+  }, 250);
+}
+
+function closeTDP(){
+  document.getElementById('tdpanel').classList.remove('open');
+  tdpId = null;
+}
+
+function renderTDP(){
+  const t = S.todos.find(x=>x.id===tdpId);
+  if(!t) return;
+
+  const cat = getCatById(t.cat);
+  const isDark = document.documentElement.getAttribute('data-theme')==='dark';
+  const catColor = isDark ? (cat.darkColor||cat.textColor) : cat.textColor;
+  const HZ_LABELS = {now:'Now',today:'Today',later:'Later',waiting:'Waiting'};
+  const hz = t.hz||'later';
+
+  // Header
+  document.getElementById('tdp-title').textContent = t.text;
+  document.getElementById('tdp-meta').innerHTML = `
+    <span style="font-family:var(--mono);font-size:9px;font-weight:500;padding:1px 5px;border-radius:2px;letter-spacing:.04em;text-transform:uppercase;background:transparent;color:${catColor};border:1px solid ${catColor};">${esc(cat.label)}</span>
+    <span class="tag p${t.pri.slice(1)||'2'}">${t.pri.toUpperCase()}</span>
+    <span style="font-family:var(--mono);font-size:9px;padding:1px 4px;border-radius:2px;border:1px solid currentColor;color:var(--text3);">${HZ_LABELS[hz]||hz}</span>`;
+
+  // Subtasks
+  const subs = (t.subtasks||[]).map(sid=>S.todos.find(x=>x.id===sid)).filter(Boolean);
+  const doneCount = subs.filter(s=>s.done).length;
+  const catOptions = S.categories.map(c=>`<option value="${c.id}"${t.cat===c.id?' selected':''}>${c.label}</option>`).join('');
+
+  document.getElementById('tdp-body').innerHTML = `
+    <!-- Subtasks -->
+    <div>
+      <div class="tdpanel-section-title">
+        ☐ Sous-tâches
+        <span style="font-family:var(--mono);font-size:10px;color:${doneCount===subs.length&&subs.length?'var(--green)':'var(--text3)'};">${doneCount}/${subs.length}</span>
+      </div>
+      <div id="tdp-sub-list">
+        ${subs.map(s=>`
+          <div class="tdpanel-sub-item" data-sid="${s.id}">
+            <input type="checkbox" class="item-check" ${s.done?'checked':''} onchange="tdpToggleSub('${s.id}')">
+            <span class="tdpanel-sub-text${s.done?' done-sub':''}" id="tdpst-${s.id}" onclick="tdpQuickEditSub('${s.id}')">${esc(s.text)}</span>
+            <button class="rb" onclick="tdpMoveSub('${s.id}',-1)" title="Monter" ${t.subtasks.indexOf(s.id)===0?'disabled':''}>↑</button>
+            <button class="rb" onclick="tdpMoveSub('${s.id}',1)" title="Descendre" ${t.subtasks.indexOf(s.id)===t.subtasks.length-1?'disabled':''}>↓</button>
+            <button class="del" onclick="tdpDelSub('${s.id}')">×</button>
+          </div>`).join('')}
+      </div>
+      <div class="tdpanel-add-sub">
+        <input type="text" id="tdp-sub-in" placeholder="Nouvelle sous-tâche… (Entrée pour ajouter)"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();tdpAddSub();}">
+        <button class="save-btn" onclick="tdpAddSub()">+ Add</button>
+      </div>
+    </div>
+
+    <!-- Comment -->
+    <div>
+      <div class="tdpanel-section-title">💬 Commentaire</div>
+      <textarea class="tdpanel-comment" id="tdp-comment" placeholder="Notes, contexte, liens…"
+        oninput="tdpAutoSaveComment(this.value)">${esc(t.comment||'')}</textarea>
+    </div>
+
+    <!-- Fields -->
+    <div>
+      <div class="tdpanel-section-title">⚙ Paramètres</div>
+      <div class="tdpanel-fields">
+        <select id="tdp-cat" onchange="tdpSaveFields()">
+          ${catOptions}
+        </select>
+        <select id="tdp-pri" onchange="tdpSaveFields()">
+          <option value="p1"${t.pri==='p1'?' selected':''}>P1</option>
+          <option value="p2"${t.pri==='p2'?' selected':''}>P2</option>
+          <option value="p3"${t.pri==='p3'?' selected':''}>P3</option>
+        </select>
+        <select id="tdp-hz" onchange="tdpSaveFields()">
+          <option value="now"${hz==='now'?' selected':''}>Now</option>
+          <option value="today"${hz==='today'?' selected':''}>Today</option>
+          <option value="later"${hz==='later'?' selected':''}>Later</option>
+          <option value="waiting"${hz==='waiting'?' selected':''}>Waiting</option>
+        </select>
+      </div>
+    </div>`;
+}
+
+function tdpAddSub(){
+  const t = S.todos.find(x=>x.id===tdpId); if(!t) return;
+  const inp = document.getElementById('tdp-sub-in');
+  const text = inp ? inp.value.trim() : '';
+  if(!text){ if(inp) inp.focus(); return; }
+  const sid = uid();
+  const sub = {id:sid, text, cat:t.cat, pri:t.pri, hz:t.hz,
+    done:false, ts:Date.now(), comment:'', subtasks:[], parentId:tdpId, type:t.type||null,
+    attachments:[], images:[]};
+  S.todos.push(sub);
+  if(!t.subtasks) t.subtasks=[];
+  t.subtasks.push(sid);
+  if(inp) inp.value='';
+  autoSave();
+  renderTDP();
+  renderTodos();
+  setTimeout(()=>{ const i=document.getElementById('tdp-sub-in'); if(i) i.focus(); },50);
+  logA('todo','Sous-tâche ajoutée: "'+text+'" → "'+t.text+'"');
+}
+
+function tdpToggleSub(sid){
+  const s = S.todos.find(x=>x.id===sid); if(!s) return;
+  s.done=!s.done;
+  autoSave(); renderTDP(); renderTodos();
+}
+
+function tdpDelSub(sid){
+  const s = S.todos.find(x=>x.id===sid); if(!s) return;
+  const parent = S.todos.find(x=>x.id===tdpId); if(!parent) return;
+  if(!confirm('Supprimer "'+s.text+'" ?')) return;
+  parent.subtasks = parent.subtasks.filter(x=>x!==sid);
+  S.todos = S.todos.filter(x=>x.id!==sid);
+  autoSave(); renderTDP(); renderTodos();
+}
+
+function tdpMoveSub(sid, dir){
+  const parent = S.todos.find(x=>x.id===tdpId); if(!parent||!parent.subtasks) return;
+  const arr = parent.subtasks;
+  const i = arr.indexOf(sid); if(i===-1) return;
+  const ni = i+dir; if(ni<0||ni>=arr.length) return;
+  [arr[i],arr[ni]]=[arr[ni],arr[i]];
+  autoSave(); renderTDP(); renderTodos();
+}
+
+function tdpQuickEditSub(sid){
+  const s = S.todos.find(x=>x.id===sid); if(!s) return;
+  const el = document.getElementById('tdpst-'+sid); if(!el||el.tagName==='INPUT') return;
+  const orig = s.text;
+  const inp = document.createElement('input');
+  inp.type='text'; inp.value=orig;
+  inp.style.cssText='flex:1;font-family:var(--sans);font-size:13px;padding:2px 6px;border:1px solid var(--accent);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;';
+  inp.id='tdpst-'+sid;
+  let committed=false;
+  inp.onkeydown=e=>{
+    if(e.key==='Enter'&&!committed){committed=true;doCommit();}
+    if(e.key==='Escape'&&!committed){committed=true;renderTDP();}
+  };
+  inp.onblur=()=>{if(!committed){committed=true;doCommit();}};
+  function doCommit(){
+    const val=inp.value.trim();
+    if(val&&val!==orig){s.text=val;autoSave();renderTodos();}
+    renderTDP();
+  }
+  el.replaceWith(inp);
+  inp.focus(); inp.select();
+}
+
+let tdpCommentTimer=null;
+function tdpAutoSaveComment(val){
+  const t=S.todos.find(x=>x.id===tdpId); if(!t) return;
+  t.comment=val;
+  clearTimeout(tdpCommentTimer);
+  tdpCommentTimer=setTimeout(()=>autoSave(),800);
+}
+
+function tdpSaveFields(){
+  const t=S.todos.find(x=>x.id===tdpId); if(!t) return;
+  t.cat=document.getElementById('tdp-cat').value;
+  t.pri=document.getElementById('tdp-pri').value;
+  t.hz=document.getElementById('tdp-hz').value;
+  // propagate to subtasks
+  (t.subtasks||[]).forEach(sid=>{
+    const s=S.todos.find(x=>x.id===sid);
+    if(s){s.cat=t.cat;s.pri=t.pri;s.hz=t.hz;}
+  });
+  autoSave(); renderTDP(); renderTodos();
+}
+
+function saveTDP(){
+  // comment already saved live; fields saved on change; just close
+  autoSave(); renderTodos(); closeTDP();
+  toast('✓ Tâche mise à jour');
 }
 
 /* ══ ARCHIVE TAB ══ */
