@@ -468,11 +468,14 @@ div:hover>.item-img-del{display:block;}
 .tdpanel-sub-item{
   display:flex;align-items:center;gap:10px;
   padding:9px 0;border-bottom:1px solid var(--line);
+  transition:opacity .15s,background .1s;
 }
 .tdpanel-sub-item:last-child{border-bottom:none;}
 .tdpanel-sub-item .del{opacity:0;transition:opacity .15s;}
 .tdpanel-sub-item:hover .del{opacity:.4;}
 .tdpanel-sub-item .del:hover{opacity:1;color:var(--red);}
+.tdpanel-sub-item.tdp-dragging{opacity:.25;}
+.tdpanel-sub-item.tdp-drag-over{background:var(--bg2);border-radius:var(--r);}
 .tdpanel-sub-text{
   flex:1;font-size:14px;color:var(--text);line-height:1.4;
   word-break:break-word;cursor:text;
@@ -3399,6 +3402,35 @@ function closeTDP(){
   tdpId = null;
 }
 
+function setupTDPDrag(el){
+  let dragSid=null;
+  el.addEventListener('dragstart',e=>{
+    const it=e.target.closest('.tdpanel-sub-item[draggable]');if(!it)return;
+    dragSid=it.dataset.sid;it.classList.add('tdp-dragging');
+    e.dataTransfer.effectAllowed='move';
+  });
+  el.addEventListener('dragend',()=>{
+    el.querySelectorAll('.tdpanel-sub-item').forEach(i=>i.classList.remove('tdp-dragging','tdp-drag-over'));
+    dragSid=null;
+  });
+  el.addEventListener('dragover',e=>{
+    e.preventDefault();
+    const it=e.target.closest('.tdpanel-sub-item');if(!it||it.dataset.sid===dragSid)return;
+    el.querySelectorAll('.tdpanel-sub-item').forEach(i=>i.classList.remove('tdp-drag-over'));
+    it.classList.add('tdp-drag-over');
+  });
+  el.addEventListener('drop',e=>{
+    e.preventDefault();
+    const it=e.target.closest('.tdpanel-sub-item');if(!it||it.dataset.sid===dragSid)return;
+    const parent=S.todos.find(x=>x.id===tdpId);if(!parent||!parent.subtasks)return;
+    const arr=parent.subtasks;
+    const fi=arr.indexOf(dragSid),ti=arr.indexOf(it.dataset.sid);
+    if(fi===-1||ti===-1)return;
+    const[m]=arr.splice(fi,1);arr.splice(ti,0,m);
+    autoSave();renderTDP();renderTodos();
+  });
+}
+
 function renderTDP(){
   const t = S.todos.find(x=>x.id===tdpId);
   if(!t) return;
@@ -3430,9 +3462,9 @@ function renderTDP(){
       </div>
       <div id="tdp-sub-list">
         ${subs.map(s=>`
-          <div class="tdpanel-sub-item" data-sid="${s.id}">
+          <div class="tdpanel-sub-item" data-sid="${s.id}" draggable="true">
             <input type="checkbox" class="item-check" ${s.done?'checked':''} onchange="tdpToggleSub('${s.id}')">
-            <span class="tdpanel-sub-text${s.done?' done-sub':''}" id="tdpst-${s.id}" onclick="tdpQuickEditSub('${s.id}')">${esc(s.text)}</span>
+            <span class="tdpanel-sub-text${s.done?' done-sub':''}" id="tdpst-${s.id}" onclick="tdpQuickEditSub('${s.id}')" style="cursor:grab;">${esc(s.text)}</span>
             <button class="del" onclick="tdpDelSub('${s.id}')" style="opacity:.3;">×</button>
           </div>`).join('')}
       </div>
@@ -3469,6 +3501,9 @@ function renderTDP(){
         </select>
       </div>
     </div>`;
+  // Wire drag on sub-list
+  const subList = document.getElementById('tdp-sub-list');
+  if(subList) setupTDPDrag(subList);
 }
 
 function tdpAddSub(){
