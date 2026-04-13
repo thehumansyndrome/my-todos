@@ -3224,9 +3224,11 @@ function todoItemHtml(t){
     <input type="checkbox" class="item-check" ${t.done?'checked':''} onchange="toggleTodo('${t.id}')">
     <div class="item-body">
       <div class="item-text" id="qtext-${t.id}"
-        ${IS_TOUCH
-          ? `onclick="quickEditText('${t.id}')" style="cursor:pointer;"`
-          : `onclick="openTDP('${t.id}')" style="cursor:pointer;" title="Ouvrir le détail"`
+        ${isSubtask
+          ? `onclick="quickEditInline('${t.id}','todos',renderTodos)" style="cursor:text;"`
+          : IS_TOUCH
+            ? `onclick="quickEditText('${t.id}')" style="cursor:pointer;"`
+            : `onclick="openTDP('${t.id}')" style="cursor:pointer;" title="Ouvrir le détail"`
         }>${esc(t.text)}</div>
       ${isSubtask ? '' : `<div class="item-meta-row">
         <div class="item-meta">
