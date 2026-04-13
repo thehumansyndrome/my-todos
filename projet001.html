@@ -3377,6 +3377,7 @@ function todoItemHtml(t){
     <button class="img-btn${t.images&&t.images.length?' has-img':''}" onclick="todoImgPick('${t.id}')" title="Ajouter une image">🖼</button>
     <input type="file" id="img-pick-${t.id}" accept="image/*" style="display:none" onchange="todoImgPickFile(this,'${t.id}')">
     <button class="edit-btn" onclick="openEdit('${t.id}')" title="Modifier">✎</button>
+    <button class="edit-btn" onclick="openTDP('${t.id}')" title="Détail & sous-tâches" style="opacity:.5;font-size:13px;">→</button>
     <button class="del" onclick="delTodo('${t.id}')">×</button>`}
   </div>`;
 }
