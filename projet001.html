@@ -3381,10 +3381,10 @@ function todoItemHtml(t){
           const idx=arr.indexOf(t.id);
           const first=idx===0, last=idx===arr.length-1;
           const arrowsHtml=`
-            <button style="background:none;border:none;cursor:pointer;font-size:11px;padding:2px 4px;color:var(--text3);opacity:${first?.2:.5};line-height:1;" ${first?'disabled':''} onclick="moveSubtask('${t.parentId}','${t.id}',-1)">↑</button>
-            <button style="background:none;border:none;cursor:pointer;font-size:11px;padding:2px 4px;color:var(--text3);opacity:${last?.2:.5};line-height:1;" ${last?'disabled':''} onclick="moveSubtask('${t.parentId}','${t.id}',1)">↓</button>`;
+            <button style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 6px;color:var(--text2);opacity:${first?.3:.8};line-height:1;font-weight:500;" ${first?'disabled':''} onclick="moveSubtask('${t.parentId}','${t.id}',-1)">↑</button>
+            <button style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 6px;color:var(--text2);opacity:${last?.3:.8};line-height:1;font-weight:500;" ${last?'disabled':''} onclick="moveSubtask('${t.parentId}','${t.id}',1)">↓</button>`;
           return `<span class="sub-arrows" style="display:flex;gap:1px;align-items:center;flex-shrink:0;">${arrowsHtml}</span>
-          <button class="del sub-del" onclick="delTodo('${t.id}')" style="opacity:.3;transition:opacity .15s;" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=.3">×</button>`;
+          <button class="del sub-del" onclick="delTodo('${t.id}')" style="opacity:.7;font-size:16px;transition:opacity .15s;color:var(--text2);" onmouseenter="this.style.opacity=1;this.style.color='var(--red)'" onmouseleave="this.style.opacity=.7;this.style.color='var(--text2)'">×</button>`;
         })()
       : `<button class="attach-btn${t.attachments&&t.attachments.length?' has-attach':''}" onclick="toggleAttachments('${t.id}')" title="Pièces jointes">📎</button>
     <button class="comment-btn${hasComment?' has-comment':''}" onclick="toggleComment('${t.id}')" title="${hasComment?'Voir le commentaire':'Ajouter un commentaire'}">💬</button>
