@@ -411,6 +411,21 @@ div:hover>.item-img-del{display:block;}
   /* Hide reminder text input too */
   .edit-form .edit-row .rem-text-field{display:none;}
 }
+/* ── INLINE ADD SUBTASK ── */
+.inline-add-sub{
+  display:flex;align-items:center;
+  margin-left:18px;padding:4px 0 8px;
+  border-left:2px solid var(--line);padding-left:6px;
+}
+.inline-add-sub input{
+  flex:1;font-family:var(--sans);font-size:13px;
+  padding:6px 10px;border:1px solid var(--line);border-radius:var(--r);
+  background:var(--bg);color:var(--text);outline:none;
+  transition:border-color .12s;
+}
+.inline-add-sub input:focus{border-color:var(--accent);}
+.inline-add-sub input::placeholder{color:var(--text3);}
+
 /* ── TASK DETAIL PANEL ── */
 .tdpanel{
   display:none;position:fixed;inset:0;z-index:300;
@@ -2748,7 +2763,7 @@ function submitQA(){
     const pri=document.getElementById('qa-pri').value;
     const hz=document.getElementById('qa-hz').value;
     const t={id:uid(),text,cat,pri,hz,done:false,ts:Date.now(),comment:'',subtasks:[],parentId:null,type:null,images:photos,attachments:[]};
-    S.todos.push(t);
+    S.todos.unshift(t);
     autoSave();renderTodos();
     logA('todo','Ajouté (FAB): "'+text+'"');
 
@@ -2815,7 +2830,7 @@ function addTodo(){
     // Kick off Drive upload asynchronously
     t.images.forEach((src,i)=>{ if(typeof src==='string'){ uploadImgToDrive(src).then(obj=>{ t.images[i]=obj; autoSave(); }); } });
   }
-  S.todos.push(t);
+  S.todos.unshift(t);
   document.getElementById('todo-in').value='';
   document.getElementById('todo-hz').value='later';
   populateCatSelect('todo-cat','perso');
@@ -3184,6 +3199,39 @@ function toggleAttachments(id){
   zone.style.display=zone.style.display==='none'?'block':'none';
 }
 
+function expandAndFocusSub(id){
+  collapsedParents.delete(id);
+  renderTodos();
+  setTimeout(()=>{ const i=document.getElementById('isub-'+id); if(i) i.focus(); }, 30);
+}
+
+function inlineAddSubHtml(parentId){
+  return `<div class="inline-add-sub">
+    <input type="text" id="isub-${parentId}" placeholder="Ajouter un élément…"
+      onkeydown="if(event.key==='Enter'){event.preventDefault();inlineAddSub('${parentId}');}
+                 if(event.key==='Escape'){collapsedParents.add('${parentId}');renderTodos();}">
+  </div>`;
+}
+
+function inlineAddSub(parentId){
+  const inp = document.getElementById('isub-'+parentId);
+  const text = inp ? inp.value.trim() : '';
+  if(!text){ if(inp) inp.focus(); return; }
+  const parent = S.todos.find(x=>x.id===parentId); if(!parent) return;
+  const sid = uid();
+  S.todos.push({id:sid, text, cat:parent.cat, pri:parent.pri, hz:parent.hz,
+    done:false, ts:Date.now(), comment:'', subtasks:[], parentId, type:parent.type||null,
+    attachments:[], images:[]});
+  if(!parent.subtasks) parent.subtasks=[];
+  parent.subtasks.push(sid);
+  collapsedParents.delete(parentId); // keep expanded
+  autoSave();
+  renderTodos();
+  // Refocus the input after render
+  setTimeout(()=>{ const i=document.getElementById('isub-'+parentId); if(i) i.focus(); }, 20);
+  logA('todo','Sous-tâche ajoutée: "'+text+'" → "'+parent.text+'"');
+}
+
 function todoItemHtml(t){
   const cat = getCatById(t.cat);
   const isDarkMode = document.documentElement.getAttribute('data-theme')==='dark';
@@ -3203,7 +3251,8 @@ function todoItemHtml(t){
     const done=t.subtasks.filter(sid=>{ const s=S.todos.find(x=>x.id===sid); return s&&s.done; }).length;
     const allDone=done===total;
     const collapsed=collapsedParents.has(t.id);
-    subtaskBadgeHtml=`<span class="subtask-progress${allDone?' done':''}" style="cursor:pointer;" onclick="event.stopPropagation();toggleSubtasks('${t.id}')" title="${collapsed?'Afficher':'Masquer'} les sous-tâches">${collapsed?'▶':'▼'} ${done}/${total}</span>`;
+    subtaskBadgeHtml=`<span class="subtask-progress${allDone?' done':''}" style="cursor:pointer;" onclick="event.stopPropagation();toggleSubtasks('${t.id}')" title="${collapsed?'Afficher':'Masquer'} les sous-tâches">${collapsed?'▶':'▼'} ${done}/${total}</span>
+    <span style="font-family:var(--mono);font-size:10px;color:var(--text3);cursor:pointer;padding:0 3px;" onclick="event.stopPropagation();expandAndFocusSub('${t.id}')" title="Ajouter un élément">+</span>`;
   }
   if(t.parentId && t.type){
     subtaskBadgeHtml=`<span class="subtask-badge">↳ ${esc(t.type)}</span>`;
@@ -3857,19 +3906,23 @@ function renderTodos(){
   }
 
   const el=document.getElementById('todo-list');
-  // Interleave ALL subtasks (done or not) right after their parent
+  // Interleave ALL subtasks (done or not) right after their parent, + inline add field
   const ordered=[];
   active.forEach(t=>{
-    ordered.push(t);
+    ordered.push({item:t, type:'task'});
     if(t.subtasks && t.subtasks.length && !collapsedParents.has(t.id)){
       t.subtasks.forEach(sid=>{
         const s=S.todos.find(x=>x.id===sid);
-        if(s) ordered.push(s);
+        if(s) ordered.push({item:s, type:'task'});
       });
+      ordered.push({item:t, type:'add-sub'}); // inline add field
     }
   });
   el.innerHTML=ordered.length
-    ? ordered.map(t=>todoItemHtml(t)).join('')
+    ? ordered.map(o=>{
+        if(o.type==='add-sub') return inlineAddSubHtml(o.item.id);
+        return todoItemHtml(o.item);
+      }).join('')
     : '<div class="empty">Aucune tâche active</div>';
   setupDrag(el,'todos',renderTodos);
 
