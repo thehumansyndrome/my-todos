@@ -1261,7 +1261,14 @@ div:hover>.item-img-del{display:block;}
       <div class="qamodal-handle"></div>
       <div class="qamodal-title" id="qa-modal-title">Nouvelle tâche</div>
 
-      <!-- Main text — all tabs -->
+      <!-- Notes: body shown first via flex order -->
+      <div id="qa-note-fields" style="display:none;">
+        <textarea class="qamodal-in" id="qa-note-body" rows="4" placeholder="Contenu de la note…"
+          style="resize:none;line-height:1.5;"
+          onkeydown="if(event.ctrlKey&&event.key==='Enter'){event.preventDefault();submitQA();}"></textarea>
+      </div>
+
+      <!-- Main text — titre pour toutes les tabs, titre optionnel pour notes -->
       <textarea class="qamodal-in" id="qa-text" rows="2" placeholder="…"
         style="resize:none;line-height:1.45;"
         onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitQA();}"></textarea>
@@ -1282,12 +1289,6 @@ div:hover>.item-img-del{display:block;}
             <option value="waiting">Waiting</option>
           </select>
         </div>
-      </div>
-
-      <!-- Notes fields -->
-      <div id="qa-note-fields" style="display:none;">
-        <textarea class="qamodal-in" id="qa-note-body" rows="3" placeholder="Contenu de la note…"
-          style="resize:none;line-height:1.5;"></textarea>
       </div>
 
       <!-- Reminders fields -->
@@ -2618,7 +2619,17 @@ function openQA(){
   renderQAPhotoPreview();
 
   document.getElementById('qa-modal').classList.add('open');
-  setTimeout(()=>document.getElementById('qa-text').focus(),100);
+  // Adapt qa-text placeholder and focus for notes (title is optional)
+  const qaTextEl = document.getElementById('qa-text');
+  if(qaCurrentTab === 'notes'){
+    qaTextEl.placeholder = 'Titre (optionnel)…';
+    qaTextEl.rows = 1;
+    setTimeout(()=>document.getElementById('qa-note-body').focus(), 100);
+  } else {
+    qaTextEl.placeholder = '…';
+    qaTextEl.rows = 2;
+    setTimeout(()=>qaTextEl.focus(), 100);
+  }
 }
 
 function closeQA(){
