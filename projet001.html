@@ -2764,6 +2764,7 @@ function submitQA(){
     const hz=document.getElementById('qa-hz').value;
     const t={id:uid(),text,cat,pri,hz,done:false,ts:Date.now(),comment:'',subtasks:[],parentId:null,type:null,images:photos,attachments:[]};
     S.todos.unshift(t);
+    expandedForAdd.add(t.id);
     autoSave();renderTodos();
     logA('todo','Ajouté (FAB): "'+text+'"');
 
@@ -2831,6 +2832,7 @@ function addTodo(){
     t.images.forEach((src,i)=>{ if(typeof src==='string'){ uploadImgToDrive(src).then(obj=>{ t.images[i]=obj; autoSave(); }); } });
   }
   S.todos.unshift(t);
+  expandedForAdd.add(t.id);
   document.getElementById('todo-in').value='';
   document.getElementById('todo-hz').value='later';
   populateCatSelect('todo-cat','perso');
@@ -3000,6 +3002,7 @@ function delTodo(id){
   logA('todo','Supprimé: "'+t.text+'"', undoId);
 }
 let collapsedParents = new Set(); // IDs of parents whose subtasks are hidden
+let expandedForAdd = new Set();  // IDs of tasks showing inline add field
 
 function collapseAllParents(){
   S.todos.forEach(t=>{
@@ -3075,8 +3078,12 @@ function saveAsTemplate(parentId){
 }
 
 function toggleSubtasks(id){
-  if(collapsedParents.has(id)) collapsedParents.delete(id);
-  else collapsedParents.add(id);
+  if(collapsedParents.has(id)){
+    collapsedParents.delete(id);
+  } else {
+    collapsedParents.add(id);
+    expandedForAdd.delete(id);
+  }
   renderTodos();
 }
 let doneSectionOpen = false;
@@ -3201,6 +3208,7 @@ function toggleAttachments(id){
 
 function expandAndFocusSub(id){
   collapsedParents.delete(id);
+  expandedForAdd.add(id);
   renderTodos();
   setTimeout(()=>{ const i=document.getElementById('isub-'+id); if(i) i.focus(); }, 30);
 }
@@ -3224,10 +3232,10 @@ function inlineAddSub(parentId){
     attachments:[], images:[]});
   if(!parent.subtasks) parent.subtasks=[];
   parent.subtasks.push(sid);
-  collapsedParents.delete(parentId); // keep expanded
+  collapsedParents.delete(parentId);
+  expandedForAdd.delete(parentId); // now managed via subtasks
   autoSave();
   renderTodos();
-  // Refocus the input after render
   setTimeout(()=>{ const i=document.getElementById('isub-'+parentId); if(i) i.focus(); }, 20);
   logA('todo','Sous-tâche ajoutée: "'+text+'" → "'+parent.text+'"');
 }
@@ -3253,6 +3261,8 @@ function todoItemHtml(t){
     const collapsed=collapsedParents.has(t.id);
     subtaskBadgeHtml=`<span class="subtask-progress${allDone?' done':''}" style="cursor:pointer;" onclick="event.stopPropagation();toggleSubtasks('${t.id}')" title="${collapsed?'Afficher':'Masquer'} les sous-tâches">${collapsed?'▶':'▼'} ${done}/${total}</span>
     <span style="font-family:var(--mono);font-size:10px;color:var(--text3);cursor:pointer;padding:0 3px;" onclick="event.stopPropagation();expandAndFocusSub('${t.id}')" title="Ajouter un élément">+</span>`;
+  } else if(!t.parentId){
+    subtaskBadgeHtml=`<span style="font-family:var(--mono);font-size:10px;color:var(--text3);cursor:pointer;padding:0 3px;opacity:.5;" onclick="event.stopPropagation();expandAndFocusSub('${t.id}')" title="Ajouter un élément">+ sous-tâche</span>`;
   }
   if(t.parentId && t.type){
     subtaskBadgeHtml=`<span class="subtask-badge">↳ ${esc(t.type)}</span>`;
@@ -3906,17 +3916,18 @@ function renderTodos(){
   }
 
   const el=document.getElementById('todo-list');
-  // Interleave ALL subtasks (done or not) right after their parent, + inline add field
   const ordered=[];
   active.forEach(t=>{
     ordered.push({item:t, type:'task'});
-    if(t.subtasks && t.subtasks.length && !collapsedParents.has(t.id)){
+    const expanded = !collapsedParents.has(t.id) && (t.subtasks && t.subtasks.length>0);
+    const showAdd = expandedForAdd.has(t.id) || expanded;
+    if(expanded){
       t.subtasks.forEach(sid=>{
         const s=S.todos.find(x=>x.id===sid);
         if(s) ordered.push({item:s, type:'task'});
       });
-      ordered.push({item:t, type:'add-sub'}); // inline add field
     }
+    if(showAdd) ordered.push({item:t, type:'add-sub'});
   });
   el.innerHTML=ordered.length
     ? ordered.map(o=>{
