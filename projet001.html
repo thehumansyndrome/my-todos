@@ -3371,7 +3371,17 @@ function todoItemHtml(t){
       </div>`}
     </div>
     ${isSubtask
-      ? `<button class="del" onclick="delTodo('${t.id}')" style="opacity:.3;transition:opacity .15s;" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=.3">×</button>`
+      ? (()=>{
+          const par=S.todos.find(x=>x.id===t.parentId);
+          const arr=par&&par.subtasks||[];
+          const idx=arr.indexOf(t.id);
+          const first=idx===0, last=idx===arr.length-1;
+          return `<span style="display:flex;gap:1px;align-items:center;flex-shrink:0;">
+            <button style="background:none;border:none;cursor:pointer;font-size:11px;padding:2px 4px;color:var(--text3);opacity:${first?.2:.5};line-height:1;" ${first?'disabled':''} onclick="moveSubtask('${t.parentId}','${t.id}',-1)">↑</button>
+            <button style="background:none;border:none;cursor:pointer;font-size:11px;padding:2px 4px;color:var(--text3);opacity:${last?.2:.5};line-height:1;" ${last?'disabled':''} onclick="moveSubtask('${t.parentId}','${t.id}',1)">↓</button>
+          </span>
+          <button class="del" onclick="delTodo('${t.id}')" style="opacity:.3;transition:opacity .15s;" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=.3">×</button>`;
+        })()
       : `<button class="attach-btn${t.attachments&&t.attachments.length?' has-attach':''}" onclick="toggleAttachments('${t.id}')" title="Pièces jointes">📎</button>
     <button class="comment-btn${hasComment?' has-comment':''}" onclick="toggleComment('${t.id}')" title="${hasComment?'Voir le commentaire':'Ajouter un commentaire'}">💬</button>
     <button class="img-btn${t.images&&t.images.length?' has-img':''}" onclick="todoImgPick('${t.id}')" title="Ajouter une image">🖼</button>
