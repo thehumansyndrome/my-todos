@@ -3403,6 +3403,7 @@ function closeTDP(){
 }
 
 function setupTDPDrag(el){
+  // ── Desktop drag & drop ──
   let dragSid=null;
   el.addEventListener('dragstart',e=>{
     const it=e.target.closest('.tdpanel-sub-item[draggable]');if(!it)return;
@@ -3422,13 +3423,78 @@ function setupTDPDrag(el){
   el.addEventListener('drop',e=>{
     e.preventDefault();
     const it=e.target.closest('.tdpanel-sub-item');if(!it||it.dataset.sid===dragSid)return;
-    const parent=S.todos.find(x=>x.id===tdpId);if(!parent||!parent.subtasks)return;
-    const arr=parent.subtasks;
-    const fi=arr.indexOf(dragSid),ti=arr.indexOf(it.dataset.sid);
-    if(fi===-1||ti===-1)return;
-    const[m]=arr.splice(fi,1);arr.splice(ti,0,m);
-    autoSave();renderTDP();renderTodos();
+    tdpReorder(dragSid,it.dataset.sid);
   });
+
+  // ── Mobile touch drag (long press → drag) ──
+  let touchSid=null, touchEl=null, ghost=null, longTimer=null, active=false;
+
+  el.addEventListener('touchstart',e=>{
+    const it=e.target.closest('.tdpanel-sub-item');if(!it)return;
+    touchSid=it.dataset.sid; touchEl=it;
+    longTimer=setTimeout(()=>{
+      active=true;
+      it.classList.add('tdp-dragging');
+      // Create ghost clone
+      ghost=it.cloneNode(true);
+      const r=it.getBoundingClientRect();
+      ghost.style.cssText=`position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;
+        opacity:.85;background:var(--card);border:1px solid var(--accent);border-radius:var(--r2);
+        z-index:9999;pointer-events:none;padding:9px 12px;box-sizing:border-box;`;
+      document.body.appendChild(ghost);
+      // Haptic if available
+      if(navigator.vibrate) navigator.vibrate(40);
+    },450);
+  },{passive:true});
+
+  el.addEventListener('touchmove',e=>{
+    if(!active||!ghost){clearTimeout(longTimer);return;}
+    e.preventDefault();
+    const touch=e.touches[0];
+    const r=touchEl.getBoundingClientRect();
+    ghost.style.top=(touch.clientY - r.height/2)+'px';
+    // Highlight target
+    el.querySelectorAll('.tdpanel-sub-item').forEach(i=>i.classList.remove('tdp-drag-over'));
+    const target=el.querySelector('.tdpanel-sub-item:not(.tdp-dragging)');
+    // Find which item the finger is over
+    const items=[...el.querySelectorAll('.tdpanel-sub-item:not(.tdp-dragging)')];
+    const over=items.find(i=>{
+      const r2=i.getBoundingClientRect();
+      return touch.clientY>=r2.top && touch.clientY<=r2.bottom;
+    });
+    if(over) over.classList.add('tdp-drag-over');
+  },{passive:false});
+
+  const endTouch=e=>{
+    clearTimeout(longTimer);
+    if(ghost){ghost.remove();ghost=null;}
+    if(!active){active=false;touchSid=null;touchEl=null;return;}
+    active=false;
+    if(touchEl) touchEl.classList.remove('tdp-dragging');
+    el.querySelectorAll('.tdpanel-sub-item').forEach(i=>i.classList.remove('tdp-drag-over'));
+    // Find drop target
+    const touch=(e.changedTouches||e.touches)[0];
+    if(touch){
+      const items=[...el.querySelectorAll('.tdpanel-sub-item')];
+      const over=items.find(i=>{
+        const r=i.getBoundingClientRect();
+        return touch.clientY>=r.top && touch.clientY<=r.bottom && i.dataset.sid!==touchSid;
+      });
+      if(over) tdpReorder(touchSid, over.dataset.sid);
+    }
+    touchSid=null;touchEl=null;
+  };
+  el.addEventListener('touchend',endTouch,{passive:true});
+  el.addEventListener('touchcancel',endTouch,{passive:true});
+}
+
+function tdpReorder(fromSid, toSid){
+  const parent=S.todos.find(x=>x.id===tdpId);if(!parent||!parent.subtasks)return;
+  const arr=parent.subtasks;
+  const fi=arr.indexOf(fromSid),ti=arr.indexOf(toSid);
+  if(fi===-1||ti===-1)return;
+  const[m]=arr.splice(fi,1);arr.splice(ti,0,m);
+  autoSave();renderTDP();renderTodos();
 }
 
 function renderTDP(){
