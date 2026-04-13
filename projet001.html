@@ -463,16 +463,16 @@ div:hover>.item-img-del{display:block;}
   word-break:break-word;cursor:text;
 }
 .tdpanel-sub-text.done-sub{text-decoration:line-through;opacity:.4;}
-.tdpanel-add-sub{
-  display:flex;gap:6px;margin-top:8px;
-}
+.tdpanel-add-sub{margin-top:6px;}
 .tdpanel-add-sub input{
-  flex:1;font-family:var(--sans);font-size:13px;
-  padding:8px 10px;border:1px solid var(--line2);border-radius:var(--r);
+  width:100%;box-sizing:border-box;
+  font-family:var(--sans);font-size:14px;
+  padding:10px 12px;border:1px solid var(--line);border-radius:var(--r);
   background:var(--bg);color:var(--text);outline:none;
   transition:border-color .12s;
 }
 .tdpanel-add-sub input:focus{border-color:var(--accent);}
+.tdpanel-add-sub input::placeholder{color:var(--text3);}
 .tdpanel-comment{
   width:100%;font-family:var(--sans);font-size:13px;
   padding:8px 10px;border:1px solid var(--line2);border-radius:var(--r);
@@ -3226,9 +3226,7 @@ function todoItemHtml(t){
       <div class="item-text" id="qtext-${t.id}"
         ${isSubtask
           ? `onclick="quickEditInline('${t.id}','todos',renderTodos)" style="cursor:text;"`
-          : IS_TOUCH
-            ? `onclick="quickEditText('${t.id}')" style="cursor:pointer;"`
-            : `onclick="openTDP('${t.id}')" style="cursor:pointer;" title="Ouvrir le détail"`
+          : `onclick="quickEditText('${t.id}')" style="cursor:pointer;"`
         }>${esc(t.text)}</div>
       ${isSubtask ? '' : `<div class="item-meta-row">
         <div class="item-meta">
@@ -3380,9 +3378,8 @@ function renderTDP(){
           </div>`).join('')}
       </div>
       <div class="tdpanel-add-sub">
-        <input type="text" id="tdp-sub-in" placeholder="Nouvelle sous-tâche… (Entrée pour ajouter)"
+        <input type="text" id="tdp-sub-in" placeholder="Ajouter un élément…"
           onkeydown="if(event.key==='Enter'){event.preventDefault();tdpAddSub();}">
-        <button class="save-btn" onclick="tdpAddSub()">+ Add</button>
       </div>
     </div>
 
@@ -3427,12 +3424,27 @@ function tdpAddSub(){
   S.todos.push(sub);
   if(!t.subtasks) t.subtasks=[];
   t.subtasks.push(sid);
-  collapsedParents.add(tdpId); // keep subtasks hidden in main list
+  collapsedParents.add(tdpId);
   if(inp) inp.value='';
   autoSave();
-  renderTDP();
   renderTodos();
-  setTimeout(()=>{ const i=document.getElementById('tdp-sub-in'); if(i) i.focus(); },50);
+  // Inject item directly — no full panel re-render so focus stays
+  const list = document.getElementById('tdp-sub-list');
+  if(list){
+    const div = document.createElement('div');
+    div.className='tdpanel-sub-item'; div.dataset.sid=sid;
+    div.innerHTML=`
+      <input type="checkbox" class="item-check">
+      <span class="tdpanel-sub-text" id="tdpst-${sid}" onclick="tdpQuickEditSub('${sid}')">${esc(text)}</span>
+      <button class="del" onclick="tdpDelSub('${sid}')" style="opacity:.3;">×</button>`;
+    div.querySelector('input').addEventListener('change',()=>tdpToggleSub(sid));
+    list.appendChild(div);
+    // Update count badge
+    const allSubs=(t.subtasks||[]).map(s=>S.todos.find(x=>x.id===s)).filter(Boolean);
+    const badge=document.querySelector('.tdpanel-section-title span');
+    if(badge){const done=allSubs.filter(s=>s.done).length;badge.textContent=`${done}/${allSubs.length}`;}
+  }
+  setTimeout(()=>{ if(inp) inp.focus(); }, 10);
   logA('todo','Sous-tâche ajoutée: "'+text+'" → "'+t.text+'"');
 }
 
