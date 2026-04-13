@@ -378,7 +378,8 @@ div:hover>.item-img-del{display:block;}
   .item > .comment-btn,
   .item > .img-btn,
   .item > .edit-btn,
-  .item > .del{display:none;}
+  .item > .del,
+  .item > .sub-arrows{display:none;}
   /* Line 2: meta row with actions pinned right — injected inside item-body */
   .item-meta-row{
     display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:5px;
@@ -398,6 +399,9 @@ div:hover>.item-img-del{display:block;}
   /* Reorder ↑↓ move into mobile-actions (line 2, right side) */
   .mobile-reorder{display:flex;gap:2px;align-items:center;}
   .mobile-reorder .rb{width:22px;height:22px;font-size:11px;}
+  /* Subtask arrows + × always visible on mobile */
+  .is-subtask > .sub-arrows{display:flex !important;align-items:center;}
+  .is-subtask > .sub-del{display:block !important;opacity:.4;}
 }
 @media(min-width:601px){
   .mobile-actions{display:none;}
@@ -3376,11 +3380,11 @@ function todoItemHtml(t){
           const arr=par&&par.subtasks||[];
           const idx=arr.indexOf(t.id);
           const first=idx===0, last=idx===arr.length-1;
-          return `<span style="display:flex;gap:1px;align-items:center;flex-shrink:0;">
+          const arrowsHtml=`
             <button style="background:none;border:none;cursor:pointer;font-size:11px;padding:2px 4px;color:var(--text3);opacity:${first?.2:.5};line-height:1;" ${first?'disabled':''} onclick="moveSubtask('${t.parentId}','${t.id}',-1)">↑</button>
-            <button style="background:none;border:none;cursor:pointer;font-size:11px;padding:2px 4px;color:var(--text3);opacity:${last?.2:.5};line-height:1;" ${last?'disabled':''} onclick="moveSubtask('${t.parentId}','${t.id}',1)">↓</button>
-          </span>
-          <button class="del" onclick="delTodo('${t.id}')" style="opacity:.3;transition:opacity .15s;" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=.3">×</button>`;
+            <button style="background:none;border:none;cursor:pointer;font-size:11px;padding:2px 4px;color:var(--text3);opacity:${last?.2:.5};line-height:1;" ${last?'disabled':''} onclick="moveSubtask('${t.parentId}','${t.id}',1)">↓</button>`;
+          return `<span class="sub-arrows" style="display:flex;gap:1px;align-items:center;flex-shrink:0;">${arrowsHtml}</span>
+          <button class="del sub-del" onclick="delTodo('${t.id}')" style="opacity:.3;transition:opacity .15s;" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=.3">×</button>`;
         })()
       : `<button class="attach-btn${t.attachments&&t.attachments.length?' has-attach':''}" onclick="toggleAttachments('${t.id}')" title="Pièces jointes">📎</button>
     <button class="comment-btn${hasComment?' has-comment':''}" onclick="toggleComment('${t.id}')" title="${hasComment?'Voir le commentaire':'Ajouter un commentaire'}">💬</button>
