@@ -476,6 +476,14 @@ div:hover>.item-img-del{display:block;}
 .tdpanel-sub-item .del:hover{opacity:1;color:var(--red);}
 .tdpanel-sub-item.tdp-dragging{opacity:.25;}
 .tdpanel-sub-item.tdp-drag-over{background:var(--bg2);border-radius:var(--r);}
+.tdp-arrows{display:flex;flex-direction:row;gap:1px;flex-shrink:0;}
+.tdp-arrow{
+  background:none;border:none;cursor:pointer;
+  font-size:11px;line-height:1;padding:2px 3px;
+  color:var(--text3);opacity:.4;transition:opacity .1s;
+}
+.tdp-arrow:hover:not(:disabled){opacity:1;color:var(--text);}
+.tdp-arrow:disabled{opacity:.15;cursor:default;}
 .tdpanel-sub-text{
   flex:1;font-size:14px;color:var(--text);line-height:1.4;
   word-break:break-word;cursor:text;
@@ -3425,67 +3433,15 @@ function setupTDPDrag(el){
     const it=e.target.closest('.tdpanel-sub-item');if(!it||it.dataset.sid===dragSid)return;
     tdpReorder(dragSid,it.dataset.sid);
   });
+}
 
-  // ── Mobile touch drag (long press → drag) ──
-  let touchSid=null, touchEl=null, ghost=null, longTimer=null, active=false;
-
-  el.addEventListener('touchstart',e=>{
-    const it=e.target.closest('.tdpanel-sub-item');if(!it)return;
-    touchSid=it.dataset.sid; touchEl=it;
-    longTimer=setTimeout(()=>{
-      active=true;
-      it.classList.add('tdp-dragging');
-      // Create ghost clone
-      ghost=it.cloneNode(true);
-      const r=it.getBoundingClientRect();
-      ghost.style.cssText=`position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;
-        opacity:.85;background:var(--card);border:1px solid var(--accent);border-radius:var(--r2);
-        z-index:9999;pointer-events:none;padding:9px 12px;box-sizing:border-box;`;
-      document.body.appendChild(ghost);
-      // Haptic if available
-      if(navigator.vibrate) navigator.vibrate(40);
-    },450);
-  },{passive:true});
-
-  el.addEventListener('touchmove',e=>{
-    if(!active||!ghost){clearTimeout(longTimer);return;}
-    e.preventDefault();
-    const touch=e.touches[0];
-    const r=touchEl.getBoundingClientRect();
-    ghost.style.top=(touch.clientY - r.height/2)+'px';
-    // Highlight target
-    el.querySelectorAll('.tdpanel-sub-item').forEach(i=>i.classList.remove('tdp-drag-over'));
-    const target=el.querySelector('.tdpanel-sub-item:not(.tdp-dragging)');
-    // Find which item the finger is over
-    const items=[...el.querySelectorAll('.tdpanel-sub-item:not(.tdp-dragging)')];
-    const over=items.find(i=>{
-      const r2=i.getBoundingClientRect();
-      return touch.clientY>=r2.top && touch.clientY<=r2.bottom;
-    });
-    if(over) over.classList.add('tdp-drag-over');
-  },{passive:false});
-
-  const endTouch=e=>{
-    clearTimeout(longTimer);
-    if(ghost){ghost.remove();ghost=null;}
-    if(!active){active=false;touchSid=null;touchEl=null;return;}
-    active=false;
-    if(touchEl) touchEl.classList.remove('tdp-dragging');
-    el.querySelectorAll('.tdpanel-sub-item').forEach(i=>i.classList.remove('tdp-drag-over'));
-    // Find drop target
-    const touch=(e.changedTouches||e.touches)[0];
-    if(touch){
-      const items=[...el.querySelectorAll('.tdpanel-sub-item')];
-      const over=items.find(i=>{
-        const r=i.getBoundingClientRect();
-        return touch.clientY>=r.top && touch.clientY<=r.bottom && i.dataset.sid!==touchSid;
-      });
-      if(over) tdpReorder(touchSid, over.dataset.sid);
-    }
-    touchSid=null;touchEl=null;
-  };
-  el.addEventListener('touchend',endTouch,{passive:true});
-  el.addEventListener('touchcancel',endTouch,{passive:true});
+function tdpMoveArrow(sid, dir){
+  const parent=S.todos.find(x=>x.id===tdpId);if(!parent||!parent.subtasks)return;
+  const arr=parent.subtasks;
+  const i=arr.indexOf(sid);if(i===-1)return;
+  const ni=i+dir;if(ni<0||ni>=arr.length)return;
+  [arr[i],arr[ni]]=[arr[ni],arr[i]];
+  autoSave();renderTDP();renderTodos();
 }
 
 function tdpReorder(fromSid, toSid){
@@ -3527,10 +3483,14 @@ function renderTDP(){
         <span style="font-family:var(--mono);font-size:10px;color:${doneCount===subs.length&&subs.length?'var(--green)':'var(--text3)'};">${doneCount}/${subs.length}</span>
       </div>
       <div id="tdp-sub-list">
-        ${subs.map(s=>`
+        ${subs.map((s,idx)=>`
           <div class="tdpanel-sub-item" data-sid="${s.id}" draggable="true">
             <input type="checkbox" class="item-check" ${s.done?'checked':''} onchange="tdpToggleSub('${s.id}')">
             <span class="tdpanel-sub-text${s.done?' done-sub':''}" id="tdpst-${s.id}" onclick="tdpQuickEditSub('${s.id}')" style="cursor:grab;">${esc(s.text)}</span>
+            <span class="tdp-arrows">
+              <button class="tdp-arrow" onclick="tdpMoveArrow('${s.id}',-1)" ${idx===0?'disabled':''}>↑</button>
+              <button class="tdp-arrow" onclick="tdpMoveArrow('${s.id}',1)" ${idx===subs.length-1?'disabled':''}>↓</button>
+            </span>
             <button class="del" onclick="tdpDelSub('${s.id}')" style="opacity:.3;">×</button>
           </div>`).join('')}
       </div>
