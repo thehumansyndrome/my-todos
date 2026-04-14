@@ -670,13 +670,13 @@ function renderPreview() {
     html += '<h2>Étapes</h2><ol class="preview-steps">';
     let n = 0;
     for (const e of mo.etapes) {
-      if (e.texte) { n++; html += `<li class="step">${n}. ${esc(e.texte)}</li>`; }
-      for (const se of e.sous_etapes) html += `<li class="sub">${esc(se)}</li>`;
+      if (e.texte) { n++; html += `<li class="step">${n}. ${linkify(e.texte)}</li>`; }
+      for (const se of e.sous_etapes) html += `<li class="sub">${linkify(se)}</li>`;
     }
     html += '</ol>';
   }
-  if (mo.resultat) html += `<div class="preview-result">✅ <b>Résultat attendu :</b> ${esc(mo.resultat)}</div>`;
-  if (mo.erreur)   html += `<div class="preview-error">⚠️ <b>Erreur fréquente :</b> ${esc(mo.erreur)}</div>`;
+  if (mo.resultat) html += `<div class="preview-result">✅ <b>Résultat attendu :</b> ${linkify(mo.resultat)}</div>`;
+  if (mo.erreur)   html += `<div class="preview-error">⚠️ <b>Erreur fréquente :</b> ${linkify(mo.erreur)}</div>`;
 
   // assignés dans aperçu
   const reds = curRedact.map(id => S.membres.find(m => m.id === id)).filter(Boolean);
@@ -1186,13 +1186,13 @@ function refreshDrawer() {
     moHTML += '<ul class="drawer-mo-steps">';
     let n = 0;
     for (const etape of mo.etapes) {
-      if (etape.texte) { n++; moHTML += `<li class="drawer-mo-step"><span class="drawer-mo-step-num">${n}.</span><span>${esc(etape.texte)}</span></li>`; }
-      for (const se of etape.sous_etapes) moHTML += `<li class="drawer-mo-substep">${esc(se)}</li>`;
+      if (etape.texte) { n++; moHTML += `<li class="drawer-mo-step"><span class="drawer-mo-step-num">${n}.</span><span>${linkify(etape.texte)}</span></li>`; }
+      for (const se of etape.sous_etapes) moHTML += `<li class="drawer-mo-substep">${linkify(se)}</li>`;
     }
     moHTML += '</ul>';
   }
-  if (mo.resultat) moHTML += `<div class="drawer-mo-result">✅ <b>Résultat attendu :</b> ${esc(mo.resultat)}</div>`;
-  if (mo.erreur)   moHTML += `<div class="drawer-mo-error">⚠️ <b>Erreur fréquente :</b> ${esc(mo.erreur)}</div>`;
+  if (mo.resultat) moHTML += `<div class="drawer-mo-result">✅ <b>Résultat attendu :</b> ${linkify(mo.resultat)}</div>`;
+  if (mo.erreur)   moHTML += `<div class="drawer-mo-error">⚠️ <b>Erreur fréquente :</b> ${linkify(mo.erreur)}</div>`;
   contentEl.innerHTML = moHTML || '<span style="font-size:13px;color:var(--muted)">Contenu vide</span>';
 
   // assignés
@@ -1686,6 +1686,14 @@ function autoSave() {
 function esc(s) {
   if (!s) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Échappe le texte puis transforme les URLs en liens cliquables
+function linkify(s) {
+  if (!s) return '';
+  const escaped = esc(s);
+  return escaped.replace(/(https?:\/\/[^\s<>"]+)/g,
+    '<a href="$1" target="_blank" rel="noopener" style="color:var(--blue);word-break:break-all;">$1</a>');
 }
 
 function avatarHTML(m, withName = false) {
