@@ -525,8 +525,33 @@ div:hover>.item-img-del{display:block;}
   display:flex;gap:8px;flex-shrink:0;
 }
 
-/* ── REVIEWS ── */
-.rv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:4px;}
+/* ── WANTED ── */
+.wt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:4px;}
+@media(max-width:500px){.wt-grid{grid-template-columns:repeat(2,1fr);gap:8px;}}
+.wt-card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r2);
+  overflow:hidden;cursor:pointer;position:relative;
+  display:flex;flex-direction:column;
+  transition:box-shadow .15s;
+}
+.wt-card:hover{box-shadow:0 2px 10px rgba(0,0,0,.08);}
+.wt-card-img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;background:var(--bg2);}
+.wt-card-no-img{width:100%;aspect-ratio:1/1;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:32px;color:var(--text3);}
+.wt-card-body{padding:8px 10px;flex:1;display:flex;flex-direction:column;gap:3px;}
+.wt-card-title{font-size:13px;font-weight:500;color:var(--text);line-height:1.35;word-break:break-word;}
+.wt-card-desc{font-size:11px;color:var(--text2);line-height:1.45;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.wt-card-price{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:500;margin-top:2px;}
+.wt-card-del{position:absolute;top:5px;right:5px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;line-height:1;padding:0;display:none;align-items:center;justify-content:center;}
+.wt-card:hover .wt-card-del{display:flex;}
+.wt-edit-overlay{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.45);align-items:center;justify-content:center;padding:16px;}
+.wt-edit-overlay.open{display:flex;}
+.wt-edit-box{background:var(--card);border:1px solid var(--line);border-radius:var(--r2);padding:16px;display:flex;flex-direction:column;gap:10px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto;}
+.wt-edit-box h3{font-size:14px;font-weight:500;color:var(--text);margin:0;}
+.wt-edit-img-preview{width:100%;max-height:180px;object-fit:cover;border-radius:var(--r);border:1px solid var(--line);display:block;}
+#wt-paste-zone:focus-within,#wt-paste-zone:hover{border-color:var(--text3);background:var(--bg2);}
+
+
+display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:4px;}
 @media(max-width:500px){.rv-grid{grid-template-columns:1fr;}}
 .rv-card{
   background:var(--card);border:1px solid var(--line);border-radius:var(--r2);
@@ -1329,6 +1354,7 @@ div:hover>.item-img-del{display:block;}
     <button class="tab" onclick="switchTab('habits')">Habits</button>
     <button class="tab" onclick="switchTab('challenges')">Challenges</button>
     <button class="tab" onclick="switchTab('reviews')">Reviews</button>
+    <button class="tab" onclick="switchTab('wanted')">Wanted</button>
     <button class="tab" onclick="switchTab('archive')">Archive</button>
     <button class="tab" onclick="switchTab('log')">Log</button>
     <button class="tab" onclick="switchTab('templates')">Templates</button>
@@ -1643,6 +1669,55 @@ div:hover>.item-img-del{display:block;}
     <div class="rv-grid" id="rv-list"></div>
   </div>
 
+  <!-- ══ WANTED ══ -->
+  <div id="tab-wanted" class="section" style="display:none;">
+    <div class="stats" id="wt-stats"></div>
+
+    <!-- Paste zone -->
+    <div id="wt-paste-zone" onclick="document.getElementById('wt-title-in').focus()"
+      style="border:2px dashed var(--line2);border-radius:var(--r2);padding:18px 12px;text-align:center;cursor:pointer;margin-bottom:10px;transition:border-color .15s,background .15s;">
+      <div id="wt-paste-hint" style="display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;">
+        <span style="font-size:28px;opacity:.35;">📋</span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--text3);">Colle une image ici <kbd style="font-family:var(--mono);font-size:10px;padding:1px 5px;border:1px solid var(--line2);border-radius:3px;background:var(--bg2);">Ctrl+V</kbd></span>
+      </div>
+      <!-- Preview inside paste zone once image is loaded -->
+      <div id="wt-new-preview" style="display:none;position:relative;display:none;margin:0 auto;">
+        <img id="wt-new-thumb" style="max-width:100%;max-height:220px;border-radius:var(--r);object-fit:contain;border:1px solid var(--line);display:block;margin:0 auto;" src="">
+        <button onclick="event.stopPropagation();wtClearNewImg()" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;line-height:1;padding:0;">×</button>
+      </div>
+    </div>
+
+    <!-- Fields row -->
+    <div class="add-row" style="flex-wrap:wrap;gap:8px;align-items:center;">
+      <input class="main-in" type="text" id="wt-title-in" placeholder="Titre (optionnel)…" style="flex:1;min-width:140px;" onkeydown="if(event.key==='Enter')addWanted()">
+      <input class="main-in" type="text" id="wt-price-in" placeholder="Prix…" style="width:90px;" onkeydown="if(event.key==='Enter')addWanted()">
+      <label class="cam-btn" title="Galerie">🖼<input type="file" accept="image/*" style="display:none" onchange="wtPickImg(this,'new')"></label>
+      <button class="add-btn" onclick="addWanted()">+ Add</button>
+    </div>
+
+    <div class="wt-grid" id="wt-list"></div>
+  </div>
+
+  <!-- Edit overlay -->
+  <div class="wt-edit-overlay" id="wt-edit-overlay" onclick="if(event.target===this)closeWtEdit()">
+    <div class="wt-edit-box">
+      <h3>Modifier</h3>
+      <img id="wt-edit-img-preview" class="wt-edit-img-preview" src="" style="display:none;">
+      <div style="display:flex;gap:6px;">
+        <label class="cam-btn" title="Photo">📷<input type="file" accept="image/*" capture="environment" style="display:none" onchange="wtPickImg(this,'edit')"></label>
+        <label class="cam-btn" title="Galerie">🖼<input type="file" accept="image/*" style="display:none" onchange="wtPickImg(this,'edit')"></label>
+        <button class="lbtn" onclick="wtRemoveEditImg()">× Photo</button>
+      </div>
+      <input class="edit-in" type="text" id="wt-edit-title" placeholder="Titre (optionnel)…">
+      <textarea class="edit-in" id="wt-edit-desc" rows="2" placeholder="Description (optionnel)…" style="resize:vertical;"></textarea>
+      <input class="edit-in" type="text" id="wt-edit-price" placeholder="Prix (optionnel)…">
+      <div style="display:flex;gap:6px;">
+        <button class="save-btn" onclick="saveWtEdit()">Enregistrer</button>
+        <button class="cancel-btn" onclick="closeWtEdit()">Annuler</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ══ ARCHIVE ══ -->
   <div id="tab-archive" class="section" style="display:none;">
     <div style="display:flex;align-items:center;gap:10px;padding:12px 0 8px;flex-wrap:wrap;">
@@ -1843,7 +1918,7 @@ div:hover>.item-img-del{display:block;}
 const P='projet001';
 const IS_TOUCH = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 const SK='td_v4_'+P, AK='td_act_'+P, TK='td_theme_'+P, DK='td_drive_'+P;
-const TABS=['todos','courses','notes','reminders','habits','challenges','reviews','archive','log','templates'];
+const TABS=['todos','courses','notes','reminders','habits','challenges','reviews','wanted','archive','log','templates'];
 
 /* ══ DEFAULT CATEGORIES ══ */
 const DEFAULT_CATS = [
@@ -1852,7 +1927,7 @@ const DEFAULT_CATS = [
 ];
 
 /* ══ STATE ══ */
-let S={todos:[],notes:[],reminders:[],habits:[],habitLogs:{},categories:[],challenges:[],courses:[]};
+let S={todos:[],notes:[],reminders:[],habits:[],habitLogs:{},categories:[],challenges:[],courses:[],wanted:[]};
 let AL=[];
 let wOff=0, tF='all', hzF='all', dF='all', rF='all', hF='all', chF='all', notesQ='';
 
@@ -1906,6 +1981,7 @@ function ensureState(){
   S.courses.forEach(c=>{ if(!c.images) c.images=[]; });
   if(!S.courseTemplates) S.courseTemplates=[];
   if(!S.reviews) S.reviews=[];
+  if(!S.wanted) S.wanted=[];
 }
 
 function save(){try{localStorage.setItem(SK,JSON.stringify(S));}catch(e){}}
@@ -2167,6 +2243,7 @@ function switchTab(t){
   if(t==='log'){renderLog();renderAL();loadDriveConf();renderCatManager();}
   if(t==='archive')loadArchive(false);
   if(t==='reviews')renderReviews();
+  if(t==='wanted')renderWanted();
   if(t==='habits')renderHabits();
   if(t==='challenges')renderChallenges();
   if(t==='templates')renderTemplates();
@@ -2299,8 +2376,8 @@ function confirmImp(){
     else toast('❌ Format invalide');}
   catch(e){toast('❌ JSON invalide');}
 }
-function clearAll(){if(!confirm('Tout effacer ?'))return;S={todos:[],notes:[],reminders:[],habits:[],habitLogs:{},challenges:[],categories:JSON.parse(JSON.stringify(DEFAULT_CATS))};save();renderCatSelects();renderAll();renderLog();toast('Données effacées');logA('drive','Tout effacé');}
-function renderAll(){renderTodos();renderNotes();renderReminders();renderHabits();renderChallenges();renderCourses();renderReviews();}
+function clearAll(){if(!confirm('Tout effacer ?'))return;S={todos:[],notes:[],reminders:[],habits:[],habitLogs:{},challenges:[],categories:JSON.parse(JSON.stringify(DEFAULT_CATS)),wanted:[]};save();renderCatSelects();renderAll();renderLog();toast('Données effacées');logA('drive','Tout effacé');}
+function renderAll(){renderTodos();renderNotes();renderReminders();renderHabits();renderChallenges();renderCourses();renderReviews();renderWanted();}
 document.getElementById('imp-modal').addEventListener('click',function(e){if(e.target===this)closeImp();});
 
 /* ══ GOOGLE DRIVE ══ */
@@ -2382,6 +2459,7 @@ async function drivePull(){
       habitLogs:d.habitLogs||{},
       challenges:d.challenges||S.challenges||[],
       courses:d.courses||S.courses||[],
+      wanted:d.wanted||S.wanted||[],
       categories:(d.categories&&d.categories.length)?d.categories:S.categories&&S.categories.length?S.categories:[]
     };
     ensureState();
@@ -5534,7 +5612,151 @@ function renderReviews(){
   }).join('');
 }
 
-/* ══ FONT SIZE ══ */
+/* ══ WANTED ══ */
+let wtNewImgB64 = null;
+let wtEditId = null;
+let wtEditImgB64 = null;
+
+// Global paste listener — active only when Wanted tab is open
+document.addEventListener('paste', function(e){
+  const activeTab = document.querySelector('.section.active');
+  if(!activeTab || activeTab.id !== 'tab-wanted') return;
+  // Ignore if user is typing in an input/textarea
+  const tag = document.activeElement && document.activeElement.tagName;
+  if(tag === 'INPUT' || tag === 'TEXTAREA') return;
+  const items = e.clipboardData && e.clipboardData.items;
+  if(!items) return;
+  for(let i=0; i<items.length; i++){
+    if(items[i].type.startsWith('image/')){
+      const file = items[i].getAsFile();
+      if(!file) continue;
+      const r = new FileReader();
+      r.onload = ev => wtSetNewImg(ev.target.result);
+      r.readAsDataURL(file);
+      e.preventDefault();
+      break;
+    }
+  }
+});
+
+function wtSetNewImg(b64){
+  wtNewImgB64 = b64;
+  const hint    = document.getElementById('wt-paste-hint');
+  const preview = document.getElementById('wt-new-preview');
+  const thumb   = document.getElementById('wt-new-thumb');
+  const zone    = document.getElementById('wt-paste-zone');
+  thumb.src = b64;
+  if(hint)    hint.style.display = 'none';
+  if(preview) preview.style.display = 'block';
+  if(zone)    zone.style.borderColor = 'var(--accent)';
+}
+
+function wtPickImg(input, ctx){
+  const file = input.files[0]; if(!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    if(ctx==='new'){
+      wtSetNewImg(e.target.result);
+    } else {
+      wtEditImgB64 = e.target.result;
+      const pi = document.getElementById('wt-edit-img-preview');
+      pi.src = wtEditImgB64; pi.style.display = 'block';
+    }
+  };
+  r.readAsDataURL(file);
+  input.value='';
+}
+
+function wtClearNewImg(){
+  wtNewImgB64 = null;
+  const hint    = document.getElementById('wt-paste-hint');
+  const preview = document.getElementById('wt-new-preview');
+  const thumb   = document.getElementById('wt-new-thumb');
+  const zone    = document.getElementById('wt-paste-zone');
+  if(hint)    hint.style.display = 'flex';
+  if(preview) preview.style.display = 'none';
+  if(thumb)   thumb.src = '';
+  if(zone)    zone.style.borderColor = '';
+}
+
+
+function addWanted(){
+  const title = document.getElementById('wt-title-in').value.trim();
+  const price = document.getElementById('wt-price-in').value.trim();
+  if(!title && !wtNewImgB64){ toast('⚠ Ajoute au moins un titre ou une image'); return; }
+  S.wanted.unshift({id:uid(), title, desc:'', price, img:wtNewImgB64||null, ts:Date.now()});
+  document.getElementById('wt-title-in').value='';
+  document.getElementById('wt-price-in').value='';
+  wtClearNewImg();
+  autoSave(); renderWanted();
+  logA('wanted','Ajouté: "'+(title||'(sans titre)')+'"');
+}
+
+function delWanted(id){
+  if(!confirm('Supprimer cet élément ?')) return;
+  S.wanted = S.wanted.filter(w=>w.id!==id);
+  autoSave(); renderWanted();
+}
+
+function openWtEdit(id){
+  const w = S.wanted.find(x=>x.id===id); if(!w) return;
+  wtEditId = id;
+  wtEditImgB64 = null;
+  const pi = document.getElementById('wt-edit-img-preview');
+  if(w.img){ pi.src=w.img; pi.style.display='block'; } else { pi.src=''; pi.style.display='none'; }
+  document.getElementById('wt-edit-title').value = w.title||'';
+  document.getElementById('wt-edit-desc').value  = w.desc||'';
+  document.getElementById('wt-edit-price').value = w.price||'';
+  document.getElementById('wt-edit-overlay').classList.add('open');
+}
+
+function closeWtEdit(){
+  wtEditId=null; wtEditImgB64=null;
+  document.getElementById('wt-edit-overlay').classList.remove('open');
+}
+
+function wtRemoveEditImg(){
+  wtEditImgB64='__remove__';
+  const pi=document.getElementById('wt-edit-img-preview');
+  pi.src=''; pi.style.display='none';
+}
+
+function saveWtEdit(){
+  const w = S.wanted.find(x=>x.id===wtEditId); if(!w) return;
+  w.title = document.getElementById('wt-edit-title').value.trim();
+  w.desc  = document.getElementById('wt-edit-desc').value.trim();
+  w.price = document.getElementById('wt-edit-price').value.trim();
+  if(wtEditImgB64==='__remove__') w.img=null;
+  else if(wtEditImgB64) w.img=wtEditImgB64;
+  closeWtEdit();
+  autoSave(); renderWanted();
+}
+
+function renderWanted(){
+  if(!S.wanted) S.wanted=[];
+  const el=document.getElementById('wt-list'); if(!el) return;
+  const stats=document.getElementById('wt-stats');
+  const n=S.wanted.length;
+  if(stats) stats.innerHTML = n ? `<div class="stat"><div class="stat-n">${n}</div><div class="stat-l">Wanted</div></div>` : '';
+
+  if(!n){ el.innerHTML='<div class="empty">Aucun élément — ajoute une image ou un titre</div>'; return; }
+
+  el.innerHTML = S.wanted.map(w=>`
+    <div class="wt-card" onclick="openWtEdit('${w.id}')">
+      ${w.img
+        ? `<img class="wt-card-img" src="${w.img}" loading="lazy">`
+        : `<div class="wt-card-no-img">🛒</div>`
+      }
+      <button class="wt-card-del" onclick="event.stopPropagation();delWanted('${w.id}')">×</button>
+      <div class="wt-card-body">
+        ${w.title ? `<div class="wt-card-title">${esc(w.title)}</div>` : ''}
+        ${w.desc  ? `<div class="wt-card-desc">${esc(w.desc)}</div>`  : ''}
+        ${w.price ? `<div class="wt-card-price">${esc(w.price)}</div>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+
 const FS_KEY = 'td_fs_' + P;
 const FS_STEPS = [0.8, 0.9, 1.0, 1.1, 1.2, 1.35, 1.5];
 const FS_DEFAULT_IDX = 2; // 1.0
