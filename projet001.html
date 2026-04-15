@@ -1310,6 +1310,7 @@ div:hover>.item-img-del{display:block;}
       <span class="live-badge" id="live-badge"><span class="live-dot"></span>Live</span>
     </div>
     <div class="header-right">
+      <button class="hbtn" id="undo-btn" onclick="undoLast()" title="Annuler la dernière suppression" style="display:none">↩</button>
       <button class="hbtn" id="hbtn-drive" title="Google Drive" onclick="switchTab('log');setTimeout(()=>document.getElementById('drive-anchor').scrollIntoView({behavior:'smooth'}),120)">☁</button>
       <button class="hbtn" id="theme-btn" onclick="toggleTheme()">☀︎</button>
     </div>
@@ -2383,10 +2384,10 @@ function updateDriveUI(){
 function loadGIS(cb){if(window.google&&window.google.accounts){cb();return;}const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';s.onload=cb;document.head.appendChild(s);}
 function driveAuth(){
   const cid=document.getElementById('drive-cid').value.trim();if(!cid){toast('⚠ Entre ton Client ID');return;}
-  drCfg.clientId=cid;saveDriveConf();setDS(null,'Connexion…');
-  loadGIS(()=>{try{const cl=google.accounts.oauth2.initTokenClient({client_id:cid,scope:'https://www.googleapis.com/auth/drive.file',callback:(r)=>{if(r.error){setDS(false,'Erreur: '+r.error);toast('❌ '+r.error);return;}drTok=r.access_token;drFid=null;setDS(true,'Connecté ✓');setSaveStatus('ok');updateDriveUI();sessionStorage.setItem('td_tok_'+P,r.access_token);toast('✓ Drive connecté');logA('drive','Connecté à Google Drive');drLoadTemplates();if(pollSecs>0)startPolling();uploadDeferredImgs();}});cl.requestAccessToken();}catch(e){setDS(false,'Erreur: '+e.message);toast('❌ '+e.message);}});
+  drCfg.clientId=cid;saveDriveConf();setSyncDot('pending');
+  loadGIS(()=>{try{const cl=google.accounts.oauth2.initTokenClient({client_id:cid,scope:'https://www.googleapis.com/auth/drive.file',callback:(r)=>{if(r.error){setSyncDot('error');toast('❌ '+r.error);return;}drTok=r.access_token;drFid=null;setSyncDot('ok');updateDriveUI();sessionStorage.setItem('td_tok_'+P,r.access_token);toast('✓ Drive connecté');logA('drive','Connecté à Google Drive');drLoadTemplates();if(pollSecs>0)startPolling();uploadDeferredImgs();}});cl.requestAccessToken();}catch(e){setSyncDot('error');toast('❌ '+e.message);}});
 }
-function driveDisc(){drTok=null;drFid=null;lastModifiedKnown=null;stopPolling();sessionStorage.removeItem('td_tok_'+P);setDS(null,'Déconnecté');setSaveStatus('local');updateDriveUI();toast('Drive déconnecté');}
+function driveDisc(){drTok=null;drFid=null;lastModifiedKnown=null;stopPolling();sessionStorage.removeItem('td_tok_'+P);setSyncDot('local');updateDriveUI();toast('Drive déconnecté');}
 
 async function drFindOrCreate(){
   if(drFid)return drFid;
