@@ -334,11 +334,12 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
 
 <div class="tabs">
   <div class="tab active" id="tb-editor"   onclick="gotoEditor()">Editeur</div>
+  <div class="tab"        id="tb-projets"  onclick="gotoProjets()">Projets</div>
   <div class="tab"        id="tb-epics"    onclick="gotoEpics()">Epics</div>
   <div class="tab"        id="tb-backlogs" onclick="gotoBacklogs()">Backlogs</div>
   <div class="tab"        id="tb-kanban"   onclick="gotoKanban()">Kanban</div>
   <div class="tab"        id="tb-team"     onclick="gotoTeam()">Equipe</div>
-  <div class="tab"        id="tb-history"  onclick="gotoHistory()">Historique</div>
+  <div class="tab"        id="tb-history"  onclick="gotoHistory()">US</div>
 </div>
 
 <div class="page">
@@ -355,6 +356,10 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
         <span style="font-size:12px;color:var(--muted);white-space:nowrap;">Rattacher a un epic :</span>
         <select id="epic-selector" onchange="attachEpicFromSelector()" style="flex:1;font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);outline:none;">
           <option value="">-- Choisir un epic --</option>
+        </select>
+        <span style="font-size:12px;color:var(--muted);white-space:nowrap;">Projet :</span>
+        <select id="us-projet-select" onchange="curUSProjet=this.value" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);outline:none;min-width:140px;">
+          <option value="">— Projet —</option>
         </select>
       </div>
       <textarea class="editor-area" id="raw-input" spellcheck="false" oninput="onEdit()"></textarea>
@@ -525,6 +530,18 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
   <div id="team-list"></div>
 </div>
 
+<!-- ── PROJETS ── -->
+<div id="tab-projets" class="section">
+  <div class="drive-bar">
+    <span class="drive-status" id="proj-status-label" style="flex:1;">Connectez-vous à Drive pour charger les projets.</span>
+    <button class="btn sm" onclick="loadSharedProjects()">&#8635; Rafraîchir</button>
+  </div>
+  <div style="padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;font-size:13px;color:var(--muted);">
+    Les projets sont gérés dans l'app <b>todos</b> (onglet Projets). Connectez-vous à Drive pour les synchroniser ici.
+  </div>
+  <div id="projets-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+</div>
+
 <!-- ── HISTORIQUE ── -->
 <div id="tab-history" class="section">
   <div class="drive-bar">
@@ -562,10 +579,15 @@ var TMPL = 'US: \nID: \nEPIC: \nPRIO: Must\nEST: \nTYPE: \n\nAS: \nWANT: \nSO: \
 /* ── State ── */
 var S = {history:[],epics:[],backlogs:[]};
 var driveFileId = null;
+var sharedFileId = null;
+var SHARED_FILE = 'shared.json';
+var sharedProjects = [];
+var curUSProjet = '';
 var tokenClient = null;
 var accessToken = sessionStorage.getItem(TOK) || null;
 var saveTimer = null;
 var curFilter = 'tous';
+var curUSProjFilter = 'tous';
 var editingEpicId = null;
 var editingBlId   = null;
 
@@ -605,20 +627,72 @@ function toggleTheme() {
 
 /* ── Tabs ── */
 function gotoTab(id) {
-  ['editor','epics','backlogs','kanban','team','history'].forEach(function(t) {
-    document.getElementById('tb-'+t).classList.toggle('active', t===id);
-    document.getElementById('tab-'+t).classList.toggle('active', t===id);
+  ['editor','projets','epics','backlogs','kanban','team','history'].forEach(function(t) {
+    var tb = document.getElementById('tb-'+t);
+    var sc = document.getElementById('tab-'+t);
+    if(tb) tb.classList.toggle('active', t===id);
+    if(sc) sc.classList.toggle('active', t===id);
   });
 }
 
-function gotoEditor()  { gotoTab('editor'); renderEpicSelector(); }
-function gotoKanban()  { gotoTab('kanban'); renderKanbanSelector(); renderKanban(); }
-function gotoTeam()    { gotoTab('team'); renderTeam(); renderSquads(); }
-function gotoTeam()    { gotoTab('team'); renderTeam(); }
-function startTab()    { gotoTab('epics'); }
+function gotoEditor()   { gotoTab('editor'); renderEpicSelector(); }
+function gotoProjets()  { gotoTab('projets'); }
+function gotoKanban()   { gotoTab('kanban'); renderKanbanSelector(); renderKanban(); }
+function gotoTeam()     { gotoTab('team'); renderTeam(); }
+function startTab()     { gotoTab('epics'); }
 function gotoEpics()    { gotoTab('epics'); }
 function gotoBacklogs() { gotoTab('backlogs'); }
 function gotoHistory()  { gotoTab('history'); }
+
+/* ── Shared Projects ── */
+function findSharedFile() {
+  var q=encodeURIComponent("name='"+SHARED_FILE+"' and trashed=false");
+  return fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id)',{headers:{Authorization:'Bearer '+accessToken}}).then(function(r){return r.json();}).then(function(d){return d.files&&d.files[0]?d.files[0].id:null;});
+}
+function loadSharedProjects() {
+  if (!accessToken) { toast('Connectez-vous a Drive d\'abord'); return; }
+  findSharedFile().then(function(id) {
+    if (!id) { toast('shared.json introuvable'); return; }
+    sharedFileId = id;
+    return fetch('https://www.googleapis.com/drive/v3/files/'+id+'?alt=media',{headers:{Authorization:'Bearer '+accessToken}}).then(function(r){return r.json();});
+  }).then(function(data) {
+    if (!data||!Array.isArray(data.projects)) return;
+    sharedProjects = data.projects;
+    populateProjetSelect();
+    renderProjets();
+    document.getElementById('proj-status-label').textContent = sharedProjects.length+' projets charges depuis todos';
+    toast('✓ '+sharedProjects.length+' projets charges');
+  }).catch(function(){ toast('Erreur chargement projets'); });
+}
+function populateProjetSelect() {
+  var sel = document.getElementById('us-projet-select');
+  if (!sel) return;
+  var prev = curUSProjet;
+  sel.innerHTML = '<option value="">— Projet —</option>';
+  sharedProjects.forEach(function(p) {
+    var opt = document.createElement('option');
+    opt.value = p.id; opt.textContent = p.name;
+    if (p.id === prev) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+function renderProjets() {
+  var el = document.getElementById('projets-list');
+  if (!el) return;
+  if (!sharedProjects.length) { el.innerHTML='<p style="color:var(--muted);font-size:13px;text-align:center;padding:40px 0;">Aucun projet charge.</p>'; return; }
+  el.innerHTML = sharedProjects.map(function(p) {
+    var count = S.history.filter(function(e){ return e.projet===p.id; }).length;
+    var label = count+' US rattaché'+(count>1?'s':'');
+    return '<div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-left:4px solid '+p.color+';border-radius:var(--radius);transition:border-color .15s;">'
+      +'<span style="width:12px;height:12px;border-radius:3px;background:'+p.color+';flex-shrink:0;display:inline-block;"></span>'
+      +'<div style="flex:1;min-width:0;">'
+      +'<div style="font-size:14px;font-weight:500;color:var(--text);">'+esc(p.name)+'</div>'
+      +'<div style="font-size:12px;color:var(--muted);margin-top:2px;">'+label+'</div>'
+      +'</div>'
+      +'<button class="btn sm" onclick="curUSProjFilter=\''+p.id+'\';gotoHistory()">Voir</button>'
+      +'</div>';
+  }).join('');
+}
 
 /* ── Parse ── */
 function parse(text) {
@@ -830,7 +904,7 @@ function saveUS() {
   var raw=document.getElementById('raw-input').value;
   var us=parse(raw);
   if (!us.titre&&!us.as) { toast('Rien a enregistrer'); return; }
-  var entry={id:Date.now(),titre:us.titre||'(sans titre)',epic:us.epic,prio:us.prio,est:us.est,acCount:us.ac.length,status:'brouillon',raw:raw,savedAt:new Date().toLocaleDateString('fr-FR')};
+  var entry={id:Date.now(),titre:us.titre||'(sans titre)',epic:us.epic,prio:us.prio,est:us.est,acCount:us.ac.length,status:'brouillon',projet:curUSProjet||'',raw:raw,savedAt:new Date().toLocaleDateString('fr-FR')};
   S.history.unshift(entry);
   if (S.history.length>50) S.history.pop();
   persist(); renderHistory(); renderEpics(); renderBacklogs();
@@ -1151,7 +1225,9 @@ function loadEntry(id) {
   var e=S.history.find(function(x){return x.id===id;});
   if (!e) return;
   document.getElementById('raw-input').value=e.raw;
-  renderPreview(); gotoTab('editor'); toast('Charge dans l&#39;editeur');
+  curUSProjet=e.projet||'';
+  populateProjetSelect();
+  renderPreview(); gotoEditor(); toast('Charge dans l&#39;editeur');
 }
 function cycleStatus(id) {
   var e=S.history.find(function(x){return x.id===id;});
@@ -1172,7 +1248,11 @@ function dlEntry(id,fmt) {
 
 function renderHistory() {
   var el=document.getElementById('history-container');
-  var filtered=curFilter==='tous'?S.history:S.history.filter(function(e){return (e.status||'brouillon')===curFilter;});
+  var filtered=S.history.filter(function(e){
+    var statusOk = curFilter==='tous' || (e.status||'brouillon')===curFilter;
+    var projOk = curUSProjFilter==='tous' || (e.projet||'')===curUSProjFilter;
+    return statusOk && projOk;
+  });
   var fs=['tous','brouillon','finalise','archive'];
   var ph='<div class="filter-bar">';
   for (var fi=0;fi<fs.length;fi++) {
@@ -1180,15 +1260,26 @@ function renderHistory() {
     ph+='<button class="filter-pill'+(curFilter===f?' active':'')+'" data-f="'+f+'" data-action="filter">'+lbl+'</button>';
   }
   ph+='</div>';
-  if (!filtered.length) { el.innerHTML=ph+'<p class="history-empty">Aucune US'+(curFilter!=='tous'?' pour ce filtre':'')+'. Enregistrez-en une depuis l&#39;editeur.</p>'; bindHistory(); return; }
+  if (sharedProjects.length) {
+    ph+='<div class="filter-bar">';
+    ph+='<button class="filter-pill'+(curUSProjFilter==='tous'?' active':'')+'" data-pf="tous" data-action="projfilter">Tous projets</button>';
+    sharedProjects.forEach(function(p){
+      var active=curUSProjFilter===p.id;
+      ph+='<button class="filter-pill'+(active?' active':'')+'" data-pf="'+p.id+'" data-action="projfilter" style="'+(active?'background:'+p.color+';border-color:'+p.color+';color:#fff;':'border-color:'+p.color+';color:'+p.color+';')+'">'+(p.name||'')+'</button>';
+    });
+    ph+='</div>';
+  }
+  if (!filtered.length) { el.innerHTML=ph+'<p class="history-empty">Aucune US'+(curFilter!=='tous'||curUSProjFilter!=='tous'?' pour ce filtre':'')+'. Enregistrez-en une depuis l&#39;editeur.</p>'; bindHistory(); return; }
   var ch='<div class="history-list">';
   for (var ci=0;ci<filtered.length;ci++) {
     var e=filtered[ci], st=e.status||'brouillon';
+    var proj=sharedProjects.find(function(p){return p.id===e.projet;});
+    var projBadge=proj?'<span style="font-size:11px;font-weight:500;padding:1px 8px;border-radius:20px;border:1px solid '+proj.color+';color:'+proj.color+';margin-left:4px;">'+esc(proj.name)+'</span>':'';
     var inBls=S.backlogs.filter(function(b){return Array.isArray(b.usIds)&&b.usIds.indexOf(e.id)!==-1;}).map(function(b){return b.nom;}).join(', ');
     var meta=(e.epic?'Epic: '+e.epic+' &middot; ':'')+(e.est?e.est+' pts &middot; ':'')+e.acCount+' AC &middot; '+e.savedAt+(inBls?' &middot; <span style="color:var(--blue);">'+esc(inBls)+'</span>':'');
     ch+='<div class="history-card"><div class="history-card-top">';
     ch+='<div style="flex:1;min-width:0;">';
-    ch+='<div class="history-title">'+esc(e.titre)+(e.prio?' <span style="font-size:11px;color:var(--muted);">'+esc(e.prio)+'</span>':'')+'</div>';
+    ch+='<div class="history-title">'+esc(e.titre)+(e.prio?' <span style="font-size:11px;color:var(--muted);">'+esc(e.prio)+'</span>':'')+projBadge+'</div>';
     ch+='<div class="history-meta">'+meta+'</div>';
     ch+='<span class="status-badge '+st+'" data-action="status" data-id="'+e.id+'">'+SLABEL[st]+'</span>';
     ch+='</div>';
@@ -1206,8 +1297,9 @@ function renderHistory() {
 function bindHistory() {
   document.getElementById('history-container').onclick=function(ev) {
     var btn=ev.target.closest('[data-action]'); if (!btn) return;
-    var action=btn.dataset.action, id=parseInt(btn.dataset.id,10)||0, f=btn.dataset.f;
-    if      (action==='filter') setFilter(f);
+    var action=btn.dataset.action, id=parseInt(btn.dataset.id,10)||0, f=btn.dataset.f, pf=btn.dataset.pf;
+    if      (action==='filter')     { curFilter=f; renderHistory(); }
+    else if (action==='projfilter') { curUSProjFilter=pf; renderHistory(); }
     else if (action==='status') cycleStatus(id);
     else if (action==='load')   loadEntry(id);
     else if (action==='dlmd')   dlEntry(id,'md');
@@ -2143,9 +2235,9 @@ function initDrive() {
   tokenClient=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:SCOPE,callback:function(resp){
     if (resp.error){setSyncDot('error');return;}
     accessToken=resp.access_token; sessionStorage.setItem(TOK,accessToken);
-    updateDriveUI(true); pushToDrive();
+    updateDriveUI(true); pushToDrive(); loadSharedProjects();
   }});
-  if (accessToken) updateDriveUI(true);
+  if (accessToken) { updateDriveUI(true); loadSharedProjects(); }
 }
 function handleDriveBtn(){if(!tokenClient){toast('Drive non initialise');return;}if(accessToken){pushToDrive();toast('Send to Drive...');}else tokenClient.requestAccessToken();}
 function updateDriveUI(c){
