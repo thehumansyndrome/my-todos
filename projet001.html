@@ -1345,14 +1345,14 @@ div:hover>.item-img-del{display:block;}
 <div class="tabs">
   <div class="tabs-inner">
     <button class="tab active" onclick="switchTab('todos')">Todos</button>
+    <button class="tab" onclick="switchTab('projects')">Projets</button>
+    <button class="tab" onclick="switchTab('backlog')">Backlog</button>
     <button class="tab" onclick="switchTab('courses')">Courses</button>
     <button class="tab" onclick="switchTab('notes')">Notes</button>
     <button class="tab" onclick="switchTab('reminders')">Reminders</button>
     <button class="tab" onclick="switchTab('habits')">Habits</button>
     <button class="tab" onclick="switchTab('challenges')">Challenges</button>
     <button class="tab" onclick="switchTab('reviews')">Reviews</button>
-    <button class="tab" onclick="switchTab('projects')">Projets</button>
-    <button class="tab" onclick="switchTab('backlog')">Backlog</button>
     <button class="tab" onclick="switchTab('archive')">Archive</button>
     <button class="tab" onclick="switchTab('log')">Log</button>
     <button class="tab" onclick="switchTab('templates')">Templates</button>
@@ -1897,7 +1897,7 @@ div:hover>.item-img-del{display:block;}
 const P='projet001';
 const IS_TOUCH = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 const SK='td_v4_'+P, AK='td_act_'+P, TK='td_theme_'+P, DK='td_drive_'+P;
-const TABS=['todos','courses','notes','reminders','habits','challenges','reviews','projects','backlog','archive','log','templates'];
+const TABS=['todos','projects','backlog','courses','notes','reminders','habits','challenges','reviews','archive','log','templates'];
 
 /* ══ DEFAULT CATEGORIES ══ */
 const DEFAULT_CATS = [
