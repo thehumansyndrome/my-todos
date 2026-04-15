@@ -171,15 +171,16 @@ body{
   border-bottom:1px solid var(--border);
   position:sticky;top:0;z-index:100;
   padding-top:env(safe-area-inset-top);
+  padding:0 16px;
+  height:52px;
+  display:flex;align-items:center;justify-content:space-between;
 }
 .header-inner{
-  max-width:720px;margin:0 auto;
-  padding:0 16px;
-  display:flex;align-items:center;gap:0;
-  height:52px;
-  overflow:hidden;
+  width:100%;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
 }
-.header-left{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.header-left{display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.header-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
 .hbtns-scroll{
   display:flex;align-items:center;gap:6px;
   overflow-x:auto;scrollbar-width:none;
@@ -187,11 +188,9 @@ body{
   flex:1;min-width:0;
   padding:0 8px;
   white-space:nowrap;
-  -webkit-mask-image:linear-gradient(to right,black calc(100% - 28px),transparent 100%);
-  mask-image:linear-gradient(to right,black calc(100% - 28px),transparent 100%);
 }
 .hbtns-scroll::-webkit-scrollbar{display:none;}
-.hbtn-fixed{flex-shrink:0;margin-right:4px;}
+.hbtn-fixed{flex-shrink:0;}
 .wordmark{
   font-size:14px;
   font-weight:500;
@@ -244,7 +243,7 @@ div:hover>.item-img-del{display:block;}
 }
 .tabs::-webkit-scrollbar{display:none;}
 .tabs-inner{
-  max-width:720px;margin:0 auto;
+  max-width:1100px;margin:0 auto;
   padding:0 16px;
   display:flex;gap:0;
 }
@@ -260,7 +259,7 @@ div:hover>.item-img-del{display:block;}
 .tab.active{color:var(--text);font-weight:500;border-bottom-color:var(--accent);}
 
 /* ── LAYOUT ── */
-.page{max-width:720px;margin:0 auto;padding:20px 16px calc(80px + env(safe-area-inset-bottom));padding-left:max(16px, env(safe-area-inset-left));padding-right:max(16px, env(safe-area-inset-right));}
+.page{max-width:1100px;margin:0 auto;padding:20px 16px calc(80px + env(safe-area-inset-bottom));padding-left:max(16px, env(safe-area-inset-left));padding-right:max(16px, env(safe-area-inset-right));}
 .section{display:none;}
 .section.active{display:block;}
 
@@ -1326,9 +1325,6 @@ div:hover>.item-img-del{display:block;}
       </span>
     </div>
     <div class="hbtns-scroll">
-      <button class="hbtn" id="hbtn-drive" onclick="switchTab('log');setTimeout(()=>document.getElementById('drive-anchor').scrollIntoView({behavior:'smooth'}),120)">
-        ☁
-      </button>
       <button class="hbtn" id="save-status-btn" onclick="forcePush()" title="Forcer la sync Drive">
         <span id="save-dot" style="width:6px;height:6px;border-radius:50%;background:var(--muted);transition:background .3s;flex-shrink:0;"></span>
         <span id="save-label">Sync</span>
@@ -1337,7 +1333,10 @@ div:hover>.item-img-del{display:block;}
       <button class="hbtn" id="btn-refresh" onclick="drivePull()" style="display:none" title="Charger depuis Drive">↻ Refresh</button>
       <span class="live-badge" id="live-badge"><span class="live-dot"></span>Live</span>
     </div>
-    <button class="hbtn hbtn-fixed" id="theme-btn" onclick="toggleTheme()">☀︎</button>
+    <div class="header-right">
+      <button class="hbtn" id="hbtn-drive" onclick="switchTab('log');setTimeout(()=>document.getElementById('drive-anchor').scrollIntoView({behavior:'smooth'}),120)" title="Google Drive">☁</button>
+      <button class="hbtn" id="theme-btn" onclick="toggleTheme()">☀︎</button>
+    </div>
   </div>
 </div>
 
@@ -2379,16 +2378,16 @@ function updateDriveUI(){
   document.getElementById('btn-disc').style.display=c?'':'none';
   const r=document.getElementById('btn-refresh');
   if(r)r.style.display=c?'':'none';
-  // Update header drive button state
+  // Update ☁ button in header-right
   const hd=document.getElementById('hbtn-drive');
   if(hd){
     hd.className=c?'hbtn':'hbtn warn';
     hd.onclick=c
       ? function(){switchTab('log');setTimeout(()=>document.getElementById('drive-anchor').scrollIntoView({behavior:'smooth'}),120);}
       : driveAuth;
-    hd.title=c?'':'Connecter Google Drive';
+    hd.title=c?'Paramètres Drive':'Connecter Google Drive';
   }
-  // Update sync dot in header
+  // Update gdot + label in header-left
   const gdot=document.getElementById('gdot');
   if(gdot) gdot.className='gdot'+(c?' on':'');
   const lbl=document.getElementById('drive-label');
