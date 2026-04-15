@@ -199,6 +199,10 @@ body{
   letter-spacing:-.01em;
   line-height:1;
 }
+.sync-dot{
+  display:flex;align-items:center;gap:5px;
+  font-size:12px;color:var(--muted);
+}
 .proj-tag{
   font-family:var(--mono);font-size:10px;font-weight:500;
   padding:2px 7px;border-radius:var(--r);
@@ -1316,13 +1320,17 @@ div:hover>.item-img-del{display:block;}
   <div class="header-inner">
     <div class="header-left">
       <span class="wordmark">todos</span>
-      <button class="hbtn" id="hbtn-drive" onclick="switchTab('log');setTimeout(()=>document.getElementById('drive-anchor').scrollIntoView({behavior:'smooth'}),120)">
-        <span class="gdot" id="gdot"></span>Drive
-      </button>
+      <span class="sync-dot" id="gdot-label">
+        <span class="gdot" id="gdot"></span>
+        <span id="drive-label">Local</span>
+      </span>
     </div>
     <div class="hbtns-scroll">
+      <button class="hbtn" id="hbtn-drive" onclick="switchTab('log');setTimeout(()=>document.getElementById('drive-anchor').scrollIntoView({behavior:'smooth'}),120)">
+        ☁
+      </button>
       <button class="hbtn" id="save-status-btn" onclick="forcePush()" title="Forcer la sync Drive">
-        <span id="save-dot" style="width:6px;height:6px;border-radius:50%;background:var(--text3);transition:background .3s;flex-shrink:0;"></span>
+        <span id="save-dot" style="width:6px;height:6px;border-radius:50%;background:var(--muted);transition:background .3s;flex-shrink:0;"></span>
         <span id="save-label">Sync</span>
       </button>
       <button class="hbtn" id="undo-btn" onclick="undoLast()" title="Annuler la dernière suppression" style="display:none">↩ Undo</button>
@@ -2362,7 +2370,7 @@ let drTok=null,drFid=null,drCfg={clientId:'',filename:'projet001.json'};
 
 function saveDriveConf(){drCfg.clientId=document.getElementById('drive-cid').value.trim();drCfg.filename=document.getElementById('drive-fn').value.trim()||'projet001.json';localStorage.setItem(DK,JSON.stringify(drCfg));}
 function loadDriveConf(){try{const s=localStorage.getItem(DK);if(s){const c=JSON.parse(s);drCfg=c;document.getElementById('drive-cid').value=c.clientId||'';document.getElementById('drive-fn').value=c.filename||'projet001.json';}}catch(e){}updateDriveUI();}
-function setDS(ok,msg){const d=document.getElementById('dsdot'),h=document.getElementById('gdot');d.className='dsdot'+(ok===true?' ok':ok===false?' err':'');h.className='gdot'+(ok===true?' on':'');document.getElementById('dstxt').textContent=msg;}
+function setDS(ok,msg){const d=document.getElementById('dsdot'),h=document.getElementById('gdot'),lbl=document.getElementById('drive-label');d.className='dsdot'+(ok===true?' ok':ok===false?' err':'');h.className='gdot'+(ok===true?' on':'');document.getElementById('dstxt').textContent=msg;if(lbl)lbl.textContent=ok===true?'Drive ✓':ok===false?'Erreur':'Local';}
 function updateDriveUI(){
   const c=!!drTok;
   document.getElementById('btn-push').disabled=!c;
@@ -2371,21 +2379,20 @@ function updateDriveUI(){
   document.getElementById('btn-disc').style.display=c?'':'none';
   const r=document.getElementById('btn-refresh');
   if(r)r.style.display=c?'':'none';
-  // Header Drive button: quick-connect when disconnected
+  // Update header drive button state
   const hd=document.getElementById('hbtn-drive');
   if(hd){
-    if(!c){
-      hd.className='hbtn warn';
-      hd.onclick=driveAuth;
-      hd.title='Connecter Google Drive';
-      hd.innerHTML='<span class="gdot" id="gdot"></span>☁ Connecter';
-    } else {
-      hd.className='hbtn';
-      hd.onclick=function(){switchTab('log');setTimeout(()=>document.getElementById('drive-anchor').scrollIntoView({behavior:'smooth'}),120);};
-      hd.title='';
-      hd.innerHTML='<span class="gdot on" id="gdot"></span>Drive';
-    }
+    hd.className=c?'hbtn':'hbtn warn';
+    hd.onclick=c
+      ? function(){switchTab('log');setTimeout(()=>document.getElementById('drive-anchor').scrollIntoView({behavior:'smooth'}),120);}
+      : driveAuth;
+    hd.title=c?'':'Connecter Google Drive';
   }
+  // Update sync dot in header
+  const gdot=document.getElementById('gdot');
+  if(gdot) gdot.className='gdot'+(c?' on':'');
+  const lbl=document.getElementById('drive-label');
+  if(lbl) lbl.textContent=c?'Drive ✓':'Local';
 }
 
 function loadGIS(cb){if(window.google&&window.google.accounts){cb();return;}const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';s.onload=cb;document.head.appendChild(s);}
