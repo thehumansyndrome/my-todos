@@ -1906,7 +1906,7 @@ const DEFAULT_CATS = [
 ];
 
 /* ══ STATE ══ */
-let S={todos:[],notes:[],reminders:[],habits:[],habitLogs:{},categories:[],challenges:[],courses:[]};
+let S={todos:[],notes:[],reminders:[],habits:[],habitLogs:{},categories:[],challenges:[],courses:[],courseTemplates:[],reviews:[],projects:[],backlog:[]};
 let AL=[];
 let wOff=0, tF='all', hzF='all', dF='all', rF='all', hF='all', chF='all', notesQ='';
 
@@ -2362,7 +2362,7 @@ function confirmImp(){
     else toast('❌ Format invalide');}
   catch(e){toast('❌ JSON invalide');}
 }
-function clearAll(){if(!confirm('Tout effacer ?'))return;S={todos:[],notes:[],reminders:[],habits:[],habitLogs:{},challenges:[],categories:JSON.parse(JSON.stringify(DEFAULT_CATS))};save();renderCatSelects();renderAll();renderLog();toast('Données effacées');logA('drive','Tout effacé');}
+function clearAll(){if(!confirm('Tout effacer ?'))return;S={todos:[],notes:[],reminders:[],habits:[],habitLogs:{},challenges:[],courses:[],courseTemplates:[],reviews:[],projects:[],backlog:[],categories:JSON.parse(JSON.stringify(DEFAULT_CATS))};save();renderCatSelects();renderAll();renderLog();toast('Données effacées');logA('drive','Tout effacé');}
 function renderAll(){renderTodos();renderNotes();renderReminders();renderHabits();renderChallenges();renderCourses();renderReviews();renderProjects();renderBacklog();}
 document.getElementById('imp-modal').addEventListener('click',function(e){if(e.target===this)closeImp();});
 
