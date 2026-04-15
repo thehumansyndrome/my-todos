@@ -138,19 +138,23 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
 </div>
 
 <div class="tabs">
-  <div class="tab active" id="tb-editor" onclick="showEditor()">Editeur</div>
-  <div class="tab" id="tb-history" onclick="showHistory()">Historique</div>
+  <div class="tab active" id="tb-editor" onclick="showTab('editor')">Editeur</div>
+  <div class="tab" id="tb-projets" onclick="showTab('projets')">Projets</div>
+  <div class="tab" id="tb-history" onclick="showTab('history')">CR</div>
 </div>
 
 <div class="page">
 
 <!-- EDITEUR -->
 <div id="tab-editor" class="section active">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
     <span style="font-size:12px;font-weight:500;color:var(--muted);white-space:nowrap;">Participants :</span>
-    <div class="tag-input-wrap" id="tag-wrap" onclick="focusTagInput()">
+    <div class="tag-input-wrap" id="tag-wrap" onclick="focusTagInput()" style="flex:1;min-width:200px;">
       <input class="tag-bare-input" id="tag-input" placeholder="Prenom Nom, Entree pour ajouter..." onkeydown="handleTagKey(event)" style="min-width:160px;">
     </div>
+    <select id="cr-projet-select" onchange="curCRProjet=this.value" style="font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);min-width:160px;">
+      <option value="">— Projet —</option>
+    </select>
   </div>
   <div class="editor-grid">
     <div class="pane">
@@ -215,8 +219,19 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
   </div>
 </div>
 
+<!-- PROJETS -->
+<div id="tab-projets" class="section">
+  <div class="drive-bar">
+    <span class="drive-status" id="proj-status-label" style="flex:1;">Connectez-vous à Drive pour charger les projets.</span>
+    <button class="btn sm" onclick="loadSharedProjects()">&#8635; Rafraîchir</button>
+  </div>
+  <div style="padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;font-size:13px;color:var(--muted);">
+    Les projets sont gérés dans l'app <b>todos</b> (onglet Projets). Connectez-vous à Drive pour les synchroniser ici.
+  </div>
+  <div id="projets-list" style="display:flex;flex-direction:column;gap:8px;"></div>
 </div>
-<div id="toast"></div>
+
+</div><!-- /page -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 var SK  = 'td_v4_cr-generator';
@@ -233,10 +248,15 @@ var TMPL = '---\ntitle: \ndate: \nduree: \nparticipants: \nobjectif: \nnext-date
 
 var S = {history:[]};
 var driveFileId = null;
+var sharedFileId = null;
+var SHARED_FILE = 'shared.json';
+var sharedProjects = [];
 var tokenClient = null;
 var accessToken = sessionStorage.getItem(TOK) || null;
 var saveTimer = null;
 var curFilter = 'tous';
+var curProjFilter = 'tous';
+var curCRProjet = '';
 var editingEntryId = null;
 
 function ensureState() { if (!Array.isArray(S.history)) S.history = []; }
@@ -262,17 +282,14 @@ function toggleTheme() {
   applyTheme(THEMES[(THEMES.indexOf(cur)+1)%THEMES.length]);
 }
 
-function showEditor() {
-  document.getElementById('tb-editor').classList.add('active');
-  document.getElementById('tb-history').classList.remove('active');
-  document.getElementById('tab-editor').classList.add('active');
-  document.getElementById('tab-history').classList.remove('active');
-}
-function showHistory() {
-  document.getElementById('tb-history').classList.add('active');
-  document.getElementById('tb-editor').classList.remove('active');
-  document.getElementById('tab-history').classList.add('active');
-  document.getElementById('tab-editor').classList.remove('active');
+function showTab(tab) {
+  ['editor','history','projets'].forEach(function(t) {
+    var tb = document.getElementById('tb-'+t);
+    var sc = document.getElementById('tab-'+t);
+    if (tb) tb.classList.toggle('active', t===tab);
+    if (sc) sc.classList.toggle('active', t===tab);
+  });
+  if (tab==='history') renderHistory();
 }
 function resetTemplate() { document.getElementById('raw-input').value=TMPL; crParticipants=[]; editingEntryId=null; renderTagWrap(); localStorage.removeItem(SK+'_draft_status'); renderPreview(); }
 
@@ -646,6 +663,7 @@ function saveCR() {
       existing.aCount  = cr.actions.length;
       existing.status  = status;
       existing.raw     = raw;
+      existing.projet  = curCRProjet||'';
       existing.savedAt = new Date().toLocaleDateString('fr-FR');
       persist(); renderHistory(); toast('Compte rendu mis a jour');
       return;
@@ -658,6 +676,7 @@ function saveCR() {
     dCount:  cr.decisions.length,
     aCount:  cr.actions.length,
     status:  status,
+    projet:  curCRProjet||'',
     raw:     raw,
     savedAt: new Date().toLocaleDateString('fr-FR')
   };
@@ -676,9 +695,11 @@ function loadEntry(id) {
   if (!e) return;
   document.getElementById('raw-input').value=e.raw;
   editingEntryId=e.id;
+  curCRProjet = e.projet||'';
   localStorage.setItem(SK+'_draft_status', e.status||'brouillon');
   loadParticipantsFromRaw(e.raw);
-  renderPreview(); showEditor(); toast('Charge dans l&#39;editeur');
+  populateProjetSelect();
+  renderPreview(); showTab('editor'); toast('Charge dans l&#39;editeur');
 }
 function cycleStatus(id) {
   var e=S.history.find(function(x){return x.id===id;});
@@ -699,19 +720,34 @@ function dlEntry(id,fmt) {
 
 function renderHistory() {
   var el=document.getElementById('history-container');
-  var filtered=curFilter==='tous'?S.history:S.history.filter(function(e){return (e.status||'brouillon')===curFilter;});
+  var filtered=S.history.filter(function(e){
+    var statusOk = curFilter==='tous' || (e.status||'brouillon')===curFilter;
+    var projOk = curProjFilter==='tous' || (e.projet||'')=== curProjFilter;
+    return statusOk && projOk;
+  });
   var fs=['tous','brouillon','finalise','archive'];
   var ph='<div class="filter-bar">';
   fs.forEach(function(f){ var lbl=f==='tous'?'Tous':SLABEL[f]; ph+='<button class="filter-pill'+(curFilter===f?' active':'')+'" data-f="'+f+'" data-action="filter">'+lbl+'</button>'; });
   ph+='</div>';
-  if (!filtered.length) { el.innerHTML=ph+'<p class="history-empty">Aucun CR'+(curFilter!=='tous'?' pour ce filtre':'')+'. Saisissez et cliquez sur Enregistrer.</p>'; bindHistory(); return; }
+  // Project filter
+  if (sharedProjects.length) {
+    ph+='<div class="filter-bar">';
+    ph+='<button class="filter-pill'+(curProjFilter==='tous'?' active':'')+'" data-pf="tous" data-action="projfilter">Tous projets</button>';
+    sharedProjects.forEach(function(p){
+      ph+='<button class="filter-pill'+(curProjFilter===p.id?' active':'')+'" data-pf="'+p.id+'" data-action="projfilter" style="'+(curProjFilter===p.id?'background:'+p.color+';border-color:'+p.color+';color:#fff;':'border-color:'+p.color+';color:'+p.color+'')+'">'+esc(p.name)+'</button>';
+    });
+    ph+='</div>';
+  }
+  if (!filtered.length) { el.innerHTML=ph+'<p class="history-empty">Aucun CR'+(curFilter!=='tous'||curProjFilter!=='tous'?' pour ce filtre':'')+'. Saisissez et cliquez sur Enregistrer.</p>'; bindHistory(); return; }
   var ch='<div class="history-list">';
   filtered.forEach(function(e) {
     var st=e.status||'brouillon';
+    var proj=sharedProjects.find(function(p){return p.id===e.projet;});
+    var projBadge=proj?'<span style="font-size:11px;font-weight:500;padding:1px 8px;border-radius:20px;border:1px solid '+proj.color+';color:'+proj.color+';margin-left:4px;">'+esc(proj.name)+'</span>':'';
     var meta=(e.date?formatDate(e.date)+' &middot; ':'')+e.dCount+' decision'+(e.dCount!==1?'s':'')+' &middot; '+e.aCount+' action'+(e.aCount!==1?'s':'')+' &middot; enregistre '+e.savedAt;
     ch+='<div class="history-card"><div class="history-card-top">';
     ch+='<div style="flex:1;min-width:0;">';
-    ch+='<div class="history-title">'+esc(e.title)+'</div>';
+    ch+='<div class="history-title">'+esc(e.title)+projBadge+'</div>';
     ch+='<div class="history-meta">'+meta+'</div>';
     ch+='<span class="status-badge '+st+'" data-action="status" data-id="'+e.id+'">'+SLABEL[st]+'</span>';
     ch+='</div>';
@@ -729,8 +765,9 @@ function renderHistory() {
 function bindHistory() {
   document.getElementById('history-container').onclick=function(ev) {
     var btn=ev.target.closest('[data-action]'); if (!btn) return;
-    var action=btn.dataset.action, id=parseInt(btn.dataset.id,10)||0, f=btn.dataset.f;
-    if      (action==='filter') setFilter(f);
+    var action=btn.dataset.action, id=parseInt(btn.dataset.id,10)||0, f=btn.dataset.f, pf=btn.dataset.pf;
+    if      (action==='filter')     { curFilter=f; renderHistory(); }
+    else if (action==='projfilter') { curProjFilter=pf; renderHistory(); }
     else if (action==='status') cycleStatus(id);
     else if (action==='load')   loadEntry(id);
     else if (action==='dlmd')   dlEntry(id,'md');
@@ -739,7 +776,54 @@ function bindHistory() {
   };
 }
 
-/* ── Persist ── */
+/* ── Shared Projects ── */
+function findSharedFile() {
+  var q=encodeURIComponent("name='"+SHARED_FILE+"' and trashed=false");
+  return fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id)',{headers:{Authorization:'Bearer '+accessToken}}).then(function(r){return r.json();}).then(function(d){return d.files&&d.files[0]?d.files[0].id:null;});
+}
+function loadSharedProjects() {
+  if (!accessToken) { toast('Connectez-vous à Drive d\'abord'); return; }
+  findSharedFile().then(function(id) {
+    if (!id) { toast('shared.json introuvable — créez des projets dans todos'); return; }
+    sharedFileId=id;
+    return fetch('https://www.googleapis.com/drive/v3/files/'+id+'?alt=media',{headers:{Authorization:'Bearer '+accessToken}}).then(function(r){return r.json();});
+  }).then(function(data) {
+    if (!data||!Array.isArray(data.projects)) return;
+    sharedProjects = data.projects;
+    populateProjetSelect();
+    renderProjets();
+    document.getElementById('proj-status-label').textContent = sharedProjects.length+' projets chargés depuis todos';
+    toast('✓ '+sharedProjects.length+' projets chargés');
+  }).catch(function(e){ toast('Erreur chargement projets'); });
+}
+function populateProjetSelect() {
+  var sel=document.getElementById('cr-projet-select');
+  if (!sel) return;
+  var prev=curCRProjet;
+  sel.innerHTML='<option value="">— Projet —</option>';
+  sharedProjects.forEach(function(p){
+    var opt=document.createElement('option');
+    opt.value=p.id; opt.textContent=p.name;
+    if (p.id===prev) opt.selected=true;
+    sel.appendChild(opt);
+  });
+}
+function renderProjets() {
+  var el=document.getElementById('projets-list');
+  if (!el) return;
+  if (!sharedProjects.length) { el.innerHTML='<p style="color:var(--muted);font-size:13px;text-align:center;padding:40px 0;">Aucun projet chargé.</p>'; return; }
+  el.innerHTML=sharedProjects.map(function(p){
+    var count=S.history.filter(function(e){return e.projet===p.id;}).length;
+    return '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-left:3px solid '+p.color+';border-radius:var(--radius);">'
+      +'<span style="width:10px;height:10px;border-radius:50%;background:'+p.color+';flex-shrink:0;"></span>'
+      +'<span style="flex:1;font-size:14px;font-weight:500;">'+esc(p.name)+'</span>'
+      +'<span style="font-family:var(--mono);font-size:10px;color:var(--muted);padding:1px 8px;border:1px solid var(--border);border-radius:20px;">'+count+' CR</span>'
+      +'<button class="btn sm" onclick="curProjFilter=\''+p.id+'\';showTab(\'history\')" style="font-size:11px;">Voir</button>'
+      +'</div>';
+  }).join('');
+}
+
+/* ── Drive ── */
 function persist() {
   localStorage.setItem(SK, JSON.stringify(S));
   setSyncDot('pending');
@@ -758,9 +842,9 @@ function initDrive() {
   tokenClient=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:SCOPE,callback:function(resp){
     if (resp.error){setSyncDot('error');return;}
     accessToken=resp.access_token; sessionStorage.setItem(TOK,accessToken);
-    updateDriveUI(true); pushToDrive();
+    updateDriveUI(true); pushToDrive(); loadSharedProjects();
   }});
-  if (accessToken) updateDriveUI(true);
+  if (accessToken) { updateDriveUI(true); loadSharedProjects(); }
 }
 function handleDriveBtn(){if(!tokenClient){toast('Drive non initialise');return;}if(accessToken){pushToDrive();toast('Send to Drive...');}else tokenClient.requestAccessToken();}
 function updateDriveUI(c){
