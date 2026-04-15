@@ -167,41 +167,33 @@ body{
 
 /* ── HEADER ── */
 .header{
+  position:sticky;top:0;z-index:100;
   background:var(--surface);
   border-bottom:1px solid var(--border);
-  position:sticky;top:0;z-index:100;
-  padding-top:env(safe-area-inset-top);
-  padding:0 16px;
-  height:52px;
+  padding:0 16px;height:52px;
   display:flex;align-items:center;justify-content:space-between;
 }
 .header-inner{
   width:100%;
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  display:flex;align-items:center;justify-content:space-between;
 }
-.header-left{display:flex;align-items:center;gap:12px;flex-shrink:0;}
-.header-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
-.hbtns-scroll{
-  display:flex;align-items:center;gap:6px;
-  overflow-x:auto;scrollbar-width:none;
-  -webkit-overflow-scrolling:touch;
-  flex:1;min-width:0;
-  padding:0 8px;
-  white-space:nowrap;
+.header-left{display:flex;align-items:center;gap:12px;}
+.header-right{display:flex;align-items:center;gap:8px;}
+.hbtns-scroll{display:none;}
+.wordmark{font-size:14px;font-weight:500;letter-spacing:-.01em;color:var(--text);}
+.sync-dot{font-size:12px;color:var(--muted);}
+.hbtn{
+  width:32px;height:32px;border-radius:var(--r);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;color:var(--muted);
+  border:none;background:none;cursor:pointer;
+  transition:background .15s;
 }
-.hbtns-scroll::-webkit-scrollbar{display:none;}
-.hbtn-fixed{flex-shrink:0;}
-.wordmark{
-  font-size:14px;
-  font-weight:500;
-  color:var(--text);
-  letter-spacing:-.01em;
-  line-height:1;
-}
-.sync-dot{
-  display:flex;align-items:center;gap:5px;
-  font-size:12px;color:var(--muted);
-}
+.hbtn:hover{background:var(--border);color:var(--text);}
+.hbtn.warn{color:var(--amber);}
+.hbtn.warn:hover{background:var(--amber);color:#fff;}
+.gdot{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:background .2s;flex-shrink:0;}
+.gdot.on{background:var(--green);}
 .proj-tag{
   font-family:var(--mono);font-size:10px;font-weight:500;
   padding:2px 7px;border-radius:var(--r);
@@ -223,10 +215,6 @@ body{
 .hbtn.orange:hover{opacity:.88;}
 .hbtn.green{background:transparent;color:var(--green);border-color:var(--green);}
 .hbtn.green:hover{background:var(--green);color:#fff;}
-.hbtn.warn{background:transparent;color:var(--amber);border-color:var(--amber);font-weight:600;}
-.hbtn.warn:hover{background:var(--amber);color:#fff;}
-.gdot{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:background .2s;flex-shrink:0;}
-.gdot.on{background:var(--green);}
 .item-imgs{display:flex;flex-wrap:wrap;gap:5px;margin:5px 0 3px 0;}
 .item-thumb{max-width:72px;max-height:56px;border-radius:4px;border:1px solid var(--border);object-fit:cover;cursor:pointer;transition:opacity .15s;}
 .item-thumb:hover{opacity:.85;}
@@ -1318,22 +1306,11 @@ div:hover>.item-img-del{display:block;}
   <div class="header-inner">
     <div class="header-left">
       <span class="wordmark">todos</span>
-      <span class="sync-dot" id="gdot-label">
-        <span class="gdot" id="gdot"></span>
-        <span id="drive-label">Local</span>
-      </span>
-    </div>
-    <div class="hbtns-scroll">
-      <button class="hbtn" id="save-status-btn" onclick="forcePush()" title="Forcer la sync Drive">
-        <span id="save-dot" style="width:6px;height:6px;border-radius:50%;background:var(--muted);transition:background .3s;flex-shrink:0;"></span>
-        <span id="save-label">Sync</span>
-      </button>
-      <button class="hbtn" id="undo-btn" onclick="undoLast()" title="Annuler la dernière suppression" style="display:none">↩ Undo</button>
-      <button class="hbtn" id="btn-refresh" onclick="drivePull()" style="display:none" title="Charger depuis Drive">↻ Refresh</button>
+      <span class="sync-dot" id="sync-dot">⚫ Local</span>
       <span class="live-badge" id="live-badge"><span class="live-dot"></span>Live</span>
     </div>
     <div class="header-right">
-      <button class="hbtn" id="hbtn-drive" onclick="switchTab('log');setTimeout(()=>document.getElementById('drive-anchor').scrollIntoView({behavior:'smooth'}),120)" title="Google Drive">☁</button>
+      <button class="hbtn" id="hbtn-drive" title="Google Drive" onclick="switchTab('log');setTimeout(()=>document.getElementById('drive-anchor').scrollIntoView({behavior:'smooth'}),120)">☁</button>
       <button class="hbtn" id="theme-btn" onclick="toggleTheme()">☀︎</button>
     </div>
   </div>
@@ -2309,14 +2286,29 @@ const STATUS = {
   ok:      { color:'var(--green)',  label:'Sync ✓',  title:'Synchronisé avec Drive' },
   error:   { color:'var(--red)',    label:'Erreur',  title:'Erreur Drive — cliquer pour réessayer' },
 };
+function setSyncDot(state){
+  const el = document.getElementById('sync-dot');
+  if(!el) return;
+  const labels = {
+    local:   '⚫ Local',
+    pending: '🟡 En attente',
+    syncing: '🟡 Sync…',
+    ok:      '🟢 Sync ✓',
+    error:   '🔴 Erreur'
+  };
+  el.textContent = labels[state] || '⚫ Local';
+}
+// Aliases for backward compat
 function setSaveStatus(state){
-  const s = STATUS[state] || STATUS.local;
-  const dot = document.getElementById('save-dot');
-  const lbl = document.getElementById('save-label');
-  const btn = document.getElementById('save-status-btn');
-  if(dot){ dot.style.background = s.color; }
-  if(lbl){ lbl.textContent = s.label; }
-  if(btn){ btn.title = s.title; }
+  const map = {local:'local',pending:'pending',syncing:'syncing',ok:'ok',error:'error'};
+  setSyncDot(map[state]||'local');
+}
+function setDS(ok,msg){
+  setSyncDot(ok===true?'ok':ok===false?'error':'local');
+  const d=document.getElementById('dsdot');
+  if(d) d.className='dsdot'+(ok===true?' ok':ok===false?' err':'');
+  const t=document.getElementById('dstxt');
+  if(t) t.textContent=msg;
 }
 
 // Keep backward compat — saveAndToast now just triggers forcePush
@@ -2375,9 +2367,7 @@ function updateDriveUI(){
   document.getElementById('btn-pull').disabled=!c;
   document.getElementById('btn-auth').style.display=c?'none':'';
   document.getElementById('btn-disc').style.display=c?'':'none';
-  const r=document.getElementById('btn-refresh');
-  if(r)r.style.display=c?'':'none';
-  // Update ☁ button in header-right
+  // Update ☁ button
   const hd=document.getElementById('hbtn-drive');
   if(hd){
     hd.className=c?'hbtn':'hbtn warn';
@@ -2386,11 +2376,8 @@ function updateDriveUI(){
       : driveAuth;
     hd.title=c?'Paramètres Drive':'Connecter Google Drive';
   }
-  // Update gdot + label in header-left
-  const gdot=document.getElementById('gdot');
-  if(gdot) gdot.className='gdot'+(c?' on':'');
-  const lbl=document.getElementById('drive-label');
-  if(lbl) lbl.textContent=c?'Drive ✓':'Local';
+  // Update sync-dot
+  setSyncDot(c?'ok':'local');
 }
 
 function loadGIS(cb){if(window.google&&window.google.accounts){cb();return;}const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';s.onload=cb;document.head.appendChild(s);}
