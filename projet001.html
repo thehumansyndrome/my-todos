@@ -5438,6 +5438,40 @@ function deleteCourseTemplate(){
   logA('course','Modèle supprimé : "'+tmpl.name+'"');
 }
 
+/* ══ SHARED PROJECTS SYNC ══ */
+let sharedFid = null;
+const SHARED_FILE = 'shared.json';
+
+async function drFindOrCreateShared(){
+  if(sharedFid) return sharedFid;
+  if(!drTok) return null;
+  const q=encodeURIComponent(`name='${SHARED_FILE}' and trashed=false`);
+  const r=await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`,{headers:{Authorization:'Bearer '+drTok}});
+  const d=await r.json();
+  if(d.files&&d.files.length){sharedFid=d.files[0].id;return sharedFid;}
+  // Create new shared.json
+  const bd='---B314160';
+  const meta=JSON.stringify({name:SHARED_FILE,mimeType:'application/json'});
+  const body=JSON.stringify({projects:S.projects||[]},null,2);
+  const mp=`--${bd}\r\nContent-Type: application/json\r\n\r\n${meta}\r\n--${bd}\r\nContent-Type: application/json\r\n\r\n${body}\r\n--${bd}--`;
+  const cr=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{Authorization:'Bearer '+drTok,'Content-Type':`multipart/related; boundary="${bd}"`},body:mp});
+  const cd=await cr.json();sharedFid=cd.id;return sharedFid;
+}
+
+async function syncSharedProjects(){
+  if(!drTok) return;
+  try{
+    const id=await drFindOrCreateShared();
+    if(!id) return;
+    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`,{
+      method:'PATCH',
+      headers:{Authorization:'Bearer '+drTok,'Content-Type':'application/json'},
+      body:JSON.stringify({projects:S.projects||[]},null,2)
+    });
+    logA('drive','Projets partagés → '+SHARED_FILE);
+  } catch(e){ console.warn('syncSharedProjects:', e.message); }
+}
+
 /* ══ PROJECTS ══ */
 const PROJ_DEFAULT_COLORS=['#6D28D9','#2563EB','#059669','#D97706','#DC2626','#DB2777','#0891B2'];
 let projFilter='all';
@@ -5451,7 +5485,7 @@ function addProject(){
   S.projects.push({id:uid(),name,color,ts:Date.now()});
   document.getElementById('proj-in').value='';
   autoSave();renderProjects();populateBacklogProjSelect();
-  logA('project','Créé: "'+name+'"');
+  syncSharedProjects();
 }
 
 function delProject(id){
@@ -5463,7 +5497,7 @@ function delProject(id){
   // Dissociate backlog items
   (S.backlog||[]).forEach(b=>{if(b.projId===id)b.projId='';});
   autoSave();renderProjects();renderBacklog();populateBacklogProjSelect();
-  logA('project','Supprimé: "'+p.name+'"');
+  syncSharedProjects();
 }
 
 function getProject(id){return (S.projects||[]).find(x=>x.id===id);}
