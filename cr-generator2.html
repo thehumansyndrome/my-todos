@@ -811,17 +811,16 @@ function populateProjetSelect() {
 function renderProjets() {
   var el=document.getElementById('projets-list');
   if (!el) return;
-  if (!sharedProjects.length) { el.innerHTML='<p style="color:var(--muted);font-size:13px;text-align:center;padding:40px 0;">Aucun projet chargé.</p>'; return; }
+  if (!sharedProjects.length) { el.innerHTML='<div style="text-align:center;padding:60px 20px;color:var(--muted);font-size:14px;">Aucun projet chargé.</div>'; return; }
   el.innerHTML=sharedProjects.map(function(p){
     var count=S.history.filter(function(e){return e.projet===p.id;}).length;
-    var label=count+' CR rattaché'+(count>1?'s':'');
-    return '<div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-left:4px solid '+p.color+';border-radius:var(--radius);transition:border-color .15s;">'
-      +'<span style="width:12px;height:12px;border-radius:3px;background:'+p.color+';flex-shrink:0;display:inline-block;"></span>'
-      +'<div style="flex:1;min-width:0;">'
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:center;gap:12px;">'
+      +'<div style="width:14px;height:36px;border-radius:4px;background:'+p.color+';flex-shrink:0;"></div>'
+      +'<div style="flex:1;">'
       +'<div style="font-size:14px;font-weight:500;color:var(--text);">'+esc(p.name)+'</div>'
-      +'<div style="font-size:12px;color:var(--muted);margin-top:2px;">'+label+'</div>'
+      +'<div style="font-size:12px;color:var(--muted);margin-top:2px;">'+count+' CR rattaché'+(count>1?'s':'')+'</div>'
       +'</div>'
-      +'<button class="btn sm" onclick="curProjFilter=\''+p.id+'\';showTab(\'history\')" style="font-size:12px;">Voir</button>'
+      +'<button class="btn sm" onclick="curProjFilter=\''+p.id+'\';showTab(\'history\')">Voir</button>'
       +'</div>';
   }).join('');
 }
