@@ -344,24 +344,14 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
   <div id="tab-projets" class="section">
     <div class="crud-header">
       <h2>Projets</h2>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:12px;color:var(--muted);">Source : <b>todos / shared.json</b></span>
+        <button class="btn sm" onclick="loadSharedProjects()">↻ Rafraîchir</button>
+      </div>
     </div>
-
-    <div class="crud-form" id="projet-form">
-      <div class="form-field">
-        <span class="form-label">Nom du projet</span>
-        <input class="form-input" type="text" id="p-nom" placeholder="ex: Migration ERP" maxlength="60">
-      </div>
-      <div class="form-field" style="flex:2">
-        <span class="form-label">Description courte</span>
-        <input class="form-input" type="text" id="p-desc" placeholder="Optionnelle" maxlength="120">
-      </div>
-      <div class="form-field" style="flex:0 0 auto">
-        <span class="form-label">Couleur</span>
-        <div class="color-picker-row" id="p-colors"></div>
-      </div>
-      <button class="btn primary" onclick="saveProjet()" style="align-self:flex-end">Ajouter</button>
+    <div style="padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;font-size:13px;color:var(--muted);">
+      Les projets sont gérés dans l'app <b>todos</b> (onglet Projets). Connectez-vous à Drive pour les synchroniser ici.
     </div>
-
     <div class="crud-list" id="projets-list"></div>
   </div>
 
@@ -404,6 +394,7 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
       <span class="drive-status" id="drive-status-label">Non connecté à Drive</span>
       <button class="btn sm" id="drive-action-btn" onclick="handleDriveBtn()">Connecter</button>
       <button class="btn sm" onclick="pullFromDrive()" id="pull-btn" style="display:none">Load from Drive</button>
+      <button class="btn sm" onclick="loadSharedProjects()" id="shared-btn" style="display:none">↻ Projets</button>
     </div>
 
     <div class="filter-row">
@@ -519,6 +510,8 @@ erreur: `;
 // ── State ──────────────────────────────────────────────────────────────────────
 let S = { history:[], projets:[], membres:[] };
 let driveFileId = null;
+let sharedFileId = null;
+const SHARED_FILE = 'shared.json';
 let tokenClient = null;
 let accessToken = sessionStorage.getItem(TOK_KEY) || null;
 let saveTimer   = null;
@@ -1602,6 +1595,34 @@ function setSyncDot(state) {
   el.textContent = labels[state] || '⚫ Local';
 }
 
+// ── Shared Projects ────────────────────────────────────────────────────────────
+async function findSharedFile() {
+  const res = await fetch(
+    `https://www.googleapis.com/drive/v3/files?q=name='${SHARED_FILE}' and trashed=false&fields=files(id)`,
+    {headers:{Authorization:`Bearer ${accessToken}`}}
+  );
+  const data = await res.json();
+  return data.files?.[0]?.id || null;
+}
+
+async function loadSharedProjects() {
+  if (!accessToken) return;
+  try {
+    const id = sharedFileId || await findSharedFile();
+    if (!id) { toast('shared.json introuvable — créez des projets dans todos d\'abord'); return; }
+    sharedFileId = id;
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, {headers:{Authorization:`Bearer ${accessToken}`}});
+    const data = await res.json();
+    if (Array.isArray(data.projects)) {
+      // Map shared format {id,name,color} → MO format {id,nom,color}
+      S.projets = data.projects.map(p => ({id:p.id, nom:p.name, color:p.color||'#6B7280', desc:''}));
+      localStorage.setItem(SK, JSON.stringify(S));
+      renderAll();
+      toast('✓ ' + S.projets.length + ' projets chargés depuis todos');
+    }
+  } catch(e) { toast('Erreur chargement projets partagés'); console.error(e); }
+}
+
 // ── Google Drive ──────────────────────────────────────────────────────────────
 const DRIVE_FILE = 'mo-generator.json';
 
@@ -1615,9 +1636,10 @@ function initDrive() {
       sessionStorage.setItem(TOK_KEY, accessToken);
       updateDriveUI(true);
       pushToDrive();
+      loadSharedProjects();
     }
   });
-  if (accessToken) updateDriveUI(true);
+  if (accessToken) { updateDriveUI(true); loadSharedProjects(); }
 }
 
 function handleDriveBtn() {
@@ -1630,6 +1652,8 @@ function updateDriveUI(connected) {
   document.getElementById('drive-status-label').textContent = connected ? 'Connecté à Google Drive' : 'Non connecté à Drive';
   document.getElementById('drive-action-btn').textContent   = connected ? 'Send to Drive' : 'Connecter';
   document.getElementById('pull-btn').style.display         = connected ? '' : 'none';
+  const sb = document.getElementById('shared-btn');
+  if(sb) sb.style.display = connected ? '' : 'none';
 }
 
 async function pushToDrive() {
