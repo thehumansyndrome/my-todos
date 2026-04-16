@@ -265,7 +265,6 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
   <div class="tab active"  onclick="switchTab('editor')">Éditeur</div>
   <div class="tab"         onclick="switchTab('history')">MO</div>
   <div class="tab"         onclick="switchTab('projets')">Projets</div>
-  <div class="tab"         onclick="switchTab('equipe')">Équipe</div>
 </div>
 
 <div class="page">
@@ -353,37 +352,6 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
   </div>
 
   <!-- ═══════════════════════════════════════ TAB ÉQUIPE ═══════════════════════════════════════ -->
-  <div id="tab-equipe" class="section">
-    <div class="crud-header">
-      <h2>Équipe</h2>
-    </div>
-
-    <div class="crud-form" id="membre-form">
-      <div class="form-field">
-        <span class="form-label">Nom complet</span>
-        <input class="form-input" type="text" id="m-nom" placeholder="ex: Marie Dupont" maxlength="50">
-      </div>
-      <div class="form-field">
-        <span class="form-label">Initiales</span>
-        <input class="form-input" type="text" id="m-init" placeholder="MD" maxlength="3" style="max-width:80px">
-      </div>
-      <div class="form-field" style="flex:0 0 auto">
-        <span class="form-label">Couleur avatar</span>
-        <div class="color-picker-row" id="m-colors"></div>
-      </div>
-      <div class="form-field">
-        <span class="form-label">Rôles</span>
-        <div class="role-toggle">
-          <button class="role-btn red-role active" id="rb-red" onclick="toggleRoleBtn('red')">Rédacteur</button>
-          <button class="role-btn green-role" id="rb-val" onclick="toggleRoleBtn('val')">Valideur</button>
-        </div>
-      </div>
-      <button class="btn primary" onclick="saveMembre()" style="align-self:flex-end">Ajouter</button>
-    </div>
-
-    <div class="crud-list" id="membres-list"></div>
-  </div>
-
   <!-- ═══════════════════════════════════════ TAB HISTORIQUE ═══════════════════════════════════════ -->
   <div id="tab-history" class="section">
 
@@ -505,7 +473,8 @@ resultat:
 erreur: `;
 
 // ── State ──────────────────────────────────────────────────────────────────────
-let S = { history:[], projets:[], membres:[] };
+let S = { history:[], projets:[] };
+let sharedTeam = []; // loaded from shared.json
 let driveFileId = null;
 let sharedFileId = null;
 const SHARED_FILE = 'shared.json';
@@ -530,18 +499,13 @@ let drawerEntryId = null;
 
 // Form state
 let editingProjetId  = null;
-let editingMembreId  = null;
 let selectedPColor   = PROJECT_COLORS[4];
-let selectedMColor   = AVATAR_COLORS[3];
-let roleRedacteur    = true;
-let roleValideur     = false;
 let ddTarget         = null; // 'red' | 'val'
 
 // ── ensureState ────────────────────────────────────────────────────────────────
 function ensureState() {
   if (!Array.isArray(S.history))  S.history  = [];
   if (!Array.isArray(S.projets))  S.projets  = [];
-  if (!Array.isArray(S.membres))  S.membres  = [];
   S.history.forEach(e => {
     if (!e.status)    e.status    = 'brouillon';
     if (!e.redacteurs) e.redacteurs = [];
@@ -571,15 +535,13 @@ function load() {
   renderAll();
   updateLockBanner();
   initDrive();
-  buildColorPickers();
-  renderRoleBtns();
+  buildColorPickers(); // for projet color picker only
 }
 
 function renderAll() {
   renderProjetsDropdown();
   renderProjetFilters();
   renderProjetsList();
-  renderMembresList();
   renderHistory();
   renderEditorMeta();
 }
@@ -596,7 +558,7 @@ function toggleTheme() {
 }
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
-const TAB_IDS = ['editor','history','projets','equipe'];
+const TAB_IDS = ['editor','history','projets'];
 function switchTab(id) {
   document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', TAB_IDS[i] === id));
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -669,8 +631,8 @@ function renderPreview() {
   if (mo.erreur)   html += `<div class="preview-error">⚠️ <b>Erreur fréquente :</b> ${linkify(mo.erreur)}</div>`;
 
   // assignés dans aperçu
-  const reds = curRedact.map(id => S.membres.find(m => m.id === id)).filter(Boolean);
-  const vals = curValid.map(id  => S.membres.find(m => m.id === id)).filter(Boolean);
+  const reds = curRedact.map(id => sharedTeam.find(m => m.id === id)).filter(Boolean);
+  const vals = curValid.map(id  => sharedTeam.find(m => m.id === id)).filter(Boolean);
   const proj = S.projets.find(p => p.id === curProjet);
   if (proj || reds.length || vals.length) {
     html += '<div class="preview-assign-row">';
@@ -762,7 +724,7 @@ function renderEditorMeta() {
 
 function renderChips(containerId, ids, type) {
   const el = document.getElementById(containerId);
-  const members = ids.map(id => S.membres.find(m => m.id === id)).filter(Boolean);
+  const members = ids.map(id => sharedTeam.find(m => m.id === id)).filter(Boolean);
   if (members.length === 0) {
     el.innerHTML = `<span style="font-size:12px;color:var(--muted)">${type === 'red' ? 'Ajouter rédacteurs…' : 'Ajouter valideurs…'}</span>`;
   } else {
@@ -807,7 +769,7 @@ function openDropdown(type) {
   wrap.style.width  = Math.max(rect.width, 200) + 'px';
 
   const curIds = type === 'red' ? curRedact : curValid;
-  const compatible = S.membres.filter(m => type === 'red' ? m.roles.includes('redacteur') : m.roles.includes('valideur'));
+  const compatible = sharedTeam.filter(m => type === 'red' ? m.roles.includes('redacteur') : m.roles.includes('valideur'));
   if (compatible.length === 0) {
     document.getElementById('dd-menu').innerHTML = `<div class="dropdown-item" style="color:var(--muted)">Aucun membre avec ce rôle</div>`;
   } else {
@@ -1027,8 +989,8 @@ function renderHistory() {
   }
   el.innerHTML = `<div class="history-list">${entries.map(e => {
     const proj  = S.projets.find(p => p.id === e.projet);
-    const reds  = (e.redacteurs||[]).map(id => S.membres.find(m => m.id === id)).filter(Boolean);
-    const vals  = (e.valideurs||[]).map(id  => S.membres.find(m => m.id === id)).filter(Boolean);
+    const reds  = (e.redacteurs||[]).map(id => sharedTeam.find(m => m.id === id)).filter(Boolean);
+    const vals  = (e.valideurs||[]).map(id  => sharedTeam.find(m => m.id === id)).filter(Boolean);
     const isEditing = e.id === curEntryId;
     return `
     <div class="history-card" onclick="openDrawer(${e.id})" style="${isEditing ? 'border-color:var(--accent)' : ''}">
@@ -1131,8 +1093,8 @@ function refreshDrawer() {
   const e = S.history.find(x => x.id === drawerEntryId);
   if (!e) return;
   const proj = S.projets.find(p => p.id === e.projet);
-  const reds = (e.redacteurs||[]).map(id => S.membres.find(m => m.id === id)).filter(Boolean);
-  const vals = (e.valideurs||[]).map(id  => S.membres.find(m => m.id === id)).filter(Boolean);
+  const reds = (e.redacteurs||[]).map(id => sharedTeam.find(m => m.id === id)).filter(Boolean);
+  const vals = (e.valideurs||[]).map(id  => sharedTeam.find(m => m.id === id)).filter(Boolean);
 
   document.getElementById('drawer-breadcrumb').textContent = proj ? proj.nom : '';
   // publishedAt sous le titre
@@ -1230,7 +1192,7 @@ function renderDrawerComments(e) {
     return;
   }
   el.innerHTML = e.comments.map((c, i) => {
-    const author = c.authorId ? S.membres.find(m => m.id === c.authorId) : null;
+    const author = c.authorId ? sharedTeam.find(m => m.id === c.authorId) : null;
     const authorHTML = author
       ? `<span class="avatar" style="background:${author.color};width:20px;height:20px;font-size:9px;flex-shrink:0">${esc(author.initiales)}</span><b style="color:var(--text)">${esc(author.nom)}</b>`
       : `<span style="color:var(--muted)">Anonyme</span>`;
@@ -1260,7 +1222,7 @@ function populateCommentAuthorSelect() {
   const sel = document.getElementById('comment-author');
   const prev = sel.value;
   sel.innerHTML = '<option value="">— Auteur du commentaire —</option>' +
-    S.membres.map(m => `<option value="${m.id}" ${m.id === prev ? 'selected':''}>${esc(m.nom)}</option>`).join('');
+    sharedTeam.map(m => `<option value="${m.id}" ${m.id === prev ? 'selected':''}>${esc(m.nom)}</option>`).join('');
 }
 
 function deleteComment(entryId, idx) {
@@ -1335,26 +1297,17 @@ function buildColorPickers() {
   document.getElementById('p-colors').innerHTML = PROJECT_COLORS.map(c =>
     `<div class="color-dot ${c===selectedPColor?'selected':''}" style="background:${c}" onclick="selectPColor('${c}')"></div>`
   ).join('');
-  // Membres
-  document.getElementById('m-colors').innerHTML = AVATAR_COLORS.map(c =>
-    `<div class="color-dot ${c===selectedMColor?'selected':''}" style="background:${c}" onclick="selectMColor('${c}')"></div>`
-  ).join('');
 }
 
 function selectPColor(c) {
   selectedPColor = c;
   document.querySelectorAll('#p-colors .color-dot').forEach(d => d.classList.toggle('selected', d.style.background === c));
 }
-function selectMColor(c) {
-  selectedMColor = c;
-  document.querySelectorAll('#m-colors .color-dot').forEach(d => d.classList.toggle('selected', d.style.background === c));
-}
 
 function saveProjet() {
   const nom  = document.getElementById('p-nom').value.trim();
   const desc = document.getElementById('p-desc').value.trim();
   if (!nom) { toast('Nom requis'); return; }
-
   if (editingProjetId) {
     const p = S.projets.find(x => x.id === editingProjetId);
     if (p) { p.nom = nom; p.desc = desc; p.color = selectedPColor; }
@@ -1365,18 +1318,15 @@ function saveProjet() {
   }
   document.getElementById('p-nom').value = '';
   document.getElementById('p-desc').value = '';
-  persist(); renderAll();
-  toast('Projet enregistré');
+  persist(); renderAll(); toast('Projet enregistré');
 }
 
 function editProjet(id) {
-  const p = S.projets.find(x => x.id === id);
-  if (!p) return;
+  const p = S.projets.find(x => x.id === id); if (!p) return;
   editingProjetId = id;
   document.getElementById('p-nom').value  = p.nom;
   document.getElementById('p-desc').value = p.desc || '';
-  selectPColor(p.color);
-  buildColorPickers();
+  selectPColor(p.color); buildColorPickers();
   document.querySelector('#projet-form .btn.primary').textContent = 'Mettre à jour';
   document.getElementById('p-nom').focus();
 }
@@ -1386,120 +1336,27 @@ function deleteProjet(id) {
   S.projets = S.projets.filter(p => p.id !== id);
   S.history.forEach(e => { if (e.projet === id) e.projet = ''; });
   if (curProjet === id) { curProjet = ''; saveMetaState(); }
-  persist(); renderAll();
-  toast('Projet supprimé');
+  persist(); renderAll(); toast('Projet supprimé');
 }
 
 function renderProjetsList() {
-  const el = document.getElementById('projets-list');
-  if (!el) return;
-  if (!S.projets.length) {
-    el.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--muted);font-size:14px;">Aucun projet chargé.</div>';
-    return;
-  }
+  const el = document.getElementById('projets-list'); if (!el) return;
+  if (!S.projets.length) { el.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--muted);font-size:14px;">Aucun projet chargé.</div>'; return; }
   el.innerHTML = S.projets.map(p => {
     const count = S.history.filter(e => e.projet === p.id).length;
     return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:center;gap:12px;">'
       + '<div style="width:14px;height:36px;border-radius:4px;background:' + p.color + ';flex-shrink:0;"></div>'
-      + '<div style="flex:1;">'
-      + '<div style="font-size:14px;font-weight:500;color:var(--text);">' + esc(p.nom) + '</div>'
-      + '<div style="font-size:12px;color:var(--muted);margin-top:2px;">' + count + ' MO rattaché' + (count > 1 ? 's' : '') + '</div>'
-      + '</div>'
-      + '<button class="btn sm" onclick="setFilterProjet(\'' + p.id + '\', null);switchTab(\'history\')">Voir</button>'
+      + '<div style="flex:1;"><div style="font-size:14px;font-weight:500;">' + esc(p.nom) + '</div>'
+      + '<div style="font-size:12px;color:var(--muted);margin-top:2px;">' + count + ' MO rattaché' + (count > 1 ? 's' : '') + '</div></div>'
+      + '<button class="btn sm" onclick="setFilterProjet(\'' + p.id + '\',null);switchTab(\'history\')">Voir</button>'
       + '</div>';
   }).join('');
 }
 
 function renderProjetsDropdown() {
-  const sel = document.getElementById('meta-projet');
-  const val = curProjet;
+  const sel = document.getElementById('meta-projet'); const val = curProjet;
   sel.innerHTML = '<option value="">— Aucun projet —</option>' +
     S.projets.map(p => `<option value="${p.id}" ${p.id === val ? 'selected':''}>${esc(p.nom)}</option>`).join('');
-}
-
-// ── Membres CRUD ──────────────────────────────────────────────────────────────
-function toggleRoleBtn(role) {
-  if (role === 'red') roleRedacteur = !roleRedacteur;
-  else                roleValideur  = !roleValideur;
-  renderRoleBtns();
-}
-
-function renderRoleBtns() {
-  document.getElementById('rb-red').classList.toggle('active', roleRedacteur);
-  document.getElementById('rb-val').classList.toggle('active', roleValideur);
-}
-
-function saveMembre() {
-  const nom  = document.getElementById('m-nom').value.trim();
-  const init = document.getElementById('m-init').value.trim().toUpperCase() || nom.split(' ').map(w=>w[0]).join('').slice(0,3);
-  const roles = [];
-  if (roleRedacteur) roles.push('redacteur');
-  if (roleValideur)  roles.push('valideur');
-  if (!nom) { toast('Nom requis'); return; }
-  if (!roles.length) { toast('Au moins un rôle requis'); return; }
-
-  if (editingMembreId) {
-    const m = S.membres.find(x => x.id === editingMembreId);
-    if (m) { m.nom = nom; m.initiales = init; m.color = selectedMColor; m.roles = roles; }
-    editingMembreId = null;
-    document.querySelector('#membre-form .btn.primary').textContent = 'Ajouter';
-  } else {
-    S.membres.push({id: 'm_' + Date.now(), nom, initiales: init, color: selectedMColor, roles});
-  }
-  document.getElementById('m-nom').value  = '';
-  document.getElementById('m-init').value = '';
-  persist(); renderAll();
-  toast('Membre enregistré');
-}
-
-function editMembre(id) {
-  const m = S.membres.find(x => x.id === id);
-  if (!m) return;
-  editingMembreId = id;
-  document.getElementById('m-nom').value  = m.nom;
-  document.getElementById('m-init').value = m.initiales;
-  selectMColor(m.color); buildColorPickers();
-  roleRedacteur = m.roles.includes('redacteur');
-  roleValideur  = m.roles.includes('valideur');
-  renderRoleBtns();
-  document.querySelector('#membre-form .btn.primary').textContent = 'Mettre à jour';
-  document.getElementById('m-nom').focus();
-}
-
-function deleteMembre(id) {
-  if (!confirm('Supprimer ce membre ?')) return;
-  S.membres = S.membres.filter(m => m.id !== id);
-  S.history.forEach(e => {
-    e.redacteurs = (e.redacteurs||[]).filter(x => x !== id);
-    e.valideurs  = (e.valideurs||[]).filter(x  => x !== id);
-  });
-  curRedact = curRedact.filter(x => x !== id);
-  curValid  = curValid.filter(x  => x !== id);
-  saveMetaState();
-  persist(); renderAll();
-  toast('Membre supprimé');
-}
-
-function renderMembresList() {
-  const el = document.getElementById('membres-list');
-  if (!S.membres.length) {
-    el.innerHTML = '<div class="empty-state"><div class="icon">👥</div><p>Aucun membre dans l\'équipe.<br>Ajoutez vos premiers collaborateurs ci-dessus.</p></div>';
-    return;
-  }
-  el.innerHTML = S.membres.map(m => {
-    const roleLabels = [m.roles.includes('redacteur')?'Rédacteur':'',m.roles.includes('valideur')?'Valideur':''].filter(Boolean).join(' + ');
-    return `<div class="crud-card">
-      <div class="avatar" style="background:${m.color};width:36px;height:36px;font-size:12px;flex-shrink:0">${esc(m.initiales)}</div>
-      <div class="crud-card-info">
-        <div class="crud-card-title">${esc(m.nom)}</div>
-        <div class="crud-card-sub">${roleLabels}</div>
-      </div>
-      <div class="crud-card-actions">
-        <button class="btn sm" onclick="editMembre('${m.id}')">✎</button>
-        <button class="btn sm danger" onclick="deleteMembre('${m.id}')">✕</button>
-      </div>
-    </div>`;
-  }).join('');
 }
 
 // ── Download ──────────────────────────────────────────────────────────────────
@@ -1611,11 +1468,14 @@ async function loadSharedProjects() {
     if (Array.isArray(data.projects)) {
       S.projets = data.projects.map(p => ({id:p.id, nom:p.name, color:p.color||'#6B7280', desc:''}));
       localStorage.setItem(SK, JSON.stringify(S));
-      renderAll();
-      const lbl = document.getElementById('proj-status-label');
-      if (lbl) lbl.textContent = S.projets.length + ' projets chargés depuis todos';
-      toast('✓ ' + S.projets.length + ' projets chargés depuis todos');
     }
+    if (Array.isArray(data.team)) {
+      sharedTeam = data.team;
+    }
+    renderAll();
+    const lbl = document.getElementById('proj-status-label');
+    if (lbl) lbl.textContent = S.projets.length + ' projets · ' + sharedTeam.length + ' membres chargés depuis todos';
+    toast('✓ ' + S.projets.length + ' projets · ' + sharedTeam.length + ' membres chargés');
   } catch(e) { toast('Erreur chargement projets partagés'); console.error(e); }
 }
 
