@@ -1338,7 +1338,6 @@ div:hover>.item-img-del{display:block;}
 
   <!-- ══ TODOS ══ -->
   <div id="tab-todos" class="section active">
-    <div class="stats" id="todo-stats"></div>
     <div class="add-row">
       <input class="main-in" type="text" id="todo-in" placeholder="Nouvelle tâche…" onkeydown="if(event.key==='Enter')addTodo()">
       <select id="todo-cat"></select>
@@ -1431,7 +1430,6 @@ div:hover>.item-img-del{display:block;}
   </div>
   <!-- ══ NOTES ══ -->
   <div id="tab-notes" class="section">
-    <div class="stats" id="notes-stats"></div>
     <div class="add-row" style="flex-direction:column;align-items:stretch;gap:6px;">
       <textarea id="notes-body-in" rows="3" placeholder="Note… (#hashtags reconnus auto · Ctrl+Entrée pour sauvegarder)" onkeydown="if(event.ctrlKey&&event.key==='Enter'){event.preventDefault();addNote();}" style="width:100%;font-family:var(--sans);font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;resize:vertical;line-height:1.5;box-sizing:border-box;"></textarea>
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
@@ -1466,7 +1464,6 @@ div:hover>.item-img-del{display:block;}
 
   <!-- ══ REMINDERS ══ -->
   <div id="tab-reminders" class="section">
-    <div class="stats" id="rem-stats"></div>
     <div class="add-row">
       <input class="main-in" type="text" id="rem-in" placeholder="Rappel…" onkeydown="if(event.key==='Enter')addReminder()">
       <input type="date" id="rem-date">
@@ -1486,7 +1483,6 @@ div:hover>.item-img-del{display:block;}
 
   <!-- ══ HABITS ══ -->
   <div id="tab-habits" class="section">
-    <div class="stats" id="hab-stats"></div>
     <div class="add-row">
       <input class="main-in" type="text" id="hab-in" placeholder="Nouvelle habitude…" onkeydown="if(event.key==='Enter')addHabit()">
       <select id="hab-cat">
@@ -1533,7 +1529,6 @@ div:hover>.item-img-del{display:block;}
 
   <!-- ══ CHALLENGES ══ -->
   <div id="tab-challenges" class="section">
-    <div class="stats" id="ch-stats"></div>
     <div class="add-row" style="flex-direction:column;align-items:stretch;">
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
         <input class="main-in" type="text" id="ch-in" placeholder="Nouveau challenge…" onkeydown="if(event.key==='Enter')addChallenge()" style="flex:2;min-width:160px;">
@@ -1569,7 +1564,6 @@ div:hover>.item-img-del{display:block;}
 
   <!-- ══ COURSES ══ -->
   <div id="tab-courses" class="section">
-    <div class="stats" id="courses-stats"></div>
     <div class="add-row">
       <input class="main-in" type="text" id="courses-in" placeholder="Ajouter un article…" onkeydown="if(event.key==='Enter')addCourse()">
       <button class="add-btn" onclick="addCourse()">+ Add</button>
@@ -1594,7 +1588,6 @@ div:hover>.item-img-del{display:block;}
 
   <!-- ══ REVIEWS ══ -->
   <div id="tab-reviews" class="section" style="display:none;">
-    <div class="stats" id="rv-stats"></div>
 
     <!-- Add form -->
     <div class="add-row" style="flex-direction:column;align-items:stretch;gap:8px;">
@@ -1644,7 +1637,6 @@ div:hover>.item-img-del{display:block;}
 
   <!-- ══ PROJECTS ══ -->
   <div id="tab-projects" class="section" style="display:none;">
-    <div class="stats" id="proj-stats"></div>
     <div class="add-row">
       <input class="main-in" type="text" id="proj-in" placeholder="Nouveau projet…" onkeydown="if(event.key==='Enter')addProject()">
       <input type="color" id="proj-color" value="#6D28D9" style="width:32px;height:32px;padding:2px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);cursor:pointer;flex-shrink:0;">
@@ -1655,7 +1647,6 @@ div:hover>.item-img-del{display:block;}
 
   <!-- ══ BACKLOG ══ -->
   <div id="tab-backlog" class="section" style="display:none;">
-    <div class="stats" id="bl-stats"></div>
     <div class="add-row">
       <input class="main-in" type="text" id="bl-in" placeholder="Nouvelle tâche backlog…" onkeydown="if(event.key==='Enter')addBacklogItem()">
       <select id="bl-proj" style="font-family:var(--mono);font-size:11px;padding:4px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text2);cursor:pointer;">
@@ -1817,7 +1808,6 @@ div:hover>.item-img-del{display:block;}
 
 <!-- ══ TEMPLATES TAB ══ -->
 <div id="tab-templates" class="section" style="display:none;">
-  <div class="stats" id="tmpl-stats" style="display:none;"></div>
 
   <!-- Add form manuel -->
   <div class="add-row" style="align-items:center;">
@@ -4089,11 +4079,7 @@ function renderTodos(){
   const totalActive=S.todos.filter(x=>!x.done&&!x.parentId).length;
   const totalDone=S.todos.filter(x=>x.done&&!x.parentId).length;
   const p1=S.todos.filter(x=>x.pri==='p1'&&!x.done&&!x.parentId).length;
-  document.getElementById('todo-stats').innerHTML=`
-    <div class="stat"><div class="stat-n">${totalActive}</div><div class="stat-l">Active</div></div>
-    <div class="stat"><div class="stat-n">${totalDone}</div><div class="stat-l">Done</div></div>
-    <div class="stat"><div class="stat-n">${p1}</div><div class="stat-l">P1</div></div>
-    <div class="stat"><div class="stat-n">${totalActive+totalDone}</div><div class="stat-l">Total</div></div>`;
+
 }
 
 
@@ -4354,8 +4340,6 @@ function renderNotes(){
   }).join(''):`<div class="empty">${q?'Aucune note trouvée':'Aucune note'}</div>`;
   const tot=S.notes.length;
   const shown=notes.length;
-  document.getElementById('notes-stats').innerHTML=tot?`
-    <div class="stat"><div class="stat-n">${q?shown+'/'+tot:tot}</div><div class="stat-l">Note${tot>1?'s':''}</div></div>`:'';
 }
 
 /* ══ YOUTUBE EMBED ══ */
@@ -4745,12 +4729,6 @@ function renderReminders(){
       <button class="del" onclick="delRem('${r.id}')">×</button>
     </div>`).join(''):`<div class="empty">Aucun rappel</div>`;
   setupDrag(el,'reminders',renderReminders);
-  const tot=S.reminders.length,ov=S.reminders.filter(r=>remSt(r)==='overdue').length,td=S.reminders.filter(r=>remSt(r)==='today').length,dn=S.reminders.filter(r=>r.done).length;
-  document.getElementById('rem-stats').innerHTML=`
-    <div class="stat"><div class="stat-n">${tot}</div><div class="stat-l">Total</div></div>
-    <div class="stat"><div class="stat-n" style="${ov?'color:var(--red)':''}">${ov}</div><div class="stat-l">Overdue</div></div>
-    <div class="stat"><div class="stat-n" style="${td?'color:var(--amber)':''}">${td}</div><div class="stat-l">Today</div></div>
-    <div class="stat"><div class="stat-n">${dn}</div><div class="stat-l">Done</div></div>`;
 }
 
 /* ══ HABITS ══ */
@@ -4938,11 +4916,6 @@ function renderHabits(){
     </div>`;
   }).join('');
   const total=S.habits.length,dt=S.habits.filter(h=>isLogged(h.id,ts)).length,best=total?Math.max(...S.habits.map(h=>calcStreak(h))):0,bad=S.habits.filter(h=>(h.typo||'neutral')==='bad').length;
-  document.getElementById('hab-stats').innerHTML=`
-    <div class="stat"><div class="stat-n">${total}</div><div class="stat-l">Habits</div></div>
-    <div class="stat"><div class="stat-n">${dt}/${total}</div><div class="stat-l">Done today</div></div>
-    <div class="stat"><div class="stat-n" style="${bad>0?'color:var(--red)':''}">${bad}</div><div class="stat-l">To fix</div></div>
-    <div class="stat"><div class="stat-n">${best}</div><div class="stat-l">Best streak</div></div>`;
   setupHabitDrag(document.getElementById('hab-list'));
 }
 
@@ -5314,11 +5287,6 @@ function renderChStats(){
   const act=S.challenges.filter(x=>x.status==='active').length;
   const done=S.challenges.filter(x=>x.status==='done').length;
   const pct=tot?Math.round(done/tot*100):0;
-  document.getElementById('ch-stats').innerHTML=`
-    <div class="stat"><div class="stat-n">${tot}</div><div class="stat-l">Total</div></div>
-    <div class="stat"><div class="stat-n">${act}</div><div class="stat-l">Actifs</div></div>
-    <div class="stat"><div class="stat-n">${done}</div><div class="stat-l">Réussis</div></div>
-    <div class="stat"><div class="stat-n">${pct}%</div><div class="stat-l">Taux</div></div>`;
 }
 
 /* ══ COURSES ══ */
@@ -5357,10 +5325,6 @@ function renderCourses(){
   const total=S.courses.length;
   const bought=S.courses.filter(x=>x.bought).length;
   const remaining=total-bought;
-  document.getElementById('courses-stats').innerHTML=`
-    <div class="stat"><div class="stat-n">${total}</div><div class="stat-l">Total</div></div>
-    <div class="stat"><div class="stat-n">${remaining}</div><div class="stat-l">Restants</div></div>
-    <div class="stat"><div class="stat-n">${bought}</div><div class="stat-l">Achetés</div></div>`;
   // Populate template select
   const sel=document.getElementById('courses-tmpl-sel');
   if(sel){
@@ -5499,9 +5463,6 @@ function renderProjects(){
   if(!S.projects)S.projects=[];
   const total=S.projects.length;
   const el=document.getElementById('proj-list');
-  document.getElementById('proj-stats').innerHTML=total?`
-    <div class="stat"><div class="stat-n">${total}</div><div class="stat-l">Projets</div></div>
-    <div class="stat"><div class="stat-n">${(S.backlog||[]).filter(b=>!b.done).length}</div><div class="stat-l">Tâches actives</div></div>`:'';
   if(!total){el.innerHTML='<div class="empty">Aucun projet</div>';return;}
   el.innerHTML=S.projects.map((p)=>{
     const count=(S.backlog||[]).filter(b=>b.projId===p.id&&!b.done).length;
@@ -5578,10 +5539,6 @@ function renderBacklog(){
   // stats
   const active=S.backlog.filter(b=>!b.done).length;
   const done=S.backlog.filter(b=>b.done).length;
-  document.getElementById('bl-stats').innerHTML=S.backlog.length?`
-    <div class="stat"><div class="stat-n">${active}</div><div class="stat-l">Actives</div></div>
-    <div class="stat"><div class="stat-n">${done}</div><div class="stat-l">Terminées</div></div>
-    <div class="stat"><div class="stat-n">${S.backlog.length}</div><div class="stat-l">Total</div></div>`:'';
   const el=document.getElementById('bl-list');
   if(!items.length){el.innerHTML='<div class="empty">Aucune tâche</div>';return;}
   el.innerHTML=items.map(b=>{
@@ -5751,10 +5708,6 @@ function renderReviews(){
   const total=S.reviews.length;
   const avg=total?Math.round(S.reviews.reduce((a,r)=>a+r.score,0)/total*10)/10:0;
   const cats=[...new Set(S.reviews.map(r=>r.cat))];
-  document.getElementById('rv-stats').innerHTML=total?`
-    <div class="stat"><div class="stat-n">${total}</div><div class="stat-l">Reviews</div></div>
-    <div class="stat"><div class="stat-n" style="color:var(--amber);">${avg}</div><div class="stat-l">Moy. /5</div></div>
-    <div class="stat"><div class="stat-n">${S.reviews.filter(r=>r.score>=4).length}</div><div class="stat-l">≥ 4★</div></div>`:'';
 
   // Filters
   const fk=['all',...Object.keys(RV_CATS).filter(k=>cats.includes(k))];

@@ -335,12 +335,12 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
 
 <div class="tabs">
   <div class="tab active" id="tb-editor"   onclick="gotoEditor()">Editeur</div>
+  <div class="tab"        id="tb-history"  onclick="gotoHistory()">US</div>
   <div class="tab"        id="tb-projets"  onclick="gotoProjets()">Projets</div>
   <div class="tab"        id="tb-epics"    onclick="gotoEpics()">Epics</div>
   <div class="tab"        id="tb-backlogs" onclick="gotoBacklogs()">Backlogs</div>
   <div class="tab"        id="tb-kanban"   onclick="gotoKanban()">Kanban</div>
   <div class="tab"        id="tb-team"     onclick="gotoTeam()">Equipe</div>
-  <div class="tab"        id="tb-history"  onclick="gotoHistory()">US</div>
 </div>
 
 <div class="page">
@@ -1318,6 +1318,13 @@ function renderHistory() {
     ch+='</div>';
     ch+='<div class="history-actions">';
     ch+='<button class="btn sm" data-action="load" data-id="'+e.id+'">Editer</button>';
+    if (sharedProjects.length) {
+      ch+='<select class="proj-assign-sel" data-action="assignProj" data-id="'+e.id+'" style="font-size:11px;padding:3px 6px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);cursor:pointer;">';
+      ch+='<option value="">— projet —</option>';
+      sharedProjects.forEach(function(p){ ch+='<option value="'+p.id+'"'+(e.projet===p.id?' selected':'')+'>'+esc(p.name)+'</option>'; });
+      ch+='<option value=""'+((!e.projet||e.projet==='')?'':'')+'>∅ aucun</option>';
+      ch+='</select>';
+    }
     ch+='<button class="btn sm" data-action="dlmd" data-id="'+e.id+'">&#8595; md</button>';
     ch+='<button class="btn sm" data-action="dltxt" data-id="'+e.id+'">&#8595; txt</button>';
     ch+='<button class="btn sm danger" data-action="del" data-id="'+e.id+'">&#10005;</button>';
@@ -1328,8 +1335,10 @@ function renderHistory() {
   bindHistory();
 }
 function bindHistory() {
-  document.getElementById('history-container').onclick=function(ev) {
+  var container = document.getElementById('history-container');
+  container.onclick=function(ev) {
     var btn=ev.target.closest('[data-action]'); if (!btn) return;
+    if (btn.tagName==='SELECT') return; // handled by onchange
     var action=btn.dataset.action, id=parseInt(btn.dataset.id,10)||0, f=btn.dataset.f, pf=btn.dataset.pf;
     if      (action==='filter')     { curFilter=f; renderHistory(); }
     else if (action==='projfilter') { curUSProjFilter=pf; renderHistory(); }
@@ -1338,6 +1347,11 @@ function bindHistory() {
     else if (action==='dlmd')   dlEntry(id,'md');
     else if (action==='dltxt')  dlEntry(id,'txt');
     else if (action==='del')    deleteEntry(id);
+  };
+  container.onchange=function(ev) {
+    var sel=ev.target.closest('[data-action="assignProj"]'); if(!sel) return;
+    var entry=S.history.find(function(x){return x.id===parseInt(sel.dataset.id,10);});
+    if(entry){ entry.projet=sel.value; persist(); renderHistory(); toast('Projet mis a jour'); }
   };
 }
 
