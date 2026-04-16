@@ -913,7 +913,7 @@ function renderHistory() {
     var meta=(e.date?formatDate(e.date)+' · ':'')+e.dCount+' décision'+(e.dCount!==1?'s':'')+' · '+e.aCount+' action'+(e.aCount!==1?'s':'')+' · '+e.savedAt+(e.versions&&e.versions.length?' · v'+(e.versions.length+1):'');
     h+='<div class="history-card" onclick="openDrawer('+e.id+')" style="'+(isEditing?'border-color:var(--accent)':'')+'">';
     h+='<div class="history-card-top">';
-    h+='<div style="flex:1;min-width:0;"><div class="history-title">'+esc(e.title)+(isEditing?' <span style="font-size:11px;color:var(--accent)">● en cours</span>':'')+'</div>';
+    h+='<div style="flex:1;min-width:0;"><div class="history-title">'+esc(e.title)+(isEditing?' <span style="font-size:11px;color:var(--accent)">● actif</span>':'')+'</div>';
     h+='<div class="history-meta">'+meta+'</div></div>';
     h+='<div style="display:flex;gap:6px;align-items:center;flex-shrink:0" onclick="event.stopPropagation()">';
     h+='<span class="status-badge '+STATUS_CLASS[st]+'" onclick="cycleStatus('+e.id+')">'+STATUS_LABELS[st]+'</span>';
