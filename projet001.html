@@ -1896,7 +1896,7 @@ const DEFAULT_CATS = [
 ];
 
 /* ══ STATE ══ */
-let S={todos:[],notes:[],reminders:[],habits:[],habitLogs:{},categories:[],challenges:[],courses:[],courseTemplates:[],reviews:[],projects:[],backlog:[]};
+let S={todos:[],notes:[],reminders:[],habits:[],habitLogs:{},categories:[],challenges:[],courses:[],courseTemplates:[],reviews:[],projects:[],backlog:[],sharedTeam:[]};
 let AL=[];
 let wOff=0, tF='all', hzF='all', dF='all', rF='all', hF='all', chF='all', notesQ='';
 
@@ -2363,7 +2363,7 @@ function confirmImp(){
     if(d.todos){
       S={todos:d.todos,notes:d.notes||[],reminders:d.reminders||[],habits:d.habits||[],habitLogs:d.habitLogs||{},challenges:d.challenges||[],
          courses:d.courses||[],courseTemplates:d.courseTemplates||[],reviews:d.reviews||[],
-         projects:d.projects||[],backlog:d.backlog||[],
+         projects:d.projects||[],backlog:d.backlog||[],sharedTeam:d.sharedTeam||S.sharedTeam||[],
          categories:d.categories&&d.categories.length?d.categories:JSON.parse(JSON.stringify(DEFAULT_CATS))};
       save();renderCatSelects();renderAll();closeImp();toast('✓ Import réussi');logA('drive','Données importées');}
     else toast('❌ Format invalide');}
@@ -2453,6 +2453,7 @@ async function drivePull(){
       reviews:d.reviews||S.reviews||[],
       projects:d.projects||S.projects||[],
       backlog:d.backlog||S.backlog||[],
+      sharedTeam:d.sharedTeam||S.sharedTeam||[],
       categories:(d.categories&&d.categories.length)?d.categories:S.categories&&S.categories.length?S.categories:[]
     };
     ensureState();
@@ -5079,6 +5080,7 @@ async function pollOnce(){
       reviews:d.reviews||S.reviews||[],
       projects:d.projects||S.projects||[],
       backlog:d.backlog||S.backlog||[],
+      sharedTeam:d.sharedTeam||S.sharedTeam||[],
       categories:Array.isArray(d.categories)&&d.categories.length?d.categories:[]
     };
     ensureState();
