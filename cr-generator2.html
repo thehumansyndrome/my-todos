@@ -63,16 +63,18 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
 /* History */
 .history-empty{color:var(--muted);font-size:13px;padding:40px 0;text-align:center;}
 .history-list{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
-.history-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;}
+.history-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;cursor:pointer;transition:border-color .15s;}
+.history-card:hover{border-color:var(--accent);}
 .history-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
 .history-title{font-size:14px;font-weight:500;flex:1;}
 .history-meta{font-size:12px;color:var(--muted);margin-top:3px;}
 .history-actions{display:flex;gap:6px;flex-shrink:0;}
-.status-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;border:1px solid var(--border);cursor:pointer;transition:opacity .15s;user-select:none;margin-top:6px;}
+.history-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center;}
+.status-badge{padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid;user-select:none;}
 .status-badge:hover{opacity:.75;}
-.status-badge.brouillon{color:var(--amber);border-color:var(--amber);}
+.status-badge.brouillon{color:var(--muted);border-color:var(--muted);}
 .status-badge.finalise{color:var(--green);border-color:var(--green);}
-.status-badge.archive{color:var(--muted);border-color:var(--muted);}
+.status-badge.archive{color:var(--blue);border-color:var(--blue);}
 .filter-bar{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
 .filter-pill{font-size:12px;padding:4px 12px;border-radius:20px;border:1px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer;transition:all .15s;}
 .filter-pill.active{background:var(--accent);color:var(--bg);border-color:var(--accent);}
@@ -753,20 +755,24 @@ function renderHistory() {
   filtered.forEach(function(e) {
     var st=e.status||'brouillon';
     var proj=sharedProjects.find(function(p){return p.id===e.projet;});
-    var projBadge=proj?'<span style="font-size:11px;font-weight:500;padding:1px 8px;border-radius:20px;border:1px solid '+proj.color+';color:'+proj.color+';margin-left:4px;">'+esc(proj.name)+'</span>':'';
     var meta=(e.date?formatDate(e.date)+' &middot; ':'')+e.dCount+' decision'+(e.dCount!==1?'s':'')+' &middot; '+e.aCount+' action'+(e.aCount!==1?'s':'')+' &middot; enregistre '+e.savedAt;
-    ch+='<div class="history-card"><div class="history-card-top">';
+    ch+='<div class="history-card" onclick="loadEntry('+e.id+')">';
+    ch+='<div class="history-card-top">';
     ch+='<div style="flex:1;min-width:0;">';
-    ch+='<div class="history-title">'+esc(e.title)+projBadge+'</div>';
+    ch+='<div class="history-title">'+esc(e.title)+'</div>';
     ch+='<div class="history-meta">'+meta+'</div>';
-    ch+='<span class="status-badge '+st+'" data-action="status" data-id="'+e.id+'">'+SLABEL[st]+'</span>';
     ch+='</div>';
-    ch+='<div class="history-actions">';
-    ch+='<button class="btn sm" data-action="load" data-id="'+e.id+'">Editer</button>';
+    ch+='<div style="display:flex;gap:6px;align-items:center;flex-shrink:0" onclick="event.stopPropagation()">';
+    ch+='<span class="status-badge '+st+'" data-action="status" data-id="'+e.id+'">'+SLABEL[st]+'</span>';
+    ch+='<button class="btn sm" style="color:var(--red);padding:4px 8px;" data-action="del" data-id="'+e.id+'">&#10005;</button>';
+    ch+='</div>';
+    ch+='</div>';
+    ch+='<div class="history-tags" onclick="event.stopPropagation()">';
+    if (proj) ch+='<span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:12px;border:1px solid '+proj.color+';color:'+proj.color+';">'+esc(proj.name)+'</span>';
     ch+='<button class="btn sm" data-action="dlmd" data-id="'+e.id+'">&#8595; md</button>';
     ch+='<button class="btn sm" data-action="dltxt" data-id="'+e.id+'">&#8595; txt</button>';
-    ch+='<button class="btn sm" style="color:var(--red);" data-action="del" data-id="'+e.id+'">&#10005;</button>';
-    ch+='</div></div></div>';
+    ch+='</div>';
+    ch+='</div>';
   });
   ch+='</div>';
   el.innerHTML=ph+ch;
