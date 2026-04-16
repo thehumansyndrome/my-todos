@@ -1488,7 +1488,7 @@ function renderBacklogs() {
           if (usIdStr)           h+=esc(usIdStr);
           h+='</span>';
         }
-        h+='<span class="bl-us-row-title" data-action="openDetail" data-usid="'+uid+'" style="cursor:pointer;" title="Voir le detail">'+esc(utitle)+'</span>';
+        h+='<span class="bl-us-row-title" data-action="openDetail" data-usid="'+uid+'" style="cursor:pointer;" title="Voir le detail">'+(us&&us.status==='valide'?'<span style="color:var(--green);font-size:11px;margin-right:3px;">✓</span>':'')+esc(utitle)+'</span>';
         h+='<div class="bl-us-row-actions">';
         h+=(usPrio&&prioCls)?'<span class="bl-prio-chip '+prioCls+'">'+esc(usPrio)+'</span>':'<span class="bl-prio-chip" style="border-color:transparent;"></span>';
         h+=usEst?'<span class="bl-est-chip">'+esc(usEst)+'pts</span>':'<span class="bl-est-chip" style="border-color:transparent;"></span>';
