@@ -535,6 +535,12 @@ function ensureState() {
 function load() {
   try { const r = localStorage.getItem(SK); if (r) S = JSON.parse(r); } catch(e) {}
   ensureState();
+  // Restore shared cache (projets + team) for offline use
+  try {
+    const c = JSON.parse(localStorage.getItem(SK+'_shared') || '{}');
+    if (Array.isArray(c.projets) && c.projets.length) S.projets = c.projets;
+    if (Array.isArray(c.team)    && c.team.length)    sharedTeam = c.team;
+  } catch(e) {}
   const draft = localStorage.getItem(`${SK}_draft`);
   document.getElementById('raw-input').value = draft || TEMPLATE;
   try {
@@ -557,6 +563,15 @@ function renderAll() {
   renderProjetsList();
   renderHistory();
   renderEditorMeta();
+  renderEquipe();
+  // Update status labels to show cached state when offline
+  const cached = S.projets.length || sharedTeam.length;
+  if (cached) {
+    const lbl = document.getElementById('proj-status-label');
+    if (lbl && !accessToken) lbl.textContent = S.projets.length + ' projets · ' + sharedTeam.length + ' membres (cache local)';
+    const elbl = document.getElementById('equipe-status-label');
+    if (elbl && !accessToken) elbl.textContent = sharedTeam.length + ' membres (cache local — connectez Drive pour sync)';
+  }
 }
 
 // ── Theme ──────────────────────────────────────────────────────────────────────
@@ -1498,6 +1513,8 @@ async function loadSharedProjects() {
     if (Array.isArray(data.team)) {
       sharedTeam = data.team;
     }
+    // Persist shared cache for offline use
+    try { localStorage.setItem(SK+'_shared', JSON.stringify({projets: S.projets, team: sharedTeam, ts: Date.now()})); } catch(e) {}
     renderAll();
     const lbl = document.getElementById('proj-status-label');
     if (lbl) lbl.textContent = S.projets.length + ' projets · ' + sharedTeam.length + ' membres chargés depuis todos';
