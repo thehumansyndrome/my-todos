@@ -1263,17 +1263,22 @@ function renderBacklogs() {
     else if (action==='cycleStatus') cycleBlUsStatus(blId, usId);
     else if (action==='cycleStatus') cycleBlUsStatus(blId, usId);
     else if (action==='unassign') {
-      var uId2=parseInt(btn.dataset.usid,10)||0, mId2=parseInt(btn.dataset.mid,10)||0;
+      var uId2=parseInt(btn.dataset.usid,10)||0, mId2=btn.dataset.mid;
       toggleAssignee(uId2,mId2); renderBacklogs(); renderKanban();
     }
     else if (action==='assignSelect') {
-      var sel2=btn; var uId3=parseInt(sel2.dataset.usid,10)||0;
-      if(sel2.value){toggleAssignee(uId3,parseInt(sel2.value,10)); renderBacklogs(); renderKanban();}
+      // handled by onchange — no-op here
     }
     else if (action==='addUs') {
       var sel=el.querySelector('.bl-us-select[data-blid="'+blId+'"]');
       if (sel&&sel.value) { addUsToBl(blId, parseInt(sel.value,10)); sel.value=''; }
     }
+  };
+  el.onchange=function(ev) {
+    var sel=ev.target.closest('[data-action="assignSelect"]'); if(!sel) return;
+    var uId=parseInt(sel.dataset.usid,10)||0;
+    var mId=sel.value; // keep as string — member ids may be 'm_xxxx'
+    if(mId){ toggleAssignee(uId, mId); sel.value=''; renderBacklogs(); renderKanban(); }
   };
 }
 
