@@ -484,6 +484,12 @@ function ensureState() {
 function load() {
   try { var r = localStorage.getItem(SK); if (r) S = JSON.parse(r); } catch(e) {}
   ensureState();
+  // Restore shared cache (projects + team) for offline use
+  try {
+    var c = JSON.parse(localStorage.getItem(SK+'_shared') || '{}');
+    if (Array.isArray(c.projects) && c.projects.length) sharedProjects = c.projects;
+    if (Array.isArray(c.team)     && c.team.length)     sharedTeam     = c.team;
+  } catch(e) {}
   var draft = localStorage.getItem(SK+'_draft');
   document.getElementById('raw-input').value = draft || TMPL;
   try {
@@ -504,6 +510,15 @@ function renderAll() {
   renderProjets();
   renderHistory();
   renderEditorMeta();
+  renderEquipe();
+  // Update status labels to show cached state when offline
+  var cached = sharedProjects.length || sharedTeam.length;
+  if (cached && !accessToken) {
+    var lbl=document.getElementById('proj-status-label');
+    if(lbl) lbl.textContent=sharedProjects.length+' projets · '+sharedTeam.length+' membres (cache local)';
+    var elbl=document.getElementById('equipe-status-label');
+    if(elbl) elbl.textContent=sharedTeam.length+' membres (cache local — connectez Drive pour sync)';
+  }
 }
 
 // ── Theme ──────────────────────────────────────────────────────────────────────
@@ -1317,6 +1332,8 @@ function loadSharedProjects(){
     if(!data)return;
     if(Array.isArray(data.projects)) sharedProjects=data.projects;
     if(Array.isArray(data.team))     sharedTeam=data.team;
+    // Persist shared cache for offline use
+    try { localStorage.setItem(SK+'_shared', JSON.stringify({projects: sharedProjects, team: sharedTeam, ts: Date.now()})); } catch(e) {}
     renderEditorMeta();
     renderProjetFilters();
     renderProjets();
