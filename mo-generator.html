@@ -1024,7 +1024,7 @@ function renderHistory() {
     <div class="history-card" onclick="openDrawer(${e.id})" style="${isEditing ? 'border-color:var(--accent)' : ''}">
       <div class="history-card-top">
         <div style="flex:1">
-          <div class="history-title">${esc(e.titre)}${isEditing ? ' <span style="font-size:11px;color:var(--accent)">● en cours</span>' : ''}</div>
+          <div class="history-title">${esc(e.titre)}${isEditing ? ' <span style="font-size:11px;color:var(--accent)">● actif</span>' : ''}</div>
           <div class="history-meta">
             ${e.auteur ? esc(e.auteur) + ' · ' : ''}
             ${e.etapes} étape${e.etapes > 1 ? 's' : ''} · ${e.savedAt}
