@@ -32,6 +32,18 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
 .section{display:none;}
 .section.active{display:block;}
 /* Editor */
+.editor-meta-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;}
+.meta-field{display:flex;flex-direction:column;gap:4px;min-width:160px;flex:1;}
+.meta-label{font-size:11px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.04em;}
+.meta-select{font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none;}
+.chips-input-wrap{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);min-height:34px;background:var(--bg);cursor:pointer;}
+.chips-input-wrap:focus-within{border-color:var(--accent);}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;font-size:12px;font-weight:500;border:1px solid transparent;}
+.chip .remove{cursor:pointer;opacity:.6;font-size:10px;margin-left:2px;}
+.chip .remove:hover{opacity:1;}
+.dropdown-item{padding:8px 12px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;}
+.dropdown-item:hover{background:var(--border);}
+.dropdown-item.checked::after{content:'✓';margin-left:auto;color:var(--accent);}
 .editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}
 @media(max-width:700px){.editor-grid{grid-template-columns:1fr;}}
 .pane{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
@@ -361,21 +373,35 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
 
 <!-- ── EDITEUR ── -->
 <div id="tab-editor" class="section active">
+
+  <!-- Barre méta : projet + rédacteurs + valideurs -->
+  <div class="editor-meta-bar">
+    <div class="meta-field">
+      <span class="meta-label">Projet</span>
+      <select class="meta-select" id="us-projet-select" onchange="curUSProjet=this.value;saveMetaState()">
+        <option value="">— Projet —</option>
+      </select>
+    </div>
+    <div class="meta-field" style="flex:2">
+      <span class="meta-label">Rédacteur(s)</span>
+      <div class="chips-input-wrap" id="chips-red" onclick="openDropdown('red')"></div>
+    </div>
+    <div class="meta-field" style="flex:2">
+      <span class="meta-label">Valideur(s)</span>
+      <div class="chips-input-wrap" id="chips-val" onclick="openDropdown('val')"></div>
+    </div>
+  </div>
+
+  <!-- Dropdown membres -->
+  <div style="display:none;position:fixed;z-index:200;" id="dd-wrap">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);min-width:180px;box-shadow:0 4px 12px rgba(0,0,0,.1);max-height:220px;overflow-y:auto;" id="dd-menu"></div>
+  </div>
+
   <div class="editor-grid">
     <div class="pane">
       <div class="pane-header">
         <span>Notes brutes</span>
         <button class="btn sm" onclick="resetTemplate()">&#8635; Template</button>
-      </div>
-      <div style="padding:8px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:var(--bg);">
-        <span style="font-size:12px;color:var(--muted);white-space:nowrap;">Rattacher a un epic :</span>
-        <select id="epic-selector" onchange="attachEpicFromSelector()" style="flex:1;font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);outline:none;">
-          <option value="">-- Choisir un epic --</option>
-        </select>
-        <span style="font-size:12px;color:var(--muted);white-space:nowrap;">Projet :</span>
-        <select id="us-projet-select" onchange="curUSProjet=this.value" style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);outline:none;min-width:140px;">
-          <option value="">— Projet —</option>
-        </select>
       </div>
       <textarea class="editor-area" id="raw-input" spellcheck="false" oninput="onEdit()"></textarea>
     </div>
@@ -644,8 +670,11 @@ var sharedFileId = null;
 var SHARED_FILE = 'shared.json';
 var sharedProjects = [];
 var curUSProjet = '';
-var curUSEntryId = null; // currently editing entry in editor
-var drawerEntryId = null; // entry shown in drawer
+var curUSEntryId = null;
+var drawerEntryId = null;
+var curRedact = [];
+var curValid  = [];
+var ddTarget  = null;
 var tokenClient = null;
 var accessToken = sessionStorage.getItem(TOK) || null;
 var saveTimer = null;
@@ -685,6 +714,14 @@ function load() {
   } catch(e) {}
   var draft = localStorage.getItem(SK+'_draft');
   document.getElementById('raw-input').value = draft || TMPL;
+  // Restore meta state (projet + assignés)
+  try {
+    var meta = JSON.parse(localStorage.getItem(SK+'_meta') || '{}');
+    curUSProjet  = meta.projet  || '';
+    curRedact    = meta.redact  || [];
+    curValid     = meta.valid   || [];
+    curUSEntryId = meta.entryId || null;
+  } catch(e) {}
   // Update status labels if we have cached data
   if (sharedProjects.length || sharedTeam.length) {
     var lbl=document.getElementById('proj-status-label');
@@ -699,6 +736,7 @@ function load() {
   renderEpics();
   renderBacklogs();
   populateProjetSelect();
+  renderEditorMeta();
   renderProjets();
   renderEquipe();
   initDrive();
@@ -765,6 +803,7 @@ function loadSharedProjects() {
     // Persist shared cache for offline use (store raw data.team so normalize runs on restore)
     try { localStorage.setItem(SK+'_shared', JSON.stringify({projects: sharedProjects, team: data.team||[], ts: Date.now()})); } catch(e) {}
     populateProjetSelect();
+    renderEditorMeta();
     renderProjets();
     renderEquipe();
     document.getElementById('proj-status-label').textContent = sharedProjects.length+' projets · '+sharedTeam.length+' membres charges';
@@ -783,6 +822,85 @@ function populateProjetSelect() {
     if (p.id === prev) opt.selected = true;
     sel.appendChild(opt);
   });
+}
+
+function renderEditorMeta() {
+  populateProjetSelect();
+  renderEditorStatusBadge();
+  renderChips('chips-red', curRedact, 'red');
+  renderChips('chips-val', curValid,  'val');
+}
+
+function renderChips(containerId, ids, type) {
+  var el = document.getElementById(containerId); if (!el) return;
+  var members = ids.map(function(id){return sharedTeam.find(function(m){return m.id===id;});}).filter(Boolean);
+  if (!members.length) {
+    el.innerHTML = '<span style="font-size:12px;color:var(--muted)">'+(type==='red'?'Ajouter rédacteurs…':'Ajouter valideurs…')+'</span>';
+  } else {
+    el.innerHTML = members.map(function(m) {
+      return '<span class="chip" style="background:'+m.color+'22;color:'+m.color+';border-color:'+m.color+'44">'+esc(m.initiales)+' '+esc(m.nom.split(' ')[0])+'<span class="remove" onclick="removeAssigne(event,\''+type+'\',\''+m.id+'\')">✕</span></span>';
+    }).join('');
+  }
+}
+
+function removeAssigne(e, type, id) {
+  e.stopPropagation();
+  if (type==='red') curRedact = curRedact.filter(function(x){return x!==id;});
+  else              curValid  = curValid.filter(function(x){return x!==id;});
+  saveMetaState();
+  renderChips(type==='red'?'chips-red':'chips-val', type==='red'?curRedact:curValid, type);
+}
+
+function saveMetaState() {
+  localStorage.setItem(SK+'_meta', JSON.stringify({projet:curUSProjet, redact:curRedact, valid:curValid, entryId:curUSEntryId}));
+}
+
+function openDropdown(type) {
+  ddTarget = type;
+  var refEl = document.getElementById(type==='red'?'chips-red':'chips-val');
+  var rect  = refEl.getBoundingClientRect();
+  var wrap  = document.getElementById('dd-wrap');
+  wrap.style.display = 'block';
+  wrap.style.top     = (rect.bottom + window.scrollY + 4) + 'px';
+  wrap.style.left    = rect.left + 'px';
+  wrap.style.width   = Math.max(rect.width, 200) + 'px';
+  var curIds = type==='red' ? curRedact : curValid;
+  var compatible = sharedTeam.filter(function(m){
+    return m.roles ? (type==='red' ? m.roles.includes('redacteur') : m.roles.includes('valideur')) : true;
+  });
+  if (!compatible.length) {
+    document.getElementById('dd-menu').innerHTML = '<div class="dropdown-item" style="color:var(--muted)">Aucun membre avec ce rôle</div>';
+  } else {
+    document.getElementById('dd-menu').innerHTML = compatible.map(function(m) {
+      var checked = curIds.indexOf(m.id) >= 0;
+      return '<div class="dropdown-item'+(checked?' checked':'')+'" onclick="toggleAssigneMeta(\''+m.id+'\')">'
+        +'<span style="width:24px;height:24px;border-radius:50%;background:'+m.color+';display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;flex-shrink:0;">'+esc(m.initiales)+'</span> '+esc(m.nom)+'</div>';
+    }).join('');
+  }
+  setTimeout(function(){document.addEventListener('click', onDocClick);}, 0);
+}
+
+function toggleAssigneMeta(id) {
+  var arr = ddTarget==='red' ? curRedact : curValid;
+  var idx = arr.indexOf(id);
+  if (idx>=0) arr.splice(idx,1); else arr.push(id);
+  saveMetaState();
+  renderChips(ddTarget==='red'?'chips-red':'chips-val', ddTarget==='red'?curRedact:curValid, ddTarget);
+  openDropdown(ddTarget);
+}
+
+function closeDropdown() {
+  var w = document.getElementById('dd-wrap'); if (w) w.style.display='none';
+  document.removeEventListener('click', onDocClick);
+}
+
+function onDocClick(e) {
+  var wrap = document.getElementById('dd-wrap');
+  var cr   = document.getElementById('chips-red');
+  var cv   = document.getElementById('chips-val');
+  if (wrap && !wrap.contains(e.target) && cr && !cr.contains(e.target) && cv && !cv.contains(e.target)) {
+    closeDropdown();
+  }
 }
 function renderProjets() {
   var el = document.getElementById('projets-list');
@@ -1063,15 +1181,17 @@ function saveUS() {
       if (existing.versions.length>=5) existing.versions.pop();
       var changes = diffUS(existing.raw, raw);
       existing.versions.unshift({raw:existing.raw, savedAt:existing.savedAt, changes:changes});
-      existing.titre   = us.titre||'(sans titre)';
-      existing.epic    = us.epic;
-      existing.prio    = us.prio;
-      existing.est     = us.est;
-      existing.acCount = us.ac.length;
-      existing.raw     = raw;
-      existing.savedAt = new Date().toLocaleDateString('fr-FR');
-      existing.projet  = curUSProjet||'';
-      persist(); renderHistory(); renderEpics(); renderBacklogs(); renderEditorStatusBadge();
+      existing.titre      = us.titre||'(sans titre)';
+      existing.epic       = us.epic;
+      existing.prio       = us.prio;
+      existing.est        = us.est;
+      existing.acCount    = us.ac.length;
+      existing.raw        = raw;
+      existing.savedAt    = new Date().toLocaleDateString('fr-FR');
+      existing.projet     = curUSProjet||'';
+      existing.redacteurs = curRedact.slice();
+      existing.valideurs  = curValid.slice();
+      persist(); renderHistory(); renderEpics(); renderBacklogs(); renderEditorStatusBadge(); saveMetaState();
       toast('✓ US mise à jour (v'+(existing.versions.length+1)+')');
       return;
     }
@@ -1086,8 +1206,8 @@ function saveUS() {
     acCount:    us.ac.length,
     status:     'brouillon',
     projet:     curUSProjet||'',
-    redacteurs: [],
-    valideurs:  [],
+    redacteurs: curRedact.slice(),
+    valideurs:  curValid.slice(),
     versions:   [],
     comments:   [],
     raw:        raw,
@@ -1096,7 +1216,7 @@ function saveUS() {
   curUSEntryId = entry.id;
   S.history.unshift(entry);
   if (S.history.length>100) S.history.pop();
-  persist(); renderHistory(); renderEpics(); renderBacklogs(); renderEditorStatusBadge();
+  persist(); renderHistory(); renderEpics(); renderBacklogs(); renderEditorStatusBadge(); saveMetaState();
   toast('✓ US enregistrée');
 }
 
@@ -1472,9 +1592,12 @@ function loadEntry(id) {
   var e=S.history.find(function(x){return x.id===id;});
   if (!e) return;
   document.getElementById('raw-input').value=e.raw;
-  curUSProjet=e.projet||'';
-  curUSEntryId=e.id;
-  populateProjetSelect();
+  curUSProjet  = e.projet||'';
+  curUSEntryId = e.id;
+  curRedact    = (e.redacteurs||[]).slice();
+  curValid     = (e.valideurs||[]).slice();
+  saveMetaState();
+  renderEditorMeta();
   renderPreview(); renderEditorStatusBadge(); gotoEditor(); toast('Chargé dans l\'éditeur');
 }
 function cycleStatus(id) {
@@ -2489,9 +2612,12 @@ function restoreVersion(entryId, vIdx) {
 function editFromDrawer() {
   var e = S.history.find(function(x){return x.id===drawerEntryId;}); if (!e) return;
   document.getElementById('raw-input').value = e.raw;
-  curUSProjet = e.projet||'';
+  curUSProjet  = e.projet||'';
   curUSEntryId = e.id;
-  populateProjetSelect();
+  curRedact    = (e.redacteurs||[]).slice();
+  curValid     = (e.valideurs||[]).slice();
+  saveMetaState();
+  renderEditorMeta();
   renderPreview(); renderEditorStatusBadge();
   closeDrawer(); gotoEditor(); toast('US chargée dans l\'éditeur');
 }
