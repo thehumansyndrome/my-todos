@@ -1321,6 +1321,7 @@ div:hover>.item-img-del{display:block;}
   <div class="tabs-inner">
     <button class="tab active" onclick="switchTab('todos')">Todos</button>
     <button class="tab" onclick="switchTab('projects')">Projets</button>
+    <button class="tab" onclick="switchTab('team')">Équipe</button>
     <button class="tab" onclick="switchTab('backlog')">Backlog</button>
     <button class="tab" onclick="switchTab('courses')">Courses</button>
     <button class="tab" onclick="switchTab('notes')">Notes</button>
@@ -1338,6 +1339,7 @@ div:hover>.item-img-del{display:block;}
 
   <!-- ══ TODOS ══ -->
   <div id="tab-todos" class="section active">
+    <div class="stats" id="todo-stats"></div>
     <div class="add-row">
       <input class="main-in" type="text" id="todo-in" placeholder="Nouvelle tâche…" onkeydown="if(event.key==='Enter')addTodo()">
       <select id="todo-cat"></select>
@@ -1430,6 +1432,7 @@ div:hover>.item-img-del{display:block;}
   </div>
   <!-- ══ NOTES ══ -->
   <div id="tab-notes" class="section">
+    <div class="stats" id="notes-stats"></div>
     <div class="add-row" style="flex-direction:column;align-items:stretch;gap:6px;">
       <textarea id="notes-body-in" rows="3" placeholder="Note… (#hashtags reconnus auto · Ctrl+Entrée pour sauvegarder)" onkeydown="if(event.ctrlKey&&event.key==='Enter'){event.preventDefault();addNote();}" style="width:100%;font-family:var(--sans);font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;resize:vertical;line-height:1.5;box-sizing:border-box;"></textarea>
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
@@ -1464,6 +1467,7 @@ div:hover>.item-img-del{display:block;}
 
   <!-- ══ REMINDERS ══ -->
   <div id="tab-reminders" class="section">
+    <div class="stats" id="rem-stats"></div>
     <div class="add-row">
       <input class="main-in" type="text" id="rem-in" placeholder="Rappel…" onkeydown="if(event.key==='Enter')addReminder()">
       <input type="date" id="rem-date">
@@ -1483,6 +1487,7 @@ div:hover>.item-img-del{display:block;}
 
   <!-- ══ HABITS ══ -->
   <div id="tab-habits" class="section">
+    <div class="stats" id="hab-stats"></div>
     <div class="add-row">
       <input class="main-in" type="text" id="hab-in" placeholder="Nouvelle habitude…" onkeydown="if(event.key==='Enter')addHabit()">
       <select id="hab-cat">
@@ -1529,6 +1534,7 @@ div:hover>.item-img-del{display:block;}
 
   <!-- ══ CHALLENGES ══ -->
   <div id="tab-challenges" class="section">
+    <div class="stats" id="ch-stats"></div>
     <div class="add-row" style="flex-direction:column;align-items:stretch;">
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
         <input class="main-in" type="text" id="ch-in" placeholder="Nouveau challenge…" onkeydown="if(event.key==='Enter')addChallenge()" style="flex:2;min-width:160px;">
@@ -1564,6 +1570,7 @@ div:hover>.item-img-del{display:block;}
 
   <!-- ══ COURSES ══ -->
   <div id="tab-courses" class="section">
+    <div class="stats" id="courses-stats"></div>
     <div class="add-row">
       <input class="main-in" type="text" id="courses-in" placeholder="Ajouter un article…" onkeydown="if(event.key==='Enter')addCourse()">
       <button class="add-btn" onclick="addCourse()">+ Add</button>
@@ -1588,6 +1595,7 @@ div:hover>.item-img-del{display:block;}
 
   <!-- ══ REVIEWS ══ -->
   <div id="tab-reviews" class="section" style="display:none;">
+    <div class="stats" id="rv-stats"></div>
 
     <!-- Add form -->
     <div class="add-row" style="flex-direction:column;align-items:stretch;gap:8px;">
@@ -1637,6 +1645,7 @@ div:hover>.item-img-del{display:block;}
 
   <!-- ══ PROJECTS ══ -->
   <div id="tab-projects" class="section" style="display:none;">
+    <div class="stats" id="proj-stats"></div>
     <div class="add-row">
       <input class="main-in" type="text" id="proj-in" placeholder="Nouveau projet…" onkeydown="if(event.key==='Enter')addProject()">
       <input type="color" id="proj-color" value="#6D28D9" style="width:32px;height:32px;padding:2px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);cursor:pointer;flex-shrink:0;">
@@ -1645,8 +1654,23 @@ div:hover>.item-img-del{display:block;}
     <div id="proj-list" style="display:flex;flex-direction:column;gap:8px;margin-top:12px;"></div>
   </div>
 
+  <!-- ══ TEAM ══ -->
+  <div id="tab-team" class="section" style="display:none;">
+    <div class="add-row">
+      <input class="main-in" type="text" id="team-nom" placeholder="Nom complet…" maxlength="50" onkeydown="if(event.key==='Enter')saveTeamMember()">
+      <input type="text" id="team-init" placeholder="Init." maxlength="3" style="width:52px;font-family:var(--mono);font-size:12px;padding:6px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text2);outline:none;">
+      <div id="team-color-picker" style="display:flex;gap:4px;align-items:center;flex-shrink:0;"></div>
+      <button id="team-rb-red" onclick="toggleTeamRole('red')" style="padding:4px 10px;border-radius:12px;font-size:12px;font-weight:500;border:1px solid var(--red);color:var(--red);cursor:pointer;background:transparent;white-space:nowrap;">Rédacteur</button>
+      <button id="team-rb-val" onclick="toggleTeamRole('val')" style="padding:4px 10px;border-radius:12px;font-size:12px;font-weight:500;border:1px solid var(--line);color:var(--text3);cursor:pointer;background:transparent;white-space:nowrap;">Valideur</button>
+      <button class="add-btn" onclick="saveTeamMember()">+ Add</button>
+    </div>
+    <p id="team-edit-hint" style="font-family:var(--mono);font-size:11px;color:var(--accent);margin:4px 0 0;display:none;">Mode édition — modifiez puis cliquez + Add</p>
+    <div id="team-list" style="display:flex;flex-direction:column;gap:8px;margin-top:12px;"></div>
+  </div>
+
   <!-- ══ BACKLOG ══ -->
   <div id="tab-backlog" class="section" style="display:none;">
+    <div class="stats" id="bl-stats"></div>
     <div class="add-row">
       <input class="main-in" type="text" id="bl-in" placeholder="Nouvelle tâche backlog…" onkeydown="if(event.key==='Enter')addBacklogItem()">
       <select id="bl-proj" style="font-family:var(--mono);font-size:11px;padding:4px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text2);cursor:pointer;">
@@ -1808,6 +1832,7 @@ div:hover>.item-img-del{display:block;}
 
 <!-- ══ TEMPLATES TAB ══ -->
 <div id="tab-templates" class="section" style="display:none;">
+  <div class="stats" id="tmpl-stats" style="display:none;"></div>
 
   <!-- Add form manuel -->
   <div class="add-row" style="align-items:center;">
@@ -1862,7 +1887,7 @@ div:hover>.item-img-del{display:block;}
 const P='projet001';
 const IS_TOUCH = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 const SK='td_v4_'+P, AK='td_act_'+P, TK='td_theme_'+P, DK='td_drive_'+P;
-const TABS=['todos','projects','backlog','courses','notes','reminders','habits','challenges','reviews','archive','log','templates'];
+const TABS=['todos','projects','team','backlog','courses','notes','reminders','habits','challenges','reviews','archive','log','templates'];
 
 /* ══ DEFAULT CATEGORIES ══ */
 const DEFAULT_CATS = [
@@ -1927,6 +1952,7 @@ function ensureState(){
   if(!S.reviews) S.reviews=[];
   if(!S.projects) S.projects=[];
   if(!S.backlog) S.backlog=[];
+  if(!S.sharedTeam) S.sharedTeam=[];
 }
 
 function save(){try{localStorage.setItem(SK,JSON.stringify(S));}catch(e){}}
@@ -2189,6 +2215,7 @@ function switchTab(t){
   const el=document.getElementById('tab-'+t);
   el.classList.add('active'); el.style.display='';
   if(t==='log'){renderLog();renderAL();loadDriveConf();renderCatManager();}
+  if(t==='team'){renderTeamList();}
   if(t==='archive')loadArchive(false);
   if(t==='reviews')renderReviews();
   if(t==='projects')renderProjects();
@@ -2342,7 +2369,7 @@ function confirmImp(){
     else toast('❌ Format invalide');}
   catch(e){toast('❌ JSON invalide');}
 }
-function clearAll(){if(!confirm('Tout effacer ?'))return;S={todos:[],notes:[],reminders:[],habits:[],habitLogs:{},challenges:[],courses:[],courseTemplates:[],reviews:[],projects:[],backlog:[],categories:JSON.parse(JSON.stringify(DEFAULT_CATS))};save();renderCatSelects();renderAll();renderLog();toast('Données effacées');logA('drive','Tout effacé');}
+function clearAll(){if(!confirm('Tout effacer ?'))return;S={todos:[],notes:[],reminders:[],habits:[],habitLogs:{},challenges:[],courses:[],courseTemplates:[],reviews:[],projects:[],backlog:[],sharedTeam:[],categories:JSON.parse(JSON.stringify(DEFAULT_CATS))};save();renderCatSelects();renderAll();renderLog();toast('Données effacées');logA('drive','Tout effacé');}
 function renderAll(){renderTodos();renderNotes();renderReminders();renderHabits();renderChallenges();renderCourses();renderReviews();renderProjects();renderBacklog();}
 document.getElementById('imp-modal').addEventListener('click',function(e){if(e.target===this)closeImp();});
 
@@ -4079,7 +4106,11 @@ function renderTodos(){
   const totalActive=S.todos.filter(x=>!x.done&&!x.parentId).length;
   const totalDone=S.todos.filter(x=>x.done&&!x.parentId).length;
   const p1=S.todos.filter(x=>x.pri==='p1'&&!x.done&&!x.parentId).length;
-
+  document.getElementById('todo-stats').innerHTML=`
+    <div class="stat"><div class="stat-n">${totalActive}</div><div class="stat-l">Active</div></div>
+    <div class="stat"><div class="stat-n">${totalDone}</div><div class="stat-l">Done</div></div>
+    <div class="stat"><div class="stat-n">${p1}</div><div class="stat-l">P1</div></div>
+    <div class="stat"><div class="stat-n">${totalActive+totalDone}</div><div class="stat-l">Total</div></div>`;
 }
 
 
@@ -4340,6 +4371,8 @@ function renderNotes(){
   }).join(''):`<div class="empty">${q?'Aucune note trouvée':'Aucune note'}</div>`;
   const tot=S.notes.length;
   const shown=notes.length;
+  document.getElementById('notes-stats').innerHTML=tot?`
+    <div class="stat"><div class="stat-n">${q?shown+'/'+tot:tot}</div><div class="stat-l">Note${tot>1?'s':''}</div></div>`:'';
 }
 
 /* ══ YOUTUBE EMBED ══ */
@@ -4729,6 +4762,12 @@ function renderReminders(){
       <button class="del" onclick="delRem('${r.id}')">×</button>
     </div>`).join(''):`<div class="empty">Aucun rappel</div>`;
   setupDrag(el,'reminders',renderReminders);
+  const tot=S.reminders.length,ov=S.reminders.filter(r=>remSt(r)==='overdue').length,td=S.reminders.filter(r=>remSt(r)==='today').length,dn=S.reminders.filter(r=>r.done).length;
+  document.getElementById('rem-stats').innerHTML=`
+    <div class="stat"><div class="stat-n">${tot}</div><div class="stat-l">Total</div></div>
+    <div class="stat"><div class="stat-n" style="${ov?'color:var(--red)':''}">${ov}</div><div class="stat-l">Overdue</div></div>
+    <div class="stat"><div class="stat-n" style="${td?'color:var(--amber)':''}">${td}</div><div class="stat-l">Today</div></div>
+    <div class="stat"><div class="stat-n">${dn}</div><div class="stat-l">Done</div></div>`;
 }
 
 /* ══ HABITS ══ */
@@ -4916,6 +4955,11 @@ function renderHabits(){
     </div>`;
   }).join('');
   const total=S.habits.length,dt=S.habits.filter(h=>isLogged(h.id,ts)).length,best=total?Math.max(...S.habits.map(h=>calcStreak(h))):0,bad=S.habits.filter(h=>(h.typo||'neutral')==='bad').length;
+  document.getElementById('hab-stats').innerHTML=`
+    <div class="stat"><div class="stat-n">${total}</div><div class="stat-l">Habits</div></div>
+    <div class="stat"><div class="stat-n">${dt}/${total}</div><div class="stat-l">Done today</div></div>
+    <div class="stat"><div class="stat-n" style="${bad>0?'color:var(--red)':''}">${bad}</div><div class="stat-l">To fix</div></div>
+    <div class="stat"><div class="stat-n">${best}</div><div class="stat-l">Best streak</div></div>`;
   setupHabitDrag(document.getElementById('hab-list'));
 }
 
@@ -5287,6 +5331,11 @@ function renderChStats(){
   const act=S.challenges.filter(x=>x.status==='active').length;
   const done=S.challenges.filter(x=>x.status==='done').length;
   const pct=tot?Math.round(done/tot*100):0;
+  document.getElementById('ch-stats').innerHTML=`
+    <div class="stat"><div class="stat-n">${tot}</div><div class="stat-l">Total</div></div>
+    <div class="stat"><div class="stat-n">${act}</div><div class="stat-l">Actifs</div></div>
+    <div class="stat"><div class="stat-n">${done}</div><div class="stat-l">Réussis</div></div>
+    <div class="stat"><div class="stat-n">${pct}%</div><div class="stat-l">Taux</div></div>`;
 }
 
 /* ══ COURSES ══ */
@@ -5325,6 +5374,10 @@ function renderCourses(){
   const total=S.courses.length;
   const bought=S.courses.filter(x=>x.bought).length;
   const remaining=total-bought;
+  document.getElementById('courses-stats').innerHTML=`
+    <div class="stat"><div class="stat-n">${total}</div><div class="stat-l">Total</div></div>
+    <div class="stat"><div class="stat-n">${remaining}</div><div class="stat-l">Restants</div></div>
+    <div class="stat"><div class="stat-n">${bought}</div><div class="stat-l">Achetés</div></div>`;
   // Populate template select
   const sel=document.getElementById('courses-tmpl-sel');
   if(sel){
@@ -5409,7 +5462,7 @@ async function drFindOrCreateShared(){
   // Create new shared.json
   const bd='---B314160';
   const meta=JSON.stringify({name:SHARED_FILE,mimeType:'application/json'});
-  const body=JSON.stringify({projects:S.projects||[]},null,2);
+  const body=JSON.stringify({projects:S.projects||[], team:S.sharedTeam||[]},null,2);
   const mp=`--${bd}\r\nContent-Type: application/json\r\n\r\n${meta}\r\n--${bd}\r\nContent-Type: application/json\r\n\r\n${body}\r\n--${bd}--`;
   const cr=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{Authorization:'Bearer '+drTok,'Content-Type':`multipart/related; boundary="${bd}"`},body:mp});
   const cd=await cr.json();sharedFid=cd.id;return sharedFid;
@@ -5423,9 +5476,9 @@ async function syncSharedProjects(){
     await fetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`,{
       method:'PATCH',
       headers:{Authorization:'Bearer '+drTok,'Content-Type':'application/json'},
-      body:JSON.stringify({projects:S.projects||[]},null,2)
+      body:JSON.stringify({projects:S.projects||[], team:S.sharedTeam||[]},null,2)
     });
-    logA('drive','Projets partagés → '+SHARED_FILE);
+    logA('drive','Équipe + Projets → '+SHARED_FILE);
   } catch(e){ console.warn('syncSharedProjects:', e.message); }
 }
 
@@ -5459,10 +5512,101 @@ function delProject(id){
 
 function getProject(id){return (S.projects||[]).find(x=>x.id===id);}
 
+/* ══ SHARED TEAM ══ */
+const TEAM_COLORS=['#E53E3E','#DD6B20','#38A169','#3182CE','#6B46C1','#D53F8C','#2C7A7B','#718096'];
+let teamEditingId=null;
+let teamSelectedColor=TEAM_COLORS[3];
+let teamRoleRed=true, teamRoleVal=false;
+
+function buildTeamColorPicker(){
+  const el=document.getElementById('team-color-picker');
+  if(!el)return;
+  el.innerHTML=TEAM_COLORS.map(c=>`<div onclick="selectTeamColor('${c}')" title="${c}" style="width:18px;height:18px;border-radius:50%;background:${c};cursor:pointer;border:2px solid ${c===teamSelectedColor?'var(--text)':'transparent'};transition:border-color .15s;flex-shrink:0;"></div>`).join('');
+}
+function selectTeamColor(c){
+  teamSelectedColor=c;
+  buildTeamColorPicker();
+}
+function toggleTeamRole(role){
+  if(role==='red') teamRoleRed=!teamRoleRed;
+  else             teamRoleVal=!teamRoleVal;
+  renderTeamRoleBtns();
+}
+function renderTeamRoleBtns(){
+  const rr=document.getElementById('team-rb-red');
+  const rv=document.getElementById('team-rb-val');
+  if(rr){rr.style.background=teamRoleRed?'var(--red)':'transparent';rr.style.color=teamRoleRed?'#fff':'var(--red)';}
+  if(rv){rv.style.background=teamRoleVal?'var(--green)':'transparent';rv.style.color=teamRoleVal?'#fff':'var(--text3)';rv.style.borderColor=teamRoleVal?'var(--green)':'var(--line)';}
+}
+function saveTeamMember(){
+  const nom=document.getElementById('team-nom').value.trim();
+  const initRaw=document.getElementById('team-init').value.trim().toUpperCase();
+  const init=initRaw||nom.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase();
+  if(!nom){toast('⚠ Nom requis');return;}
+  const roles=[];
+  if(teamRoleRed)roles.push('redacteur');
+  if(teamRoleVal)roles.push('valideur');
+  if(!roles.length){toast('⚠ Au moins un rôle requis');return;}
+  if(!S.sharedTeam)S.sharedTeam=[];
+  if(teamEditingId){
+    const m=S.sharedTeam.find(x=>x.id===teamEditingId);
+    if(m){m.nom=nom;m.initiales=init;m.color=teamSelectedColor;m.roles=roles;}
+    teamEditingId=null;
+    document.querySelector('[onclick="saveTeamMember()"]').textContent='+ Ajouter';
+    document.getElementById('team-edit-hint').style.display='none';
+  } else {
+    S.sharedTeam.push({id:'m_'+Date.now(),nom,initiales:init,color:teamSelectedColor,roles});
+  }
+  document.getElementById('team-nom').value='';
+  document.getElementById('team-init').value='';
+  autoSave(); renderTeamList(); syncSharedProjects();
+  toast('✓ Membre enregistré');
+}
+function editTeamMember(id){
+  const m=S.sharedTeam.find(x=>x.id===id);if(!m)return;
+  teamEditingId=id;
+  document.getElementById('team-nom').value=m.nom;
+  document.getElementById('team-init').value=m.initiales;
+  selectTeamColor(m.color);
+  teamRoleRed=m.roles.includes('redacteur');
+  teamRoleVal=m.roles.includes('valideur');
+  renderTeamRoleBtns();
+  document.querySelector('[onclick="saveTeamMember()"]').textContent='Enregistrer';
+  document.getElementById('team-edit-hint').style.display='';
+  document.getElementById('team-nom').focus();
+}
+function deleteTeamMember(id){
+  if(!confirm('Supprimer ce membre ?'))return;
+  S.sharedTeam=(S.sharedTeam||[]).filter(m=>m.id!==id);
+  autoSave(); renderTeamList(); syncSharedProjects();
+  toast('Membre supprimé');
+}
+function renderTeamList(){
+  if(!S.sharedTeam)S.sharedTeam=[];
+  buildTeamColorPicker(); renderTeamRoleBtns();
+  const el=document.getElementById('team-list');if(!el)return;
+  if(!S.sharedTeam.length){el.innerHTML='<p style="font-size:13px;color:var(--text3);">Aucun membre. Ajoutez vos collaborateurs ci-dessous.</p>';return;}
+  el.innerHTML=S.sharedTeam.map(m=>{
+    const roleLabels=[m.roles.includes('redacteur')?'Rédacteur':'',m.roles.includes('valideur')?'Valideur':''].filter(Boolean).join(' + ');
+    return`<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);">
+      <div style="width:32px;height:32px;border-radius:50%;background:${m.color};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;flex-shrink:0;">${esc(m.initiales)}</div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:500;">${esc(m.nom)}</div>
+        <div style="font-size:11px;color:var(--text3);">${roleLabels}</div>
+      </div>
+      <button class="lbtn" onclick="editTeamMember('${m.id}')" style="font-size:11px;padding:3px 8px;">✎</button>
+      <button class="lbtn danger" onclick="deleteTeamMember('${m.id}')" style="font-size:11px;padding:3px 8px;">×</button>
+    </div>`;
+  }).join('');
+}
+
 function renderProjects(){
   if(!S.projects)S.projects=[];
   const total=S.projects.length;
   const el=document.getElementById('proj-list');
+  document.getElementById('proj-stats').innerHTML=total?`
+    <div class="stat"><div class="stat-n">${total}</div><div class="stat-l">Projets</div></div>
+    <div class="stat"><div class="stat-n">${(S.backlog||[]).filter(b=>!b.done).length}</div><div class="stat-l">Tâches actives</div></div>`:'';
   if(!total){el.innerHTML='<div class="empty">Aucun projet</div>';return;}
   el.innerHTML=S.projects.map((p)=>{
     const count=(S.backlog||[]).filter(b=>b.projId===p.id&&!b.done).length;
@@ -5539,6 +5683,10 @@ function renderBacklog(){
   // stats
   const active=S.backlog.filter(b=>!b.done).length;
   const done=S.backlog.filter(b=>b.done).length;
+  document.getElementById('bl-stats').innerHTML=S.backlog.length?`
+    <div class="stat"><div class="stat-n">${active}</div><div class="stat-l">Actives</div></div>
+    <div class="stat"><div class="stat-n">${done}</div><div class="stat-l">Terminées</div></div>
+    <div class="stat"><div class="stat-n">${S.backlog.length}</div><div class="stat-l">Total</div></div>`:'';
   const el=document.getElementById('bl-list');
   if(!items.length){el.innerHTML='<div class="empty">Aucune tâche</div>';return;}
   el.innerHTML=items.map(b=>{
@@ -5708,6 +5856,10 @@ function renderReviews(){
   const total=S.reviews.length;
   const avg=total?Math.round(S.reviews.reduce((a,r)=>a+r.score,0)/total*10)/10:0;
   const cats=[...new Set(S.reviews.map(r=>r.cat))];
+  document.getElementById('rv-stats').innerHTML=total?`
+    <div class="stat"><div class="stat-n">${total}</div><div class="stat-l">Reviews</div></div>
+    <div class="stat"><div class="stat-n" style="color:var(--amber);">${avg}</div><div class="stat-l">Moy. /5</div></div>
+    <div class="stat"><div class="stat-n">${S.reviews.filter(r=>r.score>=4).length}</div><div class="stat-l">≥ 4★</div></div>`:'';
 
   // Filters
   const fk=['all',...Object.keys(RV_CATS).filter(k=>cats.includes(k))];
