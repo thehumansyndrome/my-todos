@@ -342,7 +342,6 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
   <div class="tab"        id="tb-epics"    onclick="gotoEpics()">Epics</div>
   <div class="tab"        id="tb-backlogs" onclick="gotoBacklogs()">Backlogs</div>
   <div class="tab"        id="tb-kanban"   onclick="gotoKanban()">Kanban</div>
-  <div class="tab"        id="tb-team"     onclick="gotoTeam()">Equipe</div>
 </div>
 
 <div class="page">
@@ -516,23 +515,6 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
   </div>
 </div>
 
-<!-- ── EQUIPE ── -->
-<div id="tab-team" class="section">
-  <div class="form-card" id="team-form">
-    <div style="font-size:13px;font-weight:500;margin-bottom:12px;" id="team-form-title">Nouveau membre</div>
-    <div class="field-row">
-      <div class="field"><label>Prenom Nom</label><input type="text" id="tf-nom" placeholder="Ahmed Benali"></div>
-      <div class="field"><label>Role</label><input type="text" id="tf-role" placeholder="Dev / QA / PO..."></div>
-    </div>
-    <div class="field"><label>Email (optionnel)</label><input type="email" id="tf-email" placeholder="ahmed@equipe.com"></div>
-    <div class="form-actions">
-      <button class="btn sm" onclick="cancelTeamEdit()">Annuler</button>
-      <button class="btn sm primary" onclick="saveMember()">Enregistrer</button>
-    </div>
-  </div>
-  <div id="team-list"></div>
-</div>
-
 <!-- ── PROJETS ── -->
 <div id="tab-projets" class="section">
   <div class="drive-bar">
@@ -581,6 +563,7 @@ var TMPL = 'US: \nID: \nEPIC: \nPRIO: Must\nEST: \nTYPE: \n\nAS: \nWANT: \nSO: \
 
 /* ── State ── */
 var S = {history:[],epics:[],backlogs:[]};
+var sharedTeam = []; // loaded from shared.json (managed in todos)
 var driveFileId = null;
 var sharedFileId = null;
 var SHARED_FILE = 'shared.json';
@@ -598,7 +581,6 @@ function ensureState() {
   if (!Array.isArray(S.history))  S.history  = [];
   if (!Array.isArray(S.epics))    S.epics    = [];
   if (!Array.isArray(S.backlogs)) S.backlogs = [];
-  if (!Array.isArray(S.team))     S.team     = [];
   if (!Array.isArray(S.squads))   S.squads   = [];
 }
 
@@ -630,7 +612,7 @@ function toggleTheme() {
 
 /* ── Tabs ── */
 function gotoTab(id) {
-  ['editor','projets','epics','backlogs','kanban','team','history'].forEach(function(t) {
+  ['editor','projets','epics','backlogs','kanban','history'].forEach(function(t) {
     var tb = document.getElementById('tb-'+t);
     var sc = document.getElementById('tab-'+t);
     if(tb) tb.classList.toggle('active', t===id);
@@ -641,7 +623,7 @@ function gotoTab(id) {
 function gotoEditor()   { gotoTab('editor'); renderEpicSelector(); }
 function gotoProjets()  { gotoTab('projets'); }
 function gotoKanban()   { gotoTab('kanban'); renderKanbanSelector(); renderKanban(); }
-function gotoTeam()     { gotoTab('team'); renderTeam(); }
+function gotoTeam()     { gotoProjets(); toast('Equipe geree dans todos → onglet Log'); }
 function startTab()     { gotoTab('epics'); }
 function gotoEpics()    { gotoTab('epics'); }
 function gotoBacklogs() { gotoTab('backlogs'); }
@@ -659,12 +641,25 @@ function loadSharedProjects() {
     sharedFileId = id;
     return fetch('https://www.googleapis.com/drive/v3/files/'+id+'?alt=media',{headers:{Authorization:'Bearer '+accessToken}}).then(function(r){return r.json();});
   }).then(function(data) {
-    if (!data||!Array.isArray(data.projects)) return;
-    sharedProjects = data.projects;
+    if (!data) return;
+    if (Array.isArray(data.projects)) sharedProjects = data.projects;
+    if (Array.isArray(data.team)) {
+      // Normalize: shared team uses {roles:[]} — US expects {role:string}
+      sharedTeam = data.team.map(function(m) {
+        return {
+          id: m.id,
+          nom: m.nom,
+          role: m.roles ? m.roles.join(' / ') : (m.role || ''),
+          email: m.email || '',
+          color: m.color || '#3182CE',
+          initiales: m.initiales || ''
+        };
+      });
+    }
     populateProjetSelect();
     renderProjets();
-    document.getElementById('proj-status-label').textContent = sharedProjects.length+' projets charges depuis todos';
-    toast('✓ '+sharedProjects.length+' projets charges');
+    document.getElementById('proj-status-label').textContent = sharedProjects.length+' projets · '+sharedTeam.length+' membres charges';
+    toast('✓ '+sharedProjects.length+' projets · '+sharedTeam.length+' membres charges');
   }).catch(function(){ toast('Erreur chargement projets'); });
 }
 function populateProjetSelect() {
@@ -1168,7 +1163,7 @@ function renderBacklogs() {
         h+='<button class="bl-status-btn '+usStatus+'" data-action="cycleStatus" data-blid="'+bl.id+'" data-usid="'+uid+'">'+statusLabel[usStatus]+'</button>';
         var usComment=bl.usComments&&bl.usComments[uid]?bl.usComments[uid]:'';
         var blChips = makeAssigneeChips(uid, true);
-        var unassigned = S.team.filter(function(m){
+        var unassigned = sharedTeam.filter(function(m){
           var a=us&&Array.isArray(us.assignees)?us.assignees:[];
           return a.indexOf(m.id)===-1&&a.indexOf(String(m.id))===-1;
         });
@@ -1314,7 +1309,7 @@ function renderHistory() {
     var assigneeChips='';
     if (Array.isArray(e.assignees)&&e.assignees.length) {
       e.assignees.forEach(function(mid){
-        var m=S.team&&S.team.find(function(x){return x.id===mid||x.id===parseInt(mid,10);});
+        var m=sharedTeam&&sharedTeam.find(function(x){return x.id===mid||x.id===parseInt(mid,10);});
         if(m){ var col=avatarColor(m.nom); assigneeChips+='<span class="avatar color-'+col+'" title="'+esc(m.nom)+'">'+esc(initials(m.nom))+'</span>'; }
       });
     }
@@ -1370,7 +1365,6 @@ function bindHistory() {
 }
 
 /* ── Team ── */
-var editingMemberId = null;
 
 function initials(nom) {
   var parts = nom.trim().split(/\s+/);
@@ -1379,12 +1373,12 @@ function initials(nom) {
 function avatarColor(nom) { var h=0; for(var i=0;i<nom.length;i++) h=(h*31+nom.charCodeAt(i))&0xFFFF; return h%8; }
 
 function makeAssigneeChips(usId, showRemove) {
-  if (!Array.isArray(S.team)||!S.team.length) return '';
+  if (!Array.isArray(sharedTeam)||!sharedTeam.length) return '';
   var us = S.history.find(function(x){return x.id===usId;});
   if (!us||!Array.isArray(us.assignees)||!us.assignees.length) return '';
   var h = '';
   us.assignees.forEach(function(mid) {
-    var m = S.team.find(function(x){return x.id===mid||x.id===parseInt(mid,10);});
+    var m = sharedTeam.find(function(x){return x.id===mid||x.id===parseInt(mid,10);});
     if (!m) return;
     var col = avatarColor(m.nom);
     var first = m.nom.split(' ')[0];
@@ -1397,10 +1391,10 @@ function makeAssigneeChips(usId, showRemove) {
 }
 
 function makeAssignSelect(usId, context) {
-  if (!Array.isArray(S.team)||!S.team.length) return '';
+  if (!Array.isArray(sharedTeam)||!sharedTeam.length) return '';
   var us = S.history.find(function(x){return x.id===usId;});
   var assigned = us&&Array.isArray(us.assignees)?us.assignees:[];
-  var available = S.team.filter(function(m){return assigned.indexOf(m.id)===-1&&assigned.indexOf(String(m.id))===-1;});
+  var available = sharedTeam.filter(function(m){return assigned.indexOf(m.id)===-1&&assigned.indexOf(String(m.id))===-1;});
   if (!available.length) return '';
   var h = '<select data-action="assignSelect" data-usid="'+usId+'" data-ctx="'+context+'" style="font-size:11px;padding:2px 6px;border:1px solid var(--border);border-radius:20px;background:var(--surface);color:var(--muted);outline:none;cursor:pointer;"><option value="">+ Assigner...</option>';
   available.forEach(function(m){
@@ -1410,47 +1404,6 @@ function makeAssignSelect(usId, context) {
   return h;
 }
 
-function saveMember() {
-  var nom = document.getElementById('tf-nom').value.trim();
-  var role = document.getElementById('tf-role').value.trim();
-  if (!nom) { toast('Le nom est obligatoire'); return; }
-  var email = document.getElementById('tf-email').value.trim();
-  if (editingMemberId) {
-    var m = S.team.find(function(x){return x.id===editingMemberId;});
-    if (m) { m.nom=nom; m.role=role; m.email=email; }
-  } else {
-    S.team.push({id:Date.now(), nom:nom, role:role, email:email});
-  }
-  cancelTeamEdit(); persist(); renderTeam(); toast('Membre enregistre');
-}
-
-function cancelTeamEdit() {
-  editingMemberId=null;
-  document.getElementById('tf-nom').value='';
-  document.getElementById('tf-role').value='';
-  document.getElementById('tf-email').value='';
-  document.getElementById('team-form-title').textContent='Nouveau membre';
-}
-
-function editMember(id) {
-  var m = S.team.find(function(x){return x.id===id;});
-  if (!m) return;
-  editingMemberId=id;
-  document.getElementById('tf-nom').value=m.nom||'';
-  document.getElementById('tf-role').value=m.role||'';
-  document.getElementById('tf-email').value=m.email||'';
-  document.getElementById('team-form-title').textContent='Modifier le membre';
-  gotoTeam(); setTimeout(function(){ flashForm('team-form'); }, 50);
-}
-
-function deleteMember(id) {
-  S.team=S.team.filter(function(x){return x.id!==id;});
-  S.history.forEach(function(us){
-    if(Array.isArray(us.assignees)) us.assignees=us.assignees.filter(function(x){return x!==id;});
-  });
-  persist(); renderTeam(); toast('Membre supprime');
-}
-
 function toggleAssignee(usId, memberId) {
   var us = S.history.find(function(x){return x.id===usId;});
   if (!us) return;
@@ -1458,71 +1411,7 @@ function toggleAssignee(usId, memberId) {
   var idx = us.assignees.indexOf(memberId);
   if (idx===-1) us.assignees.push(memberId);
   else us.assignees.splice(idx,1);
-  persist(); renderTeam();
-}
-
-function renderTeam() {
-  if (!Array.isArray(S.team)) S.team=[];
-  var el = document.getElementById('team-list');
-  if (!el) return;
-  if (!S.team.length) { el.innerHTML='<p class="history-empty">Aucun membre. Ajoutez-en un ci-dessus.</p>'; return; }
-  var h='<div class="card-list">';
-  S.team.forEach(function(m, idx) {
-    var col = avatarColor(m.nom);
-    var ini = initials(m.nom);
-    var usList = S.history.filter(function(u){ return Array.isArray(u.assignees)&&u.assignees.indexOf(m.id)!==-1; });
-    h+='<div class="team-card">';
-    h+='<div class="avatar color-'+col+'">'+esc(ini)+'</div>';
-    h+='<div class="team-card-info">';
-    var mSquads = getMemberSquads(m.id);
-    h+='<div class="team-card-name">'+esc(m.nom)+(m.role?' <span style="font-size:11px;color:var(--muted);font-weight:400;">'+esc(m.role)+'</span>':'');
-    mSquads.forEach(function(sq){ h+=' <span class="squad-chip '+esc(sq.color||'blue')+'" style="font-size:10px;padding:1px 6px;">'+esc(sq.nom)+'</span>'; });
-    h+='</div>';
-    if (m.email) h+='<div class="team-card-meta">'+esc(m.email)+'</div>';
-    h+='<div class="team-card-meta">'+usList.length+' US assignee'+(usList.length!==1?'s':'')+'</div>';
-    h+='</div>';
-    h+='<div class="team-card-actions">';
-    h+='<button class="btn sm" data-action="editMember" data-id="'+m.id+'">Editer</button>';
-    h+='<button class="btn sm danger" data-action="deleteMember" data-id="'+m.id+'">&#10005;</button>';
-    h+='</div></div>';
-  });
-  h+='</div>';
-  h+='<div style="margin-top:24px;">';
-  h+='<div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px;">Assignation des US</div>';
-  h+='<div class="card-list">';
-  S.history.forEach(function(us) {
-    if (!Array.isArray(us.assignees)) us.assignees=[];
-    h+='<div class="card" style="padding:10px 14px;">';
-    h+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">';
-    h+='<div style="font-size:13px;font-weight:500;">'+esc(us.titre)+(us.id?' <span style="font-size:11px;color:var(--muted);font-family:var(--mono);">'+esc(us.id)+'</span>':'')+'</div>';
-    h+='</div>';
-    h+='<div style="display:flex;gap:6px;flex-wrap:wrap;">';
-    S.team.forEach(function(m) {
-      var assigned = us.assignees.indexOf(m.id)!==-1;
-      var col = avatarColor(m.nom);
-      var ini = initials(m.nom);
-      h+='<span data-action="toggleAssign" data-usid="'+us.id+'" data-mid="'+m.id+'" title="'+esc(m.nom)+' ('+esc(m.role||'')+') — cliquer pour '+(assigned?'retirer':'assigner')+'" style="display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 8px 3px 4px;border-radius:20px;border:1px solid;cursor:pointer;'+(assigned?'border-color:var(--accent);background:var(--bg);':'border-color:var(--border);opacity:.5;')+'">';
-      h+='<span class="assignee-avatar color-'+col+'" style="width:20px;height:20px;font-size:9px;">'+esc(ini)+'</span>';
-      h+=esc(m.nom.split(' ')[0]);
-      h+='</span>';
-    });
-    if (!S.team.length) h+='<span style="font-size:12px;color:var(--muted);">Ajoutez des membres pour assigner.</span>';
-    h+='</div></div>';
-  });
-  h+='</div></div>';
-  el.innerHTML = h;
-  el.onclick = function(ev) {
-    var btn = ev.target.closest('[data-action]'); if (!btn) return;
-    var action = btn.dataset.action;
-    var id = parseInt(btn.dataset.id,10)||0;
-    if      (action==='editMember')   editMember(id);
-    else if (action==='deleteMember') deleteMember(id);
-    else if (action==='toggleAssign') {
-      var usId  = parseInt(btn.dataset.usid,10)||0;
-      var mid   = parseInt(btn.dataset.mid,10)||0;
-      toggleAssignee(usId, mid);
-    }
-  };
+  persist();
 }
 
 /* ── Comments ── */
@@ -1661,7 +1550,7 @@ function renderSquads() {
   var h='<div class="card-list">';
   S.squads.forEach(function(sq) {
     if (!Array.isArray(sq.memberIds)) sq.memberIds=[];
-    var members=S.team.filter(function(m){return sq.memberIds.indexOf(m.id)!==-1;});
+    var members=sharedTeam.filter(function(m){return sq.memberIds.indexOf(m.id)!==-1;});
     h+='<div class="card" style="padding:10px 14px;">';
     h+='<div class="card-top">';
     h+='<div style="display:flex;align-items:center;gap:8px;flex:1;">';
@@ -1673,7 +1562,7 @@ function renderSquads() {
     h+='<button class="btn sm danger" data-action="deleteSquad" data-id="'+sq.id+'">&#10005;</button>';
     h+='</div></div>';
     h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">';
-    S.team.forEach(function(m) {
+    sharedTeam.forEach(function(m) {
       var isMember=sq.memberIds.indexOf(m.id)!==-1;
       var col=avatarColor(m.nom);
       h+='<span data-action="toggleSquadMember" data-sqid="'+sq.id+'" data-mid="'+m.id+'" style="display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 10px;border-radius:20px;border:1px solid;cursor:pointer;'+(isMember?'border-color:var(--accent);background:var(--bg);font-weight:500;':'border-color:var(--border);opacity:.5;')+'">';
@@ -1719,11 +1608,11 @@ function renderSquadFilter(barId, activeVar, onChangeFn) {
 function renderMemberFilter(barId, activeVar, onChangeFn) {
   var bar = document.getElementById(barId);
   if (!bar) return;
-  if (!S.team || !S.team.length) { bar.style.display='none'; return; }
+  if (!sharedTeam || !sharedTeam.length) { bar.style.display='none'; return; }
   bar.style.display='flex';
   var h = '<label style="font-size:12px;color:var(--muted);font-weight:500;">Membre :</label>';
   h += '<button class="filter-pill'+(activeVar==='all'?' active':'')+'" data-mem="all">Tous</button>';
-  S.team.forEach(function(m) {
+  sharedTeam.forEach(function(m) {
     var active = String(m.id)===String(activeVar);
     h += '<button class="filter-pill'+(active?' active':'')+'" data-mem="'+m.id+'">'+esc(m.nom.split(' ')[0])+'</button>';
   });
@@ -2167,7 +2056,6 @@ function bindKanbanEvents(board, blId) {
 
 
 /* ── TEAM ── */
-var editingMemberId = null;
 
 function avatarInitials(nom) {
   var parts = nom.trim().split(' ').filter(Boolean);
@@ -2175,116 +2063,6 @@ function avatarInitials(nom) {
   return nom.slice(0,2).toUpperCase();
 }
 function avatarColor(nom) { var n=0; for(var i=0;i<nom.length;i++)n+=nom.charCodeAt(i); return 'color-'+(n%6); }
-
-function saveMember() {
-  var nom   = document.getElementById('tf-nom').value.trim();
-  var role  = document.getElementById('tf-role').value.trim();
-  var email = document.getElementById('tf-email').value.trim();
-  if (!nom) { toast('Le nom est obligatoire'); return; }
-  if (editingMemberId) {
-    var m = S.team.find(function(x){return x.id===editingMemberId;});
-    if (m) { m.nom=nom; m.role=role; m.email=email; }
-  } else {
-    S.team.push({id:Date.now(), nom:nom, role:role, email:email});
-  }
-  cancelTeamEdit(); persist(); renderTeam(); toast('Membre enregistre');
-}
-
-function cancelTeamEdit() {
-  editingMemberId=null;
-  document.getElementById('tf-nom').value='';
-  document.getElementById('tf-role').value='';
-  document.getElementById('tf-email').value='';
-  document.getElementById('team-form-title').textContent='Nouveau membre';
-}
-
-function editMember(id) {
-  var m=S.team.find(function(x){return x.id===id;});
-  if (!m) return;
-  editingMemberId=id;
-  document.getElementById('tf-nom').value=m.nom||'';
-  document.getElementById('tf-role').value=m.role||'';
-  document.getElementById('tf-email').value=m.email||'';
-  document.getElementById('team-form-title').textContent='Modifier le membre';
-  gotoTeam(); setTimeout(function(){ flashForm('team-form'); }, 50);
-}
-
-function deleteMember(id) {
-  S.team=S.team.filter(function(x){return x.id!==id;});
-  S.history.forEach(function(us){
-    if(us.assignees) us.assignees=us.assignees.filter(function(x){return x!==id;});
-  });
-  persist(); renderTeam(); toast('Membre supprime');
-}
-
-function toggleAssignee(usId, memberId) {
-  var us=S.history.find(function(x){return x.id===usId;});
-  if (!us) return;
-  if (!us.assignees) us.assignees=[];
-  var idx=us.assignees.indexOf(memberId);
-  if (idx===-1) us.assignees.push(memberId);
-  else us.assignees.splice(idx,1);
-  persist(); renderTeam();
-}
-
-function renderTeam() {
-  var el=document.getElementById('team-list');
-  if (!el) return;
-  if (!S.team||!S.team.length) {
-    el.innerHTML='<p class="history-empty">Aucun membre. Ajoutez-en un ci-dessus.</p>';
-    return;
-  }
-  var h='<div class="card-list">';
-  S.team.forEach(function(m) {
-    var initials=avatarInitials(m.nom);
-    var col=avatarColor(m.nom);
-    var assignedUS=S.history.filter(function(u){return u.assignees&&u.assignees.indexOf(m.id)!==-1;});
-    h+='<div class="member-card">';
-    h+='<div class="avatar '+col+'">'+esc(initials)+'</div>';
-    h+='<div class="member-info">';
-    h+='<div class="member-name">'+esc(m.nom)+(m.role?'<span style="font-size:11px;font-weight:400;color:var(--muted);margin-left:6px;">'+esc(m.role)+'</span>':'')+'</div>';
-    if (m.email) h+='<div class="member-email">'+esc(m.email)+'</div>';
-    h+='<div class="member-role" style="margin-top:4px;">'+assignedUS.length+' US assignee'+(assignedUS.length!==1?'s':'')+'</div>';
-    if (assignedUS.length) {
-      h+='<div class="assignee-row">';
-      assignedUS.forEach(function(u){
-        h+='<span class="assignee-chip" data-action="unassign" data-usid="'+u.id+'" data-mid="'+m.id+'" title="Retirer">'+esc(u.titre)+' &#10005;</span>';
-      });
-      h+='</div>';
-    }
-    var unassigned=S.history.filter(function(u){return !u.assignees||u.assignees.indexOf(m.id)===-1;});
-    if (unassigned.length) {
-      h+='<div class="assignee-add">';
-      h+='<select data-mid="'+m.id+'" class="assign-select"><option value="">+ Assigner une US</option>';
-      unassigned.forEach(function(u){h+='<option value="'+u.id+'">'+esc(u.titre)+'</option>';});
-      h+='</select>';
-      h+='<button class="btn sm primary" data-action="assign" data-mid="'+m.id+'">Assigner</button>';
-      h+='</div>';
-    }
-    h+='</div>';
-    h+='<div class="card-actions">';
-    h+='<button class="btn sm" data-action="editMember" data-id="'+m.id+'">Editer</button>';
-    h+='<button class="btn sm danger" data-action="deleteMember" data-id="'+m.id+'">&#10005;</button>';
-    h+='</div>';
-    h+='</div>';
-  });
-  h+='</div>';
-  el.innerHTML=h;
-  el.onclick=function(ev){
-    var btn=ev.target.closest('[data-action]'); if(!btn) return;
-    var action=btn.dataset.action;
-    var id=parseInt(btn.dataset.id,10)||0;
-    var mid=parseInt(btn.dataset.mid,10)||0;
-    var usid=parseInt(btn.dataset.usid,10)||0;
-    if      (action==='editMember')   editMember(id);
-    else if (action==='deleteMember') deleteMember(id);
-    else if (action==='unassign')     toggleAssignee(usid, mid);
-    else if (action==='assign') {
-      var sel=el.querySelector('.assign-select[data-mid="'+mid+'"]');
-      if (sel&&sel.value) { toggleAssignee(parseInt(sel.value,10), mid); sel.value=''; }
-    }
-  };
-}
 
 /* ── Persist ── */
 function persist() {
