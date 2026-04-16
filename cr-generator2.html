@@ -120,8 +120,9 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
 .help-tag{font-family:var(--mono);font-size:12px;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 6px;color:var(--accent);white-space:nowrap;flex-shrink:0;}
 .help-desc{color:var(--muted);line-height:1.5;}
 .help-note{grid-column:1/-1;font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:12px;margin-top:4px;line-height:1.6;}
-#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--text);color:var(--bg);padding:8px 16px;border-radius:20px;font-size:13px;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999;}
-#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--text);color:var(--bg);padding:8px 16px;border-radius:20px;font-size:13px;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999;display:flex;align-items:center;gap:10px;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;}
+#toast-undo{background:transparent;border:1px solid currentColor;color:inherit;border-radius:12px;padding:2px 10px;font-size:12px;cursor:pointer;white-space:nowrap;}
 </style>
 </head>
 <body>
@@ -687,8 +688,17 @@ function saveCR() {
 }
 
 function deleteEntry(id) {
+  var entry=S.history.find(function(e){return e.id===id;});
+  if(!entry) return;
+  undoStack=[{entry:entry}];
   S.history=S.history.filter(function(e){return e.id!==id;});
-  persist(); renderHistory(); toast('Supprime');
+  persist(); renderHistory();
+  toastUndo('"'+(entry.titre||'CR')+'" supprime', function undoCR(){
+    if(!undoStack.length) return;
+    var e=undoStack.pop().entry;
+    S.history.unshift(e);
+    persist(); renderHistory(); toast('Suppression annulee');
+  });
 }
 function loadEntry(id) {
   var e=S.history.find(function(x){return x.id===id;});
@@ -884,8 +894,18 @@ function autoSave(){if(accessToken)pushToDrive();else setSyncDot('local');}
 /* ── Help ── */
 function toggleHelp(){var t=document.getElementById('help-toggle'),b=document.getElementById('help-body'),o=b.classList.toggle('open');t.classList.toggle('open',o);}
 
+/* ── Undo ── */
+var undoStack=[], undoTimer=null;
+function toastUndo(msg,cb){
+  clearTimeout(undoTimer);
+  var el=document.getElementById('toast');
+  el.innerHTML='<span>'+msg+'</span><button id="toast-undo" onclick="('+cb.toString()+')()">Annuler</button>';
+  el.classList.add('show');
+  undoTimer=setTimeout(function(){el.classList.remove('show');},8000);
+}
+
 /* ── Toast ── */
-function toast(msg){var el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(function(){el.classList.remove('show');},2400);}
+function toast(msg){clearTimeout(undoTimer);var el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(function(){el.classList.remove('show');},2400);}
 
 applyTheme(localStorage.getItem(TK)||'light');
 load();

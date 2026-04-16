@@ -315,8 +315,9 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
 .drawer-comment{font-size:12px;color:var(--muted);font-style:italic;padding:8px 10px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);}
 .kanban-card-title{cursor:pointer;}
 .kanban-card-title:hover{color:var(--accent);}
-#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--text);color:var(--bg);padding:8px 16px;border-radius:20px;font-size:13px;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999;}
-#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--text);color:var(--bg);padding:8px 16px;border-radius:20px;font-size:13px;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999;display:flex;align-items:center;gap:10px;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;}
+#toast-undo{background:transparent;border:1px solid currentColor;color:inherit;border-radius:12px;padding:2px 10px;font-size:12px;cursor:pointer;white-space:nowrap;}
 </style>
 </head>
 <body>
@@ -949,8 +950,17 @@ function editEpic(id) {
   gotoEpics(); setTimeout(function(){ flashForm('epic-form'); }, 50);
 }
 function deleteEpic(id) {
+  var entry=S.epics.find(function(e){return e.id===id;});
+  if(!entry) return;
+  undoStack.epic={entry:entry};
   S.epics=S.epics.filter(function(e){return e.id!==id;});
-  persist(); renderEpics(); renderEpicSelector(); toast('Epic supprime');
+  persist(); renderEpics(); renderEpicSelector();
+  toastUndo('"'+(entry.nom||'Epic')+'" supprime', function undoEpic(){
+    if(!undoStack.epic) return;
+    var e=undoStack.epic.entry; undoStack.epic=null;
+    S.epics.unshift(e);
+    persist(); renderEpics(); renderEpicSelector(); toast('Suppression annulee');
+  });
 }
 function detachUsFromEpic(usId, epicNom) {
   var e=S.history.find(function(x){return x.id===usId;});
@@ -1032,8 +1042,17 @@ function editBacklog(id) {
   gotoBacklogs(); setTimeout(function(){ flashForm('backlog-form'); }, 50);
 }
 function deleteBacklog(id) {
+  var entry=S.backlogs.find(function(b){return b.id===id;});
+  if(!entry) return;
+  undoStack.backlog={entry:entry};
   S.backlogs=S.backlogs.filter(function(b){return b.id!==id;});
-  persist(); renderBacklogs(); toast('Backlog supprime');
+  persist(); renderBacklogs();
+  toastUndo('"'+(entry.nom||'Backlog')+'" supprime', function undoBl(){
+    if(!undoStack.backlog) return;
+    var e=undoStack.backlog.entry; undoStack.backlog=null;
+    S.backlogs.unshift(e);
+    persist(); renderBacklogs(); toast('Suppression annulee');
+  });
 }
 function addUsToBl(blId, usId) {
   var bl=S.backlogs.find(function(b){return b.id===blId;});
@@ -1216,9 +1235,24 @@ function saveUSEntry(entry) {
   S.history.unshift(entry);
 }
 function deleteEntry(id) {
+  var entry=S.history.find(function(e){return e.id===id;});
+  if(!entry) return;
+  var blBackup=[];
+  S.backlogs.forEach(function(bl){if(Array.isArray(bl.usIds)&&bl.usIds.indexOf(id)!==-1)blBackup.push(bl.id);});
+  undoStack.entry={entry:entry, blIds:blBackup};
   S.history=S.history.filter(function(e){return e.id!==id;});
   S.backlogs.forEach(function(bl){if(Array.isArray(bl.usIds))bl.usIds=bl.usIds.filter(function(x){return x!==id;});});
-  persist(); renderHistory(); renderEpics(); renderBacklogs(); toast('Supprime');
+  persist(); renderHistory(); renderEpics(); renderBacklogs();
+  toastUndo('"'+(entry.titre||'US')+'" supprime', function undoUS(){
+    if(!undoStack.entry) return;
+    var saved=undoStack.entry; undoStack.entry=null;
+    S.history.unshift(saved.entry);
+    saved.blIds.forEach(function(blId){
+      var bl=S.backlogs.find(function(b){return b.id===blId;});
+      if(bl&&Array.isArray(bl.usIds)&&bl.usIds.indexOf(saved.entry.id)===-1) bl.usIds.push(saved.entry.id);
+    });
+    persist(); renderHistory(); renderEpics(); renderBacklogs(); toast('Suppression annulee');
+  });
 }
 function loadEntry(id) {
   var e=S.history.find(function(x){return x.id===id;});
@@ -1565,8 +1599,17 @@ function editSquad(id) {
   gotoTeam(); setTimeout(function(){ flashForm('squad-form'); },50);
 }
 function deleteSquad(id) {
+  var entry=S.squads.find(function(x){return x.id===id;});
+  if(!entry) return;
+  undoStack.squad={entry:entry};
   S.squads=S.squads.filter(function(x){return x.id!==id;});
-  persist(); renderSquads(); renderTeam(); toast('Equipe supprimee');
+  persist(); renderSquads(); renderTeam();
+  toastUndo('"'+(entry.nom||'Equipe')+'" supprime', function undoSquad(){
+    if(!undoStack.squad) return;
+    var e=undoStack.squad.entry; undoStack.squad=null;
+    S.squads.unshift(e);
+    persist(); renderSquads(); renderTeam(); toast('Suppression annulee');
+  });
 }
 function toggleSquadMember(squadId, memberId) {
   var sq=S.squads.find(function(x){return x.id===squadId;});
@@ -2352,7 +2395,16 @@ function closeDrawer() {
 
 document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeDrawer(); });
 
-function toast(msg){var el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(function(){el.classList.remove('show');},2400);}
+/* ── Undo ── */
+var undoStack={}, undoTimer=null;
+function toastUndo(msg,cb){
+  clearTimeout(undoTimer);
+  var el=document.getElementById('toast');
+  el.innerHTML='<span>'+msg+'</span><button id="toast-undo" onclick="('+cb.toString()+')()">Annuler</button>';
+  el.classList.add('show');
+  undoTimer=setTimeout(function(){el.classList.remove('show');},8000);
+}
+function toast(msg){clearTimeout(undoTimer);var el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(function(){el.classList.remove('show');},2400);}
 
 /* ── Init ── */
 applyTheme(localStorage.getItem(TK)||'light');
