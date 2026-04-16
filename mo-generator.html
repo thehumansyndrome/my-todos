@@ -342,17 +342,14 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
 
   <!-- ═══════════════════════════════════════ TAB PROJETS ═══════════════════════════════════════ -->
   <div id="tab-projets" class="section">
-    <div class="crud-header">
-      <h2>Projets</h2>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span style="font-size:12px;color:var(--muted);">Source : <b>todos / shared.json</b></span>
-        <button class="btn sm" onclick="loadSharedProjects()">↻ Rafraîchir</button>
-      </div>
+    <div class="drive-bar">
+      <span class="drive-status" id="proj-status-label" style="flex:1;">Connectez-vous à Drive pour charger les projets.</span>
+      <button class="btn sm" onclick="loadSharedProjects()">↻ Rafraîchir</button>
     </div>
     <div style="padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;font-size:13px;color:var(--muted);">
       Les projets sont gérés dans l'app <b>todos</b> (onglet Projets). Connectez-vous à Drive pour les synchroniser ici.
     </div>
-    <div class="crud-list" id="projets-list"></div>
+    <div id="projets-list" style="display:flex;flex-direction:column;gap:8px;"></div>
   </div>
 
   <!-- ═══════════════════════════════════════ TAB ÉQUIPE ═══════════════════════════════════════ -->
@@ -1395,23 +1392,21 @@ function deleteProjet(id) {
 
 function renderProjetsList() {
   const el = document.getElementById('projets-list');
+  if (!el) return;
   if (!S.projets.length) {
-    el.innerHTML = '<div class="empty-state"><div class="icon">📁</div><p>Aucun projet créé.<br>Ajoutez votre premier projet ci-dessus.</p></div>';
+    el.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--muted);font-size:14px;">Aucun projet chargé.</div>';
     return;
   }
   el.innerHTML = S.projets.map(p => {
     const count = S.history.filter(e => e.projet === p.id).length;
-    return `<div class="crud-card">
-      <div style="width:14px;height:36px;border-radius:4px;background:${p.color};flex-shrink:0"></div>
-      <div class="crud-card-info">
-        <div class="crud-card-title">${esc(p.nom)}</div>
-        <div class="crud-card-sub">${p.desc ? esc(p.desc) + ' · ' : ''}${count} MO rattaché${count>1?'s':''}</div>
-      </div>
-      <div class="crud-card-actions">
-        <button class="btn sm" onclick="editProjet('${p.id}')">✎</button>
-        <button class="btn sm danger" onclick="deleteProjet('${p.id}')">✕</button>
-      </div>
-    </div>`;
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:center;gap:12px;">'
+      + '<div style="width:14px;height:36px;border-radius:4px;background:' + p.color + ';flex-shrink:0;"></div>'
+      + '<div style="flex:1;">'
+      + '<div style="font-size:14px;font-weight:500;color:var(--text);">' + esc(p.nom) + '</div>'
+      + '<div style="font-size:12px;color:var(--muted);margin-top:2px;">' + count + ' MO rattaché' + (count > 1 ? 's' : '') + '</div>'
+      + '</div>'
+      + '<button class="btn sm" onclick="setFilterProjet(\'' + p.id + '\', null);switchTab(\'history\')">Voir</button>'
+      + '</div>';
   }).join('');
 }
 
@@ -1614,10 +1609,11 @@ async function loadSharedProjects() {
     const res = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, {headers:{Authorization:`Bearer ${accessToken}`}});
     const data = await res.json();
     if (Array.isArray(data.projects)) {
-      // Map shared format {id,name,color} → MO format {id,nom,color}
       S.projets = data.projects.map(p => ({id:p.id, nom:p.name, color:p.color||'#6B7280', desc:''}));
       localStorage.setItem(SK, JSON.stringify(S));
       renderAll();
+      const lbl = document.getElementById('proj-status-label');
+      if (lbl) lbl.textContent = S.projets.length + ' projets chargés depuis todos';
       toast('✓ ' + S.projets.length + ' projets chargés depuis todos');
     }
   } catch(e) { toast('Erreur chargement projets partagés'); console.error(e); }
