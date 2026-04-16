@@ -599,7 +599,7 @@ function toggleTheme() {
 }
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
-const TAB_IDS = ['editor','projets','equipe','history'];
+const TAB_IDS = ['editor','history','projets','equipe'];
 function switchTab(id) {
   document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', TAB_IDS[i] === id));
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
