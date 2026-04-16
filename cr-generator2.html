@@ -349,30 +349,14 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
 
 <!-- ═══ ÉQUIPE ═══ -->
 <div id="tab-equipe" class="section">
-  <div class="crud-header"><h2>Équipe</h2></div>
-  <div class="crud-form" id="membre-form">
-    <div class="form-field">
-      <span class="form-label">Nom complet</span>
-      <input class="form-input" type="text" id="m-nom" placeholder="ex: Marie Dupont" maxlength="50">
-    </div>
-    <div class="form-field">
-      <span class="form-label">Initiales</span>
-      <input class="form-input" type="text" id="m-init" placeholder="MD" maxlength="3" style="max-width:80px">
-    </div>
-    <div class="form-field" style="flex:0 0 auto">
-      <span class="form-label">Couleur avatar</span>
-      <div class="color-picker-row" id="m-colors"></div>
-    </div>
-    <div class="form-field">
-      <span class="form-label">Rôles</span>
-      <div class="role-toggle">
-        <button class="role-btn red-role active" id="rb-red" onclick="toggleRoleBtn('red')">Rédacteur</button>
-        <button class="role-btn green-role" id="rb-val" onclick="toggleRoleBtn('val')">Valideur</button>
-      </div>
-    </div>
-    <button class="btn primary" onclick="saveMembre()" style="align-self:flex-end">Ajouter</button>
+  <div class="drive-bar">
+    <span class="drive-status" id="equipe-status-label" style="flex:1;">Connectez-vous à Drive pour charger l'équipe.</span>
+    <button class="btn sm" onclick="loadSharedProjects()">↻ Rafraîchir</button>
   </div>
-  <div class="crud-list" id="membres-list"></div>
+  <div style="padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;font-size:13px;color:var(--muted);">
+    L'équipe est gérée dans l'app <b>todos</b> (onglet Équipe). Connectez-vous à Drive pour la synchroniser ici.
+  </div>
+  <div id="equipe-list" style="display:flex;flex-direction:column;gap:8px;"></div>
 </div>
 
 </div><!-- /page -->
@@ -452,7 +436,8 @@ var STATUS_CLASS  = {brouillon:'status-brouillon',validation:'status-validation'
 var TMPL = '---\ntitle: \ndate: \nduree: \nparticipants: \nobjectif: \nnext-date: \nnext-agenda: \n---\n\nD: \nD: \n\nA: @Prenom JJ-MM-AAAA\nA: @Prenom JJ-MM-AAAA\n';
 
 // ── State ──────────────────────────────────────────────────────────────────────
-var S = {history:[], membres:[]};
+var S = {history:[]};
+var sharedTeam = []; // loaded from shared.json (managed in todos)
 var driveFileId  = null;
 var sharedFileId = null;
 var SHARED_FILE  = 'shared.json';
@@ -478,17 +463,13 @@ var filterProjet = 'all';
 // Drawer state
 var drawerEntryId = null;
 
-// Form state
-var editingMembreId = null;
-var selectedMColor  = AVATAR_COLORS[3];
-var roleRedacteur   = true;
-var roleValideur    = false;
+// Form state — équipe gérée centralement dans todos
 var ddTarget        = null;
 
 // ── ensureState ────────────────────────────────────────────────────────────────
 function ensureState() {
   if (!Array.isArray(S.history))  S.history  = [];
-  if (!Array.isArray(S.membres))  S.membres  = [];
+  if (!Array.isArray(sharedTeam))  sharedTeam  = [];
   S.history.forEach(function(e) {
     if (!e.status)      e.status     = 'brouillon';
     if (!e.redacteurs)  e.redacteurs = [];
@@ -516,14 +497,11 @@ function load() {
   renderPreview();
   renderAll();
   initDrive();
-  buildColorPicker();
-  renderRoleBtns();
 }
 
 function renderAll() {
   renderProjetFilters();
   renderProjets();
-  renderMembresList();
   renderHistory();
   renderEditorMeta();
 }
@@ -705,7 +683,7 @@ function renderEditorMeta() {
 
 function renderChips(containerId, ids, type) {
   var el = document.getElementById(containerId);
-  var members = ids.map(function(id){return S.membres.find(function(m){return m.id===id;});}).filter(Boolean);
+  var members = ids.map(function(id){return sharedTeam.find(function(m){return m.id===id;});}).filter(Boolean);
   if (!members.length) {
     el.innerHTML = '<span style="font-size:12px;color:var(--muted)">'+(type==='red'?'Ajouter rédacteurs…':'Ajouter valideurs…')+'</span>';
   } else {
@@ -738,7 +716,7 @@ function openDropdown(type) {
   wrap.style.left=rect.left+'px';
   wrap.style.width=Math.max(rect.width,200)+'px';
   var curIds = type==='red'?curRedact:curValid;
-  var compatible = S.membres.filter(function(m){return type==='red'?m.roles.includes('redacteur'):m.roles.includes('valideur');});
+  var compatible = sharedTeam.filter(function(m){return type==='red'?m.roles.includes('redacteur'):m.roles.includes('valideur');});
   if (!compatible.length) {
     document.getElementById('dd-menu').innerHTML='<div class="dropdown-item" style="color:var(--muted)">Aucun membre avec ce rôle</div>';
   } else {
@@ -914,8 +892,8 @@ function renderHistory() {
   entries.forEach(function(e) {
     var st=e.status||'brouillon';
     var proj=sharedProjects.find(function(p){return p.id===e.projet;});
-    var reds=(e.redacteurs||[]).map(function(id){return S.membres.find(function(m){return m.id===id;});}).filter(Boolean);
-    var vals=(e.valideurs||[]).map(function(id){return S.membres.find(function(m){return m.id===id;});}).filter(Boolean);
+    var reds=(e.redacteurs||[]).map(function(id){return sharedTeam.find(function(m){return m.id===id;});}).filter(Boolean);
+    var vals=(e.valideurs||[]).map(function(id){return sharedTeam.find(function(m){return m.id===id;});}).filter(Boolean);
     var isEditing=e.id===editingEntryId;
     var meta=(e.date?formatDate(e.date)+' · ':'')+e.dCount+' décision'+(e.dCount!==1?'s':'')+' · '+e.aCount+' action'+(e.aCount!==1?'s':'')+' · '+e.savedAt+(e.versions&&e.versions.length?' · v'+(e.versions.length+1):'');
     h+='<div class="history-card" onclick="openDrawer('+e.id+')" style="'+(isEditing?'border-color:var(--accent)':'')+'">';
@@ -989,8 +967,8 @@ function refreshDrawer() {
   var e=S.history.find(function(x){return x.id===drawerEntryId;});
   if (!e) return;
   var proj=sharedProjects.find(function(p){return p.id===e.projet;});
-  var reds=(e.redacteurs||[]).map(function(id){return S.membres.find(function(m){return m.id===id;});}).filter(Boolean);
-  var vals=(e.valideurs||[]).map(function(id){return S.membres.find(function(m){return m.id===id;});}).filter(Boolean);
+  var reds=(e.redacteurs||[]).map(function(id){return sharedTeam.find(function(m){return m.id===id;});}).filter(Boolean);
+  var vals=(e.valideurs||[]).map(function(id){return sharedTeam.find(function(m){return m.id===id;});}).filter(Boolean);
 
   document.getElementById('drawer-breadcrumb').textContent=proj?proj.name:'';
   document.getElementById('drawer-title').textContent=e.title;
@@ -1082,7 +1060,7 @@ function renderDrawerComments(e) {
   var el=document.getElementById('drawer-comments');
   if (!e.comments||!e.comments.length) { el.innerHTML='<span style="font-size:13px;color:var(--muted)">Aucun commentaire</span>'; return; }
   el.innerHTML=e.comments.map(function(c,i){
-    var author=c.authorId?S.membres.find(function(m){return m.id===c.authorId;}):null;
+    var author=c.authorId?sharedTeam.find(function(m){return m.id===c.authorId;}):null;
     var authorHTML=author?'<span class="avatar" style="background:'+author.color+';width:20px;height:20px;font-size:9px;">'+esc(author.initiales)+'</span><b style="color:var(--text)">'+esc(author.nom)+'</b>':'<span style="color:var(--muted)">Anonyme</span>';
     return '<div class="comment-item"><div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">'+authorHTML+'</div><div class="comment-text">'+esc(c.text)+'</div><div class="comment-meta">'+c.date+' <button class="btn sm" style="padding:2px 6px;color:var(--red)" onclick="deleteComment('+e.id+','+i+')">✕</button></div></div>';
   }).join('');
@@ -1101,7 +1079,7 @@ function addComment() {
 function populateCommentAuthorSelect() {
   var sel=document.getElementById('comment-author');
   var prev=sel.value;
-  sel.innerHTML='<option value="">— Auteur du commentaire —</option>'+S.membres.map(function(m){return '<option value="'+m.id+'"'+(m.id===prev?' selected':'')+'>'+esc(m.nom)+'</option>';}).join('');
+  sel.innerHTML='<option value="">— Auteur du commentaire —</option>'+sharedTeam.map(function(m){return '<option value="'+m.id+'"'+(m.id===prev?' selected':'')+'>'+esc(m.nom)+'</option>';}).join('');
 }
 
 function deleteComment(entryId, idx) {
@@ -1187,83 +1165,6 @@ function resetTemplate() {
 }
 
 // ── Équipe ────────────────────────────────────────────────────────────────────
-function buildColorPicker() {
-  document.getElementById('m-colors').innerHTML=AVATAR_COLORS.map(function(c){
-    return '<div class="color-dot'+(c===selectedMColor?' selected':'')+'" style="background:'+c+'" onclick="selectMColor(\''+c+'\')"></div>';
-  }).join('');
-}
-function selectMColor(c) {
-  selectedMColor=c;
-  document.querySelectorAll('#m-colors .color-dot').forEach(function(d){d.classList.toggle('selected',d.style.background===c);});
-}
-function toggleRoleBtn(role) {
-  if (role==='red') roleRedacteur=!roleRedacteur;
-  else              roleValideur=!roleValideur;
-  renderRoleBtns();
-}
-function renderRoleBtns() {
-  document.getElementById('rb-red').classList.toggle('active', roleRedacteur);
-  document.getElementById('rb-val').classList.toggle('active', roleValideur);
-}
-
-function saveMembre() {
-  var nom=document.getElementById('m-nom').value.trim();
-  var init=document.getElementById('m-init').value.trim().toUpperCase()||nom.split(' ').map(function(w){return w[0];}).join('').slice(0,3);
-  var roles=[];
-  if (roleRedacteur) roles.push('redacteur');
-  if (roleValideur)  roles.push('valideur');
-  if (!nom) { toast('Nom requis'); return; }
-  if (!roles.length) { toast('Au moins un rôle requis'); return; }
-  if (editingMembreId) {
-    var m=S.membres.find(function(x){return x.id===editingMembreId;});
-    if (m) { m.nom=nom; m.initiales=init; m.color=selectedMColor; m.roles=roles; }
-    editingMembreId=null;
-    document.querySelector('#membre-form .btn.primary').textContent='Ajouter';
-  } else {
-    S.membres.push({id:'m_'+Date.now(), nom:nom, initiales:init, color:selectedMColor, roles:roles});
-  }
-  document.getElementById('m-nom').value='';
-  document.getElementById('m-init').value='';
-  persist(); renderAll(); toast('Membre enregistré');
-}
-
-function editMembre(id) {
-  var m=S.membres.find(function(x){return x.id===id;}); if (!m) return;
-  editingMembreId=id;
-  document.getElementById('m-nom').value=m.nom;
-  document.getElementById('m-init').value=m.initiales;
-  selectMColor(m.color); buildColorPicker();
-  roleRedacteur=m.roles.includes('redacteur');
-  roleValideur=m.roles.includes('valideur');
-  renderRoleBtns();
-  document.querySelector('#membre-form .btn.primary').textContent='Mettre à jour';
-  document.getElementById('m-nom').focus();
-}
-
-function deleteMembre(id) {
-  if (!confirm('Supprimer ce membre ?')) return;
-  S.membres=S.membres.filter(function(m){return m.id!==id;});
-  S.history.forEach(function(e){
-    e.redacteurs=(e.redacteurs||[]).filter(function(x){return x!==id;});
-    e.valideurs=(e.valideurs||[]).filter(function(x){return x!==id;});
-  });
-  curRedact=curRedact.filter(function(x){return x!==id;});
-  curValid=curValid.filter(function(x){return x!==id;});
-  saveMetaState(); persist(); renderAll(); toast('Membre supprimé');
-}
-
-function renderMembresList() {
-  var el=document.getElementById('membres-list');
-  if (!S.membres.length) {
-    el.innerHTML='<div class="empty-state"><div class="icon">👥</div><p>Aucun membre dans l\'équipe.<br>Ajoutez vos premiers collaborateurs ci-dessus.</p></div>';
-    return;
-  }
-  el.innerHTML=S.membres.map(function(m){
-    var roleLabels=[m.roles.includes('redacteur')?'Rédacteur':'',m.roles.includes('valideur')?'Valideur':''].filter(Boolean).join(' + ');
-    return '<div class="crud-card"><div class="avatar" style="background:'+m.color+';width:36px;height:36px;font-size:12px;flex-shrink:0">'+esc(m.initiales)+'</div><div class="crud-card-info"><div class="crud-card-title">'+esc(m.nom)+'</div><div class="crud-card-sub">'+roleLabels+'</div></div><div class="crud-card-actions"><button class="btn sm" onclick="editMembre(\''+m.id+'\')">✎</button><button class="btn sm danger" onclick="deleteMembre(\''+m.id+'\')">✕</button></div></div>';
-  }).join('');
-}
-
 // ── Projets ────────────────────────────────────────────────────────────────────
 function renderProjets() {
   var el=document.getElementById('projets-list'); if (!el) return;
@@ -1413,14 +1314,31 @@ function loadSharedProjects(){
     sharedFileId=id;
     return fetch('https://www.googleapis.com/drive/v3/files/'+id+'?alt=media',{headers:{Authorization:'Bearer '+accessToken}}).then(function(r){return r.json();});
   }).then(function(data){
-    if(!data||!Array.isArray(data.projects))return;
-    sharedProjects=data.projects;
+    if(!data)return;
+    if(Array.isArray(data.projects)) sharedProjects=data.projects;
+    if(Array.isArray(data.team))     sharedTeam=data.team;
     renderEditorMeta();
     renderProjetFilters();
     renderProjets();
-    document.getElementById('proj-status-label').textContent=sharedProjects.length+' projets chargés depuis todos';
-    toast('✓ '+sharedProjects.length+' projets chargés');
+    renderEquipe();
+    document.getElementById('proj-status-label').textContent=sharedProjects.length+' projets · '+sharedTeam.length+' membres chargés';
+    var elbl=document.getElementById('equipe-status-label'); if(elbl) elbl.textContent=sharedTeam.length+' membres chargés depuis todos';
+    toast('✓ '+sharedProjects.length+' projets · '+sharedTeam.length+' membres chargés');
   }).catch(function(e){toast('Erreur chargement projets');});
+}
+
+// ── Équipe (read-only, from shared.json) ─────────────────────────────────────
+function renderEquipe() {
+  var el=document.getElementById('equipe-list'); if(!el) return;
+  if(!sharedTeam.length){el.innerHTML='<div style="text-align:center;padding:60px 20px;color:var(--muted);font-size:14px;">Aucun membre chargé.</div>';return;}
+  el.innerHTML=sharedTeam.map(function(m){
+    var roleLabels=(m.roles||[]).map(function(r){return r==='redacteur'?'Rédacteur':'Valideur';}).join(' + ')||(m.role||'');
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:center;gap:12px;">'
+      +'<div style="width:36px;height:36px;border-radius:50%;background:'+m.color+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0;">'+esc(m.initiales)+'</div>'
+      +'<div style="flex:1;"><div style="font-size:14px;font-weight:500;">'+esc(m.nom)+'</div>'
+      +'<div style="font-size:12px;color:var(--muted);margin-top:2px;">'+esc(roleLabels)+'</div></div>'
+      +'</div>';
+  }).join('');
 }
 
 // ── Help ───────────────────────────────────────────────────────────────────────
