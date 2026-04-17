@@ -165,7 +165,7 @@ input,select,textarea{background:var(--bg);color:var(--text);}
   <div class="sync-dot" id="sync-dot"></div>
   <span class="sync-label" id="sync-label">Local</span>
   <button class="hbtn" id="theme-btn" onclick="toggleTheme()" title="Thème">☀︎</button>
-  <button class="hbtn" onclick="switchTab('log')" title="Drive">☁</button>
+  <button class="hbtn" id="hbtn-cloud" onclick="accessToken ? switchTab('log') : driveAuth()" title="Connecter Google Drive">☁</button>
 </div>
 
 <div class="tabs" id="tabs">
@@ -1012,6 +1012,8 @@ function updateDriveUI() {
   document.getElementById('btn-push').disabled = !connected;
   document.getElementById('sync-label').textContent = connected ? 'Sync ✓' : 'Local';
   document.getElementById('sync-dot').className = 'sync-dot' + (connected?' ok':'');
+  const cb = document.getElementById('hbtn-cloud');
+  if (cb) cb.title = connected ? 'Drive connecté — cliquer pour le Log' : 'Connecter Google Drive';
 }
 
 async function findOrCreateDriveFile() {
