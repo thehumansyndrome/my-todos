@@ -2849,6 +2849,51 @@ function updateFabVisibility(tab){
   if(fab) fab.style.display = FAB_TABS.includes(tab) ? '' : 'none';
 }
 
+
+// ── Assignees helpers ─────────────────────────────────────────────────────
+function getAdminId(){
+  const m=(S.sharedTeam||[]).find(m=>m.appRole==='Admin');
+  return m?m.id:null;
+}
+function defaultAssignees(){
+  const aid=getAdminId();
+  return aid?[aid]:[];
+}
+function assigneeBadgesHtml(ids, itemId, itemType){
+  const team=S.sharedTeam||[];
+  const adminId=getAdminId();
+  return (ids||[]).map(id=>{
+    const m=team.find(x=>x.id===id);
+    if(!m)return '';
+    const isAdmin=id===adminId;
+    const title=m.nom+(isAdmin?' (Admin — toujours affecté)':' — clic pour désaffecter');
+    const cursor=isAdmin?'default':'pointer';
+    const onclick=isAdmin?'event.stopPropagation()':
+      `event.stopPropagation();removeAssignee('${itemType}','${itemId}','${id}')`;
+    return `<span title="${title}" onclick="${onclick}" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:${m.color};font-size:9px;font-weight:700;color:#fff;cursor:${cursor};flex-shrink:0;">${m.initiales}</span>`;
+  }).join('');
+}
+function removeAssignee(itemType, itemId, memberId){
+  if(itemType==='todo'){
+    const t=S.todos.find(x=>x.id===itemId);
+    if(t) t.assigneeIds=(t.assigneeIds||[]).filter(x=>x!==memberId);
+    autoSave(); renderTodos();
+  } else if(itemType==='backlog'){
+    const b=(S.backlog||[]).find(x=>x.id===itemId);
+    if(b) b.assigneeIds=(b.assigneeIds||[]).filter(x=>x!==memberId);
+    autoSave(); renderBacklog();
+  }
+}
+function tdpToggleAssignee(memberId){
+  const t=S.todos.find(x=>x.id===tdpId); if(!t) return;
+  const adminId=getAdminId();
+  if(memberId===adminId) return;
+  if(!t.assigneeIds) t.assigneeIds=defaultAssignees();
+  const idx=t.assigneeIds.indexOf(memberId);
+  if(idx>=0) t.assigneeIds.splice(idx,1);
+  else t.assigneeIds.push(memberId);
+  autoSave(); renderTDP(); renderTodos();
+}
 function addTodo(){
   const v=document.getElementById('todo-in').value.trim();if(!v)return;
   const cat=document.getElementById('todo-cat').value;
@@ -2869,7 +2914,7 @@ function addTodo(){
   }
 
   const t={id:parentId,text:v,cat,pri,hz,done:false,ts:Date.now(),
-    comment:'',subtasks:subtaskIds,parentId:null,type:typeKey||null};
+    comment:'',subtasks:subtaskIds,parentId:null,type:typeKey||null,assigneeIds:defaultAssignees()};
   // Attach pending pasted images
   if(pendingItemImgs['tab-todos']&&pendingItemImgs['tab-todos'].length){
     t.images=[...pendingItemImgs['tab-todos']];
@@ -3339,6 +3384,7 @@ function todoItemHtml(t){
           <span class="tag ${pl[t.pri]||'p2'}">${t.pri.toUpperCase()}</span>
           ${catBadge}
           ${hzBadge}
+          ${assigneeBadgesHtml(t.assigneeIds,'${t.id}','todo')}
           ${subtaskBadgeHtml}
           <span class="meta-date">${fd(t.ts)}</span>
         </div>
@@ -3556,6 +3602,29 @@ function renderTDP(){
 
     <!-- Fields -->
     <div>
+      ${(()=>{
+        const team=S.sharedTeam||[];
+        if(!team.length) return '';
+        const adminId=getAdminId();
+        const ids=t.assigneeIds||[];
+        const chips=team.map(m=>{
+          const on=ids.includes(m.id);
+          const isAdmin=m.id===adminId;
+          const click=isAdmin?'':'tdpToggleAssignee(\''+m.id+'\');';
+          return '<span onclick="'+click+'" '
+            +'title="'+(isAdmin?m.nom+' (Admin)':m.nom)+'" '
+            +'style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600;'
+            +'cursor:'+(isAdmin?'default':'pointer')+';'
+            +'background:'+(on?m.color:'transparent')+';'
+            +'color:'+(on?'#fff':'var(--text3)')+';'
+            +'border:1px solid '+(on?m.color:'var(--border)')+';'
+            +'transition:all .15s;">'
+            +m.initiales+' '+m.nom.split(' ')[0]
+            +'</span>';
+        }).join('');
+        return '<div><div class="tdpanel-section-title">👥 Équipe</div>'
+          +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">'+chips+'</div></div>';
+      })()}
       <div class="tdpanel-section-title">⚙ Paramètres</div>
       <div class="tdpanel-fields">
         <select id="tdp-cat" onchange="tdpSaveFields()">
@@ -3572,9 +3641,6 @@ function renderTDP(){
           <option value="later"${hz==='later'?' selected':''}>Later</option>
           <option value="waiting"${hz==='waiting'?' selected':''}>Waiting</option>
         </select>
-        ${(()=>{ const team=S.sharedTeam||[]; if(!team.length) return '';
-          const opts='<option value="">— Porteur —</option>'+team.map(m=>`<option value="${m.id}"${t.assigneeId===m.id?' selected':''}>${esc(m.nom)}</option>`).join('');
-          return `<select id="tdp-assignee" onchange="tdpSaveFields()" style="max-width:160px;">${opts}</select>`; })()}
       </div>
     </div>`;
   // Wire drag on sub-list
@@ -3678,7 +3744,6 @@ function tdpSaveFields(){
   t.cat=document.getElementById('tdp-cat').value;
   t.pri=document.getElementById('tdp-pri').value;
   t.hz=document.getElementById('tdp-hz').value;
-  const _asel=document.getElementById('tdp-assignee'); if(_asel) t.assigneeId=_asel.value||null;
   // propagate to subtasks
   (t.subtasks||[]).forEach(sid=>{
     const s=S.todos.find(x=>x.id===sid);
@@ -5454,7 +5519,7 @@ function addBacklogItem(){
   const projId=document.getElementById('bl-proj').value||'';
   const pri=document.getElementById('bl-pri').value||'p2';
   if(!S.backlog)S.backlog=[];
-  S.backlog.unshift({id:uid(),text,projId,pri,done:false,ts:Date.now()});
+  S.backlog.unshift({id:uid(),text,projId,pri,done:false,ts:Date.now(),assigneeIds:defaultAssignees()});
   document.getElementById('bl-in').value='';
   autoSave();renderBacklog();
   logA('backlog','Ajouté: "'+text+'"');
@@ -5509,6 +5574,7 @@ function renderBacklog(){
         <div class="bl-meta">
           <span class="tag ${priCls[b.pri]||'p2'}">${b.pri.toUpperCase()}</span>
           ${projBadge}
+          ${assigneeBadgesHtml(b.assigneeIds,b.id,'backlog')}
           <span class="meta-date">${fd(b.ts)}</span>
         </div>
       </div>
