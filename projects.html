@@ -294,6 +294,18 @@ input,select,textarea{background:var(--bg);color:var(--text);}
         <button class="btn" id="btn-pull" onclick="drivePull()" disabled>⬇ Charger</button>
         <button class="btn" id="btn-push" onclick="drivePush()" disabled>⬆ Sauvegarder</button>
       </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;">
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted);">Auto-sync</span>
+        <select id="poll-interval" onchange="setPollInterval(this.value)"
+          style="font-family:var(--mono);font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);cursor:pointer;">
+          <option value="0">Désactivé</option>
+          <option value="10">10 s</option>
+          <option value="30" selected>30 s</option>
+          <option value="60">1 min</option>
+          <option value="300">5 min</option>
+        </select>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted);" id="poll-next"></span>
+      </div>
       <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:8px;" id="drive-status-detail"></div>
     </div>
   </div>
@@ -1000,6 +1012,7 @@ function driveAuth() {
         updateDriveUI();
         toast('✓ Drive connecté');
         drivePull();
+        if (pollSecs > 0) startPolling();
       }
     });
     cl.requestAccessToken();
@@ -1041,19 +1054,21 @@ async function drivePull() {
   setSync('pending');
   try {
     const id = await findOrCreateDriveFile();
+    // Record modifiedTime to avoid re-pulling same version
+    const mr = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?fields=modifiedTime`,
+      {headers:{Authorization:'Bearer '+accessToken}});
+    if (mr.ok) { const mm = await mr.json(); lastModifiedKnown = mm.modifiedTime||null; }
     const r = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`,
       {headers:{Authorization:'Bearer '+accessToken}});
     const d = await r.json();
-    S = {
-      projects: d.projects||[],
-      team:     d.team||[]
-    };
+    S = { projects: d.projects||[], team: d.team||[] };
     ensureState(); save();
     renderProjects(); renderTeam();
     populateSuiviSel();
     setSync('ok');
     toast('✓ Données chargées depuis Drive');
     document.getElementById('drive-status-detail').textContent = 'Dernière synchro : '+new Date().toLocaleTimeString('fr-FR');
+    if (pollSecs > 0) startPolling();
   } catch(e) { setSync('error'); toast('❌ '+e.message); }
 }
 
@@ -1073,14 +1088,118 @@ async function drivePush() {
 
 async function silentPush() {
   if (!accessToken) return;
+  setSync('pending');
   try {
     const id = await findOrCreateDriveFile();
     const body = JSON.stringify({projects:S.projects, team:S.team}, null, 2);
-    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`,
+    const r = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`,
       {method:'PATCH', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'}, body});
+    if (!r.ok) {
+      if (r.status===412) { setSync('ok'); return; } // conflict — polling will recover
+      if (r.status===401) { setSync('local'); accessToken=''; return; } // expired
+      throw new Error('HTTP '+r.status);
+    }
     await syncShared();
+    lastModifiedKnown = null; // reset so next poll re-fetches modifiedTime
     setSync('ok');
-  } catch(e) { setSync('error'); }
+  } catch(e) {
+    setSync('local'); // silent — no red flash
+    console.warn('[silentPush]', e.message);
+  }
+}
+
+/* ══ POLLING ══ */
+const POLL_KEY = 'td_poll_projects';
+let pollSecs = 30;
+let pollTimer = null;
+let pollCountTimer = null;
+let lastModifiedKnown = null;
+
+function isEditingInProgress() {
+  // Block poll if a form input/textarea has focus
+  const active = document.activeElement;
+  if (active && (active.tagName==='INPUT'||active.tagName==='TEXTAREA'||active.tagName==='SELECT')) return true;
+  // Block if drawer is open
+  if (document.getElementById('drawer')?.classList.contains('open')) return true;
+  // Block if project or team form has visible input (user typed something)
+  const nom = document.getElementById('pf-nom');
+  if (nom && nom.value.trim()) return true;
+  const tnom = document.getElementById('tf-nom');
+  if (tnom && tnom.value.trim()) return true;
+  return false;
+}
+
+function setPollInterval(val) {
+  pollSecs = parseInt(val, 10)||0;
+  localStorage.setItem(POLL_KEY, val);
+  stopPolling();
+  if (pollSecs > 0 && accessToken) startPolling();
+  else document.getElementById('poll-next').textContent = '';
+}
+
+function startPolling() {
+  stopPolling();
+  if (!accessToken || pollSecs <= 0) return;
+  scheduleNextPoll();
+}
+
+function stopPolling() {
+  if (pollTimer)      { clearTimeout(pollTimer);   pollTimer=null; }
+  if (pollCountTimer) { clearInterval(pollCountTimer); pollCountTimer=null; }
+  document.getElementById('poll-next').textContent = '';
+}
+
+function scheduleNextPoll() {
+  if (!accessToken || pollSecs <= 0) return;
+  let countdown = pollSecs;
+  const lbl = document.getElementById('poll-next');
+  if (lbl) lbl.textContent = 'prochain dans '+countdown+'s';
+  pollCountTimer = setInterval(() => {
+    countdown--;
+    if (lbl) lbl.textContent = 'prochain dans '+countdown+'s';
+    if (countdown <= 0) { clearInterval(pollCountTimer); pollCountTimer=null; }
+  }, 1000);
+  pollTimer = setTimeout(() => pollOnce(), pollSecs * 1000);
+}
+
+async function pollOnce() {
+  if (!accessToken) return;
+  if (document.visibilityState === 'hidden') { scheduleNextPoll(); return; }
+  if (isEditingInProgress()) { scheduleNextPoll(); return; } // user is typing — defer
+  try {
+    const id = await findOrCreateDriveFile();
+    // 1. Check modifiedTime only — lightweight
+    const r = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${id}?fields=modifiedTime`,
+      {headers:{Authorization:'Bearer '+accessToken}}
+    );
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    const meta = await r.json();
+    const remoteTs = meta.modifiedTime;
+    if (lastModifiedKnown && remoteTs === lastModifiedKnown) {
+      scheduleNextPoll(); return; // no change
+    }
+    // 2. First poll — just record, don't pull (drivePull already did it at auth)
+    if (!lastModifiedKnown) { lastModifiedKnown = remoteTs; scheduleNextPoll(); return; }
+    // 3. New version — pull
+    lastModifiedKnown = remoteTs;
+    const dr = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${id}?alt=media`,
+      {headers:{Authorization:'Bearer '+accessToken}}
+    );
+    if (!dr.ok) throw new Error('HTTP '+dr.status);
+    const d = await dr.json();
+    if (!Array.isArray(d.projects)) throw new Error('Format invalide');
+    S = {projects: d.projects||[], team: d.team||[]};
+    ensureState(); save();
+    renderProjects(); renderTeam(); populateSuiviSel();
+    const t = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    setSync('ok');
+    document.getElementById('drive-status-detail').textContent = 'Sync auto ✓ — '+t;
+  } catch(e) {
+    console.warn('[poll]', e.message);
+  }
+  scheduleNextPoll();
 }
 
 /* ══ EXPORT / IMPORT ══ */
@@ -1123,9 +1242,17 @@ function load() {
   buildColorPicker('proj-color-picker', PROJ_COLORS, projSelectedColor, selectProjColor);
   buildColorPicker('team-color-picker', TEAM_COLORS, teamSelectedColor, selectTeamColor);
   renderProjects();
+  // Restore poll preference
+  const savedPoll = localStorage.getItem(POLL_KEY);
+  if (savedPoll !== null) {
+    pollSecs = parseInt(savedPoll, 10)||0;
+    const sel = document.getElementById('poll-interval');
+    if (sel) sel.value = savedPoll;
+  }
   if (accessToken) {
     setSync('ok');
     updateDriveUI();
+    if (pollSecs > 0) startPolling();
   }
 }
 load();
