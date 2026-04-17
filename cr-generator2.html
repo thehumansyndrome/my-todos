@@ -225,6 +225,7 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
   <div class="tab"        id="tb-history" onclick="showTab('history')">CR</div>
   <div class="tab"        id="tb-projets" onclick="showTab('projets')">Projets</div>
   <div class="tab"        id="tb-equipe"  onclick="showTab('equipe')">Équipe</div>
+  <div class="tab"        id="tb-taches"  onclick="showTab('taches')">Tâches</div>
 </div>
 
 <div class="page">
@@ -359,6 +360,26 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
   <div id="equipe-list" style="display:flex;flex-direction:column;gap:8px;"></div>
 </div>
 
+<!-- ═══ TÂCHES ═══ -->
+<div id="tab-taches" class="section">
+  <div class="drive-bar">
+    <span class="drive-status" id="taches-status" style="flex:1;">Connectez Drive pour charger les tâches.</span>
+    <button class="btn sm" onclick="loadTaches()">↻ Actualiser</button>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+    <input type="text" id="tache-input" placeholder="Nouvelle tâche…"
+      style="flex:1;font-family:var(--sans);font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none;"
+      onkeydown="if(event.key==='Enter')addTache()">
+    <select id="tache-pri" style="font-family:var(--mono);font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none;">
+      <option value="p2" selected>P2</option>
+      <option value="p1">P1</option>
+      <option value="p3">P3</option>
+    </select>
+    <button class="btn sm primary" onclick="addTache()">+ Ajouter</button>
+  </div>
+  <div id="taches-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+</div>
+
 </div><!-- /page -->
 
 <!-- ═══ DRAWER ═══ -->
@@ -424,7 +445,7 @@ var SK      = 'td_v4_' + APP;
 var TK      = 'td_theme_' + APP;
 var TOK     = 'td_tok_' + APP;
 var CLIENT_ID = '962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com';
-var SCOPE   = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly';
+var SCOPE   = 'https://www.googleapis.com/auth/drive';
 var THEMES  = ['light','sand','navy','dark'];
 var ICONS   = {light:'☀︎',sand:'○',navy:'◑',dark:'☾'};
 
@@ -534,13 +555,14 @@ function toggleTheme() {
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 function showTab(tab) {
-  ['editor','history','projets','equipe'].forEach(function(t) {
+  ['editor','history','projets','equipe','taches'].forEach(function(t) {
     var tb = document.getElementById('tb-'+t);
     var sc = document.getElementById('tab-'+t);
     if (tb) tb.classList.toggle('active', t===tab);
     if (sc) sc.classList.toggle('active', t===tab);
   });
   closeDropdown();
+  if (tab === 'taches') renderTaches();
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -1378,6 +1400,105 @@ function toastUndo(msg,cb){
 
 applyTheme(localStorage.getItem(TK)||'light');
 load();
+
+// ── TÂCHES MODULE ─────────────────────────────────────────────────────────────
+var APP_PROJECT_NAME = 'CR generator';
+var todoFileId = null;
+var todoFullData = null;
+var appProjId = null;
+
+function getAppProjId() {
+  var name = APP_PROJECT_NAME.toLowerCase().split(' ')[0];
+  var p = sharedProjects.find(function(p){ return (p.name||'').toLowerCase().includes(name); });
+  return p ? p.id : null;
+}
+
+function loadTaches() {
+  if (!accessToken) { document.getElementById('taches-status').textContent = 'Connectez Drive pour charger les tâches.'; return; }
+  document.getElementById('taches-status').textContent = 'Chargement…';
+  var q = encodeURIComponent("name='projet001.json' and trashed=false");
+  fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id)&orderBy=modifiedTime+desc',
+    {headers:{Authorization:'Bearer '+accessToken}})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    todoFileId = d.files && d.files[0] ? d.files[0].id : null;
+    if (!todoFileId) { document.getElementById('taches-status').textContent = 'projet001.json introuvable.'; return; }
+    return fetch('https://www.googleapis.com/drive/v3/files/'+todoFileId+'?alt=media',
+      {headers:{Authorization:'Bearer '+accessToken}});
+  }).then(function(r){ return r ? r.json() : null; })
+  .then(function(data){
+    if (!data) return;
+    todoFullData = data;
+    appProjId = getAppProjId();
+    var count = (todoFullData.backlog||[]).filter(function(t){return t.projId===appProjId;}).length;
+    document.getElementById('taches-status').textContent = appProjId
+      ? count + ' tâche' + (count>1?'s':'') + ' pour ' + APP_PROJECT_NAME
+      : 'Projet "'+APP_PROJECT_NAME+'" introuvable';
+    renderTaches();
+  }).catch(function(e){ document.getElementById('taches-status').textContent = 'Erreur : '+e.message; });
+}
+
+function renderTaches() {
+  var el = document.getElementById('taches-list'); if (!el) return;
+  if (!todoFullData || !appProjId) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:14px;">Actualisez pour charger les tâches.</div>'; return; }
+  var tasks = (todoFullData.backlog||[]).filter(function(t){return t.projId===appProjId;});
+  var active = tasks.filter(function(t){return !t.done;});
+  var done   = tasks.filter(function(t){return !!t.done;});
+  var sorted = active.concat(done);
+  if (!sorted.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:14px;">Aucune tâche pour ce projet.</div>'; return; }
+  var priColor = {p1:'var(--red)',p2:'var(--amber)',p3:'var(--muted)'};
+  el.innerHTML = sorted.map(function(t){
+    return '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);'+(t.done?'opacity:.55':'')+'">'
+      +'<input type="checkbox" '+(t.done?'checked':'')+' data-action="toggleTache" data-id="'+t.id+'"'
+      +' style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);flex-shrink:0;">'
+      +'<span style="flex:1;font-size:13px;'+(t.done?'text-decoration:line-through;color:var(--muted)':'')+'">'+(t.text||'')+'</span>'
+      +(t.pri?'<span style="font-size:11px;font-weight:600;color:'+(priColor[t.pri]||'var(--muted)')+'">'+t.pri.toUpperCase()+'</span>':'')
+      +'<button data-action="deleteTache" data-id="'+t.id+'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0 2px;">✕</button>'
+      +'</div>';
+  }).join('');
+  el.onchange = function(ev){ var cb=ev.target.closest('[data-action="toggleTache"]'); if(cb) toggleTache(cb.dataset.id); };
+  el.onclick  = function(ev){ var b=ev.target.closest('[data-action="deleteTache"]');  if(b)  deleteTache(b.dataset.id); };
+}
+
+function addTache() {
+  var text = document.getElementById('tache-input').value.trim(); if (!text) return;
+  var pri  = document.getElementById('tache-pri').value;
+  if (!todoFullData) { toast('Actualisez d\'abord'); return; }
+  if (!appProjId) { toast('Projet introuvable'); return; }
+  var newTask = {id:'cr'+Date.now().toString(36), text:text, projId:appProjId, pri:pri, done:false, ts:Date.now()};
+  todoFullData.backlog = todoFullData.backlog || [];
+  todoFullData.backlog.unshift(newTask);
+  document.getElementById('tache-input').value = '';
+  renderTaches();
+  writeTodoFile();
+}
+
+function toggleTache(id) {
+  if (!todoFullData) return;
+  var t = todoFullData.backlog.find(function(x){return x.id===id;}); if (!t) return;
+  t.done = !t.done;
+  renderTaches();
+  writeTodoFile();
+}
+
+function deleteTache(id) {
+  if (!todoFullData) return;
+  if (!confirm('Supprimer cette tâche ?')) return;
+  todoFullData.backlog = todoFullData.backlog.filter(function(x){return x.id!==id;});
+  renderTaches();
+  writeTodoFile();
+}
+
+function writeTodoFile() {
+  if (!accessToken || !todoFullData || !todoFileId) return;
+  var bodyStr = JSON.stringify(todoFullData);
+  fetch('https://www.googleapis.com/upload/drive/v3/files/'+todoFileId+'?uploadType=media',
+    {method:'PATCH', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'}, body:bodyStr})
+  .then(function(r){
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    toast('✓ Sauvegardé');
+  }).catch(function(e){ toast('❌ '+e.message); });
+}
 </script>
 </body>
 </html>
