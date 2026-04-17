@@ -896,8 +896,9 @@ let projet001FileId = null; // cached Drive file ID for projet001.json
 let projet001FullData = null; // full JSON to rewrite on toggle
 
 async function toggleBacklogTask(taskId) {
+  const numId = typeof taskId === 'string' ? parseInt(taskId, 10) : taskId;
   // Toggle in local suiviData
-  const task = suiviData.backlog.find(t => t.id === taskId);
+  const task = suiviData.backlog.find(t => t.id === numId || t.id === taskId);
   if (!task) return;
   task.done = !task.done;
   renderSuivi();
@@ -905,7 +906,7 @@ async function toggleBacklogTask(taskId) {
   if (!accessToken || !projet001FullData) { toast('Connectez Drive pour sauvegarder'); return; }
   try {
     projet001FullData.backlog = projet001FullData.backlog || [];
-    const bt = projet001FullData.backlog.find(t => t.id === taskId);
+    const bt = projet001FullData.backlog.find(t => t.id === numId || t.id === taskId);
     if (bt) bt.done = task.done;
     if (!projet001FileId) {
       const q = encodeURIComponent("name='projet001.json' and trashed=false");
