@@ -965,19 +965,19 @@ async function toggleBacklogTask(taskId) {
         headers: {Authorization:'Bearer '+accessToken, 'Content-Type':'application/json'},
         body: JSON.stringify(projet001FullData) }
     );
+    console.log('[toggleBacklogTask] PATCH status:', resp.status, 'fileId:', projet001FileId);
 
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({error:{message:'HTTP '+resp.status}}));
       const msg = (err.error && err.error.message) || ('HTTP '+resp.status);
+      console.error('[toggleBacklogTask] PATCH error:', resp.status, JSON.stringify(err));
       setSync('error');
-      // 401/403 = wrong scope or expired token
       if (resp.status === 401 || resp.status === 403) {
         sessionStorage.removeItem(TOK);
         accessToken = '';
-        setSync('error');
-        toast('⚠ Scope insuffisant — reconnectez Drive (Log → Connecter Google)');
+        toast('⚠ Reconnectez Drive (scope insuffisant — HTTP '+resp.status+')');
       } else {
-        toast('❌ Erreur Drive : '+msg);
+        toast('❌ Drive HTTP '+resp.status+' : '+msg);
       }
       return;
     }
