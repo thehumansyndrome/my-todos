@@ -342,7 +342,7 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
     <button class="btn sm" onclick="loadSharedProjects()">↻ Rafraîchir</button>
   </div>
   <div style="padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;font-size:13px;color:var(--muted);">
-    Les projets sont gérés dans l'app <b>todos</b> (onglet Projets). Connectez-vous à Drive pour les synchroniser ici.
+    Les projets sont gérés dans l'app <b>Projects</b>. Connectez-vous à Drive pour les synchroniser ici.
   </div>
   <div id="projets-list" style="display:flex;flex-direction:column;gap:8px;"></div>
 </div>
@@ -354,7 +354,7 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
     <button class="btn sm" onclick="loadSharedProjects()">↻ Rafraîchir</button>
   </div>
   <div style="padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;font-size:13px;color:var(--muted);">
-    L'équipe est gérée dans l'app <b>todos</b> (onglet Équipe). Connectez-vous à Drive pour la synchroniser ici.
+    L'équipe est gérée dans l'app <b>Projects</b> (onglet Équipe). Connectez-vous à Drive pour la synchroniser ici.
   </div>
   <div id="equipe-list" style="display:flex;flex-direction:column;gap:8px;"></div>
 </div>
@@ -1325,7 +1325,7 @@ function findSharedFile(){
 function loadSharedProjects(){
   if(!accessToken){toast('Connectez-vous à Drive d\'abord');return;}
   findSharedFile().then(function(id){
-    if(!id){toast('shared.json introuvable — créez des projets dans todos');return;}
+    if(!id){toast('shared.json introuvable — créez des projets dans Projects');return;}
     sharedFileId=id;
     return fetch('https://www.googleapis.com/drive/v3/files/'+id+'?alt=media',{headers:{Authorization:'Bearer '+accessToken}}).then(function(r){return r.json();});
   }).then(function(data){
@@ -1339,7 +1339,7 @@ function loadSharedProjects(){
     renderProjets();
     renderEquipe();
     document.getElementById('proj-status-label').textContent=sharedProjects.length+' projets · '+sharedTeam.length+' membres chargés';
-    var elbl=document.getElementById('equipe-status-label'); if(elbl) elbl.textContent=sharedTeam.length+' membres chargés depuis todos';
+    var elbl=document.getElementById('equipe-status-label'); if(elbl) elbl.textContent=sharedTeam.length+' membres chargés depuis Projects';
     toast('✓ '+sharedProjects.length+' projets · '+sharedTeam.length+' membres chargés');
   }).catch(function(e){toast('Erreur chargement projets');});
 }
