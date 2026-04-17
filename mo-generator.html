@@ -1344,7 +1344,9 @@ const PROJ_EDIT_KEY = '__editProjId__';
 
 function buildColorPickers() {
   // Projets
-  document.getElementById('p-colors').innerHTML = PROJECT_COLORS.map(c =>
+  const pColors = document.getElementById('p-colors');
+  if (!pColors) return;
+  pColors.innerHTML = PROJECT_COLORS.map(c =>
     `<div class="color-dot ${c===selectedPColor?'selected':''}" style="background:${c}" onclick="selectPColor('${c}')"></div>`
   ).join('');
 }
