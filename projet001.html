@@ -2247,16 +2247,21 @@ async function silentPush(){
       headers:{Authorization:'Bearer '+drTok,'Content-Type':'application/json'},
       body:JSON.stringify(S,null,2)
     });
-    if(!r.ok) throw new Error('HTTP '+r.status);
+    if(!r.ok){
+      // 412 = conflict (another app modified the file) — polling will recover
+      if(r.status===412){ setSaveStatus('local'); return; }
+      // 401 = token expired — silent, don't flash red
+      if(r.status===401){ setSaveStatus('local'); drTok=null; return; }
+      throw new Error('HTTP '+r.status);
+    }
     setSaveStatus('ok');
     logA('drive','Auto-sync → '+drCfg.filename);
-    // Update Drive status panel
     const t=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
     setDS(true,'Sauvegardé ✓ — '+t);
   } catch(e){
-    setSaveStatus('error');
-    setDS(false,'Erreur: '+e.message);
-    toastAction('⚠ Drive sync échoué','Réessayer',()=>forcePush());
+    // Silent fail — don't show red error for background push
+    setSaveStatus('local');
+    console.warn('[silentPush]',e.message);
   }
 }
 
@@ -5025,6 +5030,7 @@ async function pollOnce(){
     save();
     renderCatSelects();
     renderAll();
+    populateBacklogProjSelect();
     const t = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
     setDS(true, 'Sync auto ✓ — '+t);
     toast('↻ Sync Drive — '+t);
