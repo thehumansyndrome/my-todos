@@ -2868,8 +2868,9 @@ function addTodo(){
     });
   }
 
+  const _adminMember=(S.sharedTeam||[]).find(m=>m.appRole==='Admin')||null;
   const t={id:parentId,text:v,cat,pri,hz,done:false,ts:Date.now(),
-    comment:'',subtasks:subtaskIds,parentId:null,type:typeKey||null};
+    comment:'',subtasks:subtaskIds,parentId:null,type:typeKey||null,assigneeId:_adminMember?_adminMember.id:null};
   // Attach pending pasted images
   if(pendingItemImgs['tab-todos']&&pendingItemImgs['tab-todos'].length){
     t.images=[...pendingItemImgs['tab-todos']];
@@ -3339,6 +3340,7 @@ function todoItemHtml(t){
           <span class="tag ${pl[t.pri]||'p2'}">${t.pri.toUpperCase()}</span>
           ${catBadge}
           ${hzBadge}
+          ${(()=>{const _a=t.assigneeId?(S.sharedTeam||[]).find(m=>m.id===t.assigneeId):null;return _a?`<span title="${esc(_a.nom)}" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:${_a.color};font-size:8px;font-weight:700;color:#fff;vertical-align:middle;">${esc(_a.initiales)}</span>`:'';})()}
           ${subtaskBadgeHtml}
           <span class="meta-date">${fd(t.ts)}</span>
         </div>
@@ -5450,7 +5452,8 @@ function addBacklogItem(){
   const projId=document.getElementById('bl-proj').value||'';
   const pri=document.getElementById('bl-pri').value||'p2';
   if(!S.backlog)S.backlog=[];
-  S.backlog.unshift({id:uid(),text,projId,pri,done:false,ts:Date.now()});
+  const _adminBl=(S.sharedTeam||[]).find(m=>m.appRole==='Admin')||null;
+  S.backlog.unshift({id:uid(),text,projId,pri,done:false,ts:Date.now(),assigneeId:_adminBl?_adminBl.id:null});
   document.getElementById('bl-in').value='';
   autoSave();renderBacklog();
   logA('backlog','Ajouté: "'+text+'"');
@@ -5505,6 +5508,7 @@ function renderBacklog(){
         <div class="bl-meta">
           <span class="tag ${priCls[b.pri]||'p2'}">${b.pri.toUpperCase()}</span>
           ${projBadge}
+          ${(()=>{const _a=b.assigneeId?(S.sharedTeam||[]).find(m=>m.id===b.assigneeId):null;return _a?`<span title="${esc(_a.nom)}" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:${_a.color};font-size:8px;font-weight:700;color:#fff;vertical-align:middle;">${esc(_a.initiales)}</span>`:'';})()} 
           <span class="meta-date">${fd(b.ts)}</span>
         </div>
       </div>
