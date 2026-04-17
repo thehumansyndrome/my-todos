@@ -958,14 +958,38 @@ async function toggleBacklogTask(taskId) {
     }
     if (!projet001FileId) { toast('⚠ projet001.json introuvable'); setSync('error'); return; }
 
-    // 5. Write to Drive
-    const resp = await fetch(
-      `https://www.googleapis.com/upload/drive/v3/files/${projet001FileId}?uploadType=media`,
-      { method: 'PATCH',
-        headers: {Authorization:'Bearer '+accessToken, 'Content-Type':'application/json'},
-        body: JSON.stringify(projet001FullData) }
-    );
-    console.log('[toggleBacklogTask] PATCH status:', resp.status, 'fileId:', projet001FileId);
+    // 5. Write to Drive — use resumable upload if body > 4MB
+    const bodyStr = JSON.stringify(projet001FullData);
+    console.log('[toggleBacklogTask] body size:', bodyStr.length, 'bytes, fileId:', projet001FileId);
+
+    let uploadResp;
+    if (bodyStr.length > 4 * 1024 * 1024) {
+      // Resumable upload for large files
+      const initResp = await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${projet001FileId}?uploadType=resumable`,
+        { method: 'PATCH',
+          headers: {Authorization:'Bearer '+accessToken, 'Content-Type':'application/json', 'X-Upload-Content-Type':'application/json'},
+          body: '{}' }
+      );
+      if (!initResp.ok) { uploadResp = initResp; }
+      else {
+        const uploadUrl = initResp.headers.get('Location');
+        uploadResp = await fetch(uploadUrl, {
+          method: 'PUT',
+          headers: {'Content-Type':'application/json'},
+          body: bodyStr
+        });
+      }
+    } else {
+      uploadResp = await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${projet001FileId}?uploadType=media`,
+        { method: 'PATCH',
+          headers: {Authorization:'Bearer '+accessToken, 'Content-Type':'application/json'},
+          body: bodyStr }
+      );
+    }
+    const resp = uploadResp;
+    console.log('[toggleBacklogTask] upload status:', resp.status);
 
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({error:{message:'HTTP '+resp.status}}));
@@ -984,7 +1008,8 @@ async function toggleBacklogTask(taskId) {
 
     // 6. Success
     setSync('ok');
-    toast(task.done ? '✓ Tâche terminée — synchro Drive OK' : '↩ Tâche réactivée — synchro Drive OK');
+    const kb = Math.round(bodyStr.length/1024);
+    toast((task.done ? '✓ Terminée' : '↩ Réactivée')+' — Drive OK ('+kb+'kb)');
 
   } catch(e) {
     setSync('error');
