@@ -891,7 +891,15 @@ async function syncShared() {
 }
 
 /* ══ GOOGLE DRIVE ══ */
-let accessToken = sessionStorage.getItem(TOK) || '';
+// Force fresh auth if stored token was issued with old scope (drive.file → drive)
+const _storedTok = sessionStorage.getItem(TOK) || '';
+const _scopeKey = 'td_scope_projects';
+const _lastScope = localStorage.getItem(_scopeKey) || '';
+if (_lastScope !== SCOPE) {
+  sessionStorage.removeItem(TOK); // token has wrong scope, discard
+  localStorage.setItem(_scopeKey, SCOPE);
+}
+let accessToken = (_lastScope === SCOPE ? _storedTok : '');
 let driveFileId = null;
 let projet001FileId = null; // cached Drive file ID for projet001.json
 let projet001FullData = null; // full JSON to rewrite on toggle
