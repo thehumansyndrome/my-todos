@@ -906,51 +906,77 @@ let projet001FullData = null; // full JSON to rewrite on toggle
 
 async function toggleBacklogTask(taskId) {
   const numId = typeof taskId === 'string' ? parseInt(taskId, 10) : taskId;
-  // Toggle in local suiviData
+
+  // 1. Update local state immediately
   const task = suiviData.backlog.find(t => t.id === numId || t.id === taskId);
   if (!task) { toast('⚠ Tâche introuvable'); return; }
   task.done = !task.done;
-  // Also update in projet001FullData immediately
   if (projet001FullData && Array.isArray(projet001FullData.backlog)) {
     const bt = projet001FullData.backlog.find(t => t.id === numId || t.id === taskId);
     if (bt) bt.done = task.done;
   }
+
+  // 2. Re-render immediately (optimistic UI)
   renderSuivi();
-  // Write back to projet001.json on Drive
-  if (!accessToken) { toast('⚠ Connectez Drive pour sauvegarder'); return; }
-  if (!projet001FullData) { toast('⚠ Actualisez d\'abord le suivi'); return; }
+
+  // 3. Check prereqs
+  if (!accessToken) {
+    toast('⚠ Reconnectez Drive (Log → Connecter Google)');
+    return;
+  }
+  if (!projet001FullData) {
+    toast('⚠ Cliquez Actualiser d\'abord');
+    return;
+  }
+
+  // 4. Show sync indicator
+  setSync('pending');
+
   try {
+    // Use cached file ID, or find it
     if (!projet001FileId) {
       const q = encodeURIComponent("name='projet001.json' and trashed=false");
-      const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`,
-        {headers:{Authorization:'Bearer '+accessToken}});
+      const r = await fetch(
+        `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`,
+        {headers:{Authorization:'Bearer '+accessToken}}
+      );
       const d = await r.json();
+      if (d.error) throw new Error(d.error.message);
       projet001FileId = d.files && d.files[0] ? d.files[0].id : null;
     }
-    if (!projet001FileId) { toast('⚠ projet001.json introuvable sur Drive'); return; }
+    if (!projet001FileId) { toast('⚠ projet001.json introuvable'); setSync('error'); return; }
+
+    // 5. Write to Drive
     const resp = await fetch(
       `https://www.googleapis.com/upload/drive/v3/files/${projet001FileId}?uploadType=media`,
-      {method:'PATCH',
-       headers:{Authorization:'Bearer '+accessToken, 'Content-Type':'application/json'},
-       body:JSON.stringify(projet001FullData)}
+      { method: 'PATCH',
+        headers: {Authorization:'Bearer '+accessToken, 'Content-Type':'application/json'},
+        body: JSON.stringify(projet001FullData) }
     );
+
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({error:{message:'HTTP '+resp.status}}));
       const msg = (err.error && err.error.message) || ('HTTP '+resp.status);
-      toast('❌ Drive: '+msg);
-      console.error('toggleBacklogTask PATCH error:', resp.status, err);
-      // If 401 or 403 — token expired/wrong scope, force reconnect
+      setSync('error');
+      // 401/403 = wrong scope or expired token
       if (resp.status === 401 || resp.status === 403) {
         sessionStorage.removeItem(TOK);
         accessToken = '';
         setSync('error');
-        toast('⚠ Reconnectez Drive (Log → Connecter Google)');
+        toast('⚠ Scope insuffisant — reconnectez Drive (Log → Connecter Google)');
+      } else {
+        toast('❌ Erreur Drive : '+msg);
       }
       return;
     }
-    toast(task.done ? '✓ Tâche terminée' : '↩ Tâche réactivée');
+
+    // 6. Success
+    setSync('ok');
+    toast(task.done ? '✓ Tâche terminée — synchro Drive OK' : '↩ Tâche réactivée — synchro Drive OK');
+
   } catch(e) {
-    toast('❌ Erreur réseau');
+    setSync('error');
+    toast('❌ Erreur réseau : '+e.message);
     console.error('toggleBacklogTask:', e);
   }
 }
