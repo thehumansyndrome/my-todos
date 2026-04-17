@@ -805,7 +805,7 @@ function renderSuivi() {
     h += blSorted.map(e => {
       const prioCls = {p1:'color:var(--red)',p2:'color:var(--amber)',p3:'color:var(--muted)'}[e.pri]||'color:var(--muted)';
       return `<div class="suivi-row" style="${e.done?'opacity:.6':''}">
-        <input type="checkbox" ${e.done?'checked':''} onchange="toggleBacklogTask(${e.id})"
+        <input type="checkbox" ${e.done?'checked':''} data-action="toggleTask" data-id="${e.id}"
           style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);flex-shrink:0;">
         <span class="suivi-row-title"${e.done?' style="text-decoration:line-through;color:var(--muted)"':''}>${esc(e.text||'Sans titre')}</span>
         ${e.pri?`<span style="font-size:11px;font-weight:600;${prioCls}">${e.pri.toUpperCase()}</span>`:''}
@@ -868,6 +868,13 @@ function renderSuivi() {
   }
 
   el.innerHTML = h;
+
+  // Event delegation for checkboxes — avoids Brave Shield breaking inline onchange
+  el.onchange = function(ev) {
+    const cb = ev.target.closest('[data-action="toggleTask"]');
+    if (!cb) return;
+    toggleBacklogTask(cb.dataset.id);
+  };
 }
 
 /* ══ SHARED.JSON SYNC ══ */
