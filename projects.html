@@ -272,6 +272,16 @@ input,select,textarea{background:var(--bg);color:var(--text);}
           <button class="role-btn" id="rb-val" onclick="toggleRole('val')" style="border:1px solid var(--border);color:var(--muted);">Valideur</button>
         </div>
       </div>
+      <div class="field" style="min-width:120px;">
+        <label>Fonction</label>
+        <select id="tf-approle" style="font-family:var(--sans);font-size:13px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none;width:100%;">
+          <option value="">—</option>
+          <option value="Admin">Admin</option>
+          <option value="IT">IT</option>
+          <option value="Métier">Métier</option>
+          <option value="Sales">Sales</option>
+        </select>
+      </div>
     </div>
     <div class="form-actions">
       <button class="btn" onclick="cancelMemberEdit()">Annuler</button>
@@ -603,6 +613,7 @@ function cancelMemberEdit() {
   teamRoleRed = true; teamRoleVal = false;
   renderRoleBtns();
   selectTeamColor(TEAM_COLORS[3]);
+  const ar = document.getElementById('tf-approle'); if (ar) ar.value = '';
   document.getElementById('team-form-title').textContent = 'Nouveau membre';
 }
 
@@ -615,11 +626,12 @@ function saveMember() {
   if (teamRoleRed) roles.push('redacteur');
   if (teamRoleVal) roles.push('valideur');
   if (!roles.length) { toast('⚠ Au moins un rôle requis'); return; }
+  const appRole = document.getElementById('tf-approle').value;
   if (editingMemberId) {
     const m = S.team.find(x => x.id===editingMemberId);
-    if (m) Object.assign(m, {nom, initiales:init, color:teamSelectedColor, roles});
+    if (m) Object.assign(m, {nom, initiales:init, color:teamSelectedColor, roles, appRole});
   } else {
-    S.team.push({id:'m_'+uid(), nom, initiales:init, color:teamSelectedColor, roles});
+    S.team.push({id:'m_'+uid(), nom, initiales:init, color:teamSelectedColor, roles, appRole});
   }
   cancelMemberEdit();
   autoSave(); syncShared(); renderTeam();
@@ -635,6 +647,7 @@ function editMember(id) {
   teamRoleVal = m.roles.includes('valideur');
   renderRoleBtns();
   selectTeamColor(m.color||TEAM_COLORS[3]);
+  const ar = document.getElementById('tf-approle'); if (ar) ar.value = m.appRole||'';
   document.getElementById('team-form-title').textContent = 'Modifier le membre';
   document.getElementById('tf-nom').focus();
 }
@@ -662,7 +675,7 @@ function renderTeam() {
       <div class="avatar" style="background:${m.color}">${esc(m.initiales)}</div>
       <div style="flex:1;min-width:0;">
         <div style="font-size:13px;font-weight:500;">${esc(m.nom)}</div>
-        <div style="display:flex;gap:5px;margin-top:4px;flex-wrap:wrap;">${roleHtml}</div>
+        <div style="display:flex;gap:5px;margin-top:4px;flex-wrap:wrap;">${roleHtml}${m.appRole?`<span class="role-chip" style="background:var(--surface-2,#e5e7eb);color:var(--text);">${esc(m.appRole)}</span>`:''}</div>
       </div>
       <button class="btn sm" onclick="editMember('${m.id}')">✎</button>
       <button class="btn sm danger" onclick="deleteMember('${m.id}')">✕</button>
