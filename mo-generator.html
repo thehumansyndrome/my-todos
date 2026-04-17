@@ -1344,9 +1344,7 @@ const PROJ_EDIT_KEY = '__editProjId__';
 
 function buildColorPickers() {
   // Projets
-  const pColors = document.getElementById('p-colors');
-  if (!pColors) return;
-  pColors.innerHTML = PROJECT_COLORS.map(c =>
+  document.getElementById('p-colors').innerHTML = PROJECT_COLORS.map(c =>
     `<div class="color-dot ${c===selectedPColor?'selected':''}" style="background:${c}" onclick="selectPColor('${c}')"></div>`
   ).join('');
 }
@@ -1416,10 +1414,11 @@ function renderEquipe() {
   if (!sharedTeam.length) { el.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--muted);font-size:14px;">Aucun membre chargé.</div>'; return; }
   el.innerHTML = sharedTeam.map(m => {
     const roleLabels = (m.roles||[]).map(r => r==='redacteur'?'Rédacteur':'Valideur').join(' + ') || (m.role||'');
+    const appRolePart = m.appRole ? ' · ' + m.appRole : '';
     return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:center;gap:12px;">'
       + '<div style="width:36px;height:36px;border-radius:50%;background:'+m.color+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0;">'+esc(m.initiales)+'</div>'
       + '<div style="flex:1;"><div style="font-size:14px;font-weight:500;">'+esc(m.nom)+'</div>'
-      + '<div style="font-size:12px;color:var(--muted);margin-top:2px;">'+esc(roleLabels)+'</div></div>'
+      + '<div style="font-size:12px;color:var(--muted);margin-top:2px;">'+esc(roleLabels+appRolePart)+'</div></div>'
       + '</div>';
   }).join('');
 }
@@ -1724,15 +1723,20 @@ function renderTaches() {
   const sorted = [...active, ...done];
   if (!sorted.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:14px;">Aucune tâche pour ce projet.</div>'; return; }
   const priColor = {p1:'var(--red)',p2:'var(--amber)',p3:'var(--muted)'};
-  el.innerHTML = sorted.map(t =>
-    `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);${t.done?'opacity:.55':''}">
+  el.innerHTML = sorted.map(t => {
+    const assignee = t.assigneeId ? sharedTeam.find(m => m.id === t.assigneeId) : null;
+    const badgeHTML = assignee
+      ? `<div title="${esc(assignee.nom)}" style="width:22px;height:22px;border-radius:50%;background:${assignee.color};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;">${esc(assignee.initiales)}</div>`
+      : '';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);${t.done?'opacity:.55':''}">
       <input type="checkbox" ${t.done?'checked':''} data-action="toggleTache" data-id="${t.id}"
         style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);flex-shrink:0;">
       <span style="flex:1;font-size:13px;${t.done?'text-decoration:line-through;color:var(--muted)':''}">${esc(t.text)}</span>
+      ${badgeHTML}
       ${t.pri?`<span style="font-size:11px;font-weight:600;color:${priColor[t.pri]||'var(--muted)'}">${t.pri.toUpperCase()}</span>`:''}
       <button data-action="deleteTache" data-id="${t.id}" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0 2px;">✕</button>
-    </div>`
-  ).join('');
+    </div>`;
+  }).join('');
   // Event delegation
   el.onchange = ev => { const cb = ev.target.closest('[data-action="toggleTache"]'); if(cb) toggleTache(cb.dataset.id); };
   el.onclick  = ev => { const b  = ev.target.closest('[data-action="deleteTache"]');  if(b)  deleteTache(b.dataset.id); };
@@ -1744,7 +1748,8 @@ async function addTache() {
   const pri  = document.getElementById('tache-pri').value;
   if (!todoFullData) { toast('Actualisez d\'abord les tâches'); return; }
   if (!appProjId) { toast('Projet introuvable'); return; }
-  const newTask = {id:'mo'+Date.now().toString(36), text, projId:appProjId, pri, done:false, ts:Date.now()};
+  const defaultOwner = sharedTeam.find(m => m.appRole === 'Admin') || sharedTeam[0] || null;
+  const newTask = {id:'mo'+Date.now().toString(36), text, projId:appProjId, pri, done:false, ts:Date.now(), assigneeId: defaultOwner ? defaultOwner.id : null};
   todoFullData.backlog = todoFullData.backlog || [];
   todoFullData.backlog.unshift(newTask);
   inp.value = '';
