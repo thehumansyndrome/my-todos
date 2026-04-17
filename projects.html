@@ -899,15 +899,18 @@ async function toggleBacklogTask(taskId) {
   const numId = typeof taskId === 'string' ? parseInt(taskId, 10) : taskId;
   // Toggle in local suiviData
   const task = suiviData.backlog.find(t => t.id === numId || t.id === taskId);
-  if (!task) return;
+  if (!task) { toast('⚠ Tâche introuvable'); return; }
   task.done = !task.done;
-  renderSuivi();
-  // Write back to projet001.json on Drive
-  if (!accessToken || !projet001FullData) { toast('Connectez Drive pour sauvegarder'); return; }
-  try {
-    projet001FullData.backlog = projet001FullData.backlog || [];
+  // Also update in projet001FullData immediately
+  if (projet001FullData && Array.isArray(projet001FullData.backlog)) {
     const bt = projet001FullData.backlog.find(t => t.id === numId || t.id === taskId);
     if (bt) bt.done = task.done;
+  }
+  renderSuivi();
+  // Write back to projet001.json on Drive
+  if (!accessToken) { toast('⚠ Connectez Drive pour sauvegarder'); return; }
+  if (!projet001FullData) { toast('⚠ Actualisez d\'abord le suivi'); return; }
+  try {
     if (!projet001FileId) {
       const q = encodeURIComponent("name='projet001.json' and trashed=false");
       const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`,
@@ -915,12 +918,32 @@ async function toggleBacklogTask(taskId) {
       const d = await r.json();
       projet001FileId = d.files && d.files[0] ? d.files[0].id : null;
     }
-    if (!projet001FileId) { toast('projet001.json introuvable'); return; }
-    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${projet001FileId}?uploadType=media`,
-      {method:'PATCH', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
-       body:JSON.stringify(projet001FullData)});
+    if (!projet001FileId) { toast('⚠ projet001.json introuvable sur Drive'); return; }
+    const resp = await fetch(
+      `https://www.googleapis.com/upload/drive/v3/files/${projet001FileId}?uploadType=media`,
+      {method:'PATCH',
+       headers:{Authorization:'Bearer '+accessToken, 'Content-Type':'application/json'},
+       body:JSON.stringify(projet001FullData)}
+    );
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({error:{message:'HTTP '+resp.status}}));
+      const msg = (err.error && err.error.message) || ('HTTP '+resp.status);
+      toast('❌ Drive: '+msg);
+      console.error('toggleBacklogTask PATCH error:', resp.status, err);
+      // If 401 or 403 — token expired/wrong scope, force reconnect
+      if (resp.status === 401 || resp.status === 403) {
+        sessionStorage.removeItem(TOK);
+        accessToken = '';
+        setSync('error');
+        toast('⚠ Reconnectez Drive (Log → Connecter Google)');
+      }
+      return;
+    }
     toast(task.done ? '✓ Tâche terminée' : '↩ Tâche réactivée');
-  } catch(e) { toast('❌ Erreur sauvegarde'); console.error(e); }
+  } catch(e) {
+    toast('❌ Erreur réseau');
+    console.error('toggleBacklogTask:', e);
+  }
 }
 
 function loadGIS(cb) {
