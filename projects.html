@@ -697,6 +697,9 @@ async function loadSuiviData() {
         const data = await r.json();
         if (f.key === 'todos') {
           suiviData.backlog = Array.isArray(data.backlog) ? data.backlog : [];
+          projet001FullData = data; // cache full data for write-back
+          // cache file ID too
+          if (!projet001FileId && d.files && d.files[0]) projet001FileId = d.files[0].id;
         } else if (f.key === 'shared') {
           suiviData.sharedProjects = Array.isArray(data.projects) ? data.projects : [];
         } else {
@@ -787,11 +790,10 @@ function renderSuivi() {
     const blSorted = [...blActive, ...blDone];
     h += blSorted.map(e => {
       const prioCls = {p1:'color:var(--red)',p2:'color:var(--amber)',p3:'color:var(--muted)'}[e.pri]||'color:var(--muted)';
-      return `<div class="suivi-row" style="${e.done?'opacity:.55':''}">
-        ${e.done
-          ? '<span style="color:var(--green);font-size:11px;">✓</span>'
-          : '<span style="color:var(--muted);font-size:11px;">○</span>'}
-        <span class="suivi-row-title"${e.done?' style="text-decoration:line-through"':''}>${esc(e.text||'Sans titre')}</span>
+      return `<div class="suivi-row" style="${e.done?'opacity:.6':''}">
+        <input type="checkbox" ${e.done?'checked':''} onchange="toggleBacklogTask(${e.id})"
+          style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);flex-shrink:0;">
+        <span class="suivi-row-title"${e.done?' style="text-decoration:line-through;color:var(--muted)"':''}>${esc(e.text||'Sans titre')}</span>
         ${e.pri?`<span style="font-size:11px;font-weight:600;${prioCls}">${e.pri.toUpperCase()}</span>`:''}
         ${e.hz?`<span style="font-size:10px;color:var(--muted);padding:1px 6px;border:1px solid var(--border);border-radius:10px;">${e.hz}</span>`:''}
       </div>`;
@@ -890,6 +892,35 @@ async function syncShared() {
 /* ══ GOOGLE DRIVE ══ */
 let accessToken = sessionStorage.getItem(TOK) || '';
 let driveFileId = null;
+let projet001FileId = null; // cached Drive file ID for projet001.json
+let projet001FullData = null; // full JSON to rewrite on toggle
+
+async function toggleBacklogTask(taskId) {
+  // Toggle in local suiviData
+  const task = suiviData.backlog.find(t => t.id === taskId);
+  if (!task) return;
+  task.done = !task.done;
+  renderSuivi();
+  // Write back to projet001.json on Drive
+  if (!accessToken || !projet001FullData) { toast('Connectez Drive pour sauvegarder'); return; }
+  try {
+    projet001FullData.backlog = projet001FullData.backlog || [];
+    const bt = projet001FullData.backlog.find(t => t.id === taskId);
+    if (bt) bt.done = task.done;
+    if (!projet001FileId) {
+      const q = encodeURIComponent("name='projet001.json' and trashed=false");
+      const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`,
+        {headers:{Authorization:'Bearer '+accessToken}});
+      const d = await r.json();
+      projet001FileId = d.files && d.files[0] ? d.files[0].id : null;
+    }
+    if (!projet001FileId) { toast('projet001.json introuvable'); return; }
+    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${projet001FileId}?uploadType=media`,
+      {method:'PATCH', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
+       body:JSON.stringify(projet001FullData)});
+    toast(task.done ? '✓ Tâche terminée' : '↩ Tâche réactivée');
+  } catch(e) { toast('❌ Erreur sauvegarde'); console.error(e); }
+}
 
 function loadGIS(cb) {
   if (window.google && window.google.accounts) { cb(); return; }
