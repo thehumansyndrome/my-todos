@@ -677,12 +677,13 @@ async function loadSuiviData() {
   toast('Chargement…');
 
   const files = [
-    {key:'us', name:'us-generator.json'},
-    {key:'mo', name:'mo-generator.json'},
-    {key:'cr', name:'cr-generator2.json'},
-    {key:'todos', name:'projet001.json'},
+    {key:'us',     name:'us-generator.json'},
+    {key:'mo',     name:'mo-generator.json'},
+    {key:'cr',     name:'cr-generator2.json'},
+    {key:'todos',  name:'projet001.json'},
+    {key:'shared', name:'shared.json'},
   ];
-  suiviData = {us:[], mo:[], cr:[], backlog:[]};
+  suiviData = {us:[], mo:[], cr:[], backlog:[], sharedProjects:[]};
 
   for (const f of files) {
     try {
@@ -696,6 +697,8 @@ async function loadSuiviData() {
         const data = await r.json();
         if (f.key === 'todos') {
           suiviData.backlog = Array.isArray(data.backlog) ? data.backlog : [];
+        } else if (f.key === 'shared') {
+          suiviData.sharedProjects = Array.isArray(data.projects) ? data.projects : [];
         } else {
           suiviData[f.key] = data.history || data.entries || [];
         }
@@ -716,11 +719,19 @@ function renderSuivi() {
   const proj = S.projects.find(p => p.id===projId);
   if (!proj) return;
 
-  // Filter by project
+  // Filter by project — match by ID primary, project name as fallback
+  // (handles ID mismatch when todos was used before migration to Projects)
+  const blAll   = (suiviData.backlog||[]).filter(e => {
+    if (e.projId === projId) return true;
+    // Fallback: try to match by finding the project whose name matches what todos had stored
+    if (!e.projId) return false;
+    // Check if any project in shared data maps this projId to current proj
+    const todoProj = (suiviData.sharedProjects||[]).find(p => p.id === e.projId);
+    return todoProj && todoProj.name.toLowerCase() === proj.name.toLowerCase();
+  });
   const usAll   = suiviData.us.filter(e => e.projet===projId);
   const moAll   = suiviData.mo.filter(e => e.projet===projId);
   const crAll   = suiviData.cr.filter(e => e.projet===projId);
-  const blAll   = suiviData.backlog.filter(e => e.projId===projId);
   const blActive = blAll.filter(e => !e.done);
   const blDone   = blAll.filter(e => !!e.done);
 
