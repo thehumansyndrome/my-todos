@@ -701,18 +701,19 @@ async function loadSuiviData() {
   for (const f of files) {
     try {
       const q = encodeURIComponent(`name='${f.name}' and trashed=false`);
-      const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`,
+      const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)&orderBy=modifiedTime+desc`,
         {headers:{Authorization:'Bearer '+accessToken}});
       const d = await res.json();
       if (d.files && d.files[0]) {
-        const r = await fetch(`https://www.googleapis.com/drive/v3/files/${d.files[0].id}?alt=media`,
+        const fileId = d.files[0].id;
+        const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
           {headers:{Authorization:'Bearer '+accessToken}});
         const data = await r.json();
         if (f.key === 'todos') {
           suiviData.backlog = Array.isArray(data.backlog) ? data.backlog : [];
           projet001FullData = data; // cache full data for write-back
-          // cache file ID too
-          if (!projet001FileId && d.files && d.files[0]) projet001FileId = d.files[0].id;
+          projet001FileId = fileId; // always update — don't use stale cache
+          console.log('[loadSuiviData] projet001.json fileId:', fileId, 'backlog items:', suiviData.backlog.length);
         } else if (f.key === 'shared') {
           suiviData.sharedProjects = Array.isArray(data.projects) ? data.projects : [];
         } else {
@@ -945,18 +946,20 @@ async function toggleBacklogTask(taskId) {
   setSync('pending');
 
   try {
-    // Use cached file ID, or find it
+    // Always use fileId from last Actualiser — most reliable
+    // If missing, search fresh with orderBy modifiedTime to get the right one
     if (!projet001FileId) {
       const q = encodeURIComponent("name='projet001.json' and trashed=false");
       const r = await fetch(
-        `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`,
+        `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)&orderBy=modifiedTime+desc`,
         {headers:{Authorization:'Bearer '+accessToken}}
       );
       const d = await r.json();
       if (d.error) throw new Error(d.error.message);
       projet001FileId = d.files && d.files[0] ? d.files[0].id : null;
+      console.log('[toggleBacklogTask] searched fileId:', projet001FileId, 'total results:', d.files?.length);
     }
-    if (!projet001FileId) { toast('⚠ projet001.json introuvable'); setSync('error'); return; }
+    if (!projet001FileId) { toast('⚠ projet001.json introuvable — Actualisez le Suivi'); setSync('error'); return; }
 
     // 5. Write to Drive — use resumable upload if body > 4MB
     const bodyStr = JSON.stringify(projet001FullData);
