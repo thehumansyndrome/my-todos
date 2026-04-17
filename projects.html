@@ -680,8 +680,9 @@ async function loadSuiviData() {
     {key:'us', name:'us-generator.json'},
     {key:'mo', name:'mo-generator.json'},
     {key:'cr', name:'cr-generator2.json'},
+    {key:'todos', name:'projet001.json'},
   ];
-  suiviData = {us:[], mo:[], cr:[]};
+  suiviData = {us:[], mo:[], cr:[], backlog:[]};
 
   for (const f of files) {
     try {
@@ -693,7 +694,11 @@ async function loadSuiviData() {
         const r = await fetch(`https://www.googleapis.com/drive/v3/files/${d.files[0].id}?alt=media`,
           {headers:{Authorization:'Bearer '+accessToken}});
         const data = await r.json();
-        suiviData[f.key] = data.history || data.entries || [];
+        if (f.key === 'todos') {
+          suiviData.backlog = Array.isArray(data.backlog) ? data.backlog : [];
+        } else {
+          suiviData[f.key] = data.history || data.entries || [];
+        }
       }
     } catch(e) { console.warn('suivi load', f.name, e); }
   }
@@ -715,6 +720,9 @@ function renderSuivi() {
   const usAll   = suiviData.us.filter(e => e.projet===projId);
   const moAll   = suiviData.mo.filter(e => e.projet===projId);
   const crAll   = suiviData.cr.filter(e => e.projet===projId);
+  const blAll   = suiviData.backlog.filter(e => e.projId===projId);
+  const blActive = blAll.filter(e => !e.done);
+  const blDone   = blAll.filter(e => !!e.done);
 
   const usValide  = usAll.filter(e => e.status==='valide').length;
   const usBrouill = usAll.filter(e => (e.status||'brouillon')==='brouillon').length;
@@ -738,7 +746,7 @@ function renderSuivi() {
     <span class="status-pill ${STATUS_CLS[proj.status||'actif']} " style="margin-left:auto">${STATUS_LABELS[proj.status||'actif']}</span>
   </div>`;
 
-  // Progress bar
+  // Progress bar US
   if (totalUS > 0) {
     h += `<div style="margin-bottom:20px;">
       <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
@@ -757,7 +765,28 @@ function renderSuivi() {
     <div class="kpi-box"><div class="kpi-n">${moAll.length}</div><div class="kpi-l">Modes opératoires</div></div>
     <div class="kpi-box"><div class="kpi-n">${crAll.length}</div><div class="kpi-l">Comptes rendus</div></div>
     <div class="kpi-box"><div class="kpi-n" style="color:var(--green)">${crValide}</div><div class="kpi-l">CR validés</div></div>
+    ${blAll.length ? `<div class="kpi-box"><div class="kpi-n">${blActive.length}</div><div class="kpi-l">Tâches actives</div></div>
+    <div class="kpi-box"><div class="kpi-n" style="color:var(--green)">${blDone.length}</div><div class="kpi-l">Tâches terminées</div></div>` : ''}
   </div>`;
+
+  // Tâches backlog (todos)
+  if (blAll.length) {
+    h += `<div class="suivi-section"><div class="suivi-section-title">Tâches (${blAll.length})</div>`;
+    // Active first, done after
+    const blSorted = [...blActive, ...blDone];
+    h += blSorted.map(e => {
+      const prioCls = {p1:'color:var(--red)',p2:'color:var(--amber)',p3:'color:var(--muted)'}[e.pri]||'color:var(--muted)';
+      return `<div class="suivi-row" style="${e.done?'opacity:.55':''}">
+        ${e.done
+          ? '<span style="color:var(--green);font-size:11px;">✓</span>'
+          : '<span style="color:var(--muted);font-size:11px;">○</span>'}
+        <span class="suivi-row-title"${e.done?' style="text-decoration:line-through"':''}>${esc(e.text||'Sans titre')}</span>
+        ${e.pri?`<span style="font-size:11px;font-weight:600;${prioCls}">${e.pri.toUpperCase()}</span>`:''}
+        ${e.hz?`<span style="font-size:10px;color:var(--muted);padding:1px 6px;border:1px solid var(--border);border-radius:10px;">${e.hz}</span>`:''}
+      </div>`;
+    }).join('');
+    h += '</div>';
+  }
 
   // US list
   if (usAll.length) {
@@ -807,8 +836,8 @@ function renderSuivi() {
     h += '</div>';
   }
 
-  if (!totalUS && !moAll.length && !crAll.length) {
-    h += `<div class="empty"><div class="empty-icon">📂</div>Aucune donnée rattachée à ce projet.<br><span style="font-size:12px">Connectez Drive et actualisez, ou rattachez des éléments depuis MO Hub, CR Generator et US Generator.</span></div>`;
+  if (!totalUS && !moAll.length && !crAll.length && !blAll.length) {
+    h += `<div class="empty"><div class="empty-icon">📂</div>Aucune donnée rattachée à ce projet.<br><span style="font-size:12px">Connectez Drive et actualisez, ou rattachez des éléments depuis todos, MO Hub, CR Generator et US Generator.</span></div>`;
   }
 
   el.innerHTML = h;
