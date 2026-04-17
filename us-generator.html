@@ -2750,24 +2750,84 @@ function renderTaches() {
   if (!sorted.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:14px;">Aucune tâche pour ce projet.</div>'; return; }
   var priColor = {p1:'var(--red)',p2:'var(--amber)',p3:'var(--muted)'};
   el.innerHTML = sorted.map(function(t){
-    return '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);'+(t.done?'opacity:.55':'')+'">'
+    return '<div data-tache-id="'+t.id+'" style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);'+(t.done?'opacity:.55':'')+'">'
       +'<input type="checkbox" '+(t.done?'checked':'')+' data-action="toggleTache" data-id="'+t.id+'"'
       +' style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);flex-shrink:0;">'
       +'<span style="flex:1;font-size:13px;'+(t.done?'text-decoration:line-through;color:var(--muted)':'')+'">'+(t.text||'')+'</span>'
       +(t.pri?'<span style="font-size:11px;font-weight:600;color:'+(priColor[t.pri]||'var(--muted)')+'">'+t.pri.toUpperCase()+'</span>':'')
-      +'<button data-action="deleteTache" data-id="'+t.id+'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0 2px;">✕</button>'
+      +'<span style="display:inline-flex;gap:3px;">'+assigneeBadgesHtml(t.assigneeIds,t.id)+'</span>'+'<button onclick="event.stopPropagation();renderTacheTeamPicker(\''+t.id+'\')" title="Affecter" style="background:none;border:none;cursor:pointer;font-size:12px;padding:0 2px;color:var(--muted);">&#x1F465;</button>'+'<button data-action="deleteTache" data-id="'+t.id+'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0 2px;">✕</button>'
       +'</div>';
   }).join('');
   el.onchange = function(ev){ var cb=ev.target.closest('[data-action="toggleTache"]'); if(cb) toggleTache(cb.dataset.id); };
   el.onclick  = function(ev){ var b=ev.target.closest('[data-action="deleteTache"]');  if(b)  deleteTache(b.dataset.id); };
 }
 
+
+// ── Assignees helpers ─────────────────────────────────────────────────────
+function getAdminId(){
+  var m=(sharedTeam||[]).find(function(m){return m.appRole==='Admin';});
+  return m?m.id:null;
+}
+function defaultAssignees(){
+  var aid=getAdminId(); return aid?[aid]:[];
+}
+function assigneeBadgesHtml(ids, itemId){
+  var adminId=getAdminId();
+  return (ids||[]).map(function(id){
+    var m=(sharedTeam||[]).find(function(x){return x.id===id;});
+    if(!m)return '';
+    var isAdmin=id===adminId;
+    var onclick=isAdmin?'event.stopPropagation()':
+      'event.stopPropagation();removeTacheAssignee(\''+itemId+'\',\''+id+'\')';
+    return '<span title="'+m.nom+(isAdmin?' (Admin)':' — désaffecter')+'" onclick="'+onclick+'" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:'+m.color+';font-size:9px;font-weight:700;color:#fff;cursor:'+(isAdmin?'default':'pointer')+';flex-shrink:0;">'+m.initiales+'</span>';
+  }).join('');
+}
+function removeTacheAssignee(itemId, memberId){
+  if(!todoFullData) return;
+  var t=(todoFullData.backlog||[]).find(function(x){return x.id===itemId;});
+  if(t) t.assigneeIds=(t.assigneeIds||[]).filter(function(x){return x!==memberId;});
+  renderTaches(); writeTodoFile();
+}
+function toggleTacheAssignee(itemId, memberId){
+  if(!todoFullData) return;
+  var adminId=getAdminId();
+  if(memberId===adminId) return;
+  var t=(todoFullData.backlog||[]).find(function(x){return x.id===itemId;});
+  if(!t) return;
+  if(!t.assigneeIds) t.assigneeIds=defaultAssignees();
+  var idx=t.assigneeIds.indexOf(memberId);
+  if(idx>=0) t.assigneeIds.splice(idx,1); else t.assigneeIds.push(memberId);
+  renderTaches(); writeTodoFile();
+}
+function renderTacheTeamPicker(itemId){
+  var existing=document.getElementById('tp-'+itemId);
+  if(existing){existing.remove();return;}
+  var row=document.querySelector('[data-tache-id="'+itemId+'"]');
+  if(!row) return;
+  var team=sharedTeam||[];
+  if(!team.length){toast('Aucun membre');return;}
+  var t=(todoFullData.backlog||[]).find(function(x){return x.id===itemId;});
+  if(!t) return;
+  var adminId=getAdminId(); var ids=t.assigneeIds||[];
+  var picker=document.createElement('div');
+  picker.id='tp-'+itemId;
+  picker.style.cssText='display:flex;gap:6px;flex-wrap:wrap;padding:6px 12px 8px 38px;';
+  picker.innerHTML=team.map(function(m){
+    var on=ids.indexOf(m.id)>=0; var isAdmin=m.id===adminId;
+    return '<span onclick="'+(isAdmin?'':'toggleTacheAssignee(\''+itemId+'\',\''+m.id+'\');renderTacheTeamPicker(\''+itemId+'\')')+'" '
+      +'style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;'
+      +'cursor:'+(isAdmin?'default':'pointer')+';background:'+(on?m.color:'transparent')+';color:'+(on?'#fff':'var(--muted)')+';'
+      +'border:1px solid '+(on?m.color:'var(--border)')+';transition:all .15s;">'
+      +m.initiales+' '+m.nom.split(' ')[0]+'</span>';
+  }).join('');
+  row.insertAdjacentElement('afterend',picker);
+}
 function addTache() {
   var text = document.getElementById('tache-input').value.trim(); if (!text) return;
   var pri  = document.getElementById('tache-pri').value;
   if (!todoFullData) { toast('Actualisez d\'abord'); return; }
   if (!appProjId) { toast('Projet introuvable'); return; }
-  var newTask = {id:'us'+Date.now().toString(36), text:text, projId:appProjId, pri:pri, done:false, ts:Date.now()};
+  var newTask = {id:'us'+Date.now().toString(36), text:text, projId:appProjId, pri:pri, done:false, ts:Date.now(), assigneeIds:defaultAssignees()};
   todoFullData.backlog = todoFullData.backlog || [];
   todoFullData.backlog.unshift(newTask);
   document.getElementById('tache-input').value = '';
