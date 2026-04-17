@@ -1320,8 +1320,6 @@ div:hover>.item-img-del{display:block;}
 <div class="tabs">
   <div class="tabs-inner">
     <button class="tab active" onclick="switchTab('todos')">Todos</button>
-    <button class="tab" onclick="switchTab('projects')">Projets</button>
-    <button class="tab" onclick="switchTab('team')">Équipe</button>
     <button class="tab" onclick="switchTab('backlog')">Backlog</button>
     <button class="tab" onclick="switchTab('courses')">Courses</button>
     <button class="tab" onclick="switchTab('notes')">Notes</button>
@@ -1637,29 +1635,6 @@ div:hover>.item-img-del{display:block;}
   </div>
 
   <!-- ══ PROJECTS ══ -->
-  <div id="tab-projects" class="section" style="display:none;">
-    <div class="add-row">
-      <input class="main-in" type="text" id="proj-in" placeholder="Nouveau projet…" onkeydown="if(event.key==='Enter')addProject()">
-      <input type="color" id="proj-color" value="#6D28D9" style="width:32px;height:32px;padding:2px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);cursor:pointer;flex-shrink:0;">
-      <button class="add-btn" onclick="addProject()">+ Add</button>
-    </div>
-    <div id="proj-list" style="display:flex;flex-direction:column;gap:8px;margin-top:12px;"></div>
-  </div>
-
-  <!-- ══ TEAM ══ -->
-  <div id="tab-team" class="section" style="display:none;">
-    <div class="add-row">
-      <input class="main-in" type="text" id="team-nom" placeholder="Nom complet…" maxlength="50" onkeydown="if(event.key==='Enter')saveTeamMember()">
-      <input type="text" id="team-init" placeholder="Init." maxlength="3" style="width:52px;font-family:var(--mono);font-size:12px;padding:6px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text2);outline:none;">
-      <div id="team-color-picker" style="display:flex;gap:4px;align-items:center;flex-shrink:0;"></div>
-      <button id="team-rb-red" onclick="toggleTeamRole('red')" style="padding:4px 10px;border-radius:12px;font-size:12px;font-weight:500;border:1px solid var(--red);color:var(--red);cursor:pointer;background:transparent;white-space:nowrap;">Rédacteur</button>
-      <button id="team-rb-val" onclick="toggleTeamRole('val')" style="padding:4px 10px;border-radius:12px;font-size:12px;font-weight:500;border:1px solid var(--line);color:var(--text3);cursor:pointer;background:transparent;white-space:nowrap;">Valideur</button>
-      <button class="add-btn" onclick="saveTeamMember()">+ Add</button>
-    </div>
-    <p id="team-edit-hint" style="font-family:var(--mono);font-size:11px;color:var(--accent);margin:4px 0 0;display:none;">Mode édition — modifiez puis cliquez + Add</p>
-    <div id="team-list" style="display:flex;flex-direction:column;gap:8px;margin-top:12px;"></div>
-  </div>
-
   <!-- ══ BACKLOG ══ -->
   <div id="tab-backlog" class="section" style="display:none;">
     <div class="add-row">
@@ -1739,6 +1714,7 @@ div:hover>.item-img-del{display:block;}
           <button class="lbtn success" id="btn-auth" onclick="driveAuth()">Connecter Google</button>
           <button class="lbtn primary" id="btn-push" onclick="drivePush()" disabled>⬆ Sauver</button>
           <button class="lbtn" id="btn-pull" onclick="drivePull()" disabled>⬇ Charger</button>
+          <button class="lbtn" id="btn-shared" onclick="loadSharedData()" disabled title="Charge projets et équipe depuis Projects">↻ Projets & Équipe</button>
           <button class="lbtn danger" id="btn-disc" onclick="driveDisc()" style="display:none">Déconnecter</button>
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
@@ -1877,7 +1853,7 @@ div:hover>.item-img-del{display:block;}
 const P='projet001';
 const IS_TOUCH = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 const SK='td_v4_'+P, AK='td_act_'+P, TK='td_theme_'+P, DK='td_drive_'+P;
-const TABS=['todos','projects','team','backlog','courses','notes','reminders','habits','challenges','reviews','archive','log','templates'];
+const TABS=['todos','backlog','courses','notes','reminders','habits','challenges','reviews','archive','log','templates'];
 
 /* ══ DEFAULT CATEGORIES ══ */
 const DEFAULT_CATS = [
@@ -2205,10 +2181,8 @@ function switchTab(t){
   const el=document.getElementById('tab-'+t);
   el.classList.add('active'); el.style.display='';
   if(t==='log'){renderLog();renderAL();loadDriveConf();renderCatManager();}
-  if(t==='team'){renderTeamList();}
   if(t==='archive')loadArchive(false);
   if(t==='reviews')renderReviews();
-  if(t==='projects')renderProjects();
   if(t==='backlog'){blFilter=projFilter||blFilter;projFilter='all';renderBacklog();}
   if(t==='habits')renderHabits();
   if(t==='challenges')renderChallenges();
@@ -2360,7 +2334,7 @@ function confirmImp(){
   catch(e){toast('❌ JSON invalide');}
 }
 function clearAll(){if(!confirm('Tout effacer ?'))return;S={todos:[],notes:[],reminders:[],habits:[],habitLogs:{},challenges:[],courses:[],courseTemplates:[],reviews:[],projects:[],backlog:[],sharedTeam:[],categories:JSON.parse(JSON.stringify(DEFAULT_CATS))};save();renderCatSelects();renderAll();renderLog();toast('Données effacées');logA('drive','Tout effacé');}
-function renderAll(){renderTodos();renderNotes();renderReminders();renderHabits();renderChallenges();renderCourses();renderReviews();renderProjects();renderBacklog();}
+function renderAll(){renderTodos();renderNotes();renderReminders();renderHabits();renderChallenges();renderCourses();renderReviews();renderBacklog();}
 document.getElementById('imp-modal').addEventListener('click',function(e){if(e.target===this)closeImp();});
 
 /* ══ GOOGLE DRIVE ══ */
@@ -2373,6 +2347,7 @@ function updateDriveUI(){
   const c=!!drTok;
   document.getElementById('btn-push').disabled=!c;
   document.getElementById('btn-pull').disabled=!c;
+  const bs=document.getElementById('btn-shared'); if(bs) bs.disabled=!c;
   document.getElementById('btn-auth').style.display=c?'none':'';
   document.getElementById('btn-disc').style.display=c?'':'none';
   // Update ☁ button
@@ -2392,7 +2367,7 @@ function loadGIS(cb){if(window.google&&window.google.accounts){cb();return;}cons
 function driveAuth(){
   const cid=document.getElementById('drive-cid').value.trim();if(!cid){toast('⚠ Entre ton Client ID');return;}
   drCfg.clientId=cid;saveDriveConf();setSyncDot('pending');
-  loadGIS(()=>{try{const cl=google.accounts.oauth2.initTokenClient({client_id:cid,scope:'https://www.googleapis.com/auth/drive.file',callback:(r)=>{if(r.error){setSyncDot('error');toast('❌ '+r.error);return;}drTok=r.access_token;drFid=null;setSyncDot('ok');updateDriveUI();sessionStorage.setItem('td_tok_'+P,r.access_token);toast('✓ Drive connecté');logA('drive','Connecté à Google Drive');drLoadTemplates();if(pollSecs>0)startPolling();uploadDeferredImgs();}});cl.requestAccessToken();}catch(e){setSyncDot('error');toast('❌ '+e.message);}});
+  loadGIS(()=>{try{const cl=google.accounts.oauth2.initTokenClient({client_id:cid,scope:'https://www.googleapis.com/auth/drive.file',callback:(r)=>{if(r.error){setSyncDot('error');toast('❌ '+r.error);return;}drTok=r.access_token;drFid=null;setSyncDot('ok');updateDriveUI();sessionStorage.setItem('td_tok_'+P,r.access_token);toast('✓ Drive connecté');logA('drive','Connecté à Google Drive');drLoadTemplates();loadSharedData();if(pollSecs>0)startPolling();uploadDeferredImgs();}});cl.requestAccessToken();}catch(e){setSyncDot('error');toast('❌ '+e.message);}});
 }
 function driveDisc(){drTok=null;drFid=null;lastModifiedKnown=null;stopPolling();sessionStorage.removeItem('td_tok_'+P);setSyncDot('local');updateDriveUI();toast('Drive déconnecté');}
 
@@ -5424,150 +5399,32 @@ async function drFindOrCreateShared(){
   const cd=await cr.json();sharedFid=cd.id;return sharedFid;
 }
 
-async function syncSharedProjects(){
-  if(!drTok) return;
-  try{
-    const id=await drFindOrCreateShared();
-    if(!id) return;
-    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`,{
-      method:'PATCH',
-      headers:{Authorization:'Bearer '+drTok,'Content-Type':'application/json'},
-      body:JSON.stringify({projects:S.projects||[], team:S.sharedTeam||[]},null,2)
-    });
-    logA('drive','Projets partagés → '+SHARED_FILE);
-  } catch(e){ console.warn('syncSharedProjects:', e.message); }
-}
-
-/* ══ PROJECTS ══ */
+/* ══ PROJECTS/TEAM — read from shared.json written by projects.html ══ */
 const PROJ_DEFAULT_COLORS=['#6D28D9','#2563EB','#059669','#D97706','#DC2626','#DB2777','#0891B2'];
 let projFilter='all';
 
-function addProject(){
-  const name=document.getElementById('proj-in').value.trim();
-  if(!name){toast('⚠ Donne un nom au projet');return;}
-  const color=document.getElementById('proj-color').value;
-  if(!S.projects)S.projects=[];
-  if(S.projects.find(p=>p.name.toLowerCase()===name.toLowerCase())){toast('⚠ Projet déjà existant');return;}
-  S.projects.push({id:uid(),name,color,ts:Date.now()});
-  document.getElementById('proj-in').value='';
-  autoSave();renderProjects();populateBacklogProjSelect();
-  syncSharedProjects();
-}
-
-function delProject(id){
-  const p=S.projects.find(x=>x.id===id);if(!p)return;
-  const count=(S.backlog||[]).filter(b=>b.projId===id).length;
-  const msg=count?`Supprimer "${p.name}" ?\n${count} tâche(s) backlog seront dissociées.`:`Supprimer "${p.name}" ?`;
-  if(!confirm(msg))return;
-  S.projects=S.projects.filter(x=>x.id!==id);
-  // Dissociate backlog items
-  (S.backlog||[]).forEach(b=>{if(b.projId===id)b.projId='';});
-  autoSave();renderProjects();renderBacklog();populateBacklogProjSelect();
-  syncSharedProjects();
-}
-
 function getProject(id){return (S.projects||[]).find(x=>x.id===id);}
 
-/* ══ SHARED TEAM ══ */
-const TEAM_COLORS=['#E53E3E','#DD6B20','#38A169','#3182CE','#6B46C1','#D53F8C','#2C7A7B','#718096'];
-let teamEditingId=null, teamSelectedColor=TEAM_COLORS[3], teamRoleRed=true, teamRoleVal=false;
-
-function buildTeamColorPicker(){
-  const el=document.getElementById('team-color-picker'); if(!el)return;
-  el.innerHTML=TEAM_COLORS.map(c=>`<div onclick="selectTeamColor('${c}')" style="width:18px;height:18px;border-radius:50%;background:${c};cursor:pointer;border:2px solid ${c===teamSelectedColor?'var(--text)':'transparent'};flex-shrink:0;"></div>`).join('');
-}
-function selectTeamColor(c){ teamSelectedColor=c; buildTeamColorPicker(); }
-
-function toggleTeamRole(role){
-  if(role==='red') teamRoleRed=!teamRoleRed;
-  else             teamRoleVal=!teamRoleVal;
-  renderTeamRoleBtns();
-}
-function renderTeamRoleBtns(){
-  const rr=document.getElementById('team-rb-red');
-  const rv=document.getElementById('team-rb-val');
-  if(rr){rr.style.background=teamRoleRed?'var(--red)':'transparent';rr.style.color=teamRoleRed?'#fff':'var(--red)';}
-  if(rv){rv.style.background=teamRoleVal?'var(--green)':'transparent';rv.style.color=teamRoleVal?'#fff':'var(--text3)';rv.style.borderColor=teamRoleVal?'var(--green)':'var(--line)';}
-}
-
-function saveTeamMember(){
-  const nom=document.getElementById('team-nom').value.trim();
-  const initRaw=document.getElementById('team-init').value.trim().toUpperCase();
-  const init=initRaw||nom.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase();
-  if(!nom){toast('⚠ Nom requis');return;}
-  const roles=[]; if(teamRoleRed)roles.push('redacteur'); if(teamRoleVal)roles.push('valideur');
-  if(!roles.length){toast('⚠ Au moins un rôle requis');return;}
-  if(!S.sharedTeam)S.sharedTeam=[];
-  if(teamEditingId){
-    const m=S.sharedTeam.find(x=>x.id===teamEditingId);
-    if(m){m.nom=nom;m.initiales=init;m.color=teamSelectedColor;m.roles=roles;}
-    teamEditingId=null;
-    document.querySelector('[onclick="saveTeamMember()"]').textContent='+ Add';
-    document.getElementById('team-edit-hint').style.display='none';
-  } else {
-    S.sharedTeam.push({id:'m_'+Date.now(),nom,initiales:init,color:teamSelectedColor,roles});
-  }
-  document.getElementById('team-nom').value='';
-  document.getElementById('team-init').value='';
-  autoSave(); renderTeamList(); syncSharedProjects();
-  toast('✓ Membre enregistré');
-}
-
-function editTeamMember(id){
-  const m=S.sharedTeam.find(x=>x.id===id); if(!m)return;
-  teamEditingId=id;
-  document.getElementById('team-nom').value=m.nom;
-  document.getElementById('team-init').value=m.initiales;
-  selectTeamColor(m.color);
-  teamRoleRed=m.roles.includes('redacteur');
-  teamRoleVal=m.roles.includes('valideur');
-  renderTeamRoleBtns();
-  document.querySelector('[onclick="saveTeamMember()"]').textContent='Enregistrer';
-  document.getElementById('team-edit-hint').style.display='';
-  document.getElementById('team-nom').focus();
-}
-
-function deleteTeamMember(id){
-  if(!confirm('Supprimer ce membre ?'))return;
-  S.sharedTeam=(S.sharedTeam||[]).filter(m=>m.id!==id);
-  autoSave(); renderTeamList(); syncSharedProjects();
-  toast('Membre supprimé');
-}
-
-function renderTeamList(){
-  if(!S.sharedTeam)S.sharedTeam=[];
-  buildTeamColorPicker(); renderTeamRoleBtns();
-  const el=document.getElementById('team-list'); if(!el)return;
-  if(!S.sharedTeam.length){el.innerHTML='<p style="font-size:13px;color:var(--text3);">Aucun membre. Ajoutez vos collaborateurs ci-dessous.</p>';return;}
-  el.innerHTML=S.sharedTeam.map(m=>{
-    const roleLabels=[m.roles.includes('redacteur')?'Rédacteur':'',m.roles.includes('valideur')?'Valideur':''].filter(Boolean).join(' + ');
-    return`<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);">
-      <div style="width:32px;height:32px;border-radius:50%;background:${m.color};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;flex-shrink:0;">${esc(m.initiales)}</div>
-      <div style="flex:1;"><div style="font-size:13px;font-weight:500;">${esc(m.nom)}</div><div style="font-size:11px;color:var(--text3);">${roleLabels}</div></div>
-      <button class="lbtn" onclick="editTeamMember('${m.id}')" style="font-size:11px;padding:3px 8px;">✎</button>
-      <button class="lbtn danger" onclick="deleteTeamMember('${m.id}')" style="font-size:11px;padding:3px 8px;">×</button>
-    </div>`;
-  }).join('');
-}
-
-function renderProjects(){
-  if(!S.projects)S.projects=[];
-  const total=S.projects.length;
-  const el=document.getElementById('proj-list');
-  if(!total){el.innerHTML='<div class="empty">Aucun projet</div>';return;}
-  el.innerHTML=S.projects.map((p)=>{
-    const count=(S.backlog||[]).filter(b=>b.projId===p.id&&!b.done).length;
-    const total2=(S.backlog||[]).filter(b=>b.projId===p.id).length;
-    return`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;display:flex;align-items:center;gap:12px;">
-      <div style="width:14px;height:36px;border-radius:4px;background:${p.color};flex-shrink:0;"></div>
-      <div style="flex:1;">
-        <div style="font-size:14px;font-weight:500;color:var(--text);">${esc(p.name)}</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px;">${count}/${total2} tâches actives</div>
-      </div>
-      <button class="lbtn" onclick="projFilter='${p.id}';switchTab('backlog')" style="font-size:12px;">Voir</button>
-      <button class="del" onclick="delProject('${p.id}')">×</button>
-    </div>`;
-  }).join('');
+/* ══ SHARED.JSON — lecture depuis projects.html ══ */
+let sharedFileId=null;
+async function loadSharedData(){
+  if(!drTok)return;
+  try{
+    if(!sharedFileId){
+      const q=encodeURIComponent("name='shared.json' and trashed=false");
+      const r=await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`,{headers:{Authorization:'Bearer '+drTok}});
+      const d=await r.json();
+      sharedFileId=d.files&&d.files[0]?d.files[0].id:null;
+    }
+    if(!sharedFileId){toast('shared.json introuvable — ouvrez Projects pour créer vos projets');return;}
+    const r=await fetch(`https://www.googleapis.com/drive/v3/files/${sharedFileId}?alt=media`,{headers:{Authorization:'Bearer '+drTok}});
+    const d=await r.json();
+    if(Array.isArray(d.projects)) S.projects=d.projects;
+    if(Array.isArray(d.team))     S.sharedTeam=d.team;
+    try{localStorage.setItem(SK+'_shared',JSON.stringify({projects:S.projects,team:S.sharedTeam,ts:Date.now()}));}catch(e){}
+    save(); populateBacklogProjSelect(); renderBacklog();
+    toast('✓ Projets et équipe chargés');
+  }catch(e){console.warn('loadSharedData:',e.message);}
 }
 
 function populateBacklogProjSelect(){
