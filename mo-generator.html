@@ -1552,6 +1552,13 @@ async function loadSharedProjects() {
     const elbl = document.getElementById('equipe-status-label');
     if (elbl) elbl.textContent = sharedTeam.length + ' membres chargés depuis Projects';
     renderEquipe();
+
+    // Auto-set admin defaults if fields still empty
+    const _aidDef = typeof getAdminId === 'function' ? getAdminId() : null;
+    if (_aidDef) {
+      if (!curRedact.length) { curRedact = [_aidDef]; renderEditorMeta(); }
+      if (!curValid.length)  { curValid  = [_aidDef]; renderEditorMeta(); }
+    }
     toast('✓ ' + S.projets.length + ' projets · ' + sharedTeam.length + ' membres chargés');
   } catch(e) { toast('Erreur chargement projets partagés'); console.error(e); }
 }
