@@ -877,15 +877,22 @@ function renderSuivi() {
 
   // US list
   if (usAll.length) {
+    const prioCls2 = {Must:'color:var(--red)',Should:'color:var(--amber)',Could:'color:var(--blue)',Wont:'color:var(--muted)'};
     h += `<div class="suivi-section"><div class="suivi-section-title">User Stories (${usAll.length})</div>`;
     h += usAll.map(e => {
       const st = e.status||'brouillon';
       const stCls = {brouillon:'s-archive',validation:'s-pause',valide:'s-actif',renvoye:'s-termine',archive:'s-archive'}[st]||'s-archive';
-      return `<div class="suivi-row">
-        ${st==='valide'?'<span style="color:var(--green);font-size:11px;">✓</span>':'<span style="color:var(--muted);font-size:11px;">○</span>'}
-        <span class="suivi-row-title">${esc(e.titre||'Sans titre')}</span>
+      const reds = (e.redacteurs||[]).map(id => { const m=(S.team||[]).find(x=>x.id===id); return m?`<span title="${esc(m.nom)}" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:${m.color};font-size:9px;font-weight:700;color:#fff;flex-shrink:0;">${m.initiales}</span>`:''; }).join('');
+      const vals = (e.valideurs||[]).map(id => { const m=(S.team||[]).find(x=>x.id===id); return m?`<span title="${esc(m.nom)}" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:${m.color};font-size:9px;font-weight:700;color:#fff;flex-shrink:0;opacity:.6;">${m.initiales}</span>`:''; }).join('');
+      return `<div class="suivi-row" style="${st==='valide'?'opacity:.75':''}">
+        ${st==='valide'?'<span style="color:var(--green);font-size:13px;flex-shrink:0;">✓</span>':'<span style="color:var(--muted);font-size:13px;flex-shrink:0;">○</span>'}
+        <span class="suivi-row-title"${st==='valide'?' style="text-decoration:line-through;color:var(--muted)"':''}>${esc(e.titre||'Sans titre')}</span>
+        ${e.acCount?`<span style="font-size:10px;color:var(--muted);">${e.acCount} AC</span>`:''}
+        ${e.prio?`<span style="font-size:10px;font-weight:600;${prioCls2[e.prio]||'color:var(--muted)'}">${e.prio}</span>`:''}
+        ${e.est?`<span style="font-family:var(--mono);font-size:10px;color:var(--blue);border:1px solid var(--blue);padding:1px 5px;border-radius:2px;">${e.est}pts</span>`:''}
         <span class="status-pill ${stCls}" style="cursor:default;font-size:10px;">${STATUS_US[st]||st}</span>
-        ${e.est?`<span style="font-size:11px;color:var(--muted)">${e.est}pts</span>`:''}
+        ${reds}<span style="font-size:9px;color:var(--muted);margin:0 2px;">${vals?'→':''}</span>${vals}
+        ${e.savedAt?`<span style="font-size:10px;color:var(--muted);white-space:nowrap;">${e.savedAt}</span>`:''}
       </div>`;
     }).join('');
     h += '</div>';
@@ -897,11 +904,16 @@ function renderSuivi() {
     h += moAll.map(e => {
       const st = e.status||'brouillon';
       const stCls = {brouillon:'s-archive',validation:'s-pause',valide:'s-actif',renvoye:'s-termine'}[st]||'s-archive';
-      return `<div class="suivi-row">
-        ${st==='valide'?'<span style="color:var(--green);font-size:11px;">✓</span>':'<span style="color:var(--muted);font-size:11px;">○</span>'}
-        <span class="suivi-row-title">${esc(e.titre||'Sans titre')}</span>
+      const reds = (e.redacteurs||[]).map(id => { const m=(S.team||[]).find(x=>x.id===id); return m?`<span title="${esc(m.nom)}" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:${m.color};font-size:9px;font-weight:700;color:#fff;flex-shrink:0;">${m.initiales}</span>`:''; }).join('');
+      const vals = (e.valideurs||[]).map(id => { const m=(S.team||[]).find(x=>x.id===id); return m?`<span title="${esc(m.nom)}" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:${m.color};font-size:9px;font-weight:700;color:#fff;flex-shrink:0;opacity:.6;">${m.initiales}</span>`:''; }).join('');
+      const nEtapes = e.etapeCount || (e.versions&&e.versions.length ? 'v'+(e.versions.length+1) : '');
+      return `<div class="suivi-row" style="${st==='valide'?'opacity:.75':''}">
+        ${st==='valide'?'<span style="color:var(--green);font-size:13px;flex-shrink:0;">✓</span>':'<span style="color:var(--muted);font-size:13px;flex-shrink:0;">○</span>'}
+        <span class="suivi-row-title"${st==='valide'?' style="text-decoration:line-through;color:var(--muted)"':''}>${esc(e.titre||'Sans titre')}</span>
+        ${nEtapes?`<span style="font-size:10px;color:var(--muted);">${nEtapes}</span>`:''}
         <span class="status-pill ${stCls}" style="cursor:default;font-size:10px;">${STATUS_MOC[st]||st}</span>
-        ${e.savedAt?`<span style="font-size:11px;color:var(--muted)">${e.savedAt}</span>`:''}
+        ${reds}<span style="font-size:9px;color:var(--muted);margin:0 2px;">${vals?'→':''}</span>${vals}
+        ${e.savedAt?`<span style="font-size:10px;color:var(--muted);white-space:nowrap;">${e.savedAt}</span>`:''}
       </div>`;
     }).join('');
     h += '</div>';
@@ -913,11 +925,16 @@ function renderSuivi() {
     h += crAll.map(e => {
       const st = e.status||'brouillon';
       const stCls = {brouillon:'s-archive',validation:'s-pause',valide:'s-actif',renvoye:'s-termine'}[st]||'s-archive';
-      return `<div class="suivi-row">
-        ${st==='valide'?'<span style="color:var(--green);font-size:11px;">✓</span>':'<span style="color:var(--muted);font-size:11px;">○</span>'}
-        <span class="suivi-row-title">${esc(e.title||e.titre||'Sans titre')}</span>
+      const reds = (e.redacteurs||[]).map(id => { const m=(S.team||[]).find(x=>x.id===id); return m?`<span title="${esc(m.nom)}" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:${m.color};font-size:9px;font-weight:700;color:#fff;flex-shrink:0;">${m.initiales}</span>`:''; }).join('');
+      const vals = (e.valideurs||[]).map(id => { const m=(S.team||[]).find(x=>x.id===id); return m?`<span title="${esc(m.nom)}" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:${m.color};font-size:9px;font-weight:700;color:#fff;flex-shrink:0;opacity:.6;">${m.initiales}</span>`:''; }).join('');
+      const meta = [e.dCount?e.dCount+' déc.':'', e.aCount?e.aCount+' act.':''].filter(Boolean).join(' · ');
+      return `<div class="suivi-row" style="${st==='valide'?'opacity:.75':''}">
+        ${st==='valide'?'<span style="color:var(--green);font-size:13px;flex-shrink:0;">✓</span>':'<span style="color:var(--muted);font-size:13px;flex-shrink:0;">○</span>'}
+        <span class="suivi-row-title"${st==='valide'?' style="text-decoration:line-through;color:var(--muted)"':''}>${esc(e.title||e.titre||'Sans titre')}</span>
+        ${meta?`<span style="font-size:10px;color:var(--muted);">${meta}</span>`:''}
         <span class="status-pill ${stCls}" style="cursor:default;font-size:10px;">${STATUS_MOC[st]||st}</span>
-        ${e.savedAt?`<span style="font-size:11px;color:var(--muted)">${e.savedAt}</span>`:''}
+        ${reds}<span style="font-size:9px;color:var(--muted);margin:0 2px;">${vals?'→':''}</span>${vals}
+        ${e.savedAt?`<span style="font-size:10px;color:var(--muted);white-space:nowrap;">${e.savedAt}</span>`:''}
       </div>`;
     }).join('');
     h += '</div>';
