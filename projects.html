@@ -296,7 +296,7 @@ input,select,textarea{background:var(--bg);color:var(--text);}
 <!-- ══ SUIVI ══ -->
 <div id="tab-suivi" class="section">
   <div class="suivi-header">
-    <select class="suivi-sel" id="suivi-proj-sel" onchange="localStorage.setItem('td_suivi_proj',this.value);renderSuivi()">
+    <select class="suivi-sel" id="suivi-proj-sel" onchange="localStorage.setItem('td_suivi_proj',this.value);loadSuiviData()">
       <option value="">— Sélectionner un projet —</option>
     </select>
     <button class="btn sm" onclick="loadSuiviData()">↻ Actualiser</button>
@@ -316,6 +316,10 @@ input,select,textarea{background:var(--bg);color:var(--text);}
       <div class="field" style="flex:0;min-width:80px;">
         <label>Initiales</label>
         <input type="text" id="tf-init" placeholder="MD" maxlength="3">
+      </div>
+      <div class="field" style="flex:0;min-width:80px;">
+        <label>Alias @</label>
+        <input type="text" id="tf-alias" placeholder="JV" maxlength="10" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,'')">
       </div>
     </div>
     <div class="field-row" style="margin-top:8px;">
@@ -428,6 +432,8 @@ let S = {projects:[], team:[]};
 function ensureState() {
   if (!Array.isArray(S.projects)) S.projects = [];
   if (!Array.isArray(S.team))     S.team     = [];
+  // Ensure alias on all team members
+  S.team.forEach(function(m){ if(!m.alias) m.alias=(m.initiales||'').toLowerCase(); });
   S.projects.forEach(p => {
     if (!p.status)     p.status    = 'actif';
     if (!p.color)      p.color     = PROJ_COLORS[3];
@@ -687,9 +693,11 @@ function saveMember() {
   const appRole = (document.getElementById('tf-approle')||{}).value||'';
   if (editingMemberId) {
     const m = S.team.find(x => x.id===editingMemberId);
-    if (m) Object.assign(m, {nom, initiales:init, color:teamSelectedColor, roles, appRole});
+    const al2=document.getElementById('tf-alias').value.trim()||init.toLowerCase();
+    if (m) Object.assign(m, {nom, initiales:init, alias:al2, color:teamSelectedColor, roles, appRole});
   } else {
-    S.team.push({id:'m_'+uid(), nom, initiales:init, color:teamSelectedColor, roles, appRole});
+    const al3=document.getElementById('tf-alias').value.trim()||init.toLowerCase();
+    S.team.push({id:'m_'+uid(), nom, initiales:init, alias:al3, color:teamSelectedColor, roles, appRole});
   }
   cancelMemberEdit();
   autoSave(); syncShared(); renderTeam();
@@ -701,6 +709,7 @@ function editMember(id) {
   editingMemberId = id;
   document.getElementById('tf-nom').value  = m.nom;
   document.getElementById('tf-init').value = m.initiales;
+  document.getElementById('tf-alias').value = m.alias||m.initiales.toLowerCase();
   teamRoleRed = m.roles.includes('redacteur');
   teamRoleVal = m.roles.includes('valideur');
   renderRoleBtns();
@@ -732,7 +741,7 @@ function renderTeam() {
     <div class="member-card">
       <div class="avatar" style="background:${m.color}">${esc(m.initiales)}</div>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:13px;font-weight:500;">${esc(m.nom)}</div>
+        <div style="font-size:13px;font-weight:500;">${esc(m.nom)} <span style="font-family:var(--mono);font-size:11px;color:var(--muted);">@${esc(m.alias||m.initiales.toLowerCase())}</span></div>
         <div style="display:flex;gap:5px;margin-top:4px;flex-wrap:wrap;">${roleHtml}${m.appRole?`<span style="background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:10px;font-size:11px;padding:1px 7px;">${esc(m.appRole)}</span>`:''}</div>
       </div>
       <button class="btn sm" onclick="editMember('${m.id}')">✎</button>
