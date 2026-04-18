@@ -725,6 +725,21 @@ function parse(text) {
 }
 
 // ── Preview ───────────────────────────────────────────────────────────────────
+
+// ── Alias @mention resolution ──────────────────────────────────────────────────
+function resolveAlias(mention) {
+  var key = mention.replace(/^@/,'').toLowerCase();
+  return (sharedTeam||[]).find(function(m){
+    var al = (m.alias||m.initiales||'').toLowerCase();
+    return al === key;
+  }) || null;
+}
+function resolveAliasesInText(text) {
+  return text.replace(/@([a-zA-Z0-9]+)/g, function(match, al) {
+    var m = resolveAlias(al);
+    return m ? m.nom : match;
+  });
+}
 function renderPreview() {
   const text = document.getElementById('raw-input').value;
   const mo   = parse(text);
@@ -1660,6 +1675,11 @@ function esc(s) {
 // Échappe le texte puis transforme les URLs en liens cliquables
 function linkify(s) {
   if (!s) return '';
+  // Resolve @aliases before escaping
+  s = s.replace(/@([a-zA-Z0-9]+)/g, function(match, al) {
+    var m = resolveAlias(al);
+    return m ? m.nom : match;
+  });
   const escaped = esc(s);
   return escaped.replace(/(https?:\/\/[^\s<>"]+)/g,
     '<a href="$1" target="_blank" rel="noopener" style="color:var(--blue);word-break:break-all;">$1</a>');
