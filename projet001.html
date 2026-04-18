@@ -3285,54 +3285,6 @@ function todoItemHtml(t){
         </div>
       </div>`}
       ${isSubtask ? '' : itemImgsHtml(t,'todos')}
-      ${isSubtask ? '' : `<div class="todo-comment" id="tc-${t.id}">
-        <textarea id="tca-${t.id}" rows="2" placeholder="Instructions, contexte…"
-          oninput="autoResizeComment(this);saveTodoComment('${t.id}',this.value)"
-          onclick="event.stopPropagation()"
-          onkeydown="if(event.key==='Escape')toggleComment('${t.id}')"
-        >${esc(t.comment||'')}</textarea>
-      </div>`}
-      ${isSubtask ? '' : `<div id="tatts-${t.id}" style="display:${t.attachments&&t.attachments.length?'block':'none'};">
-        ${attachHtml(t)}
-        <div class="attach-add-row">
-          <input class="attach-add-in" id="eatt-${t.id}" type="url" placeholder="Coller une URL (image, PDF, YouTube, Drive…)"
-            onclick="event.stopPropagation()"
-            onkeydown="if(event.key==='Enter'){event.preventDefault();addAttach('${t.id}');}if(event.key==='Escape')toggleAttachments('${t.id}')">
-          <button class="save-btn" onclick="event.stopPropagation();addAttach('${t.id}')">+</button>
-        </div>
-      </div>`}
-      ${isSubtask ? '' : `<div class="edit-form" id="ef-${t.id}" data-id="${t.id}">
-        <div class="edit-row">
-          <textarea class="edit-in" id="et-${t.id}" rows="2" style="resize:none;overflow:hidden;line-height:1.45;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();saveTodo('${t.id}');}if(event.key==='Escape')closeEdit('${t.id}');" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'">${esc(t.text)}</textarea>
-          <select class="edit-in sm" id="ec-${t.id}">${catOptions}</select>
-          <select class="edit-in sm" id="ep-${t.id}">
-            <option value="p1"${t.pri==='p1'?' selected':''}>P1</option>
-            <option value="p2"${t.pri==='p2'?' selected':''}>P2</option>
-            <option value="p3"${t.pri==='p3'?' selected':''}>P3</option>
-          </select>
-          <select class="edit-in sm" id="ehz-${t.id}">
-            <option value="now"${hz==='now'?' selected':''}>Now</option>
-            <option value="today"${hz==='today'?' selected':''}>Today</option>
-            <option value="later"${hz==='later'?' selected':''}>Later</option>
-            <option value="waiting"${hz==='waiting'?' selected':''}>Waiting</option>
-          </select>
-        </div>
-        <div class="eact">
-          <button class="save-btn" onclick="saveTodo('${t.id}')">Enregistrer</button>
-          <button class="cancel-btn" onclick="closeEdit('${t.id}')">Annuler</button>
-          <button class="cancel-btn" onclick="toggleAddSubtask('${t.id}')" title="Ajouter une sous-tâche" style="margin-left:auto;">+ sous-tâche</button>
-          ${t.subtasks && t.subtasks.length ? `<button class="cancel-btn" onclick="saveAsTemplate('${t.id}')" title="Créer un template depuis cette tâche" style="color:var(--accent);border-color:var(--accent);">⊕ template</button>` : ''}
-        </div>
-        <div id="esub-${t.id}" style="display:none;margin-top:6px;">
-          <div style="display:flex;gap:6px;align-items:center;">
-            <input type="text" id="esubin-${t.id}" placeholder="Texte de la sous-tâche…"
-              style="flex:1;font-family:var(--sans);font-size:12px;padding:5px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;"
-              onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--line)'"
-              onkeydown="if(event.key==='Enter'){event.preventDefault();addSubtaskInline('${t.id}');}if(event.key==='Escape')toggleAddSubtask('${t.id}')">
-            <button class="save-btn" onclick="addSubtaskInline('${t.id}')">Ajouter</button>
-          </div>
-        </div>
-      </div>`}
     </div>
     ${isSubtask
       ? (()=>{
@@ -3349,7 +3301,6 @@ function todoItemHtml(t){
       : `<button class="attach-btn${t.attachments&&t.attachments.length?' has-attach':''}" onclick="toggleAttachments('${t.id}')" title="Pièces jointes">📎</button>
     <button class="comment-btn${hasComment?' has-comment':''}" onclick="toggleComment('${t.id}')" title="${hasComment?'Voir le commentaire':'Ajouter un commentaire'}">💬</button>
     <button class="img-btn${t.images&&t.images.length?' has-img':''}" onclick="todoImgPick('${t.id}')" title="Ajouter une image">🖼</button>
-    <input type="file" id="img-pick-${t.id}" accept="image/*" style="display:none" onchange="todoImgPickFile(this,'${t.id}')">
     <button class="edit-btn" onclick="openEdit('${t.id}')" title="Modifier">✎</button>
 
     <button class="del" onclick="delTodo('${t.id}')">×</button>`}
@@ -5481,7 +5432,7 @@ updateUndoBtn();
 // ══════════════════════════════════════════════════════════════════════════
 // Unified Task Drawer — handles todos AND backlog
 // ══════════════════════════════════════════════════════════════════════════
-let udType=null, udId=null;
+let udType=null, udId=null, udScrollTarget=null;
 const UD_HZ={now:'Now',today:'Today',later:'Later',waiting:'Waiting'};
 function udFmt(d){return d?new Date(d).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}):''}
 function udGetItem(){
@@ -5494,19 +5445,38 @@ function udGetAdminId(){const a=udGetAdmin();return a?a.id:null;}
 function getAdminId(){return udGetAdminId();}
 function defaultAssigneesFn(){const aid=getAdminId();return aid?[aid]:[];}
 
-function openUD(type,id){
-  udType=type; udId=id;
+function openUD(type,id,scrollTo){
+  udType=type; udId=id; udScrollTarget=scrollTo||null;
+  if(type==='todo'){
+    const t=S.todos.find(x=>x.id===id);
+    if(t&&t.comment&&t.comment.trim()&&(!t.comments||!t.comments.length)){
+      const admin=udGetAdmin();
+      t.comments=[{text:t.comment.trim(),date:udFmt(new Date(t.ts||Date.now())),authorId:admin?admin.id:null,migrated:true}];
+      t.comment='';
+      autoSave();
+    }
+  }
   refreshUD();
   document.getElementById('ud-overlay').classList.add('open');
   document.getElementById('ud-drawer').classList.add('open');
+  if(scrollTo){
+    setTimeout(()=>{
+      const el=document.getElementById('ud-sec-'+scrollTo);
+      if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+    },150);
+  }
 }
 function closeUD(){
   document.getElementById('ud-overlay').classList.remove('open');
   document.getElementById('ud-drawer').classList.remove('open');
-  udType=null; udId=null;
+  udType=null; udId=null; udScrollTarget=null;
 }
 function openTD(id){openUD('backlog',id);}
 function closeTD(){closeUD();}
+
+function openEdit(id){openUD('todo',id,'params');}
+function toggleComment(id){openUD('todo',id,'comments');}
+function toggleAttachments(id){openUD('todo',id,'attachments');}
 
 function refreshUD(){
   const t=udGetItem(); if(!t) return;
@@ -5532,10 +5502,10 @@ function udRenderBadges(t){
     html+=`<span style="font-family:var(--mono);font-size:9px;font-weight:500;padding:1px 5px;border-radius:2px;letter-spacing:.04em;text-transform:uppercase;background:transparent;color:${cc};border:1px solid ${cc};">${esc(cat.label)}</span>`;
     html+=`<span class="tag p${(t.pri||'p2').slice(1)}">${(t.pri||'P2').toUpperCase()}</span>`;
     const hz=t.hz||'later';
-    html+=`<span style="font-family:var(--mono);font-size:9px;padding:1px 4px;border-radius:2px;border:1px solid currentColor;color:var(--text3);">${UD_HZ[hz]||hz}</span>`;
+    html+=`<span class="hz-${hz}" style="font-family:var(--mono);font-size:9px;padding:1px 4px;border-radius:2px;border:1px solid currentColor;opacity:.8;">${UD_HZ[hz]||hz}</span>`;
   } else {
     const st=t.status||'brouillon';
-    html+=`<span class="ud-status-badge ${st==='valide'?'ud-status-valide':'ud-status-brouillon'}" onclick="udToggleStatus()">${st==='valide'?'Validé ✓':'Brouillon'}</span>`;
+    html+=`<span class="ud-status-badge ${st==='valide'?'ud-status-valide':'ud-status-brouillon'}" onclick="udToggleStatus()">${st==='valide'?'Valide\u0301 \u2713':'Brouillon'}</span>`;
     html+=`<span class="tag p${(t.pri||'p2').slice(1)}">${(t.pri||'P2').toUpperCase()}</span>`;
   }
   el.innerHTML=html;
@@ -5543,20 +5513,22 @@ function udRenderBadges(t){
 function udToggleStatus(){
   const t=udGetItem(); if(!t||udType!=='backlog') return;
   const prev=t.status||'brouillon'; const next=prev==='valide'?'brouillon':'valide';
-  udLog(t,'statut',prev==='valide'?'Validé':'Brouillon',next==='valide'?'Validé':'Brouillon');
+  udLog(t,'statut',prev==='valide'?'Valide\u0301':'Brouillon',next==='valide'?'Valide\u0301':'Brouillon');
   t.status=next; udSave();
 }
+
 function udRenderBody(t){
   const body=document.getElementById('ud-body');
   body.innerHTML='';
   const SEL='font-family:var(--sans);font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;';
 
-  // Params (todo only)
+  // Params todo
   if(udType==='todo'){
     const sec=document.createElement('div');
+    sec.id='ud-sec-params';
     const catOpts=S.categories.map(c=>`<option value="${c.id}"${t.cat===c.id?' selected':''}>${c.label}</option>`).join('');
     const hz=t.hz||'later';
-    sec.innerHTML=`<div class="ud-section-title">⚙ Paramètres</div>
+    sec.innerHTML=`<div class="ud-section-title">\u2699 Param\u00e8tres</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
         <select id="ud-cat" onchange="udSaveParams()" style="${SEL}">${catOpts}</select>
         <select id="ud-pri" onchange="udSaveParams()" style="${SEL}">
@@ -5574,12 +5546,13 @@ function udRenderBody(t){
     body.appendChild(sec);
   }
 
-  // Params (backlog)
+  // Params backlog
   if(udType==='backlog'){
     const sec=document.createElement('div');
-    const projOpts='<option value="">— Sans projet —</option>'
+    sec.id='ud-sec-params';
+    const projOpts='<option value="">\u2014 Sans projet \u2014</option>'
       +(S.projects||[]).map(p=>`<option value="${p.id}"${t.projId===p.id?' selected':''}>${p.name||p.nom||''}</option>`).join('');
-    sec.innerHTML=`<div class="ud-section-title">⚙ Paramètres</div>
+    sec.innerHTML=`<div class="ud-section-title">\u2699 Param\u00e8tres</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
         <select id="ud-pri" onchange="udSaveParams()" style="${SEL}">
           <option value="p1"${t.pri==='p1'?' selected':''}>P1</option>
@@ -5593,79 +5566,89 @@ function udRenderBody(t){
 
   // Equipe
   const teamSec=document.createElement('div');
+  teamSec.id='ud-sec-equipe';
   const team=S.sharedTeam||[];
   if(team.length){
     const adminId=udGetAdminId(); const ids=t.assigneeIds||[];
     const chips=team.map(m=>{
       const on=ids.includes(m.id); const isAdmin=m.id===adminId;
-      const clickFn=isAdmin?'':'udToggleAssignee(\''+m.id+'\');';
-      return `<span onclick="${clickFn}"
-        style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:600;margin:0 4px 4px 0;
-        cursor:${isAdmin?'default':'pointer'};background:${on?m.color:'transparent'};color:${on?'#fff':'var(--muted)'};
-        border:1px solid ${on?m.color:'var(--border)'};transition:all .15s;">
-        <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;
-          background:${on?'rgba(255,255,255,.25)':m.color};color:#fff;font-size:9px;font-weight:700;">${m.initiales}</span>
-        ${m.nom.split(' ')[0]}</span>`;
+      const cf=isAdmin?'':'udToggleAssignee('+JSON.stringify(m.id)+');';
+      return '<span onclick="'+cf+'" style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:600;margin:0 4px 4px 0;cursor:'+(isAdmin?'default':'pointer')+';background:'+(on?m.color:'transparent')+';color:'+(on?'#fff':'var(--muted)')+';border:1px solid '+(on?m.color:'var(--border)')+';transition:all .15s;"><span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:'+(on?'rgba(255,255,255,.25)':m.color)+';color:#fff;font-size:9px;font-weight:700;">'+m.initiales+'</span>'+m.nom.split(' ')[0]+'</span>';
     }).join('');
-    teamSec.innerHTML=`<div class="ud-section-title">👥 Équipe</div><div style="display:flex;flex-wrap:wrap;">${chips}</div>`;
+    teamSec.innerHTML='<div class="ud-section-title">\ud83d\udc65 \u00c9quipe</div><div style="display:flex;flex-wrap:wrap;">'+chips+'</div>';
   } else {
-    teamSec.innerHTML=`<div class="ud-section-title">👥 Équipe</div><span style="font-size:13px;color:var(--muted)">Aucun membre — connectez Drive et chargez Projets & Équipe</span>`;
+    teamSec.innerHTML='<div class="ud-section-title">\ud83d\udc65 \u00c9quipe</div><span style="font-size:13px;color:var(--muted)">Aucun membre \u2014 connectez Drive et chargez Projets & \u00c9quipe</span>';
   }
   body.appendChild(teamSec);
 
-  // Sous-tâches (todo only)
+  // Sous-taches (todo)
   if(udType==='todo'){
     const subs=(t.subtasks||[]).map(sid=>S.todos.find(x=>x.id===sid)).filter(Boolean);
     const done=subs.filter(s=>s.done).length;
     const subSec=document.createElement('div');
+    subSec.id='ud-sec-subtasks';
     const ABTN='background:none;border:1px solid var(--border);border-radius:var(--r);cursor:pointer;font-size:11px;padding:1px 5px;color:var(--text3);line-height:1;';
-    subSec.innerHTML=`<div class="ud-section-title">☐ Sous-tâches <span style="font-family:var(--mono);font-size:10px;color:${done===subs.length&&subs.length?'var(--green)':'var(--text3)'};">${done}/${subs.length}</span></div>
-      <div id="ud-sub-list">${subs.map((s,idx)=>`
-        <div class="ud-sub-item" data-sid="${s.id}" draggable="true">
-          <input type="checkbox" class="item-check" ${s.done?'checked':''} onchange="udToggleSub('${s.id}')">
-          <span class="ud-sub-text${s.done?' done-sub':''}" id="udst-${s.id}" onclick="udQuickEditSub('${s.id}')">${esc(s.text)}</span>
-          <button onclick="udMoveSub('${s.id}',-1)" ${idx===0?'disabled':''} style="${ABTN}">↑</button>
-          <button onclick="udMoveSub('${s.id}',1)" ${idx===subs.length-1?'disabled':''} style="${ABTN}">↓</button>
-          <button class="del" onclick="udDelSub('${s.id}')" style="opacity:.3;">×</button>
-        </div>`).join('')}
-      </div>
-      <div style="margin-top:6px;">
-        <input type="text" id="ud-sub-in" placeholder="Ajouter un élément…"
-          style="width:100%;box-sizing:border-box;font-family:var(--sans);font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;"
-          onkeydown="if(event.key==='Enter'){event.preventDefault();udAddSub();}">
-      </div>`;
+    subSec.innerHTML='<div class="ud-section-title">\u2610 Sous-t\u00e2ches <span style="font-family:var(--mono);font-size:10px;color:'+(done===subs.length&&subs.length?'var(--green)':'var(--text3)')+';">'+done+'/'+subs.length+'</span></div>'
+      +'<div id="ud-sub-list">'+subs.map((s,idx)=>'<div class="ud-sub-item" data-sid="'+s.id+'" draggable="true"><input type="checkbox" class="item-check" '+(s.done?'checked':'')+' onchange="udToggleSub(\''+s.id+'\')"><span class="ud-sub-text'+(s.done?' done-sub':'')+'" id="udst-'+s.id+'" onclick="udQuickEditSub(\''+s.id+'\')">'+(esc(s.text))+'</span><button onclick="udMoveSub(\''+s.id+'\',-1)" '+(idx===0?'disabled':'')+' style="'+ABTN+'">\u2191</button><button onclick="udMoveSub(\''+s.id+'\',1)" '+(idx===subs.length-1?'disabled':'')+' style="'+ABTN+'">\u2193</button><button class="del" onclick="udDelSub(\''+s.id+'\')" style="opacity:.3;">\xd7</button></div>').join('')+'</div>'
+      +'<div style="margin-top:6px;"><input type="text" id="ud-sub-in" placeholder="Ajouter un \u00e9l\u00e9ment\u2026" style="width:100%;box-sizing:border-box;font-family:var(--sans);font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;" onkeydown="if(event.key===\'Enter\'){event.preventDefault();udAddSub();}"></div>';
     body.appendChild(subSec);
     const subList=document.getElementById('ud-sub-list');
     if(subList) udSetupDrag(subList);
   }
 
+  // Pieces jointes (todo)
+  if(udType==='todo'){
+    const attSec=document.createElement('div');
+    attSec.id='ud-sec-attachments';
+    const atts=t.attachments||[];
+    attSec.innerHTML='<div class="ud-section-title">\ud83d\udcce Pi\u00e8ces jointes</div>'
+      +'<div id="ud-att-list">'+(atts.length?attachHtml(t):'<span style="font-size:13px;color:var(--muted)">Aucune pi\u00e8ce jointe</span>')+'</div>'
+      +'<div style="display:flex;gap:6px;margin-top:8px;"><input type="url" id="ud-att-input" placeholder="Coller une URL\u2026" style="flex:1;font-family:var(--sans);font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;" onkeydown="if(event.key===\'Enter\'){event.preventDefault();udAddAttach();}"><button class="btn sm" onclick="udAddAttach()">+</button></div>';
+    body.appendChild(attSec);
+  }
+
+  // Images (todo)
+  if(udType==='todo'){
+    const imgSec=document.createElement('div');
+    imgSec.id='ud-sec-images';
+    const imgs=t.images||[];
+    imgSec.innerHTML='<div class="ud-section-title">\ud83d\uddbc\ufe0f Images</div>'
+      +'<div id="ud-img-list">'+(imgs.length?itemImgsHtml(t,'todos'):'<span style="font-size:13px;color:var(--muted)">Aucune image</span>')+'</div>'
+      +'<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">'
+      +'<label class="btn sm" style="cursor:pointer;">\ud83d\udcf7 Cam\u00e9ra<input type="file" accept="image/*" capture="environment" style="display:none" onchange="udImgPickFile(this)"></label>'
+      +'<label class="btn sm" style="cursor:pointer;">\ud83d\uddbc\ufe0f Galerie<input type="file" accept="image/*" style="display:none" onchange="udImgPickFile(this)"></label>'
+      +'</div>';
+    body.appendChild(imgSec);
+  }
+
   // Commentaires
   const commentSec=document.createElement('div');
+  commentSec.id='ud-sec-comments';
   const comments=t.comments||[];
+  const TAST='font-family:var(--sans);font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);resize:none;outline:none;width:100%;box-sizing:border-box;';
   let cHTML=comments.length?comments.map((co,i)=>{
     const author=co.authorId?(S.sharedTeam||[]).find(m=>m.id===co.authorId):null;
-    const auth=author
-      ?`<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:${author.color};color:#fff;font-size:9px;font-weight:700;margin-right:4px;">${author.initiales}</span><b>${author.nom}</b>`
-      :'<span style="color:var(--muted)">Anonyme</span>';
-    return `<div class="ud-comment-item"><div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;">${auth}</div><div class="ud-comment-text">${co.text}</div><div class="ud-comment-meta">${co.date} <button onclick="udDeleteComment(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;padding:0 3px;">×</button></div></div>`;
+    const auth=author?'<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:'+author.color+';color:#fff;font-size:9px;font-weight:700;margin-right:4px;">'+author.initiales+'</span><b>'+author.nom+'</b>':'<span style="color:var(--muted)">Anonyme</span>';
+    return '<div class="ud-comment-item"><div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;">'+auth+(co.migrated?'<span style="font-size:10px;color:var(--muted);margin-left:4px;">(migr\u00e9)</span>':'')+'</div><div class="ud-comment-text">'+esc(co.text)+'</div><div class="ud-comment-meta">'+co.date+' <button onclick="udDeleteComment('+i+')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;padding:0 3px;">\xd7</button></div></div>';
   }).join(''):'<span style="font-size:13px;color:var(--muted)">Aucun commentaire</span>';
-  const TAST='font-family:var(--sans);font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);resize:none;outline:none;width:100%;box-sizing:border-box;';
-  commentSec.innerHTML=`<div class="ud-section-title">💬 Commentaires</div>
-    <div id="ud-comments">${cHTML}</div>
-    <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
-      <textarea id="ud-comment-input" rows="2" placeholder="Ajouter un commentaire…" style="${TAST}"
-        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();udAddComment();}"></textarea>
-      <button class="btn sm primary" onclick="udAddComment()" style="align-self:flex-end;">Envoyer</button>
-    </div>`;
+  commentSec.innerHTML='<div class="ud-section-title">\ud83d\udcac Commentaires</div><div id="ud-comments">'+cHTML+'</div><div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;"><textarea id="ud-comment-input" rows="2" placeholder="Ajouter un commentaire\u2026" style="'+TAST+'" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();udAddComment();}"></textarea><button class="btn sm primary" onclick="udAddComment()" style="align-self:flex-end;">Envoyer</button></div>';
   body.appendChild(commentSec);
 
   // Historique
   const histSec=document.createElement('div');
+  histSec.id='ud-sec-history';
   const hist=t.history||[];
-  const hHTML=hist.length?hist.map(h=>`<div class="ud-history-item"><div class="ud-history-meta">${h.date} · <b>${h.authorName}</b></div><div class="ud-history-change"><span class="ud-hist-tag">~ ${h.field}</span><span>${h.from}</span> → <span style="color:var(--text)">${h.to}</span></div></div>`).join('')
-    :'<span style="font-size:13px;color:var(--muted)">Aucune modification</span>';
-  histSec.innerHTML=`<div class="ud-section-title">📋 Historique</div><div>${hHTML}</div>`;
+  const hHTML=hist.length?hist.map(h=>'<div class="ud-history-item"><div class="ud-history-meta">'+h.date+' \u00b7 <b>'+h.authorName+'</b></div><div class="ud-history-change"><span class="ud-hist-tag">~ '+h.field+'</span><span>'+h.from+'</span> \u2192 <span style="color:var(--text)">'+h.to+'</span></div></div>').join(''):'<span style="font-size:13px;color:var(--muted)">Aucune modification</span>';
+  histSec.innerHTML='<div class="ud-section-title">\ud83d\udccb Historique</div><div>'+hHTML+'</div>';
   body.appendChild(histSec);
+
+  // Footer supprimer (todo)
+  if(udType==='todo'){
+    const footer=document.createElement('div');
+    footer.style.cssText='padding-top:8px;border-top:1px solid var(--border);';
+    footer.innerHTML='<button onclick="udDeleteTodo()" class="btn sm" style="color:var(--red);border-color:var(--red);width:100%;">\ud83d\uddd1 Supprimer cette t\u00e2che</button>';
+    body.appendChild(footer);
+  }
 }
 
 // Params
@@ -5675,23 +5658,25 @@ function udSaveParams(){
     const pP=t.pri, pProj=t.projId||'';
     const priEl=document.getElementById('ud-pri');
     const projEl=document.getElementById('ud-proj');
-    if(priEl){ t.pri=priEl.value; if(t.pri!==pP) udLog(t,'priorité',pP,t.pri); }
+    if(priEl){const v=priEl.value;if(v!==pP){udLog(t,'priorit\u00e9',pP,v);t.pri=v;}}
     if(projEl){
-      const newProj=projEl.value||null;
-      const oldName=pProj?(S.projects||[]).find(p=>p.id===pProj)?.name||pProj:'—';
-      const newName=newProj?(S.projects||[]).find(p=>p.id===newProj)?.name||newProj:'—';
-      if((newProj||'')!==(pProj||'')) udLog(t,'projet',oldName,newName);
-      t.projId=newProj;
+      const nv=projEl.value||null;
+      if((nv||'')!==(pProj||'')){
+        const on=(S.projects||[]).find(p=>p.id===pProj)?.name||pProj||'\u2014';
+        const nn=nv?(S.projects||[]).find(p=>p.id===nv)?.name||nv:'\u2014';
+        udLog(t,'projet',on,nn);t.projId=nv;
+      }
     }
-    udSave(); return;
+    udSave();return;
   }
-  if(udType!=='todo') return;
+  if(udType!=='todo')return;
   const pC=t.cat,pP=t.pri,pH=t.hz;
   t.cat=document.getElementById('ud-cat').value;
   t.pri=document.getElementById('ud-pri').value;
   t.hz=document.getElementById('ud-hz').value;
-  if(t.cat!==pC)udLog(t,'catégorie',pC,t.cat);
-  if(t.pri!==pP)udLog(t,'priorité',pP,t.pri);
+  if(hzF!=='all'&&t.hz!==hzF)hzF='all';
+  if(t.cat!==pC)udLog(t,'cat\u00e9gorie',pC,t.cat);
+  if(t.pri!==pP)udLog(t,'priorit\u00e9',pP,t.pri);
   if(t.hz!==pH)udLog(t,'horizon',pH,t.hz);
   (t.subtasks||[]).forEach(sid=>{const s=S.todos.find(x=>x.id===sid);if(s){s.cat=t.cat;s.pri=t.pri;s.hz=t.hz;}});
   udSave();
@@ -5699,21 +5684,21 @@ function udSaveParams(){
 
 // Assignees
 function udToggleAssignee(memberId){
-  const t=udGetItem(); if(!t) return;
-  const adminId=udGetAdminId(); if(memberId===adminId) return;
-  if(!t.assigneeIds) t.assigneeIds=[];
+  const t=udGetItem();if(!t)return;
+  const adminId=udGetAdminId();if(memberId===adminId)return;
+  if(!t.assigneeIds)t.assigneeIds=[];
   const m=(S.sharedTeam||[]).find(x=>x.id===memberId);
   const idx=t.assigneeIds.indexOf(memberId);
-  udLog(t,'assigné',idx>=0?(m?m.nom:'?'):'—',idx>=0?'—':(m?m.nom:'?'));
+  udLog(t,'assign\u00e9',idx>=0?(m?m.nom:'?'):'\u2014',idx>=0?'\u2014':(m?m.nom:'?'));
   if(idx>=0)t.assigneeIds.splice(idx,1);else t.assigneeIds.push(memberId);
   udSave();
 }
 
-// Sous-tâches
+// Subtasks
 function udAddSub(){
-  const t=udGetItem(); if(!t||udType!=='todo') return;
+  const t=udGetItem();if(!t||udType!=='todo')return;
   const inp=document.getElementById('ud-sub-in');
-  const text=inp?inp.value.trim():''; if(!text){if(inp)inp.focus();return;}
+  const text=inp?inp.value.trim():'';if(!text){if(inp)inp.focus();return;}
   const sid=uid();
   S.todos.push({id:sid,text,cat:t.cat,pri:t.pri,hz:t.hz,done:false,ts:Date.now(),comment:'',subtasks:[],parentId:udId,type:t.type||null,attachments:[],images:[]});
   if(!t.subtasks)t.subtasks=[];
@@ -5747,10 +5732,7 @@ function udQuickEditSub(sid){
   inp.style.cssText='flex:1;font-family:var(--sans);font-size:13px;padding:2px 6px;border:1px solid var(--accent);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;';
   inp.id='udst-'+sid;
   let committed=false;
-  inp.onkeydown=e=>{
-    if(e.key==='Enter'&&!committed){committed=true;doCommit();}
-    if(e.key==='Escape'&&!committed){committed=true;refreshUD();}
-  };
+  inp.onkeydown=e=>{if(e.key==='Enter'&&!committed){committed=true;doCommit();}if(e.key==='Escape'&&!committed){committed=true;refreshUD();}};
   inp.onblur=()=>{if(!committed){committed=true;doCommit();}};
   function doCommit(){const val=inp.value.trim();if(val&&val!==orig){s.text=val;autoSave();renderTodos();}refreshUD();}
   el.replaceWith(inp);inp.focus();inp.select();
@@ -5763,7 +5745,51 @@ function udSetupDrag(el){
   el.addEventListener('drop',e=>{e.preventDefault();const it=e.target.closest('.ud-sub-item');if(!it||it.dataset.sid===udDragSid)return;const t=udGetItem();if(!t||!t.subtasks)return;const fi=t.subtasks.indexOf(udDragSid),ti=t.subtasks.indexOf(it.dataset.sid);if(fi>-1&&ti>-1)[t.subtasks[fi],t.subtasks[ti]]=[t.subtasks[ti],t.subtasks[fi]];udDragSid=null;udSave();});
 }
 
-// Commentaires
+// Attachments
+function udAddAttach(){
+  const t=udGetItem();if(!t||udType!=='todo')return;
+  const inp=document.getElementById('ud-att-input');
+  const url=inp?inp.value.trim():'';if(!url)return;
+  if(!t.attachments)t.attachments=[];
+  t.attachments.push(url);
+  if(inp)inp.value='';
+  udSave();
+}
+function delAttach(id,i){
+  const t=S.todos.find(x=>x.id===id);if(!t||!t.attachments)return;
+  t.attachments.splice(i,1);
+  autoSave();
+  if(udType==='todo'&&udId===id)refreshUD();else renderTodos();
+}
+
+// Images
+async function udImgPickFile(input){
+  const t=udGetItem();if(!t||udType!=='todo')return;
+  const file=input&&input.files&&input.files[0];if(!file)return;
+  input.value='';
+  if(!t.images)t.images=[];
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    const b64=e.target.result;
+    const imgObj={type:'base64',src:b64};
+    t.images.push(imgObj);
+    autoSave();refreshUD();
+    uploadImgToDrive(b64).then(obj=>{
+      const idx=t.images.indexOf(imgObj);
+      if(idx>=0){t.images[idx]=obj;autoSave();if(udType==='todo'&&udId===t.id)refreshUD();}
+    });
+  };
+  reader.readAsDataURL(file);
+}
+function delItemImg(collection,itemId,idx){
+  const arr=S[collection];if(!arr)return;
+  const item=arr.find(x=>x.id===itemId);if(!item||!item.images)return;
+  item.images.splice(idx,1);
+  autoSave();
+  if(udType==='todo'&&udId===itemId)refreshUD();else renderTodos();
+}
+
+// Comments
 function udAddComment(){
   const t=udGetItem();if(!t)return;
   const inp=document.getElementById('ud-comment-input');
@@ -5779,13 +5805,22 @@ function udDeleteComment(idx){
   (t.comments||[]).splice(idx,1);udSave();
 }
 
-// Historique
+// History
 function udLog(t,field,from,to){
   if(String(from)===String(to))return;
   t.history=t.history||[];
   const admin=udGetAdmin();
   t.history.unshift({date:udFmt(new Date()),authorName:admin?admin.nom:'?',field,from:String(from),to:String(to)});
   if(t.history.length>50)t.history.length=50;
+}
+
+// Delete todo
+function udDeleteTodo(){
+  const id=udId;if(!id)return;
+  const t=S.todos.find(x=>x.id===id);if(!t)return;
+  if(!confirm('Supprimer "'+t.text+'" ?'))return;
+  closeUD();
+  delTodo(id);
 }
 
 // Save
@@ -5795,15 +5830,14 @@ function udSave(){
   refreshUD();
 }
 
-// Assignee badge helpers (used in item lists)
+// Badge helpers
 function assigneeBadgesHtml(ids,itemId,itemType){
   const adminId=getAdminId();
   return (ids||[]).map(id=>{
     const m=(S.sharedTeam||[]).find(x=>x.id===id);if(!m)return '';
     const isAdmin=id===adminId;
-    const onclick=isAdmin?'event.stopPropagation()':
-      `event.stopPropagation();udRemoveAssignee('${itemType}','${itemId}','${id}')`;
-    return `<span title="${m.nom+(isAdmin?' (Admin)':' — désaffecter')}" onclick="${onclick}" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:${m.color};font-size:9px;font-weight:700;color:#fff;cursor:${isAdmin?'default':'pointer'};flex-shrink:0;">${m.initiales}</span>`;
+    const cf=isAdmin?'event.stopPropagation()':'event.stopPropagation();udRemoveAssignee(\''+itemType+'\',\''+itemId+'\',\''+id+'\')';
+    return '<span title="'+m.nom+(isAdmin?' (Admin)':' \u2014 d\u00e9saffecter')+'" onclick="'+cf+'" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:'+m.color+';font-size:9px;font-weight:700;color:#fff;cursor:'+(isAdmin?'default':'pointer')+';flex-shrink:0;">'+m.initiales+'</span>';
   }).join('');
 }
 function udRemoveAssignee(itemType,itemId,memberId){
