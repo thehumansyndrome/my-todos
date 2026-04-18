@@ -771,7 +771,7 @@ function load() {
     if (Array.isArray(c.projects) && c.projects.length) sharedProjects = c.projects;
     if (Array.isArray(c.team)     && c.team.length) {
       sharedTeam = c.team.map(function(m) {
-        return {id:m.id, nom:m.nom, role:m.roles?m.roles.join(' / '):(m.role||''), email:m.email||'', color:m.color||'#3182CE', initiales:m.initiales||''};
+        return {id:m.id, nom:m.nom, role:m.roles?m.roles.join(' / '):(m.role||''), roles:m.roles||[], appRole:m.appRole||'', email:m.email||'', color:m.color||'#3182CE', initiales:m.initiales||''};
       });
     }
   } catch(e) {}
@@ -871,6 +871,8 @@ function loadSharedProjects() {
           id: m.id,
           nom: m.nom,
           role: m.roles ? m.roles.join(' / ') : (m.role || ''),
+          roles: m.roles || [],
+          appRole: m.appRole || '',
           email: m.email || '',
           color: m.color || '#3182CE',
           initiales: m.initiales || ''
