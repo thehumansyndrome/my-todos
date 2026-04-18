@@ -1473,6 +1473,13 @@ function loadSharedProjects(){
     renderEquipe();
     document.getElementById('proj-status-label').textContent=sharedProjects.length+' projets · '+sharedTeam.length+' membres chargés';
     var elbl=document.getElementById('equipe-status-label'); if(elbl) elbl.textContent=sharedTeam.length+' membres chargés depuis Projects';
+
+    // Auto-set admin defaults if fields still empty
+    var _aid = typeof getAdminId === 'function' ? getAdminId() : null;
+    if (_aid) {
+      if (!curRedact.length) { curRedact = [_aid]; renderChips('chips-red', curRedact, 'red'); }
+      if (!curValid.length)  { curValid  = [_aid]; renderChips('chips-val', curValid,  'val'); }
+    }
     toast('✓ '+sharedProjects.length+' projets · '+sharedTeam.length+' membres chargés');
   }).catch(function(e){toast('Erreur chargement projets');});
 }
