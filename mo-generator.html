@@ -1822,7 +1822,7 @@ async function addTache() {
   const pri  = document.getElementById('tache-pri').value;
   if (!todoFullData) { toast('Actualisez d\'abord les tâches'); return; }
   if (!appProjId) { toast('Projet introuvable'); return; }
-  const newTask = {id:'mo'+Date.now().toString(36), text, projId:appProjId, pri, done:false, ts:Date.now(), assigneeIds:defaultAssignees()};
+  const newTask = {id:'mo'+Date.now().toString(36), text, projId:appProjId, pri, done:false, status:'valide', ts:Date.now(), assigneeIds:defaultAssignees()};
   todoFullData.backlog = todoFullData.backlog || [];
   todoFullData.backlog.unshift(newTask);
   inp.value = '';
