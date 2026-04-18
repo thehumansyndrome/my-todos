@@ -5136,7 +5136,7 @@ function renderBacklog(){
       :bSt==='abandonne'
       ?`<span style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--red);border:1px solid var(--red);padding:1px 5px;border-radius:2px;letter-spacing:.04em;">Abandonné</span>`
       :`<span style="font-family:var(--mono);font-size:9px;color:var(--muted);border:1px solid var(--muted);padding:1px 5px;border-radius:2px;letter-spacing:.04em;">Brouillon</span>`;
-    return`<div class="bl-item${b.done?' done':''}">
+    return`<div class="bl-item${b.done?' done':''}" onclick="if(!event.target.closest('input,button,.del'))openUD('backlog','${b.id}')" style="cursor:pointer;">
       <input type="checkbox" class="item-check" ${b.done?'checked':''} onchange="toggleBacklog('${b.id}')">
       <div class="item-body">
         <div class="bl-text" onclick="quickEditInlineBacklog('${b.id}')" id="blt-${b.id}">${esc(b.text)}</div>
@@ -5148,7 +5148,6 @@ function renderBacklog(){
           <span class="meta-date">${fd(b.ts)}</span>
         </div>
       </div>
-      <button class="comment-btn" onclick="openUD('backlog','${b.id}')" title="Détails" style="opacity:.5;font-size:13px;">✎</button>
       <button class="del" onclick="delBacklogItem('${b.id}')">×</button>
     </div>`;
   }).join('');
