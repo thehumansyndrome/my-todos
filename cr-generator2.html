@@ -950,29 +950,39 @@ function validateCR() {
   e.status='valide';
   e.publishedAt=new Date().toLocaleString('fr-FR');
   persist(); renderHistory(); renderEditorMeta();
-  // ── #10: push CR actions → projet001 backlog ──
   pushCRActionsToProjets(e);
-  toast('✓ CR validé');
 }
 
 function pushCRActionsToProjets(e) {
   if (!e || !e.raw) return;
   var cr = parse(e.raw);
-  if (!cr.actions || !cr.actions.length) return;
+  var adminId = getAdminId();
+  if (!cr.actions || !cr.actions.length) {
+    toast('✓ CR validé');
+    return;
+  }
   if (!todoFullData) {
-    toast('⚠ Actions non exportées : connectez Drive et chargez les tâches d\'abord');
+    toast('✓ CR validé · ⚠ actions non exportées (chargez l\'onglet Tâches)');
     return;
   }
   todoFullData.backlog = todoFullData.backlog || [];
-  var adminId = getAdminId();
-  var projId  = appProjId || e.projet || null;
-  var added   = 0;
+  var projId = appProjId || e.projet || null;
+  var added  = 0;
   cr.actions.forEach(function(action) {
-    // Avoid duplicates (same text + same projId already in backlog)
     var exists = todoFullData.backlog.some(function(t){
       return t.text === action.text && t.projId === projId && !t.done;
     });
     if (exists) return;
+    // Resolve @assignee to team member id, fallback to admin
+    var assigneeIds = [adminId].filter(Boolean);
+    if (action.assignee) {
+      var hint = action.assignee.toLowerCase();
+      var member = (sharedTeam||[]).find(function(m){
+        return (m.nom||'').toLowerCase().indexOf(hint) >= 0 ||
+               (m.initiales||'').toLowerCase() === hint;
+      });
+      if (member) assigneeIds = [member.id];
+    }
     var task = {
       id:          'cr' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
       text:        action.text,
@@ -980,21 +990,20 @@ function pushCRActionsToProjets(e) {
       pri:         'p2',
       done:        false,
       ts:          Date.now(),
-      assigneeIds: adminId ? [adminId] : [],
+      assigneeIds: assigneeIds,
       source:      'cr',
       crTitle:     e.title || '',
       crDate:      e.publishedAt || ''
     };
-    if (action.due)      task.dueDate  = action.due;
-    if (action.assignee) task.assigneeHint = action.assignee;
+    if (action.due) task.dueDate = action.due;
     todoFullData.backlog.unshift(task);
     added++;
   });
   if (added > 0) {
     writeTodoFile();
-    toast('✓ CR validé · ' + added + ' action' + (added>1?'s':'') + ' envoyée' + (added>1?'s':'') + ' vers projet001');
+    toast('✓ CR validé · ' + added + ' action' + (added>1?'s':'') + ' → projet001');
   } else {
-    toast('✓ CR validé · actions déjà présentes dans projet001');
+    toast('✓ CR validé · actions déjà dans projet001');
   }
 }
 
