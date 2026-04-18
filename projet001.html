@@ -5136,7 +5136,7 @@ function renderBacklog(){
         <div class="bl-meta">
           <span class="tag ${priCls[b.pri]||'p2'}">${b.pri.toUpperCase()}</span>
           ${assigneeBadgesHtml(b.assigneeIds,b.id,'backlog')}
-          ${(b.status||'brouillon')==='valide'?'<span style="font-size:10px;font-weight:600;color:var(--green);border:1px solid var(--green);padding:1px 5px;border-radius:10px;">Validé ✓</span>':'<span style="font-size:10px;color:var(--muted);border:1px solid var(--muted);padding:1px 5px;border-radius:10px;">Brouillon</span>'}
+          ${(b.status||'brouillon')==='valide'?'<span style="font-size:10px;font-weight:600;color:var(--green);border:1px solid var(--green);padding:1px 5px;border-radius:10px;">Validé ✓</span>':(b.status==='abandonne'?'<span style="font-size:10px;font-weight:600;color:var(--red);border:1px solid var(--red);padding:1px 5px;border-radius:10px;">Abandonné</span>':'<span style="font-size:10px;color:var(--muted);border:1px solid var(--muted);padding:1px 5px;border-radius:10px;">Brouillon</span>')}
           ${projBadge}
           <span class="meta-date">${fd(b.ts)}</span>
         </div>
@@ -5510,16 +5510,20 @@ function udRenderBadges(t){
     html+=`<span class="ud-status-badge ${tstClass}" onclick="udCycleTaskStatus()" title="Cliquer pour changer">${tstLabel}</span>`;
   } else {
     const st=t.status||'brouillon';
-    html+=`<span class="ud-status-badge ${st==='valide'?'ud-status-valide':'ud-status-brouillon'}" onclick="udToggleStatus()">${st==='valide'?'Valide\u0301 \u2713':'Brouillon'}</span>`;
+    const stCls=st==='valide'?'ud-status-valide':st==='abandonne'?'ud-status-abandonne':'ud-status-brouillon';
+    const stLbl=st==='valide'?'Validé ✓':st==='abandonne'?'Abandonné':'Brouillon';
+    html+=`<span class="ud-status-badge ${stCls}" onclick="udToggleStatus()" title="Cliquer pour changer">${stLbl}</span>`;
     html+=`<span class="tag p${(t.pri||'p2').slice(1)}">${(t.pri||'P2').toUpperCase()}</span>`;
   }
   el.innerHTML=html;
 }
 function udToggleStatus(){
   const t=udGetItem(); if(!t||udType!=='backlog') return;
-  const prev=t.status||'brouillon'; const next=prev==='valide'?'brouillon':'valide';
-  udLog(t,'statut',prev==='valide'?'Valide\u0301':'Brouillon',next==='valide'?'Valide\u0301':'Brouillon');
-  t.status=next; udSave();
+  const cycle={brouillon:'valide',valide:'abandonne',abandonne:'brouillon'};
+  const labels={brouillon:'Brouillon',valide:'Validé',abandonne:'Abandonné'};
+  const prev=t.status||'brouillon'; const next=cycle[prev]||'brouillon';
+  udLog(t,'statut',labels[prev],labels[next]);
+  t.status=next; udSave(); udRenderBadges(t);
 }
 function udCycleTaskStatus(){
   const t=udGetItem(); if(!t||udType!=='todo') return;
