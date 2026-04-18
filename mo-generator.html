@@ -530,7 +530,20 @@ const STATUS_CYCLE   = ['brouillon','validation','renvoye','valide'];
 const STATUS_LABELS  = {brouillon:'Brouillon',validation:'En validation',valide:'Validé ✓',renvoye:'Renvoyé ✗',archive:'Archivé'};
 const STATUS_CLASS   = {brouillon:'status-brouillon',validation:'status-validation',valide:'status-valide',renvoye:'status-renvoye',archive:'status-archive'};
 
-const TEMPLATE = ``;
+const TEMPLATE = `titre: 
+quand: 
+duree: 
+modifie: 
+
+Notes libres (ignorées) — contexte, liens, références…
+
+E: 
+SE: 
+E: 
+E: 
+
+resultat: 
+erreur: `;
 
 // ── State ──────────────────────────────────────────────────────────────────────
 let S = { history:[], projets:[] };
@@ -589,7 +602,7 @@ function load() {
     if (Array.isArray(c.team)    && c.team.length)    sharedTeam = c.team;
   } catch(e) {}
   const draft = localStorage.getItem(`${SK}_draft`);
-  document.getElementById('raw-input').value = draft || TEMPLATE;
+  document.getElementById('raw-input').value = draft || '';
   try {
     const meta = JSON.parse(localStorage.getItem(`${SK}_meta`) || '{}');
     curProjet = meta.projet || '';
@@ -670,7 +683,11 @@ function newMO() {
 }
 function resetTemplate() {
   document.getElementById('raw-input').value = TEMPLATE;
-  curProjet = ''; curRedact = []; curValid = []; curEntryId = null;
+  curProjet = ''; curEntryId = null;
+  var aid = typeof getAdminId === 'function' ? getAdminId() : null;
+  curValid  = aid ? [aid] : [];
+  var rm = sharedTeam.find(function(m){ return (m.roles||[]).includes('redacteur'); });
+  curRedact = rm ? [rm.id] : [];
   renderEditorMeta();
   renderPreview();
 }
