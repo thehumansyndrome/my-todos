@@ -1105,7 +1105,16 @@ function renderPreview() {
   bar.innerHTML=bh; bar.style.display='flex';
 }
 
-function resetTemplate() { document.getElementById('raw-input').value=TMPL; renderPreview(); renderEpicSelector(); }
+function resetTemplate() {
+  document.getElementById('raw-input').value=TMPL;
+  curUSEntryId=null;
+  var aid = typeof getAdminId === 'function' ? getAdminId() : null;
+  curRedact = aid ? [aid] : [];
+  curValid  = aid ? [aid] : [];
+  renderChips('chips-red', curRedact, 'red');
+  renderChips('chips-val', curValid, 'val');
+  renderPreview(); renderEpicSelector();
+}
 
 function renderEpicSelector() {
   var sel = document.getElementById("epic-selector");
