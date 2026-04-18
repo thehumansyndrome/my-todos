@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Projects</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS ── */
+:root {
+  --bg:      #F7F6F3;
+  --surface: #FFFFFF;
+  --border:  #E5E4E0;
+  --text:    #1A1917;
+  --text2:   #3D3C39;
+  --muted:   #8A8880;
+  --accent:  #5B4FE8;
+  --green:   #16A34A;
+  --red:     #DC2626;
+  --amber:   #D97706;
+  --blue:    #2563EB;
+  --r:       6px;
+  --r2:      10px;
+  --sans:    'Geist', system-ui, sans-serif;
+  --mono:    'Geist Mono', monospace;
+}
+[data-theme="sand"] {
+  --bg:#F8F7FF; --surface:#FFFFFF; --border:#E4E2F5;
+  --text:#1A1830; --text2:#3D3B55; --muted:#8A88A8; --accent:#5B4FE8;
+}
+[data-theme="dark"] {
+  --bg:#111113; --surface:#1C1C1F; --border:#2A2A2E;
+  --text:#F0EFE9; --text2:#C4C3BC; --muted:#6B6A65; --accent:#7C6FE8;
+  --green:#22C55E; --red:#F87171; --amber:#FCD34D; --blue:#60A5FA;
+}
+[data-theme="navy"] {
+  --bg:#161925; --surface:#1E2233; --border:#2A2F45;
+  --text:#E8EAF2; --text2:#B0B4CC; --muted:#606480; --accent:#7C6FE8;
+  --green:#34D399; --red:#F87171; --amber:#FCD34D; --blue:#60A5FA;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;}
+
+/* ── HEADER ── */
+.header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border);padding:0 16px;height:44px;display:flex;align-items:center;gap:12px;}
+.app-name{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:-.01em;}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0;}
+.sync-dot.ok{background:var(--green);}
+.sync-dot.pending{background:var(--amber);}
+.sync-dot.error{background:var(--red);}
+.sync-label{font-family:var(--mono);font-size:11px;color:var(--muted);}
+.hbtn{margin-left:auto;background:none;border:none;cursor:pointer;font-size:14px;color:var(--muted);padding:4px 6px;border-radius:var(--r);transition:background .15s;}
+.hbtn:hover{background:var(--border);}
+
+/* ── TABS ── */
+.tabs{position:sticky;top:44px;z-index:99;background:var(--bg);border-bottom:1px solid var(--border);display:flex;gap:0;padding:0 16px;overflow-x:auto;}
+.tab{padding:10px 14px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;transition:color .15s;}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab:hover{color:var(--text2);}
+
+/* ── PAGE ── */
+.page{max-width:860px;margin:0 auto;padding:20px 16px 80px;}
+.section{display:none;}
+.section.active{display:block;}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:border-color .15s;}
+.card:hover{border-color:var(--accent);}
+.card.selected{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);}
+
+/* ── ADD ROW ── */
+.add-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.add-row input,.add-row select,.add-row textarea{font-family:var(--sans);font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;transition:border-color .15s;}
+.add-row input:focus,.add-row select:focus{border-color:var(--accent);}
+.main-in{flex:1;min-width:160px;}
+
+/* ── BUTTONS ── */
+.btn{font-family:var(--sans);font-size:12px;font-weight:500;padding:6px 12px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.btn:hover{border-color:var(--accent);color:var(--accent);}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+.btn.primary:hover{opacity:.88;}
+.btn.danger{color:var(--red);border-color:var(--red);}
+.btn.danger:hover{background:var(--red);color:#fff;}
+.btn.sm{padding:4px 8px;font-size:11px;}
+.add-btn{font-family:var(--sans);font-size:12px;font-weight:500;padding:7px 14px;border-radius:var(--r);border:none;background:var(--accent);color:#fff;cursor:pointer;white-space:nowrap;}
+.add-btn:hover{opacity:.88;}
+
+/* ── STATUS BADGES ── */
+.status-pill{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid;cursor:pointer;user-select:none;}
+.s-actif{color:var(--green);border-color:var(--green);}
+.s-pause{color:var(--amber);border-color:var(--amber);}
+.s-termine{color:var(--blue);border-color:var(--blue);}
+.s-archive{color:var(--muted);border-color:var(--muted);}
+
+/* ── PROGRESS BAR ── */
+.progress-wrap{height:6px;background:var(--border);border-radius:3px;margin:8px 0 4px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:3px;background:var(--accent);transition:width .3s;}
+.progress-fill.done{background:var(--green);}
+
+/* ── PROJECT FORM ── */
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:16px;margin-bottom:16px;}
+.form-card.hidden{display:none;}
+.field{display:flex;flex-direction:column;gap:5px;flex:1;}
+.field label{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
+.field input,.field select,.field textarea{font-family:var(--sans);font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);}
+.field-row{display:flex;gap:10px;flex-wrap:wrap;}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;}
+
+/* ── TEAM ── */
+.member-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:10px 14px;display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+.avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0;}
+.role-chip{font-size:11px;font-weight:500;padding:2px 8px;border-radius:12px;border:1px solid;}
+.role-red{color:var(--red);border-color:var(--red);}
+.role-val{color:var(--green);border-color:var(--green);}
+.role-btn{padding:4px 10px;border-radius:12px;font-size:12px;font-weight:500;cursor:pointer;background:transparent;transition:all .15s;}
+
+/* ── SUIVI ── */
+.suivi-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
+.suivi-sel{font-family:var(--sans);font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;flex:1;min-width:180px;}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:20px;}
+.kpi-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:14px 16px;}
+.kpi-n{font-size:24px;font-weight:600;line-height:1;}
+.kpi-l{font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.04em;}
+.suivi-section{margin-bottom:20px;}
+.suivi-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px;}
+.suivi-row{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:6px;font-size:13px;}
+.suivi-row-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* ── COLOR PICKER ── */
+.color-picker{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.color-dot{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;flex-shrink:0;transition:border-color .15s;}
+.color-dot.selected{border-color:var(--text);}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:var(--bg);padding:9px 18px;border-radius:20px;font-size:13px;font-weight:500;opacity:0;transition:all .25s;z-index:999;pointer-events:none;white-space:nowrap;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:60px 20px;color:var(--muted);font-size:14px;}
+.empty-icon{font-size:32px;margin-bottom:10px;}
+
+/* ── LOG ── */
+.log-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);margin-bottom:12px;overflow:hidden;}
+.log-head{padding:12px 16px;font-size:13px;font-weight:500;border-bottom:1px solid var(--border);}
+.log-body{padding:14px 16px;}
+.log-note{font-size:12px;color:var(--muted);line-height:1.6;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:600px){
+  .field-row{flex-direction:column;}
+  .kpi-grid{grid-template-columns:1fr 1fr;}
+}
+input,select,textarea{background:var(--bg);color:var(--text);}
+[data-theme="dark"] input,[data-theme="dark"] select,[data-theme="dark"] textarea{color-scheme:dark;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="app-name">Projects</span>
+  <div class="sync-dot" id="sync-dot"></div>
+  <span class="sync-label" id="sync-label">Local</span>
+  <button class="hbtn" id="theme-btn" onclick="toggleTheme()" title="Thème">☀︎</button>
+  <button class="hbtn" id="hbtn-cloud" onclick="accessToken ? switchTab('log') : driveAuth()" title="Connecter Google Drive">☁</button>
+</div>
+
+<div class="tabs" id="tabs">
+  <button class="tab active" onclick="switchTab('projets')">Projets</button>
+  <button class="tab" onclick="switchTab('suivi')">Suivi</button>
+  <button class="tab" onclick="switchTab('equipe')">Équipe</button>
+  <button class="tab" onclick="switchTab('log')">Log</button>
+</div>
+
+<div class="page">
+
+<!-- ══ PROJETS ══ -->
+<div id="tab-projets" class="section active">
+
+  <!-- Form -->
+  <div class="form-card" id="proj-form">
+    <div style="font-size:13px;font-weight:500;margin-bottom:12px;" id="proj-form-title">Nouveau projet</div>
+    <div class="field-row">
+      <div class="field" style="flex:2">
+        <label>Nom du projet</label>
+        <input type="text" id="pf-nom" placeholder="ex: Refonte Site Web" onkeydown="if(event.key==='Enter')saveProject()">
+      </div>
+      <div class="field">
+        <label>Statut</label>
+        <select id="pf-statut">
+          <option value="actif">● Actif</option>
+          <option value="pause">⏸ En pause</option>
+          <option value="termine">✓ Terminé</option>
+        </select>
+      </div>
+    </div>
+    <div class="field" style="margin-top:8px;">
+      <label>Description (optionnel)</label>
+      <input type="text" id="pf-desc" placeholder="Objectif du projet…">
+    </div>
+    <div class="field-row" style="margin-top:8px;">
+      <div class="field">
+        <label>Date début</label>
+        <input type="date" id="pf-start">
+      </div>
+      <div class="field">
+        <label>Date cible</label>
+        <input type="date" id="pf-end">
+      </div>
+      <div class="field" style="flex:0">
+        <label>Couleur</label>
+        <div class="color-picker" id="proj-color-picker"></div>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="cancelProjEdit()">Annuler</button>
+      <button class="btn primary" onclick="saveProject()">Enregistrer</button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;align-items:center;">
+    <span style="font-size:12px;color:var(--muted);">Statut :</span>
+    <button class="btn sm active" id="sf-tous"    onclick="setProjFilter('tous')"   >Tous</button>
+    <button class="btn sm"        id="sf-actif"   onclick="setProjFilter('actif')"  >Actif</button>
+    <button class="btn sm"        id="sf-pause"   onclick="setProjFilter('pause')"  >Pause</button>
+    <button class="btn sm"        id="sf-termine" onclick="setProjFilter('termine')">Terminé</button>
+    <button class="btn sm"        id="sf-archive" onclick="setProjFilter('archive')">Archivé</button>
+    <button class="btn primary sm" onclick="newProject()" style="margin-left:auto;">+ Nouveau</button>
+  </div>
+
+  <div id="proj-list"></div>
+</div>
+
+<!-- ══ SUIVI ══ -->
+<div id="tab-suivi" class="section">
+  <div class="suivi-header">
+    <select class="suivi-sel" id="suivi-proj-sel" onchange="localStorage.setItem('td_suivi_proj',this.value);renderSuivi()">
+      <option value="">— Sélectionner un projet —</option>
+    </select>
+    <button class="btn sm" onclick="loadSuiviData()">↻ Actualiser</button>
+  </div>
+  <div id="suivi-content"><div class="empty"><div class="empty-icon">📊</div>Sélectionnez un projet pour voir son suivi</div></div>
+</div>
+
+<!-- ══ ÉQUIPE ══ -->
+<div id="tab-equipe" class="section">
+  <div class="form-card" id="team-form">
+    <div style="font-size:13px;font-weight:500;margin-bottom:12px;" id="team-form-title">Nouveau membre</div>
+    <div class="field-row">
+      <div class="field" style="flex:2">
+        <label>Nom complet</label>
+        <input type="text" id="tf-nom" placeholder="Marie Dupont" maxlength="50" onkeydown="if(event.key==='Enter')saveMember()">
+      </div>
+      <div class="field" style="flex:0;min-width:80px;">
+        <label>Initiales</label>
+        <input type="text" id="tf-init" placeholder="MD" maxlength="3">
+      </div>
+    </div>
+    <div class="field-row" style="margin-top:8px;">
+      <div class="field">
+        <label>Couleur</label>
+        <div class="color-picker" id="team-color-picker"></div>
+      </div>
+      <div class="field">
+        <label>Rôles</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="role-btn" id="rb-red" onclick="toggleRole('red')" style="border:1px solid var(--red);color:var(--red);">Rédacteur</button>
+          <button class="role-btn" id="rb-val" onclick="toggleRole('val')" style="border:1px solid var(--border);color:var(--muted);">Valideur</button>
+        </div>
+      </div>
+      <div class="field" style="min-width:120px;">
+        <label>Fonction</label>
+        <select id="tf-approle" style="font-family:var(--sans);font-size:13px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none;width:100%;">
+          <option value="">—</option>
+          <option value="Admin">Admin</option>
+          <option value="IT">IT</option>
+          <option value="Métier">Métier</option>
+          <option value="Sales">Sales</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="cancelMemberEdit()">Annuler</button>
+      <button class="btn primary" onclick="saveMember()">Enregistrer</button>
+    </div>
+  </div>
+
+  <div id="team-list"></div>
+</div>
+
+<!-- ══ LOG ══ -->
+<div id="tab-log" class="section">
+
+  <div class="log-block">
+    <div class="log-head">☁ Google Drive</div>
+    <div class="log-body" id="drive-anchor">
+      <p class="log-note" style="margin-bottom:12px;">Projects est la source de vérité pour <code>shared.json</code> (projets + équipe) partagé avec MO Hub, CR Generator et US Generator.</p>
+      <div class="btn-row">
+        <button class="btn primary" id="btn-auth" onclick="driveAuth()">Connecter Google</button>
+        <button class="btn" id="btn-pull" onclick="drivePull()" disabled>⬇ Charger</button>
+        <button class="btn" id="btn-push" onclick="drivePush()" disabled>⬆ Sauvegarder</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;">
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted);">Auto-sync</span>
+        <select id="poll-interval" onchange="setPollInterval(this.value)"
+          style="font-family:var(--mono);font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);cursor:pointer;">
+          <option value="0">Désactivé</option>
+          <option value="10">10 s</option>
+          <option value="30" selected>30 s</option>
+          <option value="60">1 min</option>
+          <option value="300">5 min</option>
+        </select>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted);" id="poll-next"></span>
+      </div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:8px;" id="drive-status-detail"></div>
+    </div>
+  </div>
+
+  <div class="log-block">
+    <div class="log-head">📦 Export / Import</div>
+    <div class="log-body">
+      <div class="btn-row">
+        <button class="btn" onclick="exportData()">Copier JSON</button>
+        <button class="btn" onclick="downloadData()">↓ .json</button>
+        <button class="btn" onclick="openImport()">Importer JSON</button>
+        <button class="btn danger" onclick="clearAll()">Tout effacer</button>
+      </div>
+      <textarea id="log-area" readonly style="width:100%;height:120px;font-family:var(--mono);font-size:11px;padding:8px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);resize:vertical;" placeholder="Copier JSON pour exporter…"></textarea>
+      <div id="imp-area-wrap" style="display:none;margin-top:8px;">
+        <textarea id="imp-area" style="width:100%;height:100px;font-family:var(--mono);font-size:11px;padding:8px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);resize:vertical;" placeholder="Collez le JSON ici…"></textarea>
+        <div style="display:flex;gap:8px;margin-top:6px;">
+          <button class="btn primary" onclick="importData()">Importer</button>
+          <button class="btn" onclick="closeImport()">Annuler</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div><!-- /page -->
+
+<div id="toast"></div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+/* ══ CONSTANTS ══ */
+const SK  = 'td_v4_projects';
+const TK  = 'td_theme_projects';
+const TOK = 'td_tok_projects';
+const CLIENT_ID   = '962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com';
+const SCOPE       = 'https://www.googleapis.com/auth/drive';
+const DRIVE_FILE  = 'projects.json';
+const SHARED_FILE = 'shared.json';
+const THEMES = ['light','sand','navy','dark'];
+const THEME_ICONS = {light:'☀︎',sand:'○',navy:'◑',dark:'☾'};
+
+const PROJ_COLORS = ['#E53E3E','#DD6B20','#38A169','#3182CE','#6B46C1','#D53F8C','#2C7A7B','#718096','#5B4FE8','#0F766E'];
+const TEAM_COLORS = ['#E53E3E','#DD6B20','#38A169','#3182CE','#6B46C1','#D53F8C','#2C7A7B','#718096'];
+const STATUS_LABELS = {actif:'Actif',pause:'En pause',termine:'Terminé',archive:'Archivé'};
+const STATUS_CLS   = {actif:'s-actif',pause:'s-pause',termine:'s-termine',archive:'s-archive'};
+const STATUS_CYCLE = ['actif','pause','termine','archive'];
+
+/* ══ STATE ══ */
+let S = {projects:[], team:[]};
+
+function ensureState() {
+  if (!Array.isArray(S.projects)) S.projects = [];
+  if (!Array.isArray(S.team))     S.team     = [];
+  S.projects.forEach(p => {
+    if (!p.status)     p.status    = 'actif';
+    if (!p.color)      p.color     = PROJ_COLORS[3];
+    if (!p.desc)       p.desc      = '';
+    if (!p.dateStart)  p.dateStart = '';
+    if (!p.dateEnd)    p.dateEnd   = '';
+  });
+  S.team.forEach(m => {
+    if (!m.roles) m.roles = [];
+    if (!m.color) m.color = TEAM_COLORS[3];
+  });
+}
+
+/* ══ PERSIST ══ */
+function save() {
+  localStorage.setItem(SK, JSON.stringify(S));
+}
+let _autoTimer = null;
+function autoSave() {
+  save();
+  setSync('pending');
+  clearTimeout(_autoTimer);
+  _autoTimer = setTimeout(() => silentPush(), 2000);
+}
+function setSync(state) {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  const map  = {local:'',ok:'ok',pending:'pending',error:'error'};
+  dot.className = 'sync-dot ' + (map[state]||'');
+  lbl.textContent = {local:'Local',ok:'Sync ✓',pending:'Sauvegarde…',error:'Erreur'}[state]||'Local';
+}
+
+/* ══ TABS ══ */
+const TABS = ['projets','suivi','equipe','log'];
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach((b,i) => b.classList.toggle('active', TABS[i]===t));
+  TABS.forEach(id => {
+    const el = document.getElementById('tab-'+id);
+    if (el) el.classList.toggle('active', id===t);
+  });
+  if (t==='suivi')  { populateSuiviSel(); renderSuivi(); }
+  if (t==='equipe') renderTeam();
+  if (t==='projets') renderProjects();
+}
+
+/* ══ THEME ══ */
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t==='light'?'':t);
+  document.getElementById('theme-btn').textContent = THEME_ICONS[t]||'☀︎';
+  localStorage.setItem(TK, t);
+}
+function toggleTheme() {
+  const cur = localStorage.getItem(TK)||'light';
+  applyTheme(THEMES[(THEMES.indexOf(cur)+1)%THEMES.length]);
+}
+
+/* ══ UTILS ══ */
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function uid()  { return Date.now(); }
+function fd(d)  { if (!d) return ''; return new Date(d).toLocaleDateString('fr-FR'); }
+function toast(msg, dur=2400) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), dur);
+}
+
+/* ══ COLOR PICKERS ══ */
+let projSelectedColor = PROJ_COLORS[3];
+let teamSelectedColor = TEAM_COLORS[3];
+
+function buildColorPicker(containerId, colors, selected, onSelect) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = colors.map(c =>
+    `<div class="color-dot${c===selected?' selected':''}" style="background:${c}" onclick="(${onSelect.toString()})('${c}')"></div>`
+  ).join('');
+}
+function selectProjColor(c) { projSelectedColor=c; buildColorPicker('proj-color-picker',PROJ_COLORS,c,selectProjColor); }
+function selectTeamColor(c) { teamSelectedColor=c; buildColorPicker('team-color-picker',TEAM_COLORS,c,selectTeamColor); }
+
+/* ══ PROJECTS CRUD ══ */
+let projFilter = 'tous';
+let editingProjId = null;
+
+function setProjFilter(f) {
+  projFilter = f;
+  ['tous','actif','pause','termine','archive'].forEach(k => {
+    const b = document.getElementById('sf-'+k);
+    if (b) { b.className = 'btn sm'+(f===k?' active':''); b.style.borderColor = f===k?'var(--accent)':''; b.style.color = f===k?'var(--accent)':''; }
+  });
+  renderProjects();
+}
+
+function newProject() {
+  editingProjId = null;
+  document.getElementById('pf-nom').value = '';
+  document.getElementById('pf-desc').value = '';
+  document.getElementById('pf-start').value = '';
+  document.getElementById('pf-end').value = '';
+  document.getElementById('pf-statut').value = 'actif';
+  document.getElementById('proj-form-title').textContent = 'Nouveau projet';
+  selectProjColor(PROJ_COLORS[3]);
+  document.getElementById('pf-nom').focus();
+  document.getElementById('proj-form').scrollIntoView({behavior:'smooth'});
+}
+
+function cancelProjEdit() {
+  editingProjId = null;
+  document.getElementById('pf-nom').value = '';
+  document.getElementById('pf-desc').value = '';
+  document.getElementById('pf-start').value = '';
+  document.getElementById('pf-end').value = '';
+  document.getElementById('proj-form-title').textContent = 'Nouveau projet';
+}
+
+function saveProject() {
+  const nom = document.getElementById('pf-nom').value.trim();
+  if (!nom) { toast('⚠ Nom requis'); return; }
+  const data = {
+    name:      nom,
+    desc:      document.getElementById('pf-desc').value.trim(),
+    status:    document.getElementById('pf-statut').value,
+    color:     projSelectedColor,
+    dateStart: document.getElementById('pf-start').value,
+    dateEnd:   document.getElementById('pf-end').value,
+  };
+  if (editingProjId) {
+    const p = S.projects.find(x => x.id===editingProjId);
+    if (p) Object.assign(p, data);
+  } else {
+    S.projects.unshift({id:'p_'+uid(), ...data});
+  }
+  cancelProjEdit();
+  autoSave(); syncShared(); renderProjects();
+  toast(editingProjId ? '✓ Projet mis à jour' : '✓ Projet créé');
+  editingProjId = null;
+}
+
+function editProject(id) {
+  const p = S.projects.find(x => x.id===id); if (!p) return;
+  editingProjId = id;
+  document.getElementById('pf-nom').value    = p.name;
+  document.getElementById('pf-desc').value   = p.desc||'';
+  document.getElementById('pf-start').value  = p.dateStart||'';
+  document.getElementById('pf-end').value    = p.dateEnd||'';
+  document.getElementById('pf-statut').value = p.status||'actif';
+  document.getElementById('proj-form-title').textContent = 'Modifier le projet';
+  selectProjColor(p.color||PROJ_COLORS[3]);
+  document.getElementById('proj-form').scrollIntoView({behavior:'smooth'});
+}
+
+function cycleProjectStatus(id) {
+  const p = S.projects.find(x => x.id===id); if (!p) return;
+  const idx = STATUS_CYCLE.indexOf(p.status||'actif');
+  p.status = STATUS_CYCLE[(idx+1)%STATUS_CYCLE.length];
+  autoSave(); syncShared(); renderProjects();
+}
+
+function archiveProject(id) {
+  const p = S.projects.find(x => x.id===id); if (!p) return;
+  p.status = p.status==='archive' ? 'actif' : 'archive';
+  autoSave(); syncShared(); renderProjects();
+  toast(p.status==='archive' ? 'Projet archivé' : 'Projet réactivé');
+}
+
+function deleteProject(id) {
+  if (!confirm('Supprimer ce projet définitivement ?')) return;
+  S.projects = S.projects.filter(x => x.id!==id);
+  autoSave(); syncShared(); renderProjects(); toast('Projet supprimé');
+}
+
+function renderProjects() {
+  const el = document.getElementById('proj-list'); if (!el) return;
+  let list = S.projects;
+  if (projFilter !== 'tous') list = list.filter(p => (p.status||'actif')===projFilter);
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📁</div>${projFilter==='tous'?'Aucun projet. Créez-en un ci-dessus.':'Aucun projet avec ce statut.'}</div>`;
+    return;
+  }
+  el.innerHTML = list.map(p => {
+    const st = p.status||'actif';
+    const stCls = STATUS_CLS[st]||'s-actif';
+    const stLbl = STATUS_LABELS[st]||st;
+    const dateStr = p.dateStart||p.dateEnd
+      ? `${p.dateStart?fd(p.dateStart):''} → ${p.dateEnd?fd(p.dateEnd):'?'}`
+      : '';
+    // Count team members assigned (all by default)
+    const memberCount = S.team.length;
+    return `
+    <div class="card" onclick="openProjectSuivi('${p.id}')">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:12px;height:44px;border-radius:4px;background:${p.color};flex-shrink:0;"></div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span style="font-size:14px;font-weight:500;">${esc(p.name)}</span>
+            <span class="status-pill ${stCls}" onclick="event.stopPropagation();cycleProjectStatus('${p.id}')">${stLbl}</span>
+          </div>
+          ${p.desc?`<div style="font-size:12px;color:var(--muted);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(p.desc)}</div>`:''}
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;display:flex;gap:12px;flex-wrap:wrap;">
+            ${dateStr?`<span>📅 ${dateStr}</span>`:''}
+            ${memberCount?`<span>👥 ${memberCount} membre${memberCount>1?'s':''}</span>`:''}
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;" onclick="event.stopPropagation()">
+          <button class="btn sm" onclick="editProject('${p.id}')">✎</button>
+          <button class="btn sm" onclick="archiveProject('${p.id}')">${st==='archive'?'↩':'⬜'}</button>
+          <button class="btn sm danger" onclick="deleteProject('${p.id}')">✕</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openProjectSuivi(id) {
+  switchTab('suivi');
+  document.getElementById('suivi-proj-sel').value = id;
+  localStorage.setItem('td_suivi_proj', id);
+  loadSuiviData();
+}
+
+/* ══ TEAM CRUD ══ */
+let editingMemberId = null;
+let teamRoleRed = true, teamRoleVal = false;
+
+function toggleRole(r) {
+  if (r==='red') teamRoleRed = !teamRoleRed;
+  else           teamRoleVal = !teamRoleVal;
+  renderRoleBtns();
+}
+function renderRoleBtns() {
+  const rr = document.getElementById('rb-red');
+  const rv = document.getElementById('rb-val');
+  if (rr) {rr.style.background=teamRoleRed?'var(--red)':'transparent';rr.style.color=teamRoleRed?'#fff':'var(--red)';}
+  if (rv) {rv.style.background=teamRoleVal?'var(--green)':'transparent';rv.style.color=teamRoleVal?'#fff':'var(--muted)';rv.style.borderColor=teamRoleVal?'var(--green)':'var(--border)';}
+}
+
+function cancelMemberEdit() {
+  editingMemberId = null;
+  document.getElementById('tf-nom').value  = '';
+  document.getElementById('tf-init').value = '';
+  teamRoleRed = true; teamRoleVal = false;
+  renderRoleBtns();
+  selectTeamColor(TEAM_COLORS[3]);
+  const ar = document.getElementById('tf-approle'); if (ar) ar.value = '';
+  document.getElementById('team-form-title').textContent = 'Nouveau membre';
+}
+
+function saveMember() {
+  const nom  = document.getElementById('tf-nom').value.trim();
+  const initR= document.getElementById('tf-init').value.trim().toUpperCase();
+  const init = initR || nom.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase();
+  if (!nom) { toast('⚠ Nom requis'); return; }
+  const roles = [];
+  if (teamRoleRed) roles.push('redacteur');
+  if (teamRoleVal) roles.push('valideur');
+  if (!roles.length) { toast('⚠ Au moins un rôle requis'); return; }
+  const appRole = document.getElementById('tf-approle').value;
+  if (editingMemberId) {
+    const m = S.team.find(x => x.id===editingMemberId);
+    if (m) Object.assign(m, {nom, initiales:init, color:teamSelectedColor, roles, appRole});
+  } else {
+    S.team.push({id:'m_'+uid(), nom, initiales:init, color:teamSelectedColor, roles, appRole});
+  }
+  cancelMemberEdit();
+  autoSave(); syncShared(); renderTeam();
+  toast('✓ Membre enregistré');
+}
+
+function editMember(id) {
+  const m = S.team.find(x => x.id===id); if (!m) return;
+  editingMemberId = id;
+  document.getElementById('tf-nom').value  = m.nom;
+  document.getElementById('tf-init').value = m.initiales;
+  teamRoleRed = m.roles.includes('redacteur');
+  teamRoleVal = m.roles.includes('valideur');
+  renderRoleBtns();
+  selectTeamColor(m.color||TEAM_COLORS[3]);
+  const ar = document.getElementById('tf-approle'); if (ar) ar.value = m.appRole||'';
+  document.getElementById('team-form-title').textContent = 'Modifier le membre';
+  document.getElementById('tf-nom').focus();
+}
+
+function deleteMember(id) {
+  if (!confirm('Supprimer ce membre ?')) return;
+  S.team = S.team.filter(x => x.id!==id);
+  autoSave(); syncShared(); renderTeam(); toast('Membre supprimé');
+}
+
+function renderTeam() {
+  const el = document.getElementById('team-list'); if (!el) return;
+  renderRoleBtns();
+  buildColorPicker('team-color-picker', TEAM_COLORS, teamSelectedColor, selectTeamColor);
+  if (!S.team.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">👥</div>Aucun membre. Ajoutez vos collaborateurs ci-dessus.</div>`;
+    return;
+  }
+  el.innerHTML = S.team.map(m => {
+    const roleHtml = (m.roles||[]).map(r =>
+      `<span class="role-chip ${r==='redacteur'?'role-red':'role-val'}">${r==='redacteur'?'Rédacteur':'Valideur'}</span>`
+    ).join('');
+    return `
+    <div class="member-card">
+      <div class="avatar" style="background:${m.color}">${esc(m.initiales)}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:500;">${esc(m.nom)}</div>
+        <div style="display:flex;gap:5px;margin-top:4px;flex-wrap:wrap;">${roleHtml}${m.appRole?`<span class="role-chip" style="background:var(--surface-2,#e5e7eb);color:var(--text);">${esc(m.appRole)}</span>`:''}</div>
+      </div>
+      <button class="btn sm" onclick="editMember('${m.id}')">✎</button>
+      <button class="btn sm danger" onclick="deleteMember('${m.id}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
+/* ══ SUIVI ══ */
+let suiviData = {us:[], mo:[], cr:[]};
+
+function populateSuiviSel() {
+  const sel = document.getElementById('suivi-proj-sel'); if (!sel) return;
+  const prev = sel.value || localStorage.getItem('td_suivi_proj') || '';
+  sel.innerHTML = '<option value="">— Sélectionner un projet —</option>' +
+    S.projects.filter(p=>p.status!=='archive').map(p =>
+      `<option value="${p.id}"${p.id===prev?' selected':''}>${esc(p.name)}</option>`
+    ).join('');
+  if (prev) sel.value = prev;
+}
+
+async function loadSuiviData() {
+  if (!accessToken) { toast('Connectez Drive pour charger le suivi'); return; }
+  const projId = document.getElementById('suivi-proj-sel').value;
+  if (!projId) { toast('Sélectionnez un projet'); return; }
+  toast('Chargement…');
+
+  const files = [
+    {key:'us',     name:'us-generator.json'},
+    {key:'mo',     name:'mo-generator.json'},
+    {key:'cr',     name:'cr-generator2.json'},
+    {key:'todos',  name:'projet001.json'},
+    {key:'shared', name:'shared.json'},
+  ];
+  suiviData = {us:[], mo:[], cr:[], backlog:[], sharedProjects:[]};
+
+  for (const f of files) {
+    try {
+      const q = encodeURIComponent(`name='${f.name}' and trashed=false`);
+      const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)&orderBy=modifiedTime+desc`,
+        {headers:{Authorization:'Bearer '+accessToken}});
+      const d = await res.json();
+      if (d.files && d.files[0]) {
+        const fileId = d.files[0].id;
+        const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+          {headers:{Authorization:'Bearer '+accessToken}});
+        const data = await r.json();
+        if (f.key === 'todos') {
+          suiviData.backlog = Array.isArray(data.backlog) ? data.backlog : [];
+          projet001FullData = data; // cache full data for write-back
+          projet001FileId = fileId; // always update — don't use stale cache
+          console.log('[loadSuiviData] projet001.json fileId:', fileId, 'backlog items:', suiviData.backlog.length);
+        } else if (f.key === 'shared') {
+          suiviData.sharedProjects = Array.isArray(data.projects) ? data.projects : [];
+        } else {
+          suiviData[f.key] = data.history || data.entries || [];
+        }
+      }
+    } catch(e) { console.warn('suivi load', f.name, e); }
+  }
+  renderSuivi();
+  toast('✓ Données chargées');
+}
+
+function renderSuivi() {
+  const el = document.getElementById('suivi-content'); if (!el) return;
+  const projId = document.getElementById('suivi-proj-sel').value;
+  if (!projId) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📊</div>Sélectionnez un projet pour voir son suivi</div>`;
+    return;
+  }
+  const proj = S.projects.find(p => p.id===projId);
+  if (!proj) return;
+
+  // Filter by project — match by ID primary, project name as fallback
+  // (handles ID mismatch when todos was used before migration to Projects)
+  const blAll   = (suiviData.backlog||[]).filter(e => {
+    if (e.projId === projId) return true;
+    // Fallback: try to match by finding the project whose name matches what todos had stored
+    if (!e.projId) return false;
+    // Check if any project in shared data maps this projId to current proj
+    const todoProj = (suiviData.sharedProjects||[]).find(p => p.id === e.projId);
+    return todoProj && todoProj.name.toLowerCase() === proj.name.toLowerCase();
+  });
+  const usAll   = suiviData.us.filter(e => e.projet===projId);
+  const moAll   = suiviData.mo.filter(e => e.projet===projId);
+  const crAll   = suiviData.cr.filter(e => e.projet===projId);
+  const blActive = blAll.filter(e => !e.done);
+  const blDone   = blAll.filter(e => !!e.done);
+
+  const usValide  = usAll.filter(e => e.status==='valide').length;
+  const usBrouill = usAll.filter(e => (e.status||'brouillon')==='brouillon').length;
+  const usValid   = usAll.filter(e => e.status==='validation').length;
+  const moValide  = moAll.filter(e => e.status==='valide').length;
+  const crValide  = crAll.filter(e => e.status==='valide').length;
+
+  const totalUS = usAll.length;
+  const pct = totalUS ? Math.round(usValide/totalUS*100) : 0;
+
+  const STATUS_US  = {brouillon:'Brouillon',validation:'En validation',valide:'Validé ✓',renvoye:'Renvoyé',archive:'Archivé'};
+  const STATUS_MOC = {brouillon:'Brouillon',validation:'En validation',valide:'Validé ✓',renvoye:'Renvoyé',archive:'Archivé'};
+
+  let h = `
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+    <div style="width:14px;height:40px;border-radius:4px;background:${proj.color};flex-shrink:0;"></div>
+    <div>
+      <div style="font-size:16px;font-weight:600;">${esc(proj.name)}</div>
+      ${proj.desc?`<div style="font-size:12px;color:var(--muted);">${esc(proj.desc)}</div>`:''}
+    </div>
+    <span class="status-pill ${STATUS_CLS[proj.status||'actif']} " style="margin-left:auto">${STATUS_LABELS[proj.status||'actif']}</span>
+  </div>`;
+
+  // Progress bar US
+  if (totalUS > 0) {
+    h += `<div style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-size:12px;font-weight:500;">Progression US</span>
+        <span style="font-size:12px;color:var(--muted);">${usValide}/${totalUS} validées — ${pct}%</span>
+      </div>
+      <div class="progress-wrap"><div class="progress-fill${pct===100?' done':''}" style="width:${pct}%"></div></div>
+    </div>`;
+  }
+
+  // KPIs
+  h += `<div class="kpi-grid">
+    <div class="kpi-box"><div class="kpi-n">${totalUS}</div><div class="kpi-l">US totales</div></div>
+    <div class="kpi-box"><div class="kpi-n" style="color:var(--green)">${usValide}</div><div class="kpi-l">US validées</div></div>
+    <div class="kpi-box"><div class="kpi-n" style="color:var(--amber)">${usValid}</div><div class="kpi-l">En validation</div></div>
+    <div class="kpi-box"><div class="kpi-n">${moAll.length}</div><div class="kpi-l">Modes opératoires</div></div>
+    <div class="kpi-box"><div class="kpi-n">${crAll.length}</div><div class="kpi-l">Comptes rendus</div></div>
+    <div class="kpi-box"><div class="kpi-n" style="color:var(--green)">${crValide}</div><div class="kpi-l">CR validés</div></div>
+    ${blAll.length ? `<div class="kpi-box"><div class="kpi-n">${blActive.length}</div><div class="kpi-l">Tâches actives</div></div>
+    <div class="kpi-box"><div class="kpi-n" style="color:var(--green)">${blDone.length}</div><div class="kpi-l">Tâches terminées</div></div>` : ''}
+  </div>`;
+
+  // Tâches backlog (todos)
+  if (blAll.length) {
+    h += `<div class="suivi-section"><div class="suivi-section-title">Tâches (${blAll.length})</div>`;
+    // Active first, done after
+    const blSorted = [...blActive, ...blDone];
+    h += blSorted.map(e => {
+      const prioCls = {p1:'color:var(--red)',p2:'color:var(--amber)',p3:'color:var(--muted)'}[e.pri]||'color:var(--muted)';
+      return `<div class="suivi-row" style="${e.done?'opacity:.6':''}">
+        <input type="checkbox" ${e.done?'checked':''} data-action="toggleTask" data-id="${e.id}"
+          style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);flex-shrink:0;">
+        <span class="suivi-row-title"${e.done?' style="text-decoration:line-through;color:var(--muted)"':''}>${esc(e.text||'Sans titre')}</span>
+        ${e.pri?`<span style="font-size:11px;font-weight:600;${prioCls}">${e.pri.toUpperCase()}</span>`:''}
+        ${e.hz?`<span style="font-size:10px;color:var(--muted);padding:1px 6px;border:1px solid var(--border);border-radius:10px;">${e.hz}</span>`:''}
+      </div>`;
+    }).join('');
+    h += '</div>';
+  }
+
+  // US list
+  if (usAll.length) {
+    h += `<div class="suivi-section"><div class="suivi-section-title">User Stories (${usAll.length})</div>`;
+    h += usAll.map(e => {
+      const st = e.status||'brouillon';
+      const stCls = {brouillon:'s-archive',validation:'s-pause',valide:'s-actif',renvoye:'s-termine',archive:'s-archive'}[st]||'s-archive';
+      return `<div class="suivi-row">
+        ${st==='valide'?'<span style="color:var(--green);font-size:11px;">✓</span>':'<span style="color:var(--muted);font-size:11px;">○</span>'}
+        <span class="suivi-row-title">${esc(e.titre||'Sans titre')}</span>
+        <span class="status-pill ${stCls}" style="cursor:default;font-size:10px;">${STATUS_US[st]||st}</span>
+        ${e.est?`<span style="font-size:11px;color:var(--muted)">${e.est}pts</span>`:''}
+      </div>`;
+    }).join('');
+    h += '</div>';
+  }
+
+  // MO list
+  if (moAll.length) {
+    h += `<div class="suivi-section"><div class="suivi-section-title">Modes Opératoires (${moAll.length})</div>`;
+    h += moAll.map(e => {
+      const st = e.status||'brouillon';
+      const stCls = {brouillon:'s-archive',validation:'s-pause',valide:'s-actif',renvoye:'s-termine'}[st]||'s-archive';
+      return `<div class="suivi-row">
+        ${st==='valide'?'<span style="color:var(--green);font-size:11px;">✓</span>':'<span style="color:var(--muted);font-size:11px;">○</span>'}
+        <span class="suivi-row-title">${esc(e.titre||'Sans titre')}</span>
+        <span class="status-pill ${stCls}" style="cursor:default;font-size:10px;">${STATUS_MOC[st]||st}</span>
+        ${e.savedAt?`<span style="font-size:11px;color:var(--muted)">${e.savedAt}</span>`:''}
+      </div>`;
+    }).join('');
+    h += '</div>';
+  }
+
+  // CR list
+  if (crAll.length) {
+    h += `<div class="suivi-section"><div class="suivi-section-title">Comptes Rendus (${crAll.length})</div>`;
+    h += crAll.map(e => {
+      const st = e.status||'brouillon';
+      const stCls = {brouillon:'s-archive',validation:'s-pause',valide:'s-actif',renvoye:'s-termine'}[st]||'s-archive';
+      return `<div class="suivi-row">
+        ${st==='valide'?'<span style="color:var(--green);font-size:11px;">✓</span>':'<span style="color:var(--muted);font-size:11px;">○</span>'}
+        <span class="suivi-row-title">${esc(e.title||e.titre||'Sans titre')}</span>
+        <span class="status-pill ${stCls}" style="cursor:default;font-size:10px;">${STATUS_MOC[st]||st}</span>
+        ${e.savedAt?`<span style="font-size:11px;color:var(--muted)">${e.savedAt}</span>`:''}
+      </div>`;
+    }).join('');
+    h += '</div>';
+  }
+
+  if (!totalUS && !moAll.length && !crAll.length && !blAll.length) {
+    h += `<div class="empty"><div class="empty-icon">📂</div>Aucune donnée rattachée à ce projet.<br><span style="font-size:12px">Connectez Drive et actualisez, ou rattachez des éléments depuis todos, MO Hub, CR Generator et US Generator.</span></div>`;
+  }
+
+  el.innerHTML = h;
+
+  // Event delegation for checkboxes — avoids Brave Shield breaking inline onchange
+  el.onchange = function(ev) {
+    const cb = ev.target.closest('[data-action="toggleTask"]');
+    if (!cb) return;
+    toggleBacklogTask(cb.dataset.id);
+  };
+}
+
+/* ══ SHARED.JSON SYNC ══ */
+let sharedFileId = null;
+
+async function syncShared() {
+  if (!accessToken) return;
+  try {
+    const body = JSON.stringify({
+      projects: S.projects.map(p => ({id:p.id, name:p.name, color:p.color, status:p.status, desc:p.desc})),
+      team: S.team
+    }, null, 2);
+    if (!sharedFileId) {
+      const q = encodeURIComponent(`name='${SHARED_FILE}' and trashed=false`);
+      const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`,
+        {headers:{Authorization:'Bearer '+accessToken}});
+      const d = await res.json();
+      sharedFileId = d.files && d.files[0] ? d.files[0].id : null;
+    }
+    if (sharedFileId) {
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${sharedFileId}?uploadType=media`,
+        {method:'PATCH', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'}, body});
+    } else {
+      const meta = {name:SHARED_FILE, mimeType:'application/json'};
+      const form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(meta)],{type:'application/json'}));
+      form.append('media', new Blob([body],{type:'application/json'}));
+      const r = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+        {method:'POST', headers:{Authorization:'Bearer '+accessToken}, body:form});
+      const d = await r.json();
+      sharedFileId = d.id;
+    }
+  } catch(e) { console.warn('syncShared:', e.message); }
+}
+
+/* ══ GOOGLE DRIVE ══ */
+// Force fresh auth if stored token was issued with old scope (drive.file → drive)
+const _storedTok = sessionStorage.getItem(TOK) || '';
+const _scopeKey = 'td_scope_projects';
+const _lastScope = localStorage.getItem(_scopeKey) || '';
+if (_lastScope !== SCOPE) {
+  sessionStorage.removeItem(TOK); // token has wrong scope, discard
+  localStorage.setItem(_scopeKey, SCOPE);
+}
+let accessToken = (_lastScope === SCOPE ? _storedTok : '');
+let driveFileId = null;
+let projet001FileId = null; // cached Drive file ID for projet001.json
+let projet001FullData = null; // full JSON to rewrite on toggle
+
+async function toggleBacklogTask(taskId) {
+  const numId = typeof taskId === 'string' ? parseInt(taskId, 10) : taskId;
+
+  // 1. Update local state immediately
+  const task = suiviData.backlog.find(t => t.id === numId || t.id === taskId);
+  if (!task) { toast('⚠ Tâche introuvable'); return; }
+  task.done = !task.done;
+  if (projet001FullData && Array.isArray(projet001FullData.backlog)) {
+    const bt = projet001FullData.backlog.find(t => t.id === numId || t.id === taskId);
+    if (bt) bt.done = task.done;
+  }
+
+  // 2. Re-render immediately (optimistic UI)
+  renderSuivi();
+
+  // 3. Check prereqs
+  if (!accessToken) {
+    toast('⚠ Reconnectez Drive (Log → Connecter Google)');
+    return;
+  }
+  if (!projet001FullData) {
+    toast('⚠ Cliquez Actualiser d\'abord');
+    return;
+  }
+
+  // 4. Show sync indicator
+  setSync('pending');
+
+  try {
+    // Always use fileId from last Actualiser — most reliable
+    // If missing, search fresh with orderBy modifiedTime to get the right one
+    if (!projet001FileId) {
+      const q = encodeURIComponent("name='projet001.json' and trashed=false");
+      const r = await fetch(
+        `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)&orderBy=modifiedTime+desc`,
+        {headers:{Authorization:'Bearer '+accessToken}}
+      );
+      const d = await r.json();
+      if (d.error) throw new Error(d.error.message);
+      projet001FileId = d.files && d.files[0] ? d.files[0].id : null;
+      console.log('[toggleBacklogTask] searched fileId:', projet001FileId, 'total results:', d.files?.length);
+    }
+    if (!projet001FileId) { toast('⚠ projet001.json introuvable — Actualisez le Suivi'); setSync('error'); return; }
+
+    // 5. Write to Drive — use resumable upload if body > 4MB
+    const bodyStr = JSON.stringify(projet001FullData);
+    console.log('[toggleBacklogTask] body size:', bodyStr.length, 'bytes, fileId:', projet001FileId);
+
+    let uploadResp;
+    if (bodyStr.length > 4 * 1024 * 1024) {
+      // Resumable upload for large files
+      const initResp = await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${projet001FileId}?uploadType=resumable`,
+        { method: 'PATCH',
+          headers: {Authorization:'Bearer '+accessToken, 'Content-Type':'application/json', 'X-Upload-Content-Type':'application/json'},
+          body: '{}' }
+      );
+      if (!initResp.ok) { uploadResp = initResp; }
+      else {
+        const uploadUrl = initResp.headers.get('Location');
+        uploadResp = await fetch(uploadUrl, {
+          method: 'PUT',
+          headers: {'Content-Type':'application/json'},
+          body: bodyStr
+        });
+      }
+    } else {
+      uploadResp = await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${projet001FileId}?uploadType=media`,
+        { method: 'PATCH',
+          headers: {Authorization:'Bearer '+accessToken, 'Content-Type':'application/json'},
+          body: bodyStr }
+      );
+    }
+    const resp = uploadResp;
+    console.log('[toggleBacklogTask] upload status:', resp.status);
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({error:{message:'HTTP '+resp.status}}));
+      const msg = (err.error && err.error.message) || ('HTTP '+resp.status);
+      console.error('[toggleBacklogTask] PATCH error:', resp.status, JSON.stringify(err));
+      setSync('error');
+      if (resp.status === 401 || resp.status === 403) {
+        sessionStorage.removeItem(TOK);
+        accessToken = '';
+        toast('⚠ Reconnectez Drive (scope insuffisant — HTTP '+resp.status+')');
+      } else {
+        toast('❌ Drive HTTP '+resp.status+' : '+msg);
+      }
+      return;
+    }
+
+    // 6. Success
+    setSync('ok');
+    const kb = Math.round(bodyStr.length/1024);
+    toast((task.done ? '✓ Terminée' : '↩ Réactivée')+' — Drive OK ('+kb+'kb)');
+
+  } catch(e) {
+    setSync('error');
+    toast('❌ Erreur réseau : '+e.message);
+    console.error('toggleBacklogTask:', e);
+  }
+}
+
+function loadGIS(cb) {
+  if (window.google && window.google.accounts) { cb(); return; }
+  const s = document.createElement('script');
+  s.src = 'https://accounts.google.com/gsi/client';
+  s.onload = cb; document.head.appendChild(s);
+}
+
+function driveAuth() {
+  loadGIS(() => {
+    const cl = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID, scope: SCOPE,
+      callback: r => {
+        if (r.error) { setSync('error'); toast('❌ '+r.error); return; }
+        accessToken = r.access_token;
+        sessionStorage.setItem(TOK, accessToken);
+        setSync('ok');
+        updateDriveUI();
+        toast('✓ Drive connecté');
+        drivePull();
+        if (pollSecs > 0) startPolling();
+      }
+    });
+    cl.requestAccessToken();
+  });
+}
+
+function updateDriveUI() {
+  const connected = !!accessToken;
+  document.getElementById('btn-pull').disabled = !connected;
+  document.getElementById('btn-push').disabled = !connected;
+  document.getElementById('sync-label').textContent = connected ? 'Sync ✓' : 'Local';
+  document.getElementById('sync-dot').className = 'sync-dot' + (connected?' ok':'');
+  const cb = document.getElementById('hbtn-cloud');
+  if (cb) cb.title = connected ? 'Drive connecté — cliquer pour le Log' : 'Connecter Google Drive';
+}
+
+async function findOrCreateDriveFile() {
+  if (driveFileId) return driveFileId;
+  const q = encodeURIComponent(`name='${DRIVE_FILE}' and trashed=false`);
+  const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`,
+    {headers:{Authorization:'Bearer '+accessToken}});
+  const d = await r.json();
+  if (d.files && d.files[0]) { driveFileId = d.files[0].id; return driveFileId; }
+  // Create
+  const meta = {name:DRIVE_FILE, mimeType:'application/json'};
+  const body = JSON.stringify({projects:[], team:[]});
+  const form = new FormData();
+  form.append('metadata', new Blob([JSON.stringify(meta)],{type:'application/json'}));
+  form.append('media', new Blob([body],{type:'application/json'}));
+  const cr = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+    {method:'POST', headers:{Authorization:'Bearer '+accessToken}, body:form});
+  const cd = await cr.json();
+  driveFileId = cd.id;
+  return driveFileId;
+}
+
+async function drivePull() {
+  if (!accessToken) { toast('⚠ Connectez Drive d\'abord'); return; }
+  setSync('pending');
+  try {
+    const id = await findOrCreateDriveFile();
+    // Record modifiedTime to avoid re-pulling same version
+    const mr = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?fields=modifiedTime`,
+      {headers:{Authorization:'Bearer '+accessToken}});
+    if (mr.ok) { const mm = await mr.json(); lastModifiedKnown = mm.modifiedTime||null; }
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`,
+      {headers:{Authorization:'Bearer '+accessToken}});
+    const d = await r.json();
+    S = { projects: d.projects||[], team: d.team||[] };
+    ensureState(); save();
+    renderProjects(); renderTeam();
+    populateSuiviSel();
+    setSync('ok');
+    toast('✓ Données chargées depuis Drive');
+    document.getElementById('drive-status-detail').textContent = 'Dernière synchro : '+new Date().toLocaleTimeString('fr-FR');
+    if (pollSecs > 0) startPolling();
+  } catch(e) { setSync('error'); toast('❌ '+e.message); }
+}
+
+async function drivePush() {
+  if (!accessToken) { toast('⚠ Connectez Drive d\'abord'); return; }
+  setSync('pending');
+  try {
+    const id = await findOrCreateDriveFile();
+    const body = JSON.stringify({projects:S.projects, team:S.team}, null, 2);
+    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`,
+      {method:'PATCH', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'}, body});
+    await syncShared();
+    setSync('ok');
+    toast('✓ Sauvegardé sur Drive');
+  } catch(e) { setSync('error'); toast('❌ '+e.message); }
+}
+
+async function silentPush() {
+  if (!accessToken) return;
+  setSync('pending');
+  try {
+    const id = await findOrCreateDriveFile();
+    const body = JSON.stringify({projects:S.projects, team:S.team}, null, 2);
+    const r = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`,
+      {method:'PATCH', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'}, body});
+    if (!r.ok) {
+      if (r.status===412) { setSync('ok'); return; } // conflict — polling will recover
+      if (r.status===401) { setSync('local'); accessToken=''; return; } // expired
+      throw new Error('HTTP '+r.status);
+    }
+    await syncShared();
+    lastModifiedKnown = null; // reset so next poll re-fetches modifiedTime
+    setSync('ok');
+  } catch(e) {
+    setSync('local'); // silent — no red flash
+    console.warn('[silentPush]', e.message);
+  }
+}
+
+/* ══ POLLING ══ */
+const POLL_KEY = 'td_poll_projects';
+let pollSecs = 30;
+let pollTimer = null;
+let pollCountTimer = null;
+let lastModifiedKnown = null;
+
+function isEditingInProgress() {
+  // Block poll if a form input/textarea has focus
+  const active = document.activeElement;
+  if (active && (active.tagName==='INPUT'||active.tagName==='TEXTAREA'||active.tagName==='SELECT')) return true;
+  // Block if drawer is open
+  if (document.getElementById('drawer')?.classList.contains('open')) return true;
+  // Block if project or team form has visible input (user typed something)
+  const nom = document.getElementById('pf-nom');
+  if (nom && nom.value.trim()) return true;
+  const tnom = document.getElementById('tf-nom');
+  if (tnom && tnom.value.trim()) return true;
+  return false;
+}
+
+function setPollInterval(val) {
+  pollSecs = parseInt(val, 10)||0;
+  localStorage.setItem(POLL_KEY, val);
+  stopPolling();
+  if (pollSecs > 0 && accessToken) startPolling();
+  else document.getElementById('poll-next').textContent = '';
+}
+
+function startPolling() {
+  stopPolling();
+  if (!accessToken || pollSecs <= 0) return;
+  scheduleNextPoll();
+}
+
+function stopPolling() {
+  if (pollTimer)      { clearTimeout(pollTimer);   pollTimer=null; }
+  if (pollCountTimer) { clearInterval(pollCountTimer); pollCountTimer=null; }
+  document.getElementById('poll-next').textContent = '';
+}
+
+function scheduleNextPoll() {
+  if (!accessToken || pollSecs <= 0) return;
+  let countdown = pollSecs;
+  const lbl = document.getElementById('poll-next');
+  if (lbl) lbl.textContent = 'prochain dans '+countdown+'s';
+  pollCountTimer = setInterval(() => {
+    countdown--;
+    if (lbl) lbl.textContent = 'prochain dans '+countdown+'s';
+    if (countdown <= 0) { clearInterval(pollCountTimer); pollCountTimer=null; }
+  }, 1000);
+  pollTimer = setTimeout(() => pollOnce(), pollSecs * 1000);
+}
+
+async function pollOnce() {
+  if (!accessToken) return;
+  if (document.visibilityState === 'hidden') { scheduleNextPoll(); return; }
+  if (isEditingInProgress()) { scheduleNextPoll(); return; } // user is typing — defer
+  try {
+    const id = await findOrCreateDriveFile();
+    // 1. Check modifiedTime only — lightweight
+    const r = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${id}?fields=modifiedTime`,
+      {headers:{Authorization:'Bearer '+accessToken}}
+    );
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    const meta = await r.json();
+    const remoteTs = meta.modifiedTime;
+    if (lastModifiedKnown && remoteTs === lastModifiedKnown) {
+      scheduleNextPoll(); return; // no change
+    }
+    // 2. First poll — just record, don't pull (drivePull already did it at auth)
+    if (!lastModifiedKnown) { lastModifiedKnown = remoteTs; scheduleNextPoll(); return; }
+    // 3. New version — pull
+    lastModifiedKnown = remoteTs;
+    const dr = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${id}?alt=media`,
+      {headers:{Authorization:'Bearer '+accessToken}}
+    );
+    if (!dr.ok) throw new Error('HTTP '+dr.status);
+    const d = await dr.json();
+    if (!Array.isArray(d.projects)) throw new Error('Format invalide');
+    S = {projects: d.projects||[], team: d.team||[]};
+    ensureState(); save();
+    renderProjects(); renderTeam(); populateSuiviSel();
+    const t = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    setSync('ok');
+    document.getElementById('drive-status-detail').textContent = 'Sync auto ✓ — '+t;
+  } catch(e) {
+    console.warn('[poll]', e.message);
+  }
+  scheduleNextPoll();
+}
+
+/* ══ EXPORT / IMPORT ══ */
+function exportData() {
+  const json = JSON.stringify({projects:S.projects, team:S.team}, null, 2);
+  document.getElementById('log-area').value = json;
+  navigator.clipboard?.writeText(json).then(() => toast('✓ JSON copié'));
+}
+function downloadData() {
+  const blob = new Blob([JSON.stringify({projects:S.projects,team:S.team},null,2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='projects.json'; a.click();
+}
+function openImport()  { document.getElementById('imp-area-wrap').style.display=''; document.getElementById('imp-area').focus(); }
+function closeImport() { document.getElementById('imp-area-wrap').style.display='none'; }
+function importData() {
+  try {
+    const d = JSON.parse(document.getElementById('imp-area').value);
+    S = {projects: d.projects||[], team: d.team||[]};
+    ensureState(); save();
+    renderProjects(); renderTeam(); closeImport();
+    toast('✓ Import réussi');
+  } catch(e) { toast('❌ JSON invalide'); }
+}
+function clearAll() {
+  if (!confirm('Tout effacer ?')) return;
+  S = {projects:[], team:[]};
+  save(); renderProjects(); renderTeam(); toast('Données effacées');
+}
+
+/* ══ BOOT ══ */
+function load() {
+  try {
+    const r = localStorage.getItem(SK);
+    if (r) S = JSON.parse(r);
+  } catch(e) {}
+  ensureState();
+  const t = localStorage.getItem(TK)||'light';
+  applyTheme(t);
+  buildColorPicker('proj-color-picker', PROJ_COLORS, projSelectedColor, selectProjColor);
+  buildColorPicker('team-color-picker', TEAM_COLORS, teamSelectedColor, selectTeamColor);
+  renderProjects();
+  // Restore poll preference
+  const savedPoll = localStorage.getItem(POLL_KEY);
+  if (savedPoll !== null) {
+    pollSecs = parseInt(savedPoll, 10)||0;
+    const sel = document.getElementById('poll-interval');
+    if (sel) sel.value = savedPoll;
+  }
+  if (accessToken) {
+    setSync('ok');
+    updateDriveUI();
+    if (pollSecs > 0) startPolling();
+  }
+}
+load();
+</script>
+</body>
+</html>
