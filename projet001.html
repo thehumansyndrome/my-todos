@@ -456,14 +456,15 @@ div:hover>.item-img-del{display:block;}
 .proj-count{font-family:var(--mono);font-size:11px;color:var(--muted);padding:2px 10px;border:1px solid var(--border);border-radius:20px;white-space:nowrap;}
 /* ── BACKLOG ── */
 .bl-item{
-  display:flex;align-items:flex-start;gap:8px;
+  display:flex;align-items:flex-start;gap:10px;
   padding:10px 0;border-bottom:1px solid var(--border);
+  position:relative;
 }
 .bl-item:first-child{border-top:1px solid var(--border);}
 .bl-item.done{opacity:.45;}
 .bl-item.done .bl-text{text-decoration:line-through;}
-.bl-text{flex:1;font-size:13px;color:var(--text);line-height:1.4;word-break:break-word;cursor:pointer;}
-.bl-meta{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:3px;}
+.bl-text{font-size:13px;font-weight:400;color:var(--text);line-height:1.45;word-break:break-word;cursor:pointer;}
+.bl-meta{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:4px;}
 .bl-proj-badge{font-family:var(--mono);font-size:9px;font-weight:500;padding:1px 7px;border-radius:12px;text-transform:uppercase;letter-spacing:.04em;border:1px solid;}
 
 /* ── REVIEWS ── */
@@ -5080,7 +5081,7 @@ function addBacklogItem(){
   const projId=document.getElementById('bl-proj').value||'';
   const pri=document.getElementById('bl-pri').value||'p2';
   if(!S.backlog)S.backlog=[];
-  S.backlog.unshift({id:uid(),text,projId,pri,done:false,ts:Date.now(),assigneeIds:defaultAssigneesFn()});
+  S.backlog.unshift({id:uid(),text,projId,pri,done:false,status:'valide',ts:Date.now(),assigneeIds:defaultAssigneesFn()});
   document.getElementById('bl-in').value='';
   autoSave();renderBacklog();
   logA('backlog','Ajouté: "'+text+'"');
@@ -5129,18 +5130,25 @@ function renderBacklog(){
     const p=getProject(b.projId);
     const projBadge=p?`<span class="bl-proj-badge" style="background:${p.color}22;color:${p.color};border:1px solid ${p.color}44;">${esc(p.name)}</span>`:'';
     const priCls={p1:'p1',p2:'p2',p3:'p3'};
+    const bSt=b.status||'brouillon';
+    const bStBadge=bSt==='valide'
+      ?`<span style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--green);border:1px solid var(--green);padding:1px 5px;border-radius:2px;letter-spacing:.04em;">Validé ✓</span>`
+      :bSt==='abandonne'
+      ?`<span style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--red);border:1px solid var(--red);padding:1px 5px;border-radius:2px;letter-spacing:.04em;">Abandonné</span>`
+      :`<span style="font-family:var(--mono);font-size:9px;color:var(--muted);border:1px solid var(--muted);padding:1px 5px;border-radius:2px;letter-spacing:.04em;">Brouillon</span>`;
     return`<div class="bl-item${b.done?' done':''}">
       <input type="checkbox" class="item-check" ${b.done?'checked':''} onchange="toggleBacklog('${b.id}')">
-      <div style="flex:1;min-width:0;">
-        <div class="bl-text" onclick="openUD('backlog','${b.id}')" id="blt-${b.id}" style="cursor:pointer;">${esc(b.text)}</div>
-        <div class="bl-meta">
+      <div class="item-body">
+        <div class="bl-text" onclick="quickEditInlineBacklog('${b.id}')" id="blt-${b.id}">${esc(b.text)}</div>
+        <div class="bl-meta item-meta">
           <span class="tag ${priCls[b.pri]||'p2'}">${b.pri.toUpperCase()}</span>
           ${assigneeBadgesHtml(b.assigneeIds,b.id,'backlog')}
-          ${(b.status||'brouillon')==='valide'?'<span style="font-size:10px;font-weight:600;color:var(--green);border:1px solid var(--green);padding:1px 5px;border-radius:10px;">Validé ✓</span>':(b.status==='abandonne'?'<span style="font-size:10px;font-weight:600;color:var(--red);border:1px solid var(--red);padding:1px 5px;border-radius:10px;">Abandonné</span>':'<span style="font-size:10px;color:var(--muted);border:1px solid var(--muted);padding:1px 5px;border-radius:10px;">Brouillon</span>')}
+          ${bStBadge}
           ${projBadge}
           <span class="meta-date">${fd(b.ts)}</span>
         </div>
       </div>
+      <button class="comment-btn" onclick="openUD('backlog','${b.id}')" title="Détails" style="opacity:.5;font-size:13px;">✎</button>
       <button class="del" onclick="delBacklogItem('${b.id}')">×</button>
     </div>`;
   }).join('');
