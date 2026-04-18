@@ -156,6 +156,31 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 }
 input,select,textarea{background:var(--bg);color:var(--text);}
 [data-theme="dark"] input,[data-theme="dark"] select,[data-theme="dark"] textarea{color-scheme:dark;}
+
+/* ── Task Detail Drawer ── */
+.td-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:300;opacity:0;pointer-events:none;transition:opacity .2s;}
+.td-overlay.open{opacity:1;pointer-events:all;}
+.td-drawer{position:fixed;top:0;right:0;width:min(480px,100vw);height:100vh;background:var(--surface);border-left:1px solid var(--border);z-index:301;transform:translateX(100%);transition:transform .25s;display:flex;flex-direction:column;overflow:hidden;}
+.td-drawer.open{transform:translateX(0);}
+.td-drawer-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;}
+.td-drawer-title{font-size:15px;font-weight:500;flex:1;line-height:1.4;outline:none;border:none;background:transparent;color:var(--text);font-family:var(--sans);resize:none;padding:0;width:100%;}
+.td-drawer-title:focus{outline:1px solid var(--accent);border-radius:3px;padding:2px 4px;}
+.td-drawer-close{width:28px;height:28px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0;cursor:pointer;background:none;border:none;font-size:16px;}
+.td-drawer-close:hover{background:var(--border);}
+.td-drawer-body{flex:1;overflow-y:auto;padding:16px;padding-bottom:env(safe-area-inset-bottom,24px);-webkit-overflow-scrolling:touch;}
+.td-drawer-section{margin-bottom:20px;}
+.td-drawer-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px;}
+.td-status-badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid;user-select:none;transition:all .15s;}
+.td-status-brouillon{color:var(--muted);border-color:var(--muted);}
+.td-status-valide{color:var(--green);border-color:var(--green);}
+.td-history-item{padding:7px 10px;background:var(--bg);border-radius:var(--radius);margin-bottom:5px;font-size:12px;}
+.td-history-meta{color:var(--muted);font-size:11px;margin-bottom:3px;}
+.td-history-change{display:flex;gap:5px;align-items:baseline;margin-top:2px;font-size:11px;}
+.td-hist-tag{font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.04em;flex-shrink:0;color:var(--amber);}
+.td-comment-item{padding:8px 10px;background:var(--bg);border-radius:var(--radius);margin-bottom:6px;}
+.td-comment-text{font-size:13px;line-height:1.5;}
+.td-comment-meta{font-size:11px;color:var(--muted);margin-top:3px;}
+
 </style>
 </head>
 <body>
@@ -834,7 +859,7 @@ function renderSuivi() {
     const blSorted = [...blActive, ...blDone];
     h += blSorted.map(e => {
       const prioCls = {p1:'color:var(--red)',p2:'color:var(--amber)',p3:'color:var(--muted)'}[e.pri]||'color:var(--muted)';
-      return `<div class="suivi-row" style="${e.done?'opacity:.6':''}">
+      return `<div class="suivi-row" style="${e.done?'opacity:.6':''};cursor:pointer;" onclick="if(!event.target.closest('input,button'))openTD('${e.id}')">
         <input type="checkbox" ${e.done?'checked':''} data-action="toggleTask" data-id="${e.id}"
           style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);flex-shrink:0;">
         <span class="suivi-row-title"${e.done?' style="text-decoration:line-through;color:var(--muted)"':''}>${esc(e.text||'Sans titre')}</span>
@@ -956,6 +981,52 @@ let driveFileId = null;
 let projet001FileId = null; // cached Drive file ID for projet001.json
 let projet001FullData = null; // full JSON to rewrite on toggle
 
+
+async function writeProjet001(toastMsg) {
+  if (!accessToken) { toast('⚠ Reconnectez Drive'); return false; }
+  if (!projet001FullData) { toast('⚠ Cliquez Actualiser d\'abord'); return false; }
+  if (!projet001FileId) {
+    const q = encodeURIComponent("name='projet001.json' and trashed=false");
+    const r = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)&orderBy=modifiedTime+desc`,
+      {headers:{Authorization:'Bearer '+accessToken}}
+    );
+    const d = await r.json();
+    if (d.error) throw new Error(d.error.message);
+    projet001FileId = d.files && d.files[0] ? d.files[0].id : null;
+  }
+  if (!projet001FileId) { toast('⚠ projet001.json introuvable'); setSync('error'); return false; }
+  setSync('pending');
+  try {
+    const bodyStr = JSON.stringify(projet001FullData);
+    let resp;
+    if (bodyStr.length > 4*1024*1024) {
+      const init = await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${projet001FileId}?uploadType=resumable`,
+        {method:'PATCH', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json','X-Upload-Content-Type':'application/json'}, body:'{}'}
+      );
+      const url = init.headers.get('Location');
+      resp = await fetch(url, {method:'PUT', headers:{'Content-Type':'application/json'}, body:bodyStr});
+    } else {
+      resp = await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${projet001FileId}?uploadType=media`,
+        {method:'PATCH', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'}, body:bodyStr}
+      );
+    }
+    if (!resp.ok) {
+      const err = await resp.json().catch(()=>({error:{message:'HTTP '+resp.status}}));
+      setSync('error');
+      if (resp.status===401||resp.status===403) { accessToken=''; toast('⚠ Reconnectez Drive'); }
+      else toast('❌ Drive HTTP '+resp.status+' : '+((err.error&&err.error.message)||''));
+      return false;
+    }
+    setSync('ok');
+    if (toastMsg) toast(toastMsg);
+    return true;
+  } catch(e) {
+    setSync('error'); toast('❌ '+e.message); return false;
+  }
+}
 async function toggleBacklogTask(taskId) {
   const numId = typeof taskId === 'string' ? parseInt(taskId, 10) : taskId;
 
@@ -971,93 +1042,8 @@ async function toggleBacklogTask(taskId) {
   // 2. Re-render immediately (optimistic UI)
   renderSuivi();
 
-  // 3. Check prereqs
-  if (!accessToken) {
-    toast('⚠ Reconnectez Drive (Log → Connecter Google)');
-    return;
-  }
-  if (!projet001FullData) {
-    toast('⚠ Cliquez Actualiser d\'abord');
-    return;
-  }
-
-  // 4. Show sync indicator
-  setSync('pending');
-
-  try {
-    // Always use fileId from last Actualiser — most reliable
-    // If missing, search fresh with orderBy modifiedTime to get the right one
-    if (!projet001FileId) {
-      const q = encodeURIComponent("name='projet001.json' and trashed=false");
-      const r = await fetch(
-        `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)&orderBy=modifiedTime+desc`,
-        {headers:{Authorization:'Bearer '+accessToken}}
-      );
-      const d = await r.json();
-      if (d.error) throw new Error(d.error.message);
-      projet001FileId = d.files && d.files[0] ? d.files[0].id : null;
-      console.log('[toggleBacklogTask] searched fileId:', projet001FileId, 'total results:', d.files?.length);
-    }
-    if (!projet001FileId) { toast('⚠ projet001.json introuvable — Actualisez le Suivi'); setSync('error'); return; }
-
-    // 5. Write to Drive — use resumable upload if body > 4MB
-    const bodyStr = JSON.stringify(projet001FullData);
-    console.log('[toggleBacklogTask] body size:', bodyStr.length, 'bytes, fileId:', projet001FileId);
-
-    let uploadResp;
-    if (bodyStr.length > 4 * 1024 * 1024) {
-      // Resumable upload for large files
-      const initResp = await fetch(
-        `https://www.googleapis.com/upload/drive/v3/files/${projet001FileId}?uploadType=resumable`,
-        { method: 'PATCH',
-          headers: {Authorization:'Bearer '+accessToken, 'Content-Type':'application/json', 'X-Upload-Content-Type':'application/json'},
-          body: '{}' }
-      );
-      if (!initResp.ok) { uploadResp = initResp; }
-      else {
-        const uploadUrl = initResp.headers.get('Location');
-        uploadResp = await fetch(uploadUrl, {
-          method: 'PUT',
-          headers: {'Content-Type':'application/json'},
-          body: bodyStr
-        });
-      }
-    } else {
-      uploadResp = await fetch(
-        `https://www.googleapis.com/upload/drive/v3/files/${projet001FileId}?uploadType=media`,
-        { method: 'PATCH',
-          headers: {Authorization:'Bearer '+accessToken, 'Content-Type':'application/json'},
-          body: bodyStr }
-      );
-    }
-    const resp = uploadResp;
-    console.log('[toggleBacklogTask] upload status:', resp.status);
-
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({error:{message:'HTTP '+resp.status}}));
-      const msg = (err.error && err.error.message) || ('HTTP '+resp.status);
-      console.error('[toggleBacklogTask] PATCH error:', resp.status, JSON.stringify(err));
-      setSync('error');
-      if (resp.status === 401 || resp.status === 403) {
-        sessionStorage.removeItem(TOK);
-        accessToken = '';
-        toast('⚠ Reconnectez Drive (scope insuffisant — HTTP '+resp.status+')');
-      } else {
-        toast('❌ Drive HTTP '+resp.status+' : '+msg);
-      }
-      return;
-    }
-
-    // 6. Success
-    setSync('ok');
-    const kb = Math.round(bodyStr.length/1024);
-    toast((task.done ? '✓ Terminée' : '↩ Réactivée')+' — Drive OK ('+kb+'kb)');
-
-  } catch(e) {
-    setSync('error');
-    toast('❌ Erreur réseau : '+e.message);
-    console.error('toggleBacklogTask:', e);
-  }
+  // 3. Write to Drive via shared helper
+  await writeProjet001(task.done ? '✓ Terminée' : '↩ Réactivée');
 }
 
 function loadGIS(cb) {
@@ -1323,6 +1309,154 @@ function load() {
   }
 }
 load();
+
+// ── Task Detail Drawer ──────────────────────────────────────────────────────
+let tdTaskId = null;
+function tdFmt(d){return d?new Date(d).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}):''}
+function tdGetTask(){
+  if(!projet001FullData) return null;
+  const numId = typeof tdTaskId==='string'?parseInt(tdTaskId,10):tdTaskId;
+  return (projet001FullData.backlog||[]).find(t=>t.id===numId||t.id===tdTaskId)||null;
+}
+function tdGetAdmin(){return (S.team||[]).find(m=>m.appRole==='Admin')||null;}
+
+function openTD(rawId){
+  // rawId may come from data-id (string) — keep as-is, tdGetTask handles both
+  tdTaskId = rawId;
+  refreshTD();
+  document.getElementById('td-overlay').classList.add('open');
+  document.getElementById('td-drawer').classList.add('open');
+}
+function closeTD(){
+  document.getElementById('td-overlay').classList.remove('open');
+  document.getElementById('td-drawer').classList.remove('open');
+  tdTaskId = null;
+}
+function refreshTD(){
+  const t=tdGetTask(); if(!t) return;
+  const ta=document.getElementById('td-title'); ta.value=t.text||''; tdAutoResize(ta);
+  const st=t.status||'brouillon';
+  document.getElementById('td-badges').innerHTML=
+    `<span class="td-status-badge ${st==='valide'?'td-status-valide':'td-status-brouillon'}" onclick="tdToggleStatus()">${st==='valide'?'Validé ✓':'Brouillon'}</span>`;
+  tdRenderTeam(t); tdRenderComments(t); tdRenderHistory(t);
+}
+function tdAutoResize(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
+
+function tdSaveTitle(){
+  const t=tdGetTask(); if(!t) return;
+  const v=document.getElementById('td-title').value.trim(); if(!v||v===t.text) return;
+  tdLog(t,'texte',t.text,v);
+  t.text=v;
+  // Sync to suiviData too
+  const numId=typeof tdTaskId==='string'?parseInt(tdTaskId,10):tdTaskId;
+  const sb=suiviData.backlog.find(x=>x.id===numId||x.id===tdTaskId); if(sb) sb.text=v;
+  tdSave();
+}
+function tdToggleStatus(){
+  const t=tdGetTask(); if(!t) return;
+  const prev=t.status||'brouillon'; const next=prev==='valide'?'brouillon':'valide';
+  tdLog(t,'statut',prev==='valide'?'Validé':'Brouillon',next==='valide'?'Validé':'Brouillon');
+  t.status=next;
+  const numId=typeof tdTaskId==='string'?parseInt(tdTaskId,10):tdTaskId;
+  const sb=suiviData.backlog.find(x=>x.id===numId||x.id===tdTaskId); if(sb) sb.status=next;
+  tdSave();
+}
+function tdRenderTeam(t){
+  const el=document.getElementById('td-team');
+  const team=S.team||[];
+  if(!team.length){el.innerHTML='<span style="font-size:13px;color:var(--muted)">Aucun membre</span>';return;}
+  const admin=tdGetAdmin(); const adminId=admin?admin.id:null;
+  const ids=t.assigneeIds||[];
+  el.innerHTML=team.map(m=>{
+    const on=ids.includes(m.id); const isAdmin=m.id===adminId;
+    return `<span onclick="${isAdmin?'':'tdToggleAssignee(\''+m.id+'\');'}" style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:600;margin:0 4px 4px 0;cursor:${isAdmin?'default':'pointer'};background:${on?m.color:'transparent'};color:${on?'#fff':'var(--muted)'};border:1px solid ${on?m.color:'var(--border)'};transition:all .15s;">
+      <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:${on?'rgba(255,255,255,.25)':m.color};color:#fff;font-size:9px;font-weight:700;">${m.initiales}</span>
+      ${m.nom.split(' ')[0]}</span>`;
+  }).join('');
+}
+function tdToggleAssignee(memberId){
+  const t=tdGetTask(); if(!t) return;
+  const admin=tdGetAdmin(); if(admin&&memberId===admin.id) return;
+  if(!t.assigneeIds) t.assigneeIds=[];
+  const m=(S.team||[]).find(x=>x.id===memberId);
+  const idx=t.assigneeIds.indexOf(memberId);
+  tdLog(t,'assigné',idx>=0?(m?m.nom:'?'):'—',idx>=0?'—':(m?m.nom:'?'));
+  if(idx>=0) t.assigneeIds.splice(idx,1); else t.assigneeIds.push(memberId);
+  tdSave();
+}
+function tdRenderComments(t){
+  const el=document.getElementById('td-comments'); const comments=t.comments||[];
+  if(!comments.length){el.innerHTML='<span style="font-size:13px;color:var(--muted)">Aucun commentaire</span>';return;}
+  el.innerHTML=comments.map((c,i)=>{
+    const author=c.authorId?(S.team||[]).find(m=>m.id===c.authorId):null;
+    const auth=author?`<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:${author.color};color:#fff;font-size:9px;font-weight:700;margin-right:4px;">${author.initiales}</span><b>${author.nom}</b>`:'<span style="color:var(--muted)">Anonyme</span>';
+    return `<div class="td-comment-item"><div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;">${auth}</div><div class="td-comment-text">${c.text}</div><div class="td-comment-meta">${c.date} <button onclick="tdDeleteComment(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;padding:0 3px;">✕</button></div></div>`;
+  }).join('');
+}
+function tdAddComment(){
+  const t=tdGetTask(); if(!t) return;
+  const inp=document.getElementById('td-comment-input'); const text=inp.value.trim(); if(!text) return;
+  const admin=tdGetAdmin();
+  t.comments=t.comments||[];
+  t.comments.push({text,date:tdFmt(new Date()),authorId:admin?admin.id:null});
+  inp.value=''; tdSave();
+}
+function tdDeleteComment(idx){
+  const t=tdGetTask(); if(!t) return;
+  if(!confirm('Supprimer ce commentaire ?')) return;
+  (t.comments||[]).splice(idx,1); tdSave();
+}
+function tdLog(t,field,from,to){
+  if(from===to) return;
+  t.history=t.history||[];
+  const admin=tdGetAdmin();
+  t.history.unshift({date:tdFmt(new Date()),authorName:admin?admin.nom:'?',field,from,to});
+  if(t.history.length>50) t.history.length=50;
+}
+function tdRenderHistory(t){
+  const el=document.getElementById('td-history'); const hist=t.history||[];
+  if(!hist.length){el.innerHTML='<span style="font-size:13px;color:var(--muted)">Aucune modification</span>';return;}
+  el.innerHTML=hist.map(h=>`<div class="td-history-item"><div class="td-history-meta">${h.date} · <b>${h.authorName}</b></div><div class="td-history-change"><span class="td-hist-tag">~ ${h.field}</span><span style="color:var(--muted)">${h.from}</span> → <span>${h.to}</span></div></div>`).join('');
+}
+async function tdSave(){
+  await writeProjet001('✓ Sauvegardé');
+  renderSuivi();
+  refreshTD();
+}
+
 </script>
+
+<!-- Task Detail Drawer -->
+<div class="td-overlay" id="td-overlay" onclick="closeTD()"></div>
+<div class="td-drawer" id="td-drawer">
+  <div class="td-drawer-header">
+    <div style="flex:1;min-width:0;">
+      <textarea class="td-drawer-title" id="td-title" rows="2" oninput="tdAutoResize(this)" onblur="tdSaveTitle()"></textarea>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;" id="td-badges"></div>
+    </div>
+    <button class="td-drawer-close" onclick="closeTD()">&#x2715;</button>
+  </div>
+  <div class="td-drawer-body">
+    <div class="td-drawer-section">
+      <div class="td-drawer-section-title">&#x1F465; &Eacute;quipe</div>
+      <div id="td-team"></div>
+    </div>
+    <div class="td-drawer-section">
+      <div class="td-drawer-section-title">&#x1F4AC; Commentaires</div>
+      <div id="td-comments"></div>
+      <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
+        <textarea id="td-comment-input" rows="2" placeholder="Ajouter un commentaire…"
+          style="font-family:var(--sans);font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);resize:none;outline:none;width:100%;box-sizing:border-box;"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();tdAddComment();}"></textarea>
+        <button class="btn sm primary" onclick="tdAddComment()" style="align-self:flex-end;">Envoyer</button>
+      </div>
+    </div>
+    <div class="td-drawer-section">
+      <div class="td-drawer-section-title">&#x1F4CB; Historique</div>
+      <div id="td-history"></div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
