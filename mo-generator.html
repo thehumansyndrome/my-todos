@@ -54,11 +54,22 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
 /* ── Page ── */
 .page{max-width:1100px;margin:0 auto;padding:20px 16px 80px;}
 .section{display:none;}
-.mo-guide-body{overflow:hidden;max-height:0;transition:max-height .25s ease;}
-.mo-guide-body.mo-guide-open{max-height:600px;}
 .section.active{display:block;}
-
 /* lock banner removed */
+.help-section{margin-top:0;border-top:1px solid var(--border);background:var(--surface);overflow:hidden;}
+.help-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;padding:11px 16px;cursor:pointer;font-size:12px;font-weight:500;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;background:none;border:none;text-align:left;transition:background .15s;}
+.help-toggle:hover{background:var(--border);}
+.help-toggle .chevron{font-size:10px;transition:transform .2s;}
+.help-toggle.open .chevron{transform:rotate(180deg);}
+.help-body{display:none;padding:16px 20px 20px;border-top:1px solid var(--border);}
+.help-body.open{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+@media(max-width:700px){.help-body.open{grid-template-columns:1fr;}}
+.help-group{display:flex;flex-direction:column;gap:10px;}
+.help-group h3{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;}
+.help-row{display:flex;gap:10px;align-items:baseline;font-size:13px;}
+.help-tag{font-family:var(--mono);font-size:12px;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 6px;color:var(--accent);white-space:nowrap;flex-shrink:0;}
+.help-desc{color:var(--muted);line-height:1.5;}
+.help-note{grid-column:1/-1;font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:12px;margin-top:4px;line-height:1.6;}
 
 
 
@@ -326,24 +337,27 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
         </div>
         <textarea class="editor-area" id="raw-input" spellcheck="false"
           oninput="onEdit()" placeholder="Commencez à taper vos notes ici…"></textarea>
-        <div id="mo-guide" style="border-top:1px solid var(--border);padding:10px 14px;font-size:11px;line-height:1.7;color:var(--muted);">
-          <div style="font-weight:600;margin-bottom:6px;color:var(--text);cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px;" onclick="this.parentElement.querySelector('.mo-guide-body').classList.toggle('mo-guide-open')">
-            <span>📋 Guide des marqueurs</span>
-            <span style="font-size:9px;opacity:.6;">(cliquer pour plier)</span>
-          </div>
-          <div class="mo-guide-body mo-guide-open">
-            <table style="width:100%;border-collapse:collapse;font-size:11px;">
-              <tr><td style="padding:2px 8px 2px 0;font-weight:600;color:var(--text);white-space:nowrap;vertical-align:top;">titre:</td><td style="padding:2px 8px 2px 0;">Titre du MO (obligatoire)</td><td style="color:var(--muted);font-style:italic;font-size:10px;">titre: Réunion de lancement</td></tr>
-              <tr><td style="padding:2px 8px 2px 0;font-weight:600;color:var(--text);white-space:nowrap;vertical-align:top;">quand:</td><td style="padding:2px 8px 2px 0;">Date / heure</td><td style="color:var(--muted);font-style:italic;font-size:10px;">quand: 2026-04-18 14h00</td></tr>
-              <tr><td style="padding:2px 8px 2px 0;font-weight:600;color:var(--text);white-space:nowrap;vertical-align:top;">durée:</td><td style="padding:2px 8px 2px 0;">Durée de la réunion</td><td style="color:var(--muted);font-style:italic;font-size:10px;">durée: 1h30</td></tr>
-              <tr><td style="padding:2px 8px 2px 0;font-weight:600;color:var(--text);white-space:nowrap;vertical-align:top;">auteur:</td><td style="padding:2px 8px 2px 0;">Rédacteur du MO</td><td style="color:var(--muted);font-style:italic;font-size:10px;">auteur: Jean Dupont</td></tr>
-              <tr><td style="padding:2px 8px 2px 0;font-weight:600;color:var(--text);white-space:nowrap;vertical-align:top;">modifié:</td><td style="padding:2px 8px 2px 0;">Date de modif (JJ-MM-AAAA)</td><td style="color:var(--muted);font-style:italic;font-size:10px;">modifié: 18-04-2026</td></tr>
-              <tr><td style="padding:2px 8px 2px 0;font-weight:600;color:var(--text);white-space:nowrap;vertical-align:top;">E:</td><td style="padding:2px 8px 2px 0;">Étape / point ordre du jour</td><td style="color:var(--muted);font-style:italic;font-size:10px;">E: Point budget Q2</td></tr>
-              <tr><td style="padding:2px 8px 2px 0;font-weight:600;color:var(--text);white-space:nowrap;vertical-align:top;">SE:</td><td style="padding:2px 8px 2px 0;">Sous-étape (après un E:)</td><td style="color:var(--muted);font-style:italic;font-size:10px;">SE: Validation par le DAF</td></tr>
-              <tr><td style="padding:2px 8px 2px 0;font-weight:600;color:var(--text);white-space:nowrap;vertical-align:top;">résultat:</td><td style="padding:2px 8px 2px 0;">Conclusion / décision finale</td><td style="color:var(--muted);font-style:italic;font-size:10px;">résultat: Accord sur le budget</td></tr>
-              <tr><td style="padding:2px 8px 2px 0;font-weight:600;color:var(--text);white-space:nowrap;vertical-align:top;">erreur:</td><td style="padding:2px 8px 2px 0;">Point bloquant / problème</td><td style="color:var(--muted);font-style:italic;font-size:10px;">erreur: Serveur indisponible</td></tr>
-            </table>
-            <div style="margin-top:6px;opacity:.7;">Les lignes sans marqueur sont ignorées (notes libres).</div>
+        <div class="help-section">
+          <button class="help-toggle" id="help-toggle" onclick="toggleHelp()">
+            <span>Guide des marqueurs</span><span class="chevron">&#9660;</span>
+          </button>
+          <div class="help-body" id="help-body">
+            <div class="help-group">
+              <h3>En-tête</h3>
+              <div class="help-row"><span class="help-tag">titre:</span><span class="help-desc">Titre du MO (obligatoire)</span></div>
+              <div class="help-row"><span class="help-tag">quand:</span><span class="help-desc">Date / heure ex : 2026-04-18 14h00</span></div>
+              <div class="help-row"><span class="help-tag">durée:</span><span class="help-desc">Durée ex : 1h30</span></div>
+              <div class="help-row"><span class="help-tag">auteur:</span><span class="help-desc">Rédacteur du MO</span></div>
+              <div class="help-row"><span class="help-tag">modifié:</span><span class="help-desc">Date de modif (JJ-MM-AAAA)</span></div>
+            </div>
+            <div class="help-group">
+              <h3>Corps</h3>
+              <div class="help-row"><span class="help-tag">E:</span><span class="help-desc">Étape / point ordre du jour</span></div>
+              <div class="help-row"><span class="help-tag">SE:</span><span class="help-desc">Sous-étape (après un E:)</span></div>
+              <div class="help-row"><span class="help-tag">résultat:</span><span class="help-desc">Conclusion / décision finale</span></div>
+              <div class="help-row"><span class="help-tag">erreur:</span><span class="help-desc">Point bloquant / problème</span></div>
+            </div>
+            <div class="help-note">Les lignes sans marqueur sont ignorées (notes libres).</div>
           </div>
         </div>
       </div>
@@ -659,6 +673,7 @@ function switchTab(id) {
 }
 
 // ── Template ──────────────────────────────────────────────────────────────────
+function toggleHelp(){var t=document.getElementById('help-toggle'),b=document.getElementById('help-body'),o=b.classList.toggle('open');t.classList.toggle('open',o);}
 function newMO() {
   if (document.getElementById('raw-input').value.trim() &&
       !confirm('Créer un nouveau MO ? Le contenu non enregistré sera perdu.')) return;
