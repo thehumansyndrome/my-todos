@@ -230,9 +230,19 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
 .td-comment-text{font-size:13px;line-height:1.5;}
 .td-comment-meta{font-size:11px;color:var(--muted);margin-top:3px;}
 
+
+.draft-restore-banner{display:none;align-items:center;gap:10px;padding:8px 16px;background:var(--amber,#f59e0b);color:#fff;font-size:12px;font-weight:500;}
+.draft-restore-banner button{background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.5);color:#fff;padding:2px 10px;border-radius:4px;cursor:pointer;font-size:11px;}
+.draft-restore-banner button:hover{background:rgba(255,255,255,.4);}
 </style>
 </head>
 <body>
+<div class="draft-restore-banner" id="draft-restore-banner">
+  📝 Brouillon restauré depuis votre dernière session.
+  <button onclick="discardDraft()">Effacer</button>
+  <button onclick="document.getElementById('draft-restore-banner').style.display='none'">Garder</button>
+</div>
+
 
 <div class="header">
   <div class="header-left">
@@ -291,6 +301,7 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
     <div class="pane">
       <div class="pane-header">
         <span>Notes brutes</span>
+        <button class="btn sm" onclick="newCR()" title="Nouveau CR">+ Nouveau</button>
         <button class="btn sm" onclick="resetTemplate()">↺ Template</button>
       </div>
       <textarea class="editor-area" id="raw-input" spellcheck="false" oninput="onEdit()"></textarea>
@@ -520,6 +531,10 @@ function ensureState() {
     if (!e.status)      e.status     = 'brouillon';
     if (!e.redacteurs)  e.redacteurs = [];
     if (!e.valideurs)   e.valideurs  = [];
+    if (!e.redacteurs.length || !e.valideurs.length) {
+      var _a = typeof getAdminId === 'function' ? getAdminId() : null;
+      if (_a) { if (!e.redacteurs.length) e.redacteurs=[_a]; if (!e.valideurs.length) e.valideurs=[_a]; }
+    }
     if (!e.versions)    e.versions   = [];
     if (!e.comments)    e.comments   = [];
     if (e.projet === undefined) e.projet = '';
@@ -543,12 +558,21 @@ function load() {
     curCRProjet = meta.projet || '';
     curRedact   = meta.redact || [];
     curValid    = meta.valid  || [];
+    var _aid = typeof getAdminId === 'function' ? getAdminId() : null;
+    if (_aid) { if (!curRedact.length) curRedact=[_aid]; if (!curValid.length) curValid=[_aid]; }
     editingEntryId = meta.entryId || null;
   } catch(e) {}
   loadParticipantsFromRaw(document.getElementById('raw-input').value);
   renderPreview();
   renderAll();
+  setTimeout(showDraftBannerIfNeeded, 100);
   initDrive();
+  window.addEventListener('beforeunload', function(e) {
+    var raw = document.getElementById('raw-input');
+    if (raw && raw.value.trim() && raw.value.trim() !== (typeof TEMPLATE!=='undefined'?TEMPLATE.trim():'')) {
+      e.preventDefault(); e.returnValue = '';
+    }
+  });
 }
 
 function renderAll() {
@@ -937,7 +961,52 @@ function validateCR() {
   e.status='valide';
   e.publishedAt=new Date().toLocaleString('fr-FR');
   persist(); renderHistory(); renderEditorMeta();
+  // ── #10: push CR actions → projet001 backlog ──
+  pushCRActionsToProjets(e);
   toast('✓ CR validé');
+}
+
+function pushCRActionsToProjets(e) {
+  if (!e || !e.raw) return;
+  var cr = parse(e.raw);
+  if (!cr.actions || !cr.actions.length) return;
+  if (!todoFullData) {
+    toast('⚠ Actions non exportées : connectez Drive et chargez les tâches d\'abord');
+    return;
+  }
+  todoFullData.backlog = todoFullData.backlog || [];
+  var adminId = getAdminId();
+  var projId  = appProjId || e.projet || null;
+  var added   = 0;
+  cr.actions.forEach(function(action) {
+    // Avoid duplicates (same text + same projId already in backlog)
+    var exists = todoFullData.backlog.some(function(t){
+      return t.text === action.text && t.projId === projId && !t.done;
+    });
+    if (exists) return;
+    var task = {
+      id:          'cr' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
+      text:        action.text,
+      projId:      projId,
+      pri:         'p2',
+      done:        false,
+      ts:          Date.now(),
+      assigneeIds: adminId ? [adminId] : [],
+      source:      'cr',
+      crTitle:     e.title || '',
+      crDate:      e.publishedAt || ''
+    };
+    if (action.due)      task.dueDate  = action.due;
+    if (action.assignee) task.assigneeHint = action.assignee;
+    todoFullData.backlog.unshift(task);
+    added++;
+  });
+  if (added > 0) {
+    writeTodoFile();
+    toast('✓ CR validé · ' + added + ' action' + (added>1?'s':'') + ' envoyée' + (added>1?'s':'') + ' vers projet001');
+  } else {
+    toast('✓ CR validé · actions déjà présentes dans projet001');
+  }
 }
 
 // ── History ────────────────────────────────────────────────────────────────────
@@ -1219,6 +1288,21 @@ function deleteEntry(id) {
 }
 
 // ── Reset template ─────────────────────────────────────────────────────────────
+function newCR() {
+  if (document.getElementById('raw-input').value.trim() &&
+      !confirm('Créer un nouveau CR ? Le contenu non enregistré sera perdu.')) return;
+  document.getElementById('raw-input').value = TEMPLATE;
+  curCRProjet = ''; editingEntryId = null;
+  var aid = typeof getAdminId === 'function' ? getAdminId() : null;
+  curRedact = aid ? [aid] : [];
+  curValid  = aid ? [aid] : [];
+  document.getElementById('tag-wrap') && (document.getElementById('tag-wrap').querySelectorAll('.tag-chip').forEach(t=>t.remove()));
+  tags = [];
+  renderChips('chips-red', curRedact, 'red');
+  renderChips('chips-val', curValid, 'val');
+  renderPreview();
+  toast('Nouveau CR');
+}
 function resetTemplate() {
   document.getElementById('raw-input').value=TMPL;
   crParticipants=[]; curRedact=[]; curValid=[]; curCRProjet=''; editingEntryId=null;
@@ -1671,6 +1755,20 @@ function tdRenderHistory(t){
 }
 function tdSave(){writeTodoFile();renderTaches();refreshTD();}
 
+
+function discardDraft() {
+  localStorage.removeItem(typeof SK!=='undefined'?SK+'_draft':'draft');
+  document.getElementById('raw-input').value = typeof TEMPLATE!=='undefined' ? TEMPLATE : '';
+  document.getElementById('draft-restore-banner').style.display='none';
+  if(typeof renderPreview==='function') renderPreview();
+}
+function showDraftBannerIfNeeded() {
+  var raw = document.getElementById('raw-input');
+  var tmpl = typeof TEMPLATE!=='undefined' ? TEMPLATE.trim() : '';
+  if (raw && raw.value.trim() && raw.value.trim() !== tmpl) {
+    document.getElementById('draft-restore-banner').style.display='flex';
+  }
+}
 </script>
 
 <!-- Task Detail Drawer -->
