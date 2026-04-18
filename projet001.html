@@ -5574,6 +5574,23 @@ function udRenderBody(t){
     body.appendChild(sec);
   }
 
+  // Params (backlog)
+  if(udType==='backlog'){
+    const sec=document.createElement('div');
+    const projOpts='<option value="">— Sans projet —</option>'
+      +(S.projects||[]).map(p=>`<option value="${p.id}"${t.projId===p.id?' selected':''}>${p.name||p.nom||''}</option>`).join('');
+    sec.innerHTML=`<div class="ud-section-title">⚙ Paramètres</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <select id="ud-pri" onchange="udSaveParams()" style="${SEL}">
+          <option value="p1"${t.pri==='p1'?' selected':''}>P1</option>
+          <option value="p2"${t.pri==='p2'?' selected':''}>P2</option>
+          <option value="p3"${t.pri==='p3'?' selected':''}>P3</option>
+        </select>
+        <select id="ud-proj" onchange="udSaveParams()" style="${SEL};max-width:200px;">${projOpts}</select>
+      </div>`;
+    body.appendChild(sec);
+  }
+
   // Equipe
   const teamSec=document.createElement('div');
   const team=S.sharedTeam||[];
@@ -5653,7 +5670,22 @@ function udRenderBody(t){
 
 // Params
 function udSaveParams(){
-  const t=udGetItem(); if(!t||udType!=='todo') return;
+  const t=udGetItem(); if(!t) return;
+  if(udType==='backlog'){
+    const pP=t.pri, pProj=t.projId||'';
+    const priEl=document.getElementById('ud-pri');
+    const projEl=document.getElementById('ud-proj');
+    if(priEl){ t.pri=priEl.value; if(t.pri!==pP) udLog(t,'priorité',pP,t.pri); }
+    if(projEl){
+      const newProj=projEl.value||null;
+      const oldName=pProj?(S.projects||[]).find(p=>p.id===pProj)?.name||pProj:'—';
+      const newName=newProj?(S.projects||[]).find(p=>p.id===newProj)?.name||newProj:'—';
+      if((newProj||'')!==(pProj||'')) udLog(t,'projet',oldName,newName);
+      t.projId=newProj;
+    }
+    udSave(); return;
+  }
+  if(udType!=='todo') return;
   const pC=t.cat,pP=t.pri,pH=t.hz;
   t.cat=document.getElementById('ud-cat').value;
   t.pri=document.getElementById('ud-pri').value;
