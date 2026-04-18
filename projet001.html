@@ -435,94 +435,7 @@ div:hover>.item-img-del{display:block;}
 .inline-add-sub input::placeholder{color:var(--text3);}
 
 /* ── TASK DETAIL PANEL ── */
-.tdpanel{
-  display:none;position:fixed;inset:0;z-index:300;
-  align-items:flex-end;justify-content:center;
-}
-.tdpanel.open{display:flex;}
-.tdpanel-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45);}
-.tdpanel-sheet{
-  position:relative;z-index:1;
-  width:100%;max-width:620px;
-  max-height:90vh;
-  background:var(--card);
-  border-radius:16px 16px 0 0;
-  display:flex;flex-direction:column;
-  animation:slideup .2s ease;
-  overflow:hidden;
-}
-.tdpanel-header{
-  padding:14px 16px 10px;
-  border-bottom:1px solid var(--line);
-  flex-shrink:0;
-}
-.tdpanel-handle{width:36px;height:4px;border-radius:2px;background:var(--line2);margin:0 auto 12px;}
-.tdpanel-title{
-  font-size:16px;font-weight:500;color:var(--text);
-  line-height:1.4;word-break:break-word;
-}
-.tdpanel-meta{
-  display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;align-items:center;
-}
-.tdpanel-body{
-  flex:1;overflow-y:auto;padding:14px 16px;
-  display:flex;flex-direction:column;gap:14px;
-}
-.tdpanel-section-title{
-  font-family:var(--mono);font-size:10px;font-weight:500;
-  text-transform:uppercase;letter-spacing:.06em;color:var(--text3);
-  margin-bottom:6px;display:flex;align-items:center;gap:6px;
-}
-.tdpanel-sub-item{
-  display:flex;align-items:center;gap:10px;
-  padding:9px 0;border-bottom:1px solid var(--line);
-  transition:opacity .15s,background .1s;
-}
-.tdpanel-sub-item:last-child{border-bottom:none;}
-.tdpanel-sub-item .del{opacity:0;transition:opacity .15s;}
-.tdpanel-sub-item:hover .del{opacity:.4;}
-.tdpanel-sub-item .del:hover{opacity:1;color:var(--red);}
-.tdpanel-sub-item.tdp-dragging{opacity:.25;}
-.tdpanel-sub-item.tdp-drag-over{background:var(--bg2);border-radius:var(--r);}
-.tdp-arrows{display:flex;flex-direction:row;gap:1px;flex-shrink:0;}
-.tdp-arrow{
-  background:none;border:none;cursor:pointer;
-  font-size:11px;line-height:1;padding:2px 4px;
-  color:var(--text3);opacity:.5;transition:opacity .1s;
-}
-.tdp-arrow:hover:not(:disabled){opacity:1;color:var(--text);}
-.tdp-arrow:disabled{opacity:.15;cursor:default;}
-.tdpanel-sub-text{
-  flex:1;font-size:14px;color:var(--text);line-height:1.4;
-  word-break:break-word;cursor:text;
-}
-.tdpanel-sub-text.done-sub{text-decoration:line-through;opacity:.4;}
-.tdpanel-add-sub{margin-top:6px;}
-.tdpanel-add-sub input{
-  width:100%;box-sizing:border-box;
-  font-family:var(--sans);font-size:14px;
-  padding:10px 12px;border:1px solid var(--line);border-radius:var(--r);
-  background:var(--bg);color:var(--text);outline:none;
-  transition:border-color .12s;
-}
-.tdpanel-add-sub input:focus{border-color:var(--accent);}
-.tdpanel-add-sub input::placeholder{color:var(--text3);}
-.tdpanel-comment{
-  width:100%;font-family:var(--sans);font-size:13px;
-  padding:8px 10px;border:1px solid var(--line2);border-radius:var(--r);
-  background:var(--bg);color:var(--text);outline:none;
-  resize:vertical;min-height:64px;line-height:1.5;
-  transition:border-color .12s;box-sizing:border-box;
-}
-.tdpanel-comment:focus{border-color:var(--accent);}
-.tdpanel-fields{display:flex;gap:6px;flex-wrap:wrap;}
-.tdpanel-fields select{
-  font-family:var(--mono);font-size:11px;
-  padding:5px 8px;border:1px solid var(--line);border-radius:var(--r);
-  background:var(--bg);color:var(--text2);cursor:pointer;outline:none;
-  transition:border-color .12s;
-}
-.tdpanel-fields select:focus{border-color:var(--accent);}
+
 .tdpanel-footer{
   padding:10px 16px calc(10px + env(safe-area-inset-bottom));
   border-top:1px solid var(--line);
@@ -1299,29 +1212,34 @@ div:hover>.item-img-del{display:block;}
 .note-read-btn.read{background:var(--green-bg);color:var(--green);border-color:var(--green);}
 .notes-tag-filters{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;}
 
-/* ── Task Detail Drawer ── */
-.td-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:300;opacity:0;pointer-events:none;transition:opacity .2s;}
-.td-overlay.open{opacity:1;pointer-events:all;}
-.td-drawer{position:fixed;top:0;right:0;width:min(480px,100vw);height:100vh;background:var(--surface);border-left:1px solid var(--border);z-index:301;transform:translateX(100%);transition:transform .25s;display:flex;flex-direction:column;overflow:hidden;}
-.td-drawer.open{transform:translateX(0);}
-.td-drawer-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;}
-.td-drawer-title{font-size:15px;font-weight:500;flex:1;line-height:1.4;outline:none;border:none;background:transparent;color:var(--text);font-family:var(--sans);resize:none;padding:0;width:100%;}
-.td-drawer-title:focus{outline:1px solid var(--accent);border-radius:3px;padding:2px 4px;}
-.td-drawer-close{width:28px;height:28px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0;cursor:pointer;background:none;border:none;font-size:16px;}
-.td-drawer-close:hover{background:var(--border);}
-.td-drawer-body{flex:1;overflow-y:auto;padding:16px;padding-bottom:env(safe-area-inset-bottom,24px);-webkit-overflow-scrolling:touch;}
-.td-drawer-section{margin-bottom:20px;}
-.td-drawer-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px;}
-.td-status-badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid;user-select:none;transition:all .15s;}
-.td-status-brouillon{color:var(--muted);border-color:var(--muted);}
-.td-status-valide{color:var(--green);border-color:var(--green);}
-.td-history-item{padding:7px 10px;background:var(--bg);border-radius:var(--radius);margin-bottom:5px;font-size:12px;}
-.td-history-meta{color:var(--muted);font-size:11px;margin-bottom:3px;}
-.td-history-change{display:flex;gap:5px;align-items:baseline;margin-top:2px;font-size:11px;}
-.td-hist-tag{font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.04em;flex-shrink:0;color:var(--amber);}
-.td-comment-item{padding:8px 10px;background:var(--bg);border-radius:var(--radius);margin-bottom:6px;}
-.td-comment-text{font-size:13px;line-height:1.5;}
-.td-comment-meta{font-size:11px;color:var(--muted);margin-top:3px;}
+/* ── Unified Drawer ─────────────────────────────────────────────────────── */
+.ud-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:400;opacity:0;pointer-events:none;transition:opacity .2s;}
+.ud-overlay.open{opacity:1;pointer-events:all;}
+.ud-drawer{position:fixed;top:0;right:0;width:min(520px,100vw);height:100vh;background:var(--surface);border-left:1px solid var(--border);z-index:401;transform:translateX(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden;}
+.ud-drawer.open{transform:translateX(0);}
+.ud-header{padding:14px 16px 12px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;}
+.ud-title{font-size:15px;font-weight:500;flex:1;line-height:1.4;outline:none;border:none;background:transparent;color:var(--text);font-family:var(--sans);resize:none;padding:0;width:100%;}
+.ud-title:focus{outline:1px solid var(--accent);border-radius:3px;padding:2px 4px;}
+.ud-close{width:28px;height:28px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0;cursor:pointer;background:none;border:none;font-size:16px;}
+.ud-close:hover{background:var(--border);}
+.ud-body{flex:1;overflow-y:auto;padding:16px;padding-bottom:env(safe-area-inset-bottom,32px);-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:20px;}
+.ud-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px;}
+.ud-status-badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid;user-select:none;transition:all .15s;}
+.ud-status-brouillon{color:var(--muted);border-color:var(--muted);}
+.ud-status-valide{color:var(--green);border-color:var(--green);}
+.ud-sub-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:1px solid var(--border);font-size:13px;}
+.ud-sub-item:last-child{border-bottom:none;}
+.ud-sub-text{flex:1;cursor:text;line-height:1.4;}
+.ud-sub-text.done-sub{text-decoration:line-through;opacity:.4;}
+.ud-sub-item.ud-dragging{opacity:.25;}
+.ud-sub-item.ud-drag-over{background:var(--bg2,var(--bg));border-radius:var(--r);}
+.ud-history-item{padding:7px 10px;background:var(--bg);border-radius:var(--r);font-size:12px;margin-bottom:5px;}
+.ud-history-meta{color:var(--muted);font-size:11px;margin-bottom:3px;}
+.ud-history-change{display:flex;gap:5px;align-items:baseline;margin-top:2px;font-size:11px;color:var(--muted);}
+.ud-hist-tag{font-weight:600;font-size:10px;text-transform:uppercase;flex-shrink:0;color:var(--amber);}
+.ud-comment-item{padding:8px 10px;background:var(--bg);border-radius:var(--r);margin-bottom:6px;}
+.ud-comment-text{font-size:13px;line-height:1.5;}
+.ud-comment-meta{font-size:11px;color:var(--muted);margin-top:3px;}
 
 </style>
 </head>
@@ -1841,22 +1759,6 @@ div:hover>.item-img-del{display:block;}
 </div>
 </div>
 
-<!-- TASK DETAIL PANEL -->
-<div class="tdpanel" id="tdpanel" onclick="if(event.target===this||event.target.classList.contains('tdpanel-backdrop'))closeTDP()">
-  <div class="tdpanel-backdrop"></div>
-  <div class="tdpanel-sheet">
-    <div class="tdpanel-header">
-      <div class="tdpanel-handle"></div>
-      <div class="tdpanel-title" id="tdp-title"></div>
-      <div class="tdpanel-meta" id="tdp-meta"></div>
-    </div>
-    <div class="tdpanel-body" id="tdp-body"></div>
-    <div class="tdpanel-footer">
-      <button class="save-btn" onclick="saveTDP()" style="flex:1;">✓ Enregistrer</button>
-      <button class="cancel-btn" onclick="closeTDP()">Fermer</button>
-    </div>
-  </div>
-</div>
 
 <!-- MODAL -->
 <div id="imp-modal">
@@ -2874,39 +2776,6 @@ function updateFabVisibility(tab){
   if(fab) fab.style.display = FAB_TABS.includes(tab) ? '' : 'none';
 }
 
-
-// ── Assignees helpers ─────────────────────────────────────────────────────
-function getAdminId(){const m=(S.sharedTeam||[]).find(m=>m.appRole==='Admin');return m?m.id:null;}
-function defaultAssignees(){const aid=getAdminId();return aid?[aid]:[];}
-function assigneeBadgesHtml(ids,itemId,itemType){
-  const adminId=getAdminId();
-  return (ids||[]).map(id=>{
-    const m=(S.sharedTeam||[]).find(x=>x.id===id);if(!m)return '';
-    const isAdmin=id===adminId;
-    const onclick=isAdmin?'event.stopPropagation()':
-      `event.stopPropagation();removeAssignee('${itemType}','${itemId}','${id}')`;
-    return `<span title="${m.nom+(isAdmin?' (Admin)':' — clic pour désaffecter')}" onclick="${onclick}" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:${m.color};font-size:9px;font-weight:700;color:#fff;cursor:${isAdmin?'default':'pointer'};flex-shrink:0;">${m.initiales}</span>`;
-  }).join('');
-}
-function removeAssignee(itemType,itemId,memberId){
-  if(itemType==='todo'){
-    const t=S.todos.find(x=>x.id===itemId);
-    if(t)t.assigneeIds=(t.assigneeIds||[]).filter(x=>x!==memberId);
-    autoSave();renderTodos();
-  } else if(itemType==='backlog'){
-    const b=(S.backlog||[]).find(x=>x.id===itemId);
-    if(b)b.assigneeIds=(b.assigneeIds||[]).filter(x=>x!==memberId);
-    autoSave();renderBacklog();
-  }
-}
-function tdpToggleAssignee(memberId){
-  const t=S.todos.find(x=>x.id===tdpId);if(!t)return;
-  const adminId=getAdminId();if(memberId===adminId)return;
-  if(!t.assigneeIds)t.assigneeIds=defaultAssignees();
-  const idx=t.assigneeIds.indexOf(memberId);
-  if(idx>=0)t.assigneeIds.splice(idx,1);else t.assigneeIds.push(memberId);
-  autoSave();renderTDP();renderTodos();
-}
 function addTodo(){
   const v=document.getElementById('todo-in').value.trim();if(!v)return;
   const cat=document.getElementById('todo-cat').value;
@@ -2927,7 +2796,7 @@ function addTodo(){
   }
 
   const t={id:parentId,text:v,cat,pri,hz,done:false,ts:Date.now(),
-    comment:'',subtasks:subtaskIds,parentId:null,type:typeKey||null,assigneeIds:defaultAssignees()};
+    comment:'',subtasks:subtaskIds,parentId:null,type:typeKey||null,assigneeIds:defaultAssigneesFn()};
   // Attach pending pasted images
   if(pendingItemImgs['tab-todos']&&pendingItemImgs['tab-todos'].length){
     t.images=[...pendingItemImgs['tab-todos']];
@@ -3376,7 +3245,7 @@ function todoItemHtml(t){
   const isSubtask = !!t.parentId;
 
   return `
-  <div class="item${t.done?' done':''}${isSubtask?' is-subtask':''}" ${isSubtask||IS_TOUCH?'':'draggable="true"'} data-id="${t.id}">
+  <div class="item${t.done?' done':''}" onclick="if(!isSubtask&&!event.target.closest('input,button,label,textarea,select,.del,.rb,.attach-btn,.comment-btn,.img-btn'))openUD('todo','${t.id}')"${isSubtask?' is-subtask':''}" ${isSubtask||IS_TOUCH?'':'draggable="true"'} data-id="${t.id}">
     ${isSubtask
       ? ''
       : `<div class="dh"><span></span><span></span><span></span></div>
@@ -3402,7 +3271,7 @@ function todoItemHtml(t){
           <span class="meta-date">${fd(t.ts)}</span>
         </div>
         <div class="mobile-actions">
-          <button onclick="openTDP('${t.id}')" title="Détail & sous-tâches" style="background:none;border:1px solid var(--line2);border-radius:var(--r);cursor:pointer;font-size:13px;padding:3px 7px;color:var(--text3);line-height:1;">→</button>
+
           <button class="attach-btn${t.attachments&&t.attachments.length?' has-attach':''}" onclick="toggleAttachments('${t.id}')" title="Pièces jointes">📎</button>
           <button class="comment-btn${hasComment?' has-comment':''}" onclick="toggleComment('${t.id}')" title="${hasComment?'Voir':'Ajouter'} commentaire">💬</button>
           <label class="img-btn${t.images&&t.images.length?' has-img':''}" title="Caméra" style="cursor:pointer;background:none;border:none;font-size:14px;padding:3px 4px;opacity:.5;line-height:1;display:flex;align-items:center;">📷<input type="file" accept="image/*" capture="environment" style="display:none" onchange="todoImgPickFile(this,'${t.id}')"></label>
@@ -3482,7 +3351,7 @@ function todoItemHtml(t){
     <button class="img-btn${t.images&&t.images.length?' has-img':''}" onclick="todoImgPick('${t.id}')" title="Ajouter une image">🖼</button>
     <input type="file" id="img-pick-${t.id}" accept="image/*" style="display:none" onchange="todoImgPickFile(this,'${t.id}')">
     <button class="edit-btn" onclick="openEdit('${t.id}')" title="Modifier">✎</button>
-    <button class="edit-btn" onclick="openTDP('${t.id}')" title="Détail & sous-tâches" style="opacity:.5;font-size:13px;">→</button>
+
     <button class="del" onclick="delTodo('${t.id}')">×</button>`}
   </div>`;
 }
@@ -3496,278 +3365,6 @@ function toggleDoneSection(){
 }
 
 /* ══ TASK DETAIL PANEL ══ */
-let tdpId = null; // current task id in panel
-
-function openTDP(id){
-  const t = S.todos.find(x=>x.id===id);
-  if(!t || t.parentId) return; // only top-level tasks
-  tdpId = id;
-  renderTDP();
-  document.getElementById('tdpanel').classList.add('open');
-  // Focus the subtask input after animation
-  setTimeout(()=>{
-    const inp = document.getElementById('tdp-sub-in');
-    if(inp) inp.focus();
-  }, 250);
-}
-
-function closeTDP(){
-  document.getElementById('tdpanel').classList.remove('open');
-  tdpId = null;
-}
-
-function setupTDPDrag(el){
-  // ── Desktop drag & drop ──
-  let dragSid=null;
-  el.addEventListener('dragstart',e=>{
-    const it=e.target.closest('.tdpanel-sub-item[draggable]');if(!it)return;
-    dragSid=it.dataset.sid;it.classList.add('tdp-dragging');
-    e.dataTransfer.effectAllowed='move';
-  });
-  el.addEventListener('dragend',()=>{
-    el.querySelectorAll('.tdpanel-sub-item').forEach(i=>i.classList.remove('tdp-dragging','tdp-drag-over'));
-    dragSid=null;
-  });
-  el.addEventListener('dragover',e=>{
-    e.preventDefault();
-    const it=e.target.closest('.tdpanel-sub-item');if(!it||it.dataset.sid===dragSid)return;
-    el.querySelectorAll('.tdpanel-sub-item').forEach(i=>i.classList.remove('tdp-drag-over'));
-    it.classList.add('tdp-drag-over');
-  });
-  el.addEventListener('drop',e=>{
-    e.preventDefault();
-    const it=e.target.closest('.tdpanel-sub-item');if(!it||it.dataset.sid===dragSid)return;
-    tdpReorder(dragSid,it.dataset.sid);
-  });
-}
-
-function tdpMoveArrow(sid, dir){
-  const parent=S.todos.find(x=>x.id===tdpId);if(!parent||!parent.subtasks)return;
-  const arr=parent.subtasks;
-  const i=arr.indexOf(sid);if(i===-1)return;
-  const ni=i+dir;if(ni<0||ni>=arr.length)return;
-  [arr[i],arr[ni]]=[arr[ni],arr[i]];
-  autoSave();renderTDP();renderTodos();
-}
-
-function tdpReorder(fromSid, toSid){
-  const parent=S.todos.find(x=>x.id===tdpId);if(!parent||!parent.subtasks)return;
-  const arr=parent.subtasks;
-  const fi=arr.indexOf(fromSid),ti=arr.indexOf(toSid);
-  if(fi===-1||ti===-1)return;
-  const[m]=arr.splice(fi,1);arr.splice(ti,0,m);
-  autoSave();renderTDP();renderTodos();
-}
-
-function renderTDP(){
-  const t = S.todos.find(x=>x.id===tdpId);
-  if(!t) return;
-
-  const cat = getCatById(t.cat);
-  const isDark = document.documentElement.getAttribute('data-theme')==='dark';
-  const catColor = isDark ? (cat.darkColor||cat.textColor) : cat.textColor;
-  const HZ_LABELS = {now:'Now',today:'Today',later:'Later',waiting:'Waiting'};
-  const hz = t.hz||'later';
-
-  // Header
-  document.getElementById('tdp-title').textContent = t.text;
-  document.getElementById('tdp-meta').innerHTML = `
-    <span style="font-family:var(--mono);font-size:9px;font-weight:500;padding:1px 5px;border-radius:2px;letter-spacing:.04em;text-transform:uppercase;background:transparent;color:${catColor};border:1px solid ${catColor};">${esc(cat.label)}</span>
-    <span class="tag p${t.pri.slice(1)||'2'}">${t.pri.toUpperCase()}</span>
-    <span style="font-family:var(--mono);font-size:9px;padding:1px 4px;border-radius:2px;border:1px solid currentColor;color:var(--text3);">${HZ_LABELS[hz]||hz}</span>`;
-
-  // Subtasks
-  const subs = (t.subtasks||[]).map(sid=>S.todos.find(x=>x.id===sid)).filter(Boolean);
-  const doneCount = subs.filter(s=>s.done).length;
-  const catOptions = S.categories.map(c=>`<option value="${c.id}"${t.cat===c.id?' selected':''}>${c.label}</option>`).join('');
-
-  document.getElementById('tdp-body').innerHTML = `
-    <!-- Subtasks -->
-    <div>
-      <div class="tdpanel-section-title">
-        ☐ Sous-tâches
-        <span style="font-family:var(--mono);font-size:10px;color:${doneCount===subs.length&&subs.length?'var(--green)':'var(--text3)'};">${doneCount}/${subs.length}</span>
-      </div>
-      <div id="tdp-sub-list">
-        ${subs.map((s,idx)=>`
-          <div class="tdpanel-sub-item" data-sid="${s.id}" draggable="true">
-            <input type="checkbox" class="item-check" ${s.done?'checked':''} onchange="tdpToggleSub('${s.id}')">
-            <span class="tdpanel-sub-text${s.done?' done-sub':''}" id="tdpst-${s.id}" onclick="tdpQuickEditSub('${s.id}')" style="cursor:grab;">${esc(s.text)}</span>
-            <span class="tdp-arrows">
-              <button class="tdp-arrow" onclick="tdpMoveArrow('${s.id}',-1)" ${idx===0?'disabled':''}>↑</button>
-              <button class="tdp-arrow" onclick="tdpMoveArrow('${s.id}',1)" ${idx===subs.length-1?'disabled':''}>↓</button>
-            </span>
-            <button class="del" onclick="tdpDelSub('${s.id}')" style="opacity:.3;">×</button>
-          </div>`).join('')}
-      </div>
-      <div class="tdpanel-add-sub">
-        <input type="text" id="tdp-sub-in" placeholder="Ajouter un élément…"
-          onkeydown="if(event.key==='Enter'){event.preventDefault();tdpAddSub();}">
-      </div>
-    </div>
-
-    <!-- Comment -->
-    <div>
-      <div class="tdpanel-section-title">💬 Commentaire</div>
-      <textarea class="tdpanel-comment" id="tdp-comment" placeholder="Notes, contexte, liens…"
-        oninput="tdpAutoSaveComment(this.value)">${esc(t.comment||'')}</textarea>
-    </div>
-
-    <!-- Fields -->
-    <div>
-      ${(()=>{
-        const team=S.sharedTeam||[];
-        if(!team.length) return '';
-        const adminId=getAdminId();
-        const ids=t.assigneeIds||[];
-        const chips=team.map(m=>{
-          const on=ids.includes(m.id);
-          const isAdmin=m.id===adminId;
-          const click=isAdmin?'':'tdpToggleAssignee(\''+m.id+'\');';
-          return '<span onclick="'+click+'" style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600;'
-            +'cursor:'+(isAdmin?'default':'pointer')+';'
-            +'background:'+(on?m.color:'transparent')+';'
-            +'color:'+(on?'#fff':'var(--text3,var(--muted))')+';'
-            +'border:1px solid '+(on?m.color:'var(--border)')+';'
-            +'transition:all .15s;">'
-            +m.initiales+' '+m.nom.split(' ')[0]+'</span>';
-        }).join('');
-        return '<div><div class="tdpanel-section-title">👥 Équipe</div>'
-          +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">'+chips+'</div></div>';
-      })()}
-      <div class="tdpanel-section-title">⚙ Paramètres</div>
-      <div class="tdpanel-fields">
-        <select id="tdp-cat" onchange="tdpSaveFields()">
-          ${catOptions}
-        </select>
-        <select id="tdp-pri" onchange="tdpSaveFields()">
-          <option value="p1"${t.pri==='p1'?' selected':''}>P1</option>
-          <option value="p2"${t.pri==='p2'?' selected':''}>P2</option>
-          <option value="p3"${t.pri==='p3'?' selected':''}>P3</option>
-        </select>
-        <select id="tdp-hz" onchange="tdpSaveFields()">
-          <option value="now"${hz==='now'?' selected':''}>Now</option>
-          <option value="today"${hz==='today'?' selected':''}>Today</option>
-          <option value="later"${hz==='later'?' selected':''}>Later</option>
-          <option value="waiting"${hz==='waiting'?' selected':''}>Waiting</option>
-        </select>
-      </div>
-    </div>`;
-  // Wire drag on sub-list
-  const subList = document.getElementById('tdp-sub-list');
-  if(subList) setupTDPDrag(subList);
-}
-
-function tdpAddSub(){
-  const t = S.todos.find(x=>x.id===tdpId); if(!t) return;
-  const inp = document.getElementById('tdp-sub-in');
-  const text = inp ? inp.value.trim() : '';
-  if(!text){ if(inp) inp.focus(); return; }
-  const sid = uid();
-  const sub = {id:sid, text, cat:t.cat, pri:t.pri, hz:t.hz,
-    done:false, ts:Date.now(), comment:'', subtasks:[], parentId:tdpId, type:t.type||null,
-    attachments:[], images:[]};
-  S.todos.push(sub);
-  if(!t.subtasks) t.subtasks=[];
-  t.subtasks.push(sid);
-  collapsedParents.add(tdpId);
-  if(inp) inp.value='';
-  autoSave();
-  renderTodos();
-  // Inject item directly — no full panel re-render so focus stays
-  const list = document.getElementById('tdp-sub-list');
-  if(list){
-    const div = document.createElement('div');
-    div.className='tdpanel-sub-item'; div.dataset.sid=sid;
-    div.innerHTML=`
-      <input type="checkbox" class="item-check">
-      <span class="tdpanel-sub-text" id="tdpst-${sid}" onclick="tdpQuickEditSub('${sid}')">${esc(text)}</span>
-      <button class="del" onclick="tdpDelSub('${sid}')" style="opacity:.3;">×</button>`;
-    div.querySelector('input').addEventListener('change',()=>tdpToggleSub(sid));
-    list.appendChild(div);
-    // Update count badge
-    const allSubs=(t.subtasks||[]).map(s=>S.todos.find(x=>x.id===s)).filter(Boolean);
-    const badge=document.querySelector('.tdpanel-section-title span');
-    if(badge){const done=allSubs.filter(s=>s.done).length;badge.textContent=`${done}/${allSubs.length}`;}
-  }
-  setTimeout(()=>{ if(inp) inp.focus(); }, 10);
-  logA('todo','Sous-tâche ajoutée: "'+text+'" → "'+t.text+'"');
-}
-
-function tdpToggleSub(sid){
-  const s = S.todos.find(x=>x.id===sid); if(!s) return;
-  s.done=!s.done;
-  autoSave(); renderTDP(); renderTodos();
-}
-
-function tdpDelSub(sid){
-  const s = S.todos.find(x=>x.id===sid); if(!s) return;
-  const parent = S.todos.find(x=>x.id===tdpId); if(!parent) return;
-  if(!confirm('Supprimer "'+s.text+'" ?')) return;
-  parent.subtasks = parent.subtasks.filter(x=>x!==sid);
-  S.todos = S.todos.filter(x=>x.id!==sid);
-  autoSave(); renderTDP(); renderTodos();
-}
-
-function tdpMoveSub(sid, dir){
-  const parent = S.todos.find(x=>x.id===tdpId); if(!parent||!parent.subtasks) return;
-  const arr = parent.subtasks;
-  const i = arr.indexOf(sid); if(i===-1) return;
-  const ni = i+dir; if(ni<0||ni>=arr.length) return;
-  [arr[i],arr[ni]]=[arr[ni],arr[i]];
-  autoSave(); renderTDP(); renderTodos();
-}
-
-function tdpQuickEditSub(sid){
-  const s = S.todos.find(x=>x.id===sid); if(!s) return;
-  const el = document.getElementById('tdpst-'+sid); if(!el||el.tagName==='INPUT') return;
-  const orig = s.text;
-  const inp = document.createElement('input');
-  inp.type='text'; inp.value=orig;
-  inp.style.cssText='flex:1;font-family:var(--sans);font-size:13px;padding:2px 6px;border:1px solid var(--accent);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;';
-  inp.id='tdpst-'+sid;
-  let committed=false;
-  inp.onkeydown=e=>{
-    if(e.key==='Enter'&&!committed){committed=true;doCommit();}
-    if(e.key==='Escape'&&!committed){committed=true;renderTDP();}
-  };
-  inp.onblur=()=>{if(!committed){committed=true;doCommit();}};
-  function doCommit(){
-    const val=inp.value.trim();
-    if(val&&val!==orig){s.text=val;autoSave();renderTodos();}
-    renderTDP();
-  }
-  el.replaceWith(inp);
-  inp.focus(); inp.select();
-}
-
-let tdpCommentTimer=null;
-function tdpAutoSaveComment(val){
-  const t=S.todos.find(x=>x.id===tdpId); if(!t) return;
-  t.comment=val;
-  clearTimeout(tdpCommentTimer);
-  tdpCommentTimer=setTimeout(()=>autoSave(),800);
-}
-
-function tdpSaveFields(){
-  const t=S.todos.find(x=>x.id===tdpId); if(!t) return;
-  t.cat=document.getElementById('tdp-cat').value;
-  t.pri=document.getElementById('tdp-pri').value;
-  t.hz=document.getElementById('tdp-hz').value;
-  // assigneeIds managed via tdpToggleAssignee
-  // propagate to subtasks
-  (t.subtasks||[]).forEach(sid=>{
-    const s=S.todos.find(x=>x.id===sid);
-    if(s){s.cat=t.cat;s.pri=t.pri;s.hz=t.hz;}
-  });
-  autoSave(); renderTDP(); renderTodos();
-}
-
-function saveTDP(){
-  // comment already saved live; fields saved on change; just close
-  autoSave(); renderTodos(); closeTDP();
-  toast('✓ Tâche mise à jour');
-}
 
 /* ══ ARCHIVE TAB ══ */
 let archiveData = null; // cached {archives:[]} from Drive
@@ -5531,7 +5128,7 @@ function addBacklogItem(){
   const projId=document.getElementById('bl-proj').value||'';
   const pri=document.getElementById('bl-pri').value||'p2';
   if(!S.backlog)S.backlog=[];
-  S.backlog.unshift({id:uid(),text,projId,pri,done:false,ts:Date.now(),assigneeIds:defaultAssignees()});
+  S.backlog.unshift({id:uid(),text,projId,pri,done:false,ts:Date.now(),assigneeIds:defaultAssigneesFn()});
   document.getElementById('bl-in').value='';
   autoSave();renderBacklog();
   logA('backlog','Ajouté: "'+text+'"');
@@ -5553,22 +5150,6 @@ function delBacklogItem(id){
   autoSave();renderBacklog();
 }
 
-
-function ensureAdminOnItems(){
-  var adminId=getAdminId(); if(!adminId) return;
-  var changed=false;
-  (S.todos||[]).forEach(function(t){
-    if(!t.parentId){
-      if(!t.assigneeIds||t.assigneeIds.length===0){t.assigneeIds=[adminId];changed=true;}
-      else if(t.assigneeIds.indexOf(adminId)<0){t.assigneeIds.unshift(adminId);changed=true;}
-    }
-  });
-  (S.backlog||[]).forEach(function(b){
-    if(!b.assigneeIds||b.assigneeIds.length===0){b.assigneeIds=[adminId];changed=true;}
-    else if(b.assigneeIds.indexOf(adminId)<0){b.assigneeIds.unshift(adminId);changed=true;}
-  });
-  if(changed) autoSave();
-}
 function renderBacklog(){
   ensureAdminOnItems();
   if(!S.backlog)S.backlog=[];
@@ -5599,7 +5180,7 @@ function renderBacklog(){
     return`<div class="bl-item${b.done?' done':''}">
       <input type="checkbox" class="item-check" ${b.done?'checked':''} onchange="toggleBacklog('${b.id}')">
       <div style="flex:1;min-width:0;">
-        <div class="bl-text" onclick="openTD('${b.id}')" id="blt-${b.id}" style="cursor:pointer;">${esc(b.text)}</div>
+        <div class="bl-text" onclick="openUD('backlog','${b.id}')" id="blt-${b.id}" style="cursor:pointer;">${esc(b.text)}</div>
         <div class="bl-meta">
           <span class="tag ${priCls[b.pri]||'p2'}">${b.pri.toUpperCase()}</span>
           ${assigneeBadgesHtml(b.assigneeIds,b.id,'backlog')}
@@ -5896,128 +5477,340 @@ updateUndoBtn();
   } catch(e) { /* silent fail */ }
 })();
 
-// ── Task Detail Drawer ──────────────────────────────────────────────────────
-var tdTaskId=null;
-function tdFmt(d){return d?new Date(d).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}):''}
-function tdGetTask(){return todoFullData?(todoFullData.backlog||[]).find(function(x){return x.id===tdTaskId;}):null;}
-function tdGetAdminMember(){return(sharedTeam||[]).find(function(m){return m.appRole==='Admin';})||null;}
-function openTD(id){tdTaskId=id;refreshTD();document.getElementById('td-overlay').classList.add('open');document.getElementById('td-drawer').classList.add('open');}
-function closeTD(){document.getElementById('td-overlay').classList.remove('open');document.getElementById('td-drawer').classList.remove('open');tdTaskId=null;}
-function refreshTD(){
-  var t=tdGetTask();if(!t)return;
-  var ta=document.getElementById('td-title');ta.value=t.text||'';tdAutoResize(ta);
-  var st=t.status||'brouillon';
-  document.getElementById('td-badges').innerHTML='<span class="td-status-badge '+(st==='valide'?'td-status-valide':'td-status-brouillon')+'" onclick="tdToggleStatus()">'+(st==='valide'?'Validé ✓':'Brouillon')+'</span>';
-  tdRenderTeam(t);tdRenderComments(t);tdRenderHistory(t);
+
+// ══════════════════════════════════════════════════════════════════════════
+// Unified Task Drawer — handles todos AND backlog
+// ══════════════════════════════════════════════════════════════════════════
+let udType=null, udId=null;
+const UD_HZ={now:'Now',today:'Today',later:'Later',waiting:'Waiting'};
+function udFmt(d){return d?new Date(d).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}):''}
+function udGetItem(){
+  if(udType==='todo') return S.todos.find(x=>x.id===udId)||null;
+  if(udType==='backlog') return (S.backlog||[]).find(x=>x.id===udId)||null;
+  return null;
 }
-function tdAutoResize(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
-function tdSaveTitle(){
-  var t=tdGetTask();if(!t)return;
-  var v=document.getElementById('td-title').value.trim();if(!v||v===t.text)return;
-  tdLog(t,'text',t.text,v);t.text=v;tdSave();
+function udGetAdmin(){return (S.sharedTeam||[]).find(m=>m.appRole==='Admin')||null;}
+function udGetAdminId(){const a=udGetAdmin();return a?a.id:null;}
+function getAdminId(){return udGetAdminId();}
+function defaultAssigneesFn(){const aid=getAdminId();return aid?[aid]:[];}
+
+function openUD(type,id){
+  udType=type; udId=id;
+  refreshUD();
+  document.getElementById('ud-overlay').classList.add('open');
+  document.getElementById('ud-drawer').classList.add('open');
 }
-function tdToggleStatus(){
-  var t=tdGetTask();if(!t)return;
-  var prev=t.status||'brouillon';var next=prev==='valide'?'brouillon':'valide';
-  tdLog(t,'statut',prev==='valide'?'Validé':'Brouillon',next==='valide'?'Validé':'Brouillon');
-  t.status=next;tdSave();
+function closeUD(){
+  document.getElementById('ud-overlay').classList.remove('open');
+  document.getElementById('ud-drawer').classList.remove('open');
+  udType=null; udId=null;
 }
-function tdRenderTeam(t){
-  var el=document.getElementById('td-team');
-  var team=sharedTeam||[];
-  if(!team.length){el.innerHTML='<span style="font-size:13px;color:var(--muted)">Aucun membre — connectez Drive</span>';return;}
-  var admin=tdGetAdminMember();var adminId=admin?admin.id:null;
-  var ids=t.assigneeIds||[];
-  el.innerHTML=team.map(function(m){
-    var on=ids.indexOf(m.id)>=0;var isAdmin=m.id===adminId;
-    return '<span onclick="'+(isAdmin?'':'tdToggleAssignee(\''+m.id+'\');')+'" style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:600;margin:0 4px 4px 0;cursor:'+(isAdmin?'default':'pointer')+';background:'+(on?m.color:'transparent')+';color:'+(on?'#fff':'var(--muted)')+';border:1px solid '+(on?m.color:'var(--border)')+';transition:all .15s;">'
-      +'<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:'+(on?'rgba(255,255,255,.25)':m.color)+';color:#fff;font-size:9px;font-weight:700;">'+m.initiales+'</span>'
-      +m.nom.split(' ')[0]+'</span>';
-  }).join('');
+function openTD(id){openUD('backlog',id);}
+function closeTD(){closeUD();}
+
+function refreshUD(){
+  const t=udGetItem(); if(!t) return;
+  const ta=document.getElementById('ud-title');
+  ta.value=t.text||''; udAutoResize(ta);
+  udRenderBadges(t);
+  udRenderBody(t);
 }
-function tdToggleAssignee(memberId){
-  var t=tdGetTask();if(!t)return;
-  var admin=tdGetAdminMember();if(admin&&memberId===admin.id)return;
-  if(!t.assigneeIds)t.assigneeIds=[];
-  var team=sharedTeam||[];var m=team.find(function(x){return x.id===memberId;});
-  var idx=t.assigneeIds.indexOf(memberId);
-  tdLog(t,'assigné',idx>=0?(m?m.nom:'?'):'—',idx>=0?'—':(m?m.nom:'?'));
+function udAutoResize(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
+function udSaveTitle(){
+  const t=udGetItem(); if(!t) return;
+  const v=document.getElementById('ud-title').value.trim();
+  if(!v||v===t.text) return;
+  udLog(t,'texte',t.text,v); t.text=v; udSave();
+}
+function udRenderBadges(t){
+  const el=document.getElementById('ud-badges');
+  let html='';
+  if(udType==='todo'){
+    const cat=getCatById(t.cat);
+    const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+    const cc=isDark?(cat.darkColor||cat.textColor):cat.textColor;
+    html+=`<span style="font-family:var(--mono);font-size:9px;font-weight:500;padding:1px 5px;border-radius:2px;letter-spacing:.04em;text-transform:uppercase;background:transparent;color:${cc};border:1px solid ${cc};">${esc(cat.label)}</span>`;
+    html+=`<span class="tag p${(t.pri||'p2').slice(1)}">${(t.pri||'P2').toUpperCase()}</span>`;
+    const hz=t.hz||'later';
+    html+=`<span style="font-family:var(--mono);font-size:9px;padding:1px 4px;border-radius:2px;border:1px solid currentColor;color:var(--text3);">${UD_HZ[hz]||hz}</span>`;
+  } else {
+    const st=t.status||'brouillon';
+    html+=`<span class="ud-status-badge ${st==='valide'?'ud-status-valide':'ud-status-brouillon'}" onclick="udToggleStatus()">${st==='valide'?'Validé ✓':'Brouillon'}</span>`;
+    html+=`<span class="tag p${(t.pri||'p2').slice(1)}">${(t.pri||'P2').toUpperCase()}</span>`;
+  }
+  el.innerHTML=html;
+}
+function udToggleStatus(){
+  const t=udGetItem(); if(!t||udType!=='backlog') return;
+  const prev=t.status||'brouillon'; const next=prev==='valide'?'brouillon':'valide';
+  udLog(t,'statut',prev==='valide'?'Validé':'Brouillon',next==='valide'?'Validé':'Brouillon');
+  t.status=next; udSave();
+}
+function udRenderBody(t){
+  const body=document.getElementById('ud-body');
+  body.innerHTML='';
+  const SEL='font-family:var(--sans);font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;';
+
+  // Params (todo only)
+  if(udType==='todo'){
+    const sec=document.createElement('div');
+    const catOpts=S.categories.map(c=>`<option value="${c.id}"${t.cat===c.id?' selected':''}>${c.label}</option>`).join('');
+    const hz=t.hz||'later';
+    sec.innerHTML=`<div class="ud-section-title">⚙ Paramètres</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <select id="ud-cat" onchange="udSaveParams()" style="${SEL}">${catOpts}</select>
+        <select id="ud-pri" onchange="udSaveParams()" style="${SEL}">
+          <option value="p1"${t.pri==='p1'?' selected':''}>P1</option>
+          <option value="p2"${t.pri==='p2'?' selected':''}>P2</option>
+          <option value="p3"${t.pri==='p3'?' selected':''}>P3</option>
+        </select>
+        <select id="ud-hz" onchange="udSaveParams()" style="${SEL}">
+          <option value="now"${hz==='now'?' selected':''}>Now</option>
+          <option value="today"${hz==='today'?' selected':''}>Today</option>
+          <option value="later"${hz==='later'?' selected':''}>Later</option>
+          <option value="waiting"${hz==='waiting'?' selected':''}>Waiting</option>
+        </select>
+      </div>`;
+    body.appendChild(sec);
+  }
+
+  // Equipe
+  const teamSec=document.createElement('div');
+  const team=S.sharedTeam||[];
+  if(team.length){
+    const adminId=udGetAdminId(); const ids=t.assigneeIds||[];
+    const chips=team.map(m=>{
+      const on=ids.includes(m.id); const isAdmin=m.id===adminId;
+      const clickFn=isAdmin?'':'udToggleAssignee(\''+m.id+'\');';
+      return `<span onclick="${clickFn}"
+        style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:600;margin:0 4px 4px 0;
+        cursor:${isAdmin?'default':'pointer'};background:${on?m.color:'transparent'};color:${on?'#fff':'var(--muted)'};
+        border:1px solid ${on?m.color:'var(--border)'};transition:all .15s;">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;
+          background:${on?'rgba(255,255,255,.25)':m.color};color:#fff;font-size:9px;font-weight:700;">${m.initiales}</span>
+        ${m.nom.split(' ')[0]}</span>`;
+    }).join('');
+    teamSec.innerHTML=`<div class="ud-section-title">👥 Équipe</div><div style="display:flex;flex-wrap:wrap;">${chips}</div>`;
+  } else {
+    teamSec.innerHTML=`<div class="ud-section-title">👥 Équipe</div><span style="font-size:13px;color:var(--muted)">Aucun membre — connectez Drive et chargez Projets & Équipe</span>`;
+  }
+  body.appendChild(teamSec);
+
+  // Sous-tâches (todo only)
+  if(udType==='todo'){
+    const subs=(t.subtasks||[]).map(sid=>S.todos.find(x=>x.id===sid)).filter(Boolean);
+    const done=subs.filter(s=>s.done).length;
+    const subSec=document.createElement('div');
+    const ABTN='background:none;border:1px solid var(--border);border-radius:var(--r);cursor:pointer;font-size:11px;padding:1px 5px;color:var(--text3);line-height:1;';
+    subSec.innerHTML=`<div class="ud-section-title">☐ Sous-tâches <span style="font-family:var(--mono);font-size:10px;color:${done===subs.length&&subs.length?'var(--green)':'var(--text3)'};">${done}/${subs.length}</span></div>
+      <div id="ud-sub-list">${subs.map((s,idx)=>`
+        <div class="ud-sub-item" data-sid="${s.id}" draggable="true">
+          <input type="checkbox" class="item-check" ${s.done?'checked':''} onchange="udToggleSub('${s.id}')">
+          <span class="ud-sub-text${s.done?' done-sub':''}" id="udst-${s.id}" onclick="udQuickEditSub('${s.id}')">${esc(s.text)}</span>
+          <button onclick="udMoveSub('${s.id}',-1)" ${idx===0?'disabled':''} style="${ABTN}">↑</button>
+          <button onclick="udMoveSub('${s.id}',1)" ${idx===subs.length-1?'disabled':''} style="${ABTN}">↓</button>
+          <button class="del" onclick="udDelSub('${s.id}')" style="opacity:.3;">×</button>
+        </div>`).join('')}
+      </div>
+      <div style="margin-top:6px;">
+        <input type="text" id="ud-sub-in" placeholder="Ajouter un élément…"
+          style="width:100%;box-sizing:border-box;font-family:var(--sans);font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();udAddSub();}">
+      </div>`;
+    body.appendChild(subSec);
+    const subList=document.getElementById('ud-sub-list');
+    if(subList) udSetupDrag(subList);
+  }
+
+  // Commentaires
+  const commentSec=document.createElement('div');
+  const comments=t.comments||[];
+  let cHTML=comments.length?comments.map((co,i)=>{
+    const author=co.authorId?(S.sharedTeam||[]).find(m=>m.id===co.authorId):null;
+    const auth=author
+      ?`<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:${author.color};color:#fff;font-size:9px;font-weight:700;margin-right:4px;">${author.initiales}</span><b>${author.nom}</b>`
+      :'<span style="color:var(--muted)">Anonyme</span>';
+    return `<div class="ud-comment-item"><div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;">${auth}</div><div class="ud-comment-text">${co.text}</div><div class="ud-comment-meta">${co.date} <button onclick="udDeleteComment(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;padding:0 3px;">×</button></div></div>`;
+  }).join(''):'<span style="font-size:13px;color:var(--muted)">Aucun commentaire</span>';
+  const TAST='font-family:var(--sans);font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);resize:none;outline:none;width:100%;box-sizing:border-box;';
+  commentSec.innerHTML=`<div class="ud-section-title">💬 Commentaires</div>
+    <div id="ud-comments">${cHTML}</div>
+    <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
+      <textarea id="ud-comment-input" rows="2" placeholder="Ajouter un commentaire…" style="${TAST}"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();udAddComment();}"></textarea>
+      <button class="btn sm primary" onclick="udAddComment()" style="align-self:flex-end;">Envoyer</button>
+    </div>`;
+  body.appendChild(commentSec);
+
+  // Historique
+  const histSec=document.createElement('div');
+  const hist=t.history||[];
+  const hHTML=hist.length?hist.map(h=>`<div class="ud-history-item"><div class="ud-history-meta">${h.date} · <b>${h.authorName}</b></div><div class="ud-history-change"><span class="ud-hist-tag">~ ${h.field}</span><span>${h.from}</span> → <span style="color:var(--text)">${h.to}</span></div></div>`).join('')
+    :'<span style="font-size:13px;color:var(--muted)">Aucune modification</span>';
+  histSec.innerHTML=`<div class="ud-section-title">📋 Historique</div><div>${hHTML}</div>`;
+  body.appendChild(histSec);
+}
+
+// Params
+function udSaveParams(){
+  const t=udGetItem(); if(!t||udType!=='todo') return;
+  const pC=t.cat,pP=t.pri,pH=t.hz;
+  t.cat=document.getElementById('ud-cat').value;
+  t.pri=document.getElementById('ud-pri').value;
+  t.hz=document.getElementById('ud-hz').value;
+  if(t.cat!==pC)udLog(t,'catégorie',pC,t.cat);
+  if(t.pri!==pP)udLog(t,'priorité',pP,t.pri);
+  if(t.hz!==pH)udLog(t,'horizon',pH,t.hz);
+  (t.subtasks||[]).forEach(sid=>{const s=S.todos.find(x=>x.id===sid);if(s){s.cat=t.cat;s.pri=t.pri;s.hz=t.hz;}});
+  udSave();
+}
+
+// Assignees
+function udToggleAssignee(memberId){
+  const t=udGetItem(); if(!t) return;
+  const adminId=udGetAdminId(); if(memberId===adminId) return;
+  if(!t.assigneeIds) t.assigneeIds=[];
+  const m=(S.sharedTeam||[]).find(x=>x.id===memberId);
+  const idx=t.assigneeIds.indexOf(memberId);
+  udLog(t,'assigné',idx>=0?(m?m.nom:'?'):'—',idx>=0?'—':(m?m.nom:'?'));
   if(idx>=0)t.assigneeIds.splice(idx,1);else t.assigneeIds.push(memberId);
-  tdSave();
+  udSave();
 }
-function tdRenderComments(t){
-  var el=document.getElementById('td-comments');var comments=t.comments||[];
-  if(!comments.length){el.innerHTML='<span style="font-size:13px;color:var(--muted)">Aucun commentaire</span>';return;}
-  var team=sharedTeam||[];
-  el.innerHTML=comments.map(function(c,i){
-    var author=c.authorId?team.find(function(m){return m.id===c.authorId;}):null;
-    var auth=author?('<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:'+author.color+';color:#fff;font-size:9px;font-weight:700;margin-right:4px;">'+author.initiales+'</span><b>'+author.nom+'</b>'):'<span style="color:var(--muted)">Anonyme</span>';
-    return '<div class="td-comment-item"><div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;">'+auth+'</div><div class="td-comment-text">'+c.text+'</div><div class="td-comment-meta">'+c.date+' <button onclick="tdDeleteComment('+i+')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;padding:0 3px;">✕</button></div></div>';
-  }).join('');
+
+// Sous-tâches
+function udAddSub(){
+  const t=udGetItem(); if(!t||udType!=='todo') return;
+  const inp=document.getElementById('ud-sub-in');
+  const text=inp?inp.value.trim():''; if(!text){if(inp)inp.focus();return;}
+  const sid=uid();
+  S.todos.push({id:sid,text,cat:t.cat,pri:t.pri,hz:t.hz,done:false,ts:Date.now(),comment:'',subtasks:[],parentId:udId,type:t.type||null,attachments:[],images:[]});
+  if(!t.subtasks)t.subtasks=[];
+  t.subtasks.push(sid);
+  collapsedParents.add(udId);
+  if(inp)inp.value='';
+  udSave();
 }
-function tdAddComment(){
-  var t=tdGetTask();if(!t)return;
-  var inp=document.getElementById('td-comment-input');var text=inp.value.trim();if(!text)return;
-  var admin=tdGetAdminMember();
+function udToggleSub(sid){const s=S.todos.find(x=>x.id===sid);if(!s)return;s.done=!s.done;udSave();}
+function udDelSub(sid){
+  const s=S.todos.find(x=>x.id===sid);if(!s)return;
+  const t=udGetItem();if(!t)return;
+  if(!confirm('Supprimer "'+s.text+'" ?'))return;
+  t.subtasks=(t.subtasks||[]).filter(x=>x!==sid);
+  S.todos=S.todos.filter(x=>x.id!==sid);
+  udSave();
+}
+function udMoveSub(sid,dir){
+  const t=udGetItem();if(!t||!t.subtasks)return;
+  const arr=t.subtasks,i=arr.indexOf(sid);if(i===-1)return;
+  const ni=i+dir;if(ni<0||ni>=arr.length)return;
+  [arr[i],arr[ni]]=[arr[ni],arr[i]];
+  udSave();
+}
+function udQuickEditSub(sid){
+  const s=S.todos.find(x=>x.id===sid);if(!s)return;
+  const el=document.getElementById('udst-'+sid);if(!el||el.tagName==='INPUT')return;
+  const orig=s.text;
+  const inp=document.createElement('input');
+  inp.type='text';inp.value=orig;
+  inp.style.cssText='flex:1;font-family:var(--sans);font-size:13px;padding:2px 6px;border:1px solid var(--accent);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;';
+  inp.id='udst-'+sid;
+  let committed=false;
+  inp.onkeydown=e=>{
+    if(e.key==='Enter'&&!committed){committed=true;doCommit();}
+    if(e.key==='Escape'&&!committed){committed=true;refreshUD();}
+  };
+  inp.onblur=()=>{if(!committed){committed=true;doCommit();}};
+  function doCommit(){const val=inp.value.trim();if(val&&val!==orig){s.text=val;autoSave();renderTodos();}refreshUD();}
+  el.replaceWith(inp);inp.focus();inp.select();
+}
+let udDragSid=null;
+function udSetupDrag(el){
+  el.addEventListener('dragstart',e=>{const it=e.target.closest('.ud-sub-item[draggable]');if(!it)return;udDragSid=it.dataset.sid;it.classList.add('ud-dragging');});
+  el.addEventListener('dragend',()=>el.querySelectorAll('.ud-sub-item').forEach(i=>i.classList.remove('ud-dragging','ud-drag-over')));
+  el.addEventListener('dragover',e=>{e.preventDefault();const it=e.target.closest('.ud-sub-item');if(!it||it.dataset.sid===udDragSid)return;el.querySelectorAll('.ud-sub-item').forEach(i=>i.classList.remove('ud-drag-over'));it.classList.add('ud-drag-over');});
+  el.addEventListener('drop',e=>{e.preventDefault();const it=e.target.closest('.ud-sub-item');if(!it||it.dataset.sid===udDragSid)return;const t=udGetItem();if(!t||!t.subtasks)return;const fi=t.subtasks.indexOf(udDragSid),ti=t.subtasks.indexOf(it.dataset.sid);if(fi>-1&&ti>-1)[t.subtasks[fi],t.subtasks[ti]]=[t.subtasks[ti],t.subtasks[fi]];udDragSid=null;udSave();});
+}
+
+// Commentaires
+function udAddComment(){
+  const t=udGetItem();if(!t)return;
+  const inp=document.getElementById('ud-comment-input');
+  const text=inp.value.trim();if(!text)return;
+  const admin=udGetAdmin();
   t.comments=t.comments||[];
-  t.comments.push({text:text,date:tdFmt(new Date()),authorId:admin?admin.id:null});
-  inp.value='';tdSave();
+  t.comments.push({text,date:udFmt(new Date()),authorId:admin?admin.id:null});
+  inp.value='';udSave();
 }
-function tdDeleteComment(idx){
-  var t=tdGetTask();if(!t)return;
+function udDeleteComment(idx){
+  const t=udGetItem();if(!t)return;
   if(!confirm('Supprimer ce commentaire ?'))return;
-  (t.comments||[]).splice(idx,1);tdSave();
+  (t.comments||[]).splice(idx,1);udSave();
 }
-function tdLog(t,field,from,to){
-  if(from===to)return;
+
+// Historique
+function udLog(t,field,from,to){
+  if(String(from)===String(to))return;
   t.history=t.history||[];
-  var admin=tdGetAdminMember();
-  t.history.unshift({date:tdFmt(new Date()),authorName:admin?admin.nom:'?',field:field,from:from,to:to});
+  const admin=udGetAdmin();
+  t.history.unshift({date:udFmt(new Date()),authorName:admin?admin.nom:'?',field,from:String(from),to:String(to)});
   if(t.history.length>50)t.history.length=50;
 }
-function tdRenderHistory(t){
-  var el=document.getElementById('td-history');var hist=t.history||[];
-  if(!hist.length){el.innerHTML='<span style="font-size:13px;color:var(--muted)">Aucune modification</span>';return;}
-  el.innerHTML=hist.map(function(h){
-    return '<div class="td-history-item"><div class="td-history-meta">'+h.date+' · <b>'+h.authorName+'</b></div>'
-      +'<div class="td-history-change"><span class="td-hist-tag">~ '+h.field+'</span>'
-      +'<span style="color:var(--muted)">'+h.from+'</span> → <span>'+h.to+'</span></div></div>';
+
+// Save
+function udSave(){
+  autoSave();
+  if(udType==='todo')renderTodos();else renderBacklog();
+  refreshUD();
+}
+
+// Assignee badge helpers (used in item lists)
+function assigneeBadgesHtml(ids,itemId,itemType){
+  const adminId=getAdminId();
+  return (ids||[]).map(id=>{
+    const m=(S.sharedTeam||[]).find(x=>x.id===id);if(!m)return '';
+    const isAdmin=id===adminId;
+    const onclick=isAdmin?'event.stopPropagation()':
+      `event.stopPropagation();udRemoveAssignee('${itemType}','${itemId}','${id}')`;
+    return `<span title="${m.nom+(isAdmin?' (Admin)':' — désaffecter')}" onclick="${onclick}" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:${m.color};font-size:9px;font-weight:700;color:#fff;cursor:${isAdmin?'default':'pointer'};flex-shrink:0;">${m.initiales}</span>`;
   }).join('');
 }
-function tdSave(){autoSave();renderBacklog();refreshTD();}
+function udRemoveAssignee(itemType,itemId,memberId){
+  if(itemType==='todo'){const t=S.todos.find(x=>x.id===itemId);if(t)t.assigneeIds=(t.assigneeIds||[]).filter(x=>x!==memberId);autoSave();renderTodos();}
+  else{const b=(S.backlog||[]).find(x=>x.id===itemId);if(b)b.assigneeIds=(b.assigneeIds||[]).filter(x=>x!==memberId);autoSave();renderBacklog();}
+}
+function removeAssignee(t,i,m){udRemoveAssignee(t,i,m);}
+function tdpToggleAssignee(){}
+
+// Ensure Admin on all items
+function ensureAdminOnItems(){
+  const adminId=getAdminId();if(!adminId)return;
+  let changed=false;
+  (S.todos||[]).forEach(t=>{
+    if(!t.parentId){
+      if(!t.assigneeIds||!t.assigneeIds.length){t.assigneeIds=[adminId];changed=true;}
+      else if(!t.assigneeIds.includes(adminId)){t.assigneeIds.unshift(adminId);changed=true;}
+    }
+  });
+  (S.backlog||[]).forEach(b=>{
+    if(!b.assigneeIds||!b.assigneeIds.length){b.assigneeIds=[adminId];changed=true;}
+    else if(!b.assigneeIds.includes(adminId)){b.assigneeIds.unshift(adminId);changed=true;}
+  });
+  if(changed)autoSave();
+}
 
 </script>
 
-<!-- Task Detail Drawer -->
-<div class="td-overlay" id="td-overlay" onclick="closeTD()"></div>
-<div class="td-drawer" id="td-drawer">
-  <div class="td-drawer-header">
+<!-- Unified Task Drawer -->
+<div class="ud-overlay" id="ud-overlay" onclick="closeUD()"></div>
+<div class="ud-drawer" id="ud-drawer">
+  <div class="ud-header">
     <div style="flex:1;min-width:0;">
-      <textarea class="td-drawer-title" id="td-title" rows="2" oninput="tdAutoResize(this)" onblur="tdSaveTitle()"></textarea>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;" id="td-badges"></div>
+      <textarea class="ud-title" id="ud-title" rows="2" oninput="udAutoResize(this)" onblur="udSaveTitle()"></textarea>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center;" id="ud-badges"></div>
     </div>
-    <button class="td-drawer-close" onclick="closeTD()">&#x2715;</button>
+    <button class="ud-close" onclick="closeUD()">&#x2715;</button>
   </div>
-  <div class="td-drawer-body">
-    <div class="td-drawer-section">
-      <div class="td-drawer-section-title">&#x1F465; &Eacute;quipe</div>
-      <div id="td-team"></div>
-    </div>
-    <div class="td-drawer-section">
-      <div class="td-drawer-section-title">&#x1F4AC; Commentaires</div>
-      <div id="td-comments"></div>
-      <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
-        <textarea id="td-comment-input" rows="2" placeholder="Ajouter un commentaire…"
-          style="font-family:var(--sans);font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);resize:none;outline:none;width:100%;box-sizing:border-box;"
-          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();tdAddComment();}"></textarea>
-        <button class="btn sm primary" onclick="tdAddComment()" style="align-self:flex-end;">Envoyer</button>
-      </div>
-    </div>
-    <div class="td-drawer-section">
-      <div class="td-drawer-section-title">&#x1F4CB; Historique</div>
-      <div id="td-history"></div>
-    </div>
-  </div>
+  <div class="ud-body" id="ud-body"></div>
 </div>
 
 </body>
