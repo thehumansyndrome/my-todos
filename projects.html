@@ -739,6 +739,23 @@ async function loadSuiviData() {
   toast('✓ Données chargées');
 }
 
+
+// ── Admin helper ──────────────────────────────────────────────────────────
+function getAdminMember(){
+  return (S.team||[]).find(function(m){return m.appRole==='Admin';})||null;
+}
+function adminBadgeHtml(task){
+  // Show assignee badges; always include Admin visually if assigneeIds missing
+  const team = S.team||[];
+  const admin = getAdminMember();
+  const ids = task.assigneeIds && task.assigneeIds.length ? task.assigneeIds
+             : (admin ? [admin.id] : []);
+  return ids.map(function(id){
+    const m = team.find(function(x){return x.id===id;});
+    if(!m) return '';
+    return `<span title="${esc(m.nom)}" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:${m.color};font-size:9px;font-weight:700;color:#fff;flex-shrink:0;">${m.initiales}</span>`;
+  }).join('');
+}
 function renderSuivi() {
   const el = document.getElementById('suivi-content'); if (!el) return;
   const projId = document.getElementById('suivi-proj-sel').value;
@@ -823,6 +840,8 @@ function renderSuivi() {
         <span class="suivi-row-title"${e.done?' style="text-decoration:line-through;color:var(--muted)"':''}>${esc(e.text||'Sans titre')}</span>
         ${e.pri?`<span style="font-size:11px;font-weight:600;${prioCls}">${e.pri.toUpperCase()}</span>`:''}
         ${e.hz?`<span style="font-size:10px;color:var(--muted);padding:1px 6px;border:1px solid var(--border);border-radius:10px;">${e.hz}</span>`:''}
+        ${(e.status||'brouillon')==='valide'?`<span style="font-size:10px;font-weight:600;color:var(--green);border:1px solid var(--green);padding:1px 5px;border-radius:10px;">Validé ✓</span>`:''}
+        <span style="display:inline-flex;gap:3px;">${adminBadgeHtml(e)}</span>
       </div>`;
     }).join('');
     h += '</div>';
