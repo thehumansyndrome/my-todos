@@ -847,12 +847,15 @@ function renderSuivi() {
   });
   // Match by ID, or fallback by project name (handles ID mismatch across apps)
   function matchesProj(e) {
+    if (!e.projet && e.projet !== 0) return false;
     if (e.projet === projId) return true;
-    if (!e.projet) return false;
-    // Check if the project stored in entry matches current proj by name
-    const entryProj = (suiviData.sharedProjects||[]).find(p => p.id === e.projet);
-    if (entryProj && proj && entryProj.name.toLowerCase() === proj.name.toLowerCase()) return true;
-    // Also try matching projId directly against proj name (stored as name string)
+    // Check via suiviData.sharedProjects (loaded from shared.json in loadSuiviData)
+    const entryProjInShared = (suiviData.sharedProjects||[]).find(p => p.id === e.projet);
+    if (entryProjInShared && proj && entryProjInShared.name.toLowerCase() === proj.name.toLowerCase()) return true;
+    // Check via S.projects (authoritative list from projects.json)
+    const entryProjInLocal = (S.projects||[]).find(p => p.id === e.projet);
+    if (entryProjInLocal && proj && entryProjInLocal.name.toLowerCase() === proj.name.toLowerCase()) return true;
+    // Direct name match (e.projet stored as name string instead of ID)
     if (typeof e.projet === 'string' && proj && e.projet.toLowerCase() === proj.name.toLowerCase()) return true;
     return false;
   }
@@ -976,7 +979,16 @@ function renderSuivi() {
   }
 
   if (!totalUS && !moAll.length && !crAll.length && !blAll.length) {
-    h += `<div class="empty"><div class="empty-icon">📂</div>Aucune donnée rattachée à ce projet.<br><span style="font-size:12px">Connectez Drive et actualisez, ou rattachez des éléments depuis todos, MO Hub, CR Generator et US Generator.</span></div>`;
+    // Diagnostic: show unmatched CR/MO/US entries to help debug project ID mismatch
+    const allCR = suiviData.cr||[];
+    const diagHtml = allCR.length
+      ? '<div style="margin-top:12px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);font-size:11px;color:var(--muted);">'
+        +'<b>Diagnostic :</b> '+allCR.length+' CR trouvés en tout · '
+        +'projet sélectionné : <code>'+projId+'</code><br>'
+        +allCR.map(function(e){return '<span style="display:block;margin-top:4px;">CR "'+esc(e.title||e.titre||'?')+'" · projet stocké : <code>'+(e.projet||'(vide)')+'</code></span>';}).join('')
+        +'</div>'
+      : '';
+    h += `<div class="empty"><div class="empty-icon">📂</div>Aucune donnée rattachée à ce projet.<br><span style="font-size:12px">Connectez Drive et actualisez, ou rattachez des éléments depuis todos, MO Hub, CR Generator et US Generator.</span></div>`+diagHtml;
   }
 
   el.innerHTML = h;
