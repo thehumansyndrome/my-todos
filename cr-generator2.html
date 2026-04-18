@@ -706,6 +706,10 @@ function handleTagKey(ev) {
   if ((ev.key==='Enter'||ev.key===',') && input.value.trim()) {
     ev.preventDefault();
     var nom = input.value.replace(',','').trim();
+    if (nom.startsWith('@')) {
+      var resolved = resolveAlias(nom);
+      if (resolved) nom = resolved.nom;
+    }
     if (nom && crParticipants.indexOf(nom)===-1) crParticipants.push(nom);
     input.value=''; renderTagWrap(); onEdit();
   } else if (ev.key==='Backspace' && !input.value && crParticipants.length) {
@@ -826,13 +830,33 @@ function onDocClick(e) {
 }
 
 // ── Preview ────────────────────────────────────────────────────────────────────
+
+// ── Alias @mention resolution ──────────────────────────────────────────────────
+function resolveAlias(mention) {
+  // mention = "JV" or "@JV" — match against alias field (fallback: initiales)
+  var key = mention.replace(/^@/,'').toLowerCase();
+  return (sharedTeam||[]).find(function(m){
+    var al = (m.alias||m.initiales||'').toLowerCase();
+    return al === key;
+  }) || null;
+}
+function aliasAvatarHtml(mention) {
+  var m = resolveAlias(mention);
+  if (!m) return '<span class="tag-item" style="vertical-align:middle;"><span class="tag-item-avatar c'+pColor(mention)+'">'+esc(pInitials(mention))+'</span>'+esc(mention)+'</span>';
+  return '<span style="display:inline-flex;align-items:center;gap:3px;vertical-align:middle;background:'+m.color+'22;color:'+m.color+';border:1px solid '+m.color+'44;border-radius:10px;padding:1px 6px;font-size:11px;font-weight:600;">'    +'<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:'+m.color+';font-size:8px;font-weight:700;color:#fff;">'+esc(m.initiales)+'</span>'    +esc(m.nom.split(' ')[0])+'</span>';
+}
 function renderParticipantChips(participants) {
   if (!participants) return '';
   var names = participants.split(',').map(function(n){return n.trim();}).filter(Boolean);
   if (!names.length) return '';
   var h = '<div class="participant-chips">';
   names.forEach(function(nom) {
-    h += '<span class="p-chip"><span class="p-avatar c'+pColor(nom)+'">'+esc(pInitials(nom))+'</span>'+esc(nom)+'</span>';
+    var resolved = nom.startsWith('@') ? resolveAlias(nom) : null;
+    if (resolved) {
+      h += '<span class="p-chip" style="background:'+resolved.color+'22;border-color:'+resolved.color+'44;color:'+resolved.color+';"><span class="p-avatar" style="background:'+resolved.color+';">'+esc(resolved.initiales)+'</span>'+esc(resolved.nom)+'</span>';
+    } else {
+      h += '<span class="p-chip"><span class="p-avatar c'+pColor(nom)+'">'+esc(pInitials(nom))+'</span>'+esc(nom)+'</span>';
+    }
   });
   return h+'</div>';
 }
@@ -869,7 +893,7 @@ function renderPreview() {
     cr.actions.forEach(function(a,i) {
       var col=a.assignee?pColor(a.assignee):0, ini=a.assignee?pInitials(a.assignee):'';
       h += '<div class="pr-item"><span class="pr-item-icon" style="font-family:var(--mono);font-size:12px;min-width:18px;">'+(i+1)+'.</span><div class="pr-item-body">'+esc(a.text);
-      if (a.assignee) h+=' <span class="tag-item" style="vertical-align:middle;"><span class="tag-item-avatar c'+col+'">'+esc(ini)+'</span>'+esc(a.assignee)+'</span>';
+      if (a.assignee) h+=' '+aliasAvatarHtml(a.assignee);
       if (a.due) h+=' <span style="color:var(--amber);font-size:12px;">📅 '+esc(a.due)+'</span>';
       h += '</div></div>';
     });
