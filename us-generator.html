@@ -1037,6 +1037,21 @@ function prioClass(p) {
 }
 
 /* ── Preview ── */
+
+// ── Alias @mention resolution ──────────────────────────────────────────────────
+function resolveAlias(mention) {
+  var key = mention.replace(/^@/,'').toLowerCase();
+  return (sharedTeam||[]).find(function(m){
+    var al = (m.alias||m.initiales||'').toLowerCase();
+    return al === key;
+  }) || null;
+}
+function resolveAliasesInText(text) {
+  return text.replace(/@([a-zA-Z0-9]+)/g, function(match, al) {
+    var m = resolveAlias(al);
+    return m ? m.nom : match;
+  });
+}
 function renderPreview() {
   var text = document.getElementById('raw-input').value;
   var us   = parse(text);
