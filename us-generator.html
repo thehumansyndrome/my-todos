@@ -2886,7 +2886,7 @@ function addTache() {
   var pri  = document.getElementById('tache-pri').value;
   if (!todoFullData) { toast('Actualisez d\'abord'); return; }
   if (!appProjId) { toast('Projet introuvable'); return; }
-  var newTask = {id:'us'+Date.now().toString(36), text:text, projId:appProjId, pri:pri, done:false, ts:Date.now(), assigneeIds:defaultAssignees()};
+  var newTask = {id:'us'+Date.now().toString(36), text:text, projId:appProjId, pri:pri, done:false, status:'valide', ts:Date.now(), assigneeIds:defaultAssignees()};
   todoFullData.backlog = todoFullData.backlog || [];
   todoFullData.backlog.unshift(newTask);
   document.getElementById('tache-input').value = '';
