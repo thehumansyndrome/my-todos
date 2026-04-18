@@ -2765,7 +2765,22 @@ function loadTaches() {
   }).catch(function(e){ if(e!=='no file') document.getElementById('taches-status').textContent = 'Erreur : '+(e.message||e); });
 }
 
+
+function ensureAdminOnTasks(){
+  if(!todoFullData||!todoFullData.backlog) return;
+  var adminId=getAdminId(); if(!adminId) return;
+  var changed=false;
+  todoFullData.backlog.forEach(function(t){
+    if(!t.assigneeIds||t.assigneeIds.length===0){
+      t.assigneeIds=[adminId]; changed=true;
+    } else if(t.assigneeIds.indexOf(adminId)<0){
+      t.assigneeIds.unshift(adminId); changed=true;
+    }
+  });
+  if(changed) writeTodoFile();
+}
 function renderTaches() {
+  ensureAdminOnTasks();
   var el = document.getElementById('taches-list'); if (!el) return;
   if (!todoFullData || !appProjId) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:14px;">Actualisez pour charger les tâches.</div>'; return; }
   var tasks = (todoFullData.backlog||[]).filter(function(t){return t.projId===appProjId;});
