@@ -301,7 +301,6 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
     <div class="pane">
       <div class="pane-header">
         <span>Notes brutes</span>
-        <button class="btn sm" onclick="newCR()" title="Nouveau CR">+ Nouveau</button>
         <button class="btn sm" onclick="resetTemplate()">↺ Template</button>
       </div>
       <textarea class="editor-area" id="raw-input" spellcheck="false" oninput="onEdit()"></textarea>
@@ -1305,7 +1304,10 @@ function newCR() {
 }
 function resetTemplate() {
   document.getElementById('raw-input').value=TMPL;
-  crParticipants=[]; curRedact=[]; curValid=[]; curCRProjet=''; editingEntryId=null;
+  crParticipants=[]; curCRProjet=''; editingEntryId=null;
+  var aid = typeof getAdminId === 'function' ? getAdminId() : null;
+  curRedact = aid ? [aid] : [];
+  curValid  = aid ? [aid] : [];
   renderTagWrap(); saveMetaState(); renderEditorMeta(); renderPreview();
   localStorage.removeItem(SK+'_draft');
 }
