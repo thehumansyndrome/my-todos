@@ -331,7 +331,6 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
       <div class="pane">
         <div class="pane-header">
           <span>Notes brutes</span>
-          <button class="btn sm" onclick="newMO()" title="Nouveau MO">+ Nouveau</button>
           <button class="btn sm" onclick="resetTemplate()">↺ Template</button>
         </div>
         <textarea class="editor-area" id="raw-input" spellcheck="false"
@@ -531,20 +530,7 @@ const STATUS_CYCLE   = ['brouillon','validation','renvoye','valide'];
 const STATUS_LABELS  = {brouillon:'Brouillon',validation:'En validation',valide:'Validé ✓',renvoye:'Renvoyé ✗',archive:'Archivé'};
 const STATUS_CLASS   = {brouillon:'status-brouillon',validation:'status-validation',valide:'status-valide',renvoye:'status-renvoye',archive:'status-archive'};
 
-const TEMPLATE = `titre: 
-quand: 
-duree: 
-modifie: 
-
-Notes libres (ignorées) — contexte, liens, références…
-
-E: 
-SE: 
-E: 
-E: 
-
-resultat: 
-erreur: `;
+const TEMPLATE = ``;
 
 // ── State ──────────────────────────────────────────────────────────────────────
 let S = { history:[], projets:[] };
@@ -611,7 +597,11 @@ function load() {
     curValid  = meta.valid  || [];
     curEntryId = meta.entryId || null;
     var _aid = typeof getAdminId === 'function' ? getAdminId() : null;
-    if (_aid) { if (!curRedact.length) curRedact=[_aid]; if (!curValid.length) curValid=[_aid]; }
+    if (!curValid.length && _aid)  curValid  = [_aid];
+    if (!curRedact.length) {
+      var _rm = sharedTeam.find(function(m){ return (m.roles||[]).includes('redacteur'); });
+      if (_rm) curRedact = [_rm.id];
+    }
   } catch(e) {}
   renderPreview();
   renderAll();
@@ -672,8 +662,9 @@ function newMO() {
   document.getElementById('raw-input').value = TEMPLATE;
   curProjet = ''; curEntryId = null;
   var aid = typeof getAdminId === 'function' ? getAdminId() : null;
-  curRedact = aid ? [aid] : [];
   curValid  = aid ? [aid] : [];
+  var rm = sharedTeam.find(function(m){ return (m.roles||[]).includes('redacteur'); });
+  curRedact = rm ? [rm.id] : [];
   renderEditorMeta(); renderPreview(); hideLockBanner();
   toast('Nouveau MO');
 }
