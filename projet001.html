@@ -4074,6 +4074,7 @@ async function genericItemImgPickFile(input, id, collection, renderFn){
 }
 
 function renderTodos(){
+  ensureAdminOnItems();
   if(!S.categories || !Array.isArray(S.categories)) ensureState();
   applyHzEscalation();
   const catKeys = S.categories.map(c=>c.id);
@@ -5552,7 +5553,24 @@ function delBacklogItem(id){
   autoSave();renderBacklog();
 }
 
+
+function ensureAdminOnItems(){
+  var adminId=getAdminId(); if(!adminId) return;
+  var changed=false;
+  (S.todos||[]).forEach(function(t){
+    if(!t.parentId){
+      if(!t.assigneeIds||t.assigneeIds.length===0){t.assigneeIds=[adminId];changed=true;}
+      else if(t.assigneeIds.indexOf(adminId)<0){t.assigneeIds.unshift(adminId);changed=true;}
+    }
+  });
+  (S.backlog||[]).forEach(function(b){
+    if(!b.assigneeIds||b.assigneeIds.length===0){b.assigneeIds=[adminId];changed=true;}
+    else if(b.assigneeIds.indexOf(adminId)<0){b.assigneeIds.unshift(adminId);changed=true;}
+  });
+  if(changed) autoSave();
+}
 function renderBacklog(){
+  ensureAdminOnItems();
   if(!S.backlog)S.backlog=[];
   populateBacklogProjSelect();
   // filters
