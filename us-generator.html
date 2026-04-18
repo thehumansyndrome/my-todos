@@ -370,18 +370,9 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
 .td-comment-meta{font-size:11px;color:var(--muted);margin-top:3px;}
 
 
-.draft-restore-banner{display:none;align-items:center;gap:10px;padding:8px 16px;background:var(--amber,#f59e0b);color:#fff;font-size:12px;font-weight:500;}
-.draft-restore-banner button{background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.5);color:#fff;padding:2px 10px;border-radius:4px;cursor:pointer;font-size:11px;}
-.draft-restore-banner button:hover{background:rgba(255,255,255,.4);}
 </style>
 </head>
 <body>
-<div class="draft-restore-banner" id="draft-restore-banner">
-  📝 Brouillon restauré depuis votre dernière session.
-  <button onclick="discardDraft()">Effacer</button>
-  <button onclick="document.getElementById('draft-restore-banner').style.display='none'">Garder</button>
-</div>
-
 
 <div class="header">
   <div class="header-left">
@@ -804,7 +795,6 @@ function load() {
   renderHistory();
   renderEpics();
   renderBacklogs();
-  setTimeout(showDraftBannerIfNeeded, 100);
   populateProjetSelect();
   renderEditorMeta();
   renderProjets();
@@ -3020,21 +3010,6 @@ function tdRenderHistory(t){
   }).join('');
 }
 function tdSave(){writeTodoFile();renderTaches();refreshTD();}
-
-
-function discardDraft() {
-  localStorage.removeItem(typeof SK!=='undefined'?SK+'_draft':'draft');
-  document.getElementById('raw-input').value = typeof TEMPLATE!=='undefined' ? TEMPLATE : '';
-  document.getElementById('draft-restore-banner').style.display='none';
-  if(typeof renderPreview==='function') renderPreview();
-}
-function showDraftBannerIfNeeded() {
-  var raw = document.getElementById('raw-input');
-  var tmpl = typeof TEMPLATE!=='undefined' ? TEMPLATE.trim() : '';
-  if (raw && raw.value.trim() && raw.value.trim() !== tmpl) {
-    document.getElementById('draft-restore-banner').style.display='flex';
-  }
-}
 </script>
 
 <!-- Task Detail Drawer -->
