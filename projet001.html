@@ -1227,6 +1227,7 @@ div:hover>.item-img-del{display:block;}
 .ud-status-badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid;user-select:none;transition:all .15s;}
 .ud-status-brouillon{color:var(--muted);border-color:var(--muted);}
 .ud-status-valide{color:var(--green);border-color:var(--green);}
+.ud-status-abandonne{color:var(--red);border-color:var(--red);}
 .ud-sub-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:1px solid var(--border);font-size:13px;}
 .ud-sub-item:last-child{border-bottom:none;}
 .ud-sub-text{flex:1;cursor:text;line-height:1.4;}
@@ -5503,6 +5504,10 @@ function udRenderBadges(t){
     html+=`<span class="tag p${(t.pri||'p2').slice(1)}">${(t.pri||'P2').toUpperCase()}</span>`;
     const hz=t.hz||'later';
     html+=`<span class="hz-${hz}" style="font-family:var(--mono);font-size:9px;padding:1px 4px;border-radius:2px;border:1px solid currentColor;opacity:.8;">${UD_HZ[hz]||hz}</span>`;
+    const tst=t.taskStatus||'brouillon';
+    const tstClass=tst==='valide'?'ud-status-valide':tst==='abandonne'?'ud-status-abandonne':'ud-status-brouillon';
+    const tstLabel=tst==='valide'?'Valide\u0301 \u2713':tst==='abandonne'?'Abandonn\u00e9':'Brouillon';
+    html+=`<span class="ud-status-badge ${tstClass}" onclick="udCycleTaskStatus()" title="Cliquer pour changer">${tstLabel}</span>`;
   } else {
     const st=t.status||'brouillon';
     html+=`<span class="ud-status-badge ${st==='valide'?'ud-status-valide':'ud-status-brouillon'}" onclick="udToggleStatus()">${st==='valide'?'Valide\u0301 \u2713':'Brouillon'}</span>`;
@@ -5515,6 +5520,14 @@ function udToggleStatus(){
   const prev=t.status||'brouillon'; const next=prev==='valide'?'brouillon':'valide';
   udLog(t,'statut',prev==='valide'?'Valide\u0301':'Brouillon',next==='valide'?'Valide\u0301':'Brouillon');
   t.status=next; udSave();
+}
+function udCycleTaskStatus(){
+  const t=udGetItem(); if(!t||udType!=='todo') return;
+  const cycle={brouillon:'valide',valide:'abandonne',abandonne:'brouillon'};
+  const prev=t.taskStatus||'brouillon'; const next=cycle[prev]||'brouillon';
+  const labels={brouillon:'Brouillon',valide:'Valide\u0301',abandonne:'Abandonn\u00e9'};
+  udLog(t,'statut t\u00e2che',labels[prev],labels[next]);
+  t.taskStatus=next; udSave(); udRenderBadges(t);
 }
 
 function udRenderBody(t){
