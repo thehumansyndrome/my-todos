@@ -3245,7 +3245,7 @@ function todoItemHtml(t){
   const isSubtask = !!t.parentId;
 
   return `
-  <div class="item${t.done?' done':''}" onclick="if(!isSubtask&&!event.target.closest('input,button,label,textarea,select,.del,.rb,.attach-btn,.comment-btn,.img-btn'))openUD('todo','${t.id}')"${isSubtask?' is-subtask':''}" ${isSubtask||IS_TOUCH?'':'draggable="true"'} data-id="${t.id}">
+  <div class="item${t.done?' done':''}${isSubtask?' is-subtask':''}" onclick="if(!this.classList.contains('is-subtask')&&!event.target.closest('input,button,label,textarea,select,.del,.rb,.attach-btn,.comment-btn,.img-btn'))openUD('todo','${t.id}')" ${isSubtask||IS_TOUCH?'':' draggable="true"'} data-id="${t.id}">
     ${isSubtask
       ? ''
       : `<div class="dh"><span></span><span></span><span></span></div>
