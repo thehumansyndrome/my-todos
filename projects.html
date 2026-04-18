@@ -845,9 +845,20 @@ function renderSuivi() {
     const todoProj = (suiviData.sharedProjects||[]).find(p => p.id === e.projId);
     return todoProj && todoProj.name.toLowerCase() === proj.name.toLowerCase();
   });
-  const usAll   = suiviData.us.filter(e => e.projet===projId);
-  const moAll   = suiviData.mo.filter(e => e.projet===projId);
-  const crAll   = suiviData.cr.filter(e => e.projet===projId);
+  // Match by ID, or fallback by project name (handles ID mismatch across apps)
+  function matchesProj(e) {
+    if (e.projet === projId) return true;
+    if (!e.projet) return false;
+    // Check if the project stored in entry matches current proj by name
+    const entryProj = (suiviData.sharedProjects||[]).find(p => p.id === e.projet);
+    if (entryProj && proj && entryProj.name.toLowerCase() === proj.name.toLowerCase()) return true;
+    // Also try matching projId directly against proj name (stored as name string)
+    if (typeof e.projet === 'string' && proj && e.projet.toLowerCase() === proj.name.toLowerCase()) return true;
+    return false;
+  }
+  const usAll   = suiviData.us.filter(matchesProj);
+  const moAll   = suiviData.mo.filter(matchesProj);
+  const crAll   = suiviData.cr.filter(matchesProj);
   const blActive = blAll.filter(e => !e.done);
   const blDone   = blAll.filter(e => !!e.done);
 
