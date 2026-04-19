@@ -329,6 +329,26 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
   display:flex;align-items:center;transition:color .15s;
 }
 .tabs-bar-new:hover{color:var(--text);}
+.tab-item.pinned .tab-pin{opacity:1;color:var(--accent);}
+.tab-pin{
+  width:14px;height:14px;border-radius:3px;display:flex;align-items:center;
+  justify-content:center;font-size:10px;color:var(--muted);flex-shrink:0;
+  background:none;border:none;cursor:pointer;transition:opacity .15s,color .15s;
+  opacity:0;
+}
+.tab-item:hover .tab-pin{opacity:1;}
+.tab-item.pinned{padding-left:8px;padding-right:8px;}
+.tab-item.pinned .tab-item-title{max-width:60px;}
+.tab-item.dragging{opacity:.4;}
+.tab-item.drag-over{border-left:2px solid var(--accent);}
+
+/* ── Note date footer ── */
+.note-date-footer{
+  padding:6px 24px 10px;font-size:11px;color:var(--muted);
+  background:var(--surface);border-top:1px solid var(--border);
+  flex-shrink:0;display:flex;align-items:center;gap:6px;
+  font-family:var(--mono);
+}
 
 /* ── Rich preview ── */
 .pr-link{color:var(--blue);text-decoration:none;word-break:break-all;}
@@ -441,6 +461,10 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
         <button class="btn sm primary" onclick="copyHtml()">⎘ Copier</button>
       </div>
 
+      <div class="note-date-footer" id="note-date-footer" style="display:none;">
+        <span>✎</span><span id="note-date-text"></span>
+      </div>
+
     </div>
 
   </div>
@@ -472,7 +496,8 @@ let saveTimer  = null;
 let curTemplate = null;   // template applied to current note
 
 // Tabs (Obsidian-style open tabs)
-let openTabs   = [];      // [{id, title}]
+let openTabs   = [];      // [{id, pinned}]
+let dragSrcIdx = null;    // drag-and-drop source index
 
 // Drive
 let driveFileId  = null;
@@ -623,12 +648,13 @@ function openNote(id) {
 
   // Add to tabs if not already open
   if (!openTabs.find(t => t.id === id)) {
-    openTabs.push({id});
+    openTabs.push({id, pinned: false});
   }
   renderTabs();
   renderList();
   updatePreview();
   updateExportBar();
+  updateDateFooter();
 }
 
 function deleteNote() {
@@ -660,23 +686,48 @@ function deleteNote() {
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 function renderTabs() {
   const bar = document.getElementById('tabs-bar');
-  const tabsHtml = openTabs.map(t => {
+  const tabsHtml = openTabs.map((t, idx) => {
     const n = S.notes.find(x => x.id === t.id);
     const title = n ? (noteTitle(n) || 'Sans titre') : 'Sans titre';
     const isActive = t.id === curId;
-    return `<div class="tab-item${isActive?' active':''}" onclick="openNote('${t.id}')">
+    const isPinned = !!t.pinned;
+    return `<div class="tab-item${isActive?' active':''}${isPinned?' pinned':''}"
+        data-idx="${idx}"
+        onclick="openNote('${t.id}')"
+        draggable="true"
+        ondragstart="onTabDragStart(event,${idx})"
+        ondragover="onTabDragOver(event,${idx})"
+        ondrop="onTabDrop(event,${idx})"
+        ondragend="onTabDragEnd(event)"
+        ondragleave="onTabDragLeave(event)">
+      <button class="tab-pin" onclick="toggleTabPin(event,'${t.id}')" title="${isPinned?'Désépingler':'Épingler'}">📌</button>
       <span class="tab-item-title" title="${esc(title)}">${esc(title)}</span>
-      <button class="tab-close" onclick="closeTab(event,'${t.id}')" title="Fermer">×</button>
+      ${isPinned ? '' : `<button class="tab-close" onclick="closeTab(event,'${t.id}')" title="Fermer">×</button>`}
     </div>`;
   }).join('');
   bar.innerHTML = tabsHtml + `<button class="tabs-bar-new" onclick="newNote()" title="Nouvelle note">＋</button>`;
 }
 
+function toggleTabPin(e, id) {
+  e.stopPropagation();
+  const t = openTabs.find(x => x.id === id);
+  if (!t) return;
+  t.pinned = !t.pinned;
+  // Pinned tabs go to front
+  const pinned = openTabs.filter(x => x.pinned);
+  const unpinned = openTabs.filter(x => !x.pinned);
+  openTabs = [...pinned, ...unpinned];
+  renderTabs();
+  toast(t.pinned ? '📌 Onglet épinglé' : 'Onglet désépinglé');
+}
+
 function closeTab(e, id) {
   e.stopPropagation();
+  // Cannot close pinned tab without unpinning first
+  const t = openTabs.find(x => x.id === id);
+  if (t && t.pinned) { toast('Désépingle d'abord l'onglet'); return; }
   openTabs = openTabs.filter(t => t.id !== id);
   if (curId === id) {
-    // Switch to last remaining tab or show empty
     const last = openTabs[openTabs.length - 1];
     if (last) {
       openNote(last.id);
@@ -685,10 +736,48 @@ function closeTab(e, id) {
       curTemplate = null;
       document.getElementById('editor-active').style.display = 'none';
       document.getElementById('editor-empty').style.display = 'flex';
+      updateDateFooter();
     }
   }
   renderTabs();
   renderList();
+}
+
+// ── Tab drag & drop ───────────────────────────────────────────────────────────
+function onTabDragStart(e, idx) {
+  dragSrcIdx = idx;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function onTabDragOver(e, idx) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.tab-item').forEach((el,i) => {
+    el.classList.toggle('drag-over', i === idx && i !== dragSrcIdx);
+  });
+}
+function onTabDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+function onTabDrop(e, idx) {
+  e.preventDefault();
+  if (dragSrcIdx === null || dragSrcIdx === idx) return;
+  // Respect pinned boundary: can't drag unpinned before pinned
+  const src = openTabs[dragSrcIdx];
+  const pinnedCount = openTabs.filter(x => x.pinned).length;
+  const targetPinned = openTabs[idx] && openTabs[idx].pinned;
+  if (!src.pinned && targetPinned) { toast('Ne peut pas déplacer avant un onglet épinglé'); return; }
+  if (src.pinned && !openTabs[idx].pinned && idx >= pinnedCount) { src.pinned = false; }
+  openTabs.splice(dragSrcIdx, 1);
+  openTabs.splice(idx, 0, src);
+  dragSrcIdx = null;
+  renderTabs();
+}
+function onTabDragEnd(e) {
+  dragSrcIdx = null;
+  document.querySelectorAll('.tab-item').forEach(el => {
+    el.classList.remove('dragging','drag-over');
+  });
 }
 
 // ── Favorites ─────────────────────────────────────────────────────────────────
@@ -743,6 +832,7 @@ function onNoteInput() {
   n.body = document.getElementById('note-textarea').value;
   n.updated = Date.now();
   if (curView !== 'raw') updatePreview();
+  updateDateFooter();
   debounceSave();
   // Refresh list item lazily
   clearTimeout(window._listRefreshTimer);
@@ -875,6 +965,18 @@ function updateExportBar() {
   const bar = document.getElementById('export-bar');
   const tmpl = TEMPLATES.find(t => t.id === (curTemplate || 'none'));
   bar.style.display = (curView !== 'raw' && tmpl && tmpl.id !== 'none') ? '' : 'none';
+}
+
+function updateDateFooter() {
+  const footer = document.getElementById('note-date-footer');
+  const label  = document.getElementById('note-date-text');
+  const n = S.notes.find(x => x.id === curId);
+  if (!n) { footer.style.display = 'none'; return; }
+  footer.style.display = '';
+  const d = new Date(n.updated);
+  label.textContent = 'Modifiée le ' + d.toLocaleDateString('fr-FR', {
+    weekday:'long', year:'numeric', month:'long', day:'numeric'
+  }) + ' à ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
 }
 
 // ── Template menu ─────────────────────────────────────────────────────────────
