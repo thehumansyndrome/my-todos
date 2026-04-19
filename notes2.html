@@ -727,7 +727,7 @@ function closeTab(e, id) {
   e.stopPropagation();
   // Cannot close pinned tab without unpinning first
   const t = openTabs.find(x => x.id === id);
-  if (t && t.pinned) { toast('Désépingle d'abord l'onglet'); return; }
+  if (t && t.pinned) { toast('Désépingle l\'onglet d\'abord'); return; }
   openTabs = openTabs.filter(t => t.id !== id);
   if (curId === id) {
     const last = openTabs[openTabs.length - 1];
