@@ -1469,13 +1469,23 @@ function updateDriveUI(c){
   document.getElementById('shared-btn').style.display=c?'':'none';
 }
 function pushToDrive(){
-  if(!accessToken)return; setSyncDot('pending');
+  if(!accessToken){console.warn('[CR] pushToDrive: no accessToken');return;} setSyncDot('pending');
   var body=JSON.stringify(S);
+  console.log('[CR] pushToDrive: S.history.length='+S.history.length+', body='+body.length+'bytes');
   findDriveFile().then(function(fid){
     driveFileId=fid;
+    console.log('[CR] fileId found:', fid);
     if(fid) return fetch('https://www.googleapis.com/upload/drive/v3/files/'+fid+'?uploadType=media',{method:'PATCH',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:body});
-    return fetch('https://www.googleapis.com/drive/v3/files',{method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify({name:DRIVE_FILE,mimeType:'application/json'})}).then(function(r){return r.json();}).then(function(m){driveFileId=m.id;return fetch('https://www.googleapis.com/upload/drive/v3/files/'+driveFileId+'?uploadType=media',{method:'PATCH',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:body});});
-  }).then(function(){setSyncDot('ok');}).catch(function(){setSyncDot('error');});
+    return fetch('https://www.googleapis.com/drive/v3/files',{method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify({name:DRIVE_FILE,mimeType:'application/json'})}).then(function(r){return r.json();}).then(function(m){
+      console.log('[CR] file created:', m.id, m.error||'');
+      driveFileId=m.id;
+      return fetch('https://www.googleapis.com/upload/drive/v3/files/'+driveFileId+'?uploadType=media',{method:'PATCH',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:body});
+    });
+  }).then(function(r){
+    console.log('[CR] push response status:', r&&r.status);
+    if(r&&!r.ok) r.json().then(function(e){console.error('[CR] push error:', e);});
+    setSyncDot('ok');
+  }).catch(function(e){console.error('[CR] push failed:', e); setSyncDot('error');});
 }
 function pullFromDrive(){
   if(!accessToken)return;
