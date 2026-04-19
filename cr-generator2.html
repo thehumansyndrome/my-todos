@@ -350,7 +350,7 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
     <button class="btn sm" onclick="loadSharedProjects()" id="shared-btn" style="display:none">↻ Projets</button>
   </div>
   <div class="search-bar">
-    <input class="search-input" id="cr-search" placeholder="🔍 Rechercher un CR…" oninput="renderHistory()" type="search">
+    <input class="search-input" id="cr-search" placeholder="🔍 Rechercher un CR…" type="search">
   </div>
   <div class="filter-row">
     <span style="font-size:12px;color:var(--muted);font-weight:500">Statut :</span>
@@ -1808,6 +1808,8 @@ function tdRenderHistory(t){
   }).join('');
 }
 function tdSave(){writeTodoFile();renderTaches();refreshTD();}
+
+document.getElementById("cr-search").addEventListener("input",renderHistory);
 </script>
 
 <!-- Task Detail Drawer -->
