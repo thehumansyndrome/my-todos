@@ -444,7 +444,7 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
     </div>
 
     <div class="search-bar">
-      <input class="search-input" id="mo-search" placeholder="🔍 Rechercher un MO…" oninput="renderHistory()" type="search">
+      <input class="search-input" id="mo-search" placeholder="🔍 Rechercher un MO…" type="search">
     </div>
     <div class="filter-row">
       <span style="font-size:12px;color:var(--muted);font-weight:500">Statut :</span>
@@ -1993,6 +1993,8 @@ function tdRenderHistory(t){
   }).join('');
 }
 function tdSave(){writeTodoFile();renderTaches();refreshTD();}
+
+document.getElementById("mo-search").addEventListener("input",renderHistory);
 </script>
 
 <!-- Task Detail Drawer -->
