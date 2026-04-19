@@ -2539,9 +2539,9 @@ function setSyncDot(state) {
 var DRIVE_FILE='us-generator.json';
 function initDrive() {
   if (!window.google){setTimeout(initDrive,500);return;}
-  tokenClient=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:SCOPE,callback:function(resp){
+  tokenClient=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:SCOPE,prompt:'',callback:function(resp){
     if (resp.error){setSyncDot('error');return;}
-    accessToken=resp.access_token; sessionStorage.setItem(TOK,accessToken);
+    accessToken=resp.access_token; sessionStorage.setItem(TOK,accessToken); sessionStorage.setItem(TOK+'_exp', Date.now()+3500000);
     updateDriveUI(true); pushToDrive(); loadSharedProjects();
   }});
   if (accessToken) { updateDriveUI(true); loadSharedProjects(); }
@@ -2552,6 +2552,23 @@ function updateDriveUI(c){
   document.getElementById('drive-action-btn').textContent=c?'Send to Drive':'Connecter';
   document.getElementById('pull-btn').style.display=c?'':'none';
 }
+function refreshTokenIfNeeded(cb) {
+  var exp = parseInt(sessionStorage.getItem(TOK+'_exp')||'0',10);
+  if (!accessToken || Date.now() > exp - 60000) {
+    // Token missing or expiring in <1min — refresh silently
+    accessToken = '';
+    if (tokenClient) {
+      var origCb = tokenClient.callback;
+      tokenClient.callback = function(resp) {
+        if (!resp.error) cb();
+        if (origCb) origCb(resp);
+      };
+      tokenClient.requestAccessToken({prompt:''});
+    }
+  } else {
+    cb();
+  }
+}
 function pushToDrive(){
   if(!accessToken)return; setSyncDot('pending');
   var body=JSON.stringify(S);
@@ -2559,7 +2576,12 @@ function pushToDrive(){
     driveFileId=fid;
     if(fid) return fetch('https://www.googleapis.com/upload/drive/v3/files/'+fid+'?uploadType=media',{method:'PATCH',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:body});
     return fetch('https://www.googleapis.com/drive/v3/files',{method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify({name:DRIVE_FILE,mimeType:'application/json'})}).then(function(r){return r.json();}).then(function(m){driveFileId=m.id;return fetch('https://www.googleapis.com/upload/drive/v3/files/'+driveFileId+'?uploadType=media',{method:'PATCH',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:body});});
-  }).then(function(){setSyncDot('ok');}).catch(function(){setSyncDot('error');});
+  }).then(function(r){
+    if(r&&(r.status===401||r.status===403)){
+      accessToken=''; setSyncDot('error'); toast('⚠ Session expirée — reconnectez Drive'); return;
+    }
+    setSyncDot('ok');
+  }).catch(function(){setSyncDot('error'); toast('⚠ Erreur Drive');});
 }
 function pullFromDrive(){
   if(!accessToken)return;
