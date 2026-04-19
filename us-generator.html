@@ -1669,7 +1669,7 @@ function saveUSEntry(entry) {
   S.history.unshift(entry);
 }
 function deleteEntry(id) {
-  var entry=S.history.find(function(e){return e.id===id;});
+  var entry=S.history.find(function(e){return e.id===id||String(e.id)===String(id);});
   if(!entry) return;
   var blBackup=[];
   S.backlogs.forEach(function(bl){if(Array.isArray(bl.usIds)&&bl.usIds.indexOf(id)!==-1)blBackup.push(bl.id);});
@@ -1769,7 +1769,7 @@ function renderHistory() {
     ch+='</div>';
     ch+='<div style="display:flex;gap:6px;align-items:center;flex-shrink:0" onclick="event.stopPropagation()">';
     ch+='<span class="status-badge '+stClass+'" data-action="status" data-id="'+e.id+'">'+SLABEL[st]+'</span>';
-    ch+='<button class="btn sm" style="color:var(--red);padding:4px 8px;" data-action="del" data-id="'+e.id+'">✕</button>';
+    ch+='<button class="btn sm" style="color:var(--red);padding:4px 8px;" onclick="event.stopPropagation();deleteEntry('+e.id+')">✕</button>';
     ch+='</div></div>';
     ch+='<div class="history-tags" onclick="event.stopPropagation()">';
     if (proj) ch+='<span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:12px;border:1px solid '+proj.color+';color:'+proj.color+';">'+esc(proj.name)+'</span>';
@@ -1795,7 +1795,7 @@ function bindHistory() {
   container.onclick=function(ev) {
     var btn=ev.target.closest('[data-action]'); if (!btn) return;
     if (btn.tagName==='SELECT') return; // handled by onchange
-    var action=btn.dataset.action, id=parseInt(btn.dataset.id,10)||0, f=btn.dataset.f, pf=btn.dataset.pf;
+    var action=btn.dataset.action, id=parseInt(btn.dataset.id,10)||btn.dataset.id, f=btn.dataset.f, pf=btn.dataset.pf;
     if      (action==='filter')     { curFilter=f; renderHistory(); }
     else if (action==='projfilter') { curUSProjFilter=pf; renderHistory(); }
     else if (action==='status') cycleStatus(id);
