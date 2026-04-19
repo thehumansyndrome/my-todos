@@ -169,6 +169,9 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
 .status-renvoye{color:var(--red);border-color:var(--red);}
 .status-archive{color:var(--blue);border-color:var(--blue);}
 .filter-bar{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.search-bar{display:flex;gap:8px;margin-bottom:12px;align-items:center;}
+.search-input{flex:1;font-family:var(--sans);font-size:13px;padding:7px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none;}
+.search-input:focus{border-color:var(--accent);}
 .filter-pill{font-size:12px;padding:4px 12px;border-radius:20px;border:1px solid var(--border);color:var(--muted);background:var(--surface);cursor:pointer;transition:all .15s;}
 .filter-pill.active{background:var(--accent);color:var(--bg);border-color:var(--accent);}
 /* Drive */
@@ -636,6 +639,9 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
     <span class="drive-status" id="drive-status-label">Non connecte a Drive</span>
     <button class="btn sm" id="drive-action-btn" onclick="handleDriveBtn()">Connecter</button>
     <button class="btn sm" id="pull-btn" onclick="pullFromDrive()" style="display:none;">Load from Drive</button>
+  </div>
+  <div class="search-bar" style="margin-bottom:8px;">
+    <input class="search-input" id="us-search" placeholder="🔍 Rechercher une US…" oninput="renderHistory()" type="search">
   </div>
   <div id="history-container"></div>
 </div>
@@ -1729,10 +1735,16 @@ function dlEntry(id,fmt) {
 
 function renderHistory() {
   var el=document.getElementById('history-container');
+  var usSearchQ=((document.getElementById('us-search')||{}).value||'').trim().toLowerCase();
   var filtered=S.history.filter(function(e){
     var statusOk = curFilter==='tous' || (e.status||'brouillon')===curFilter;
     var projOk = curUSProjFilter==='tous' || (e.projet||'')===curUSProjFilter;
-    return statusOk && projOk;
+    var searchOk = !usSearchQ ||
+      (e.titre||'').toLowerCase().includes(usSearchQ) ||
+      (e.epic||'').toLowerCase().includes(usSearchQ) ||
+      (e.raw||'').toLowerCase().includes(usSearchQ) ||
+      (e.savedAt||'').toLowerCase().includes(usSearchQ);
+    return statusOk && projOk && searchOk;
   });
   var fs=['tous','brouillon','validation','valide','renvoye','archive'];
   var ph='<div class="filter-bar">';
