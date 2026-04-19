@@ -6,6 +6,8 @@
 <title>Notes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/turndown/7.1.2/turndown.min.js"></script>
 <style>
 /* ── Tokens ── */
 :root{
@@ -358,6 +360,51 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
 .pr-yt-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0;}
 .pr-img{max-width:100%;border-radius:var(--radius);margin:8px 0;display:block;border:1px solid var(--border);}
 
+/* ── WYSIWYG / Live edit ── */
+.editor-preview[contenteditable="true"]{
+  outline:none;cursor:text;caret-color:var(--text);
+}
+.editor-preview[contenteditable="true"]:focus{
+  box-shadow:inset 0 0 0 2px var(--accent)22;
+}
+.editor-preview h1,.editor-preview h2,.editor-preview h3{
+  font-weight:600;letter-spacing:-.02em;margin:20px 0 8px;line-height:1.3;
+}
+.editor-preview h1{font-size:22px;}
+.editor-preview h2{font-size:18px;}
+.editor-preview h3{font-size:15px;}
+.editor-preview p{margin:6px 0;line-height:1.75;}
+.editor-preview ul,.editor-preview ol{padding-left:22px;margin:6px 0;}
+.editor-preview li{margin:3px 0;line-height:1.65;}
+.editor-preview blockquote{
+  border-left:3px solid var(--border);margin:8px 0;padding:4px 12px;
+  color:var(--muted);font-style:italic;
+}
+.editor-preview code{
+  font-family:var(--mono);font-size:12px;background:var(--bg);
+  border:1px solid var(--border);border-radius:3px;padding:1px 5px;
+}
+.editor-preview pre{
+  background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);
+  padding:12px 16px;overflow-x:auto;margin:8px 0;
+}
+.editor-preview pre code{background:none;border:none;padding:0;}
+.editor-preview strong{font-weight:600;}
+.editor-preview em{font-style:italic;}
+.editor-preview a{color:var(--blue);text-decoration:none;}
+.editor-preview a:hover{text-decoration:underline;}
+.editor-preview hr{border:none;border-top:1px solid var(--border);margin:16px 0;}
+.editor-preview input[type="checkbox"]{margin-right:6px;accent-color:var(--accent);}
+.editor-preview table{border-collapse:collapse;width:100%;margin:8px 0;font-size:13px;}
+.editor-preview th,.editor-preview td{border:1px solid var(--border);padding:6px 10px;text-align:left;}
+.editor-preview th{background:var(--bg);font-weight:600;}
+/* wysiwyg mode indicator */
+.wysiwyg-badge{
+  font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;
+  border:1px solid var(--green);color:var(--green);margin-left:6px;
+  letter-spacing:.04em;text-transform:uppercase;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar{width:4px;}
 ::-webkit-scrollbar-track{background:transparent;}
@@ -438,8 +485,9 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
           <div class="view-toggle" id="view-toggle">
             <button class="view-toggle-btn active" id="vt-raw" onclick="setView('raw')">Brut</button>
             <button class="view-toggle-btn" id="vt-split" onclick="setView('split')">Split</button>
-            <button class="view-toggle-btn" id="vt-preview" onclick="setView('preview')">Rendu</button>
+            <button class="view-toggle-btn" id="vt-preview" onclick="setView('preview')">Live</button>
           </div>
+          <span class="wysiwyg-badge" id="wysiwyg-badge" style="display:none;">édition</span>
         </div>
 
         <div class="toolbar-right">
@@ -655,6 +703,39 @@ function openNote(id) {
   updatePreview();
   updateExportBar();
   updateDateFooter();
+  // Wire WYSIWYG input event (idempotent)
+  const pv = document.getElementById('editor-preview');
+  pv.oninput = onWysiwygInput;
+}
+
+function onWysiwygInput() {
+  const preview = document.getElementById('editor-preview');
+  if (preview.contentEditable !== 'true') return;
+  // Debounced flush
+  clearTimeout(window._wysiwygTimer);
+  window._wysiwygTimer = setTimeout(() => {
+    const n = S.notes.find(x => x.id === curId);
+    if (!n) return;
+    try {
+      const td = new TurndownService({ headingStyle: 'atx', bulletListMarker: '-', codeBlockStyle: 'fenced' });
+      td.addRule('img-tag', {
+        filter: node => node.nodeName === 'IMG' && node.dataset.imgid,
+        replacement: (c, node) => '\n[img:' + node.dataset.imgid + ']\n'
+      });
+      td.addRule('yt-embed', {
+        filter: node => node.nodeName === 'IFRAME' && node.src && node.src.includes('youtube'),
+        replacement: (c, node) => { const m = node.src.match(/embed\/([A-Za-z0-9_-]{11})/); return m ? '\nhttps://youtu.be/' + m[1] + '\n' : ''; }
+      });
+      const md = td.turndown(preview.innerHTML);
+      n.body = md;
+      document.getElementById('note-textarea').value = md;
+      n.updated = Date.now();
+      updateDateFooter();
+      debounceSave();
+      clearTimeout(window._listRefreshTimer);
+      window._listRefreshTimer = setTimeout(() => { renderList(); renderTabs(); }, 1000);
+    } catch(e) { console.warn('wysiwyg input error:', e); }
+  }, 600);
 }
 
 function deleteNote() {
@@ -937,30 +1018,83 @@ function onSearch() {
 
 // ── View modes ────────────────────────────────────────────────────────────────
 function setView(v) {
+  // Flush WYSIWYG edits before switching away from preview
+  if (curView === 'preview') flushWysiwyg();
+
   curView = v;
   const raw = document.getElementById('editor-raw');
   const preview = document.getElementById('editor-preview');
   const body = document.getElementById('editor-body');
+  const badge = document.getElementById('wysiwyg-badge');
   document.querySelectorAll('.view-toggle-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('vt-' + v).classList.add('active');
 
   if (v === 'raw') {
     raw.style.display = '';
     preview.style.display = 'none';
+    preview.contentEditable = 'false';
     body.classList.remove('editor-split');
+    badge.style.display = 'none';
   } else if (v === 'split') {
     raw.style.display = '';
     preview.style.display = '';
+    preview.contentEditable = 'false';
     body.classList.add('editor-split');
     body.style.flexDirection = 'row';
+    badge.style.display = 'none';
     updatePreview();
-  } else { // preview
+  } else { // preview = Live WYSIWYG
     raw.style.display = 'none';
     preview.style.display = '';
     body.classList.remove('editor-split');
+    badge.style.display = '';
     updatePreview();
+    // Make editable after render
+    setTimeout(() => {
+      preview.contentEditable = 'true';
+      preview.focus();
+    }, 50);
   }
   updateExportBar();
+}
+
+// Flush WYSIWYG contenteditable → back to markdown in textarea
+function flushWysiwyg() {
+  const preview = document.getElementById('editor-preview');
+  if (preview.contentEditable !== 'true') return;
+  preview.contentEditable = 'false';
+  const n = S.notes.find(x => x.id === curId);
+  if (!n) return;
+  try {
+    const td = new TurndownService({
+      headingStyle: 'atx',
+      bulletListMarker: '-',
+      codeBlockStyle: 'fenced'
+    });
+    // Preserve image tags
+    td.addRule('img-tag', {
+      filter: node => node.nodeName === 'IMG' && node.dataset.imgid,
+      replacement: (content, node) => '\n[img:' + node.dataset.imgid + ']\n'
+    });
+    // Preserve YouTube iframes
+    td.addRule('yt-embed', {
+      filter: node => node.nodeName === 'IFRAME' && node.src && node.src.includes('youtube'),
+      replacement: (content, node) => {
+        const m = node.src.match(/embed\/([A-Za-z0-9_-]{11})/);
+        return m ? '\nhttps://youtu.be/' + m[1] + '\n' : '';
+      }
+    });
+    const md = td.turndown(preview.innerHTML);
+    n.body = md;
+    document.getElementById('note-textarea').value = md;
+    n.updated = Date.now();
+    updateDateFooter();
+    debounceSave();
+    renderList();
+    renderTabs();
+  } catch(e) {
+    console.warn('Turndown error:', e);
+  }
 }
 
 function updateExportBar() {
@@ -1041,10 +1175,70 @@ function applyTemplate(tmplId) {
 function updatePreview() {
   const preview = document.getElementById('editor-preview');
   if (preview.style.display === 'none') return;
+  // Don't re-render while user is typing in WYSIWYG mode
+  if (preview.contentEditable === 'true' && document.activeElement === preview) return;
+
   const n = S.notes.find(x => x.id === curId);
   if (!n) { preview.innerHTML = '<div class="pr-empty">Aucune note</div>'; return; }
   const tmpl = TEMPLATES.find(t => t.id === (curTemplate || n.template || 'none'));
-  preview.innerHTML = tmpl && tmpl.render ? tmpl.render(n.body) : renderFree(n.body);
+
+  // Use template renderer for structured templates, marked for free notes
+  if (tmpl && tmpl.id !== 'none' && tmpl.render) {
+    preview.innerHTML = tmpl.render(n.body);
+  } else {
+    preview.innerHTML = renderWithMarked(n.body, n.images || {});
+  }
+}
+
+function renderWithMarked(body, images) {
+  if (!body || !body.trim()) return '<div class="pr-empty">Note vide</div>';
+
+  // Pre-process: replace [img:id] with placeholder, replace yt urls
+  const _n = S.notes.find(x => x.id === curId);
+  const _imgs = images || ((_n && _n.images) ? _n.images : {});
+
+  let processed = body;
+
+  // Replace [img:id] with a special marker before markdown parsing
+  processed = processed.replace(/\[img:([a-z0-9]+)\]/g, (_, id) => {
+    const src = _imgs[id];
+    if (!src) return '';
+    // Use a fake markdown image that we'll post-process
+    return '![__img__' + id + '__](__img__' + id + '__)';
+  });
+
+  // Replace bare youtube URLs with markdown link (marked handles them)
+  processed = processed.replace(
+    /(^|\n)(https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})[^\s]*)/gm,
+    (_, pre, url, vid) => pre + '__YT__' + vid + '__'
+  );
+
+  // Configure marked
+  if (typeof marked !== 'undefined') {
+    marked.setOptions({
+      breaks: true,
+      gfm: true
+    });
+  }
+
+  let html = (typeof marked !== 'undefined') ? marked.parse(processed) : esc(processed).replace(/\n/g, '<br>');
+
+  // Post-process: restore images with data-imgid for flush
+  html = html.replace(/<img[^>]*src="__img__([a-z0-9]+)__"[^>]*>/g, (_, id) => {
+    const src = _imgs[id];
+    if (!src) return '';
+    return '<img class="pr-img" src="' + src + '" data-imgid="' + id + '" alt="image">';
+  });
+
+  // Post-process: restore YouTube embeds
+  html = html.replace(/__YT__([A-Za-z0-9_-]{11})__/g, (_, vid) => {
+    return '<div class="pr-yt-wrap"><iframe src="https://www.youtube-nocookie.com/embed/' + vid + '" allowfullscreen loading="lazy"></iframe></div>';
+  });
+
+  // Make links open in new tab
+  html = html.replace(/<a href=/g, '<a target="_blank" rel="noopener" href=');
+
+  return html;
 }
 
 // ── Renderers ─────────────────────────────────────────────────────────────────
