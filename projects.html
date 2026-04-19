@@ -304,6 +304,7 @@ input,select,textarea{background:var(--bg);color:var(--text);}
       <option value="">— Sélectionner un projet —</option>
     </select>
     <button class="btn sm" onclick="loadSuiviData()">↻ Actualiser</button>
+    <button class="btn sm" onclick="debugSuivi()" style="color:var(--amber);border-color:var(--amber);">🔍 Debug</button>
   </div>
   <div id="suivi-content"><div class="empty"><div class="empty-icon">📊</div>Sélectionnez un projet pour voir son suivi</div></div>
 </div>
@@ -788,6 +789,7 @@ async function loadSuiviData() {
       const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)&orderBy=modifiedTime+desc`,
         {headers:{Authorization:'Bearer '+accessToken}});
       const d = await res.json();
+      console.log(`[Suivi] ${f.name}: ${d.files ? d.files.length : 'erreur'} fichier(s) trouvé(s)`, d.files||d.error||'');
       if (d.files && d.files[0]) {
         const fileId = d.files[0].id;
         const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
@@ -1820,6 +1822,20 @@ async function _docSave(toastMsg) {
 // ── Make US/MO/CR rows clickable ──
 // Patched into renderSuivi via _docIndex
 var _docIndex = {};
+function debugSuivi() {
+  var lines = [];
+  lines.push('=== SUIVI DEBUG ===');
+  lines.push('Drive connecté: ' + (accessToken ? 'OUI' : 'NON'));
+  lines.push('Projet sélectionné: ' + (document.getElementById('suivi-proj-sel').value||'(aucun)'));
+  lines.push('CR chargés: ' + (suiviData.cr||[]).length);
+  (suiviData.cr||[]).forEach(function(e,i){
+    lines.push('  CR'+i+': "'+( e.title||e.titre||'?')+'" | projet: "'+( e.projet||'(vide)')+'"');
+  });
+  lines.push('MO chargés: ' + (suiviData.mo||[]).length);
+  lines.push('US chargés: ' + (suiviData.us||[]).length);
+  lines.push('Projets S.projects: ' + S.projects.map(function(p){return p.name+'('+p.id+')';}).join(', '));
+  alert(lines.join('\n'));
+}
 </script>
 
 <!-- Task Detail Drawer -->
