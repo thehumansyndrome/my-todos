@@ -281,6 +281,63 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
 .search-mark{background:#ffe066;color:#1a1a1a;border-radius:2px;padding:0 1px;}
 [data-theme="dark"] .search-mark,[data-theme="navy"] .search-mark{background:#5a4a00;color:#f5d76e;}
 
+/* ── Favorites ── */
+.note-item-fav{
+  background:none;border:none;cursor:pointer;font-size:13px;opacity:.3;
+  transition:opacity .15s,transform .15s;padding:0;line-height:1;flex-shrink:0;
+}
+.note-item-fav:hover,.note-item-fav.on{opacity:1;}
+.note-item-fav.on{transform:scale(1.15);}
+.fav-filter{
+  display:flex;align-items:center;gap:6px;padding:7px 12px;
+  border-bottom:1px solid var(--border);font-size:12px;color:var(--muted);
+}
+.fav-btn{
+  padding:3px 10px;border-radius:12px;font-size:12px;font-weight:500;
+  border:1px solid var(--border);color:var(--muted);cursor:pointer;
+  background:transparent;transition:all .15s;display:flex;align-items:center;gap:4px;
+}
+.fav-btn.active{background:var(--amber);color:#fff;border-color:var(--amber);}
+
+/* ── Tabs bar (Obsidian-style) ── */
+.tabs-bar{
+  display:flex;align-items:center;background:var(--bg);border-bottom:1px solid var(--border);
+  overflow-x:auto;flex-shrink:0;min-height:36px;
+  scrollbar-width:none;
+}
+.tabs-bar::-webkit-scrollbar{display:none;}
+.tab-item{
+  display:flex;align-items:center;gap:6px;padding:0 12px;height:36px;
+  border-right:1px solid var(--border);cursor:pointer;white-space:nowrap;
+  font-size:12px;color:var(--muted);transition:background .12s;flex-shrink:0;
+  max-width:180px;
+}
+.tab-item:hover{background:var(--surface);color:var(--text);}
+.tab-item.active{background:var(--surface);color:var(--text);font-weight:500;
+  border-bottom:2px solid var(--accent);margin-bottom:-1px;}
+.tab-item-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+.tab-close{
+  width:16px;height:16px;border-radius:3px;display:flex;align-items:center;
+  justify-content:center;font-size:11px;color:var(--muted);flex-shrink:0;opacity:0;
+  background:none;border:none;cursor:pointer;transition:opacity .15s,background .15s;
+}
+.tab-item:hover .tab-close,.tab-item.active .tab-close{opacity:1;}
+.tab-close:hover{background:var(--border);color:var(--text);}
+.tabs-bar-new{
+  padding:0 10px;height:36px;font-size:16px;color:var(--muted);
+  cursor:pointer;background:none;border:none;flex-shrink:0;
+  display:flex;align-items:center;transition:color .15s;
+}
+.tabs-bar-new:hover{color:var(--text);}
+
+/* ── Rich preview ── */
+.pr-link{color:var(--blue);text-decoration:none;word-break:break-all;}
+.pr-link:hover{text-decoration:underline;}
+.pr-yt-wrap{margin:12px 0;border-radius:var(--radius);overflow:hidden;background:#000;
+  position:relative;padding-top:56.25%;max-width:560px;}
+.pr-yt-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0;}
+.pr-img{max-width:100%;border-radius:var(--radius);margin:8px 0;display:block;border:1px solid var(--border);}
+
 /* Scrollbar */
 ::-webkit-scrollbar{width:4px;}
 ::-webkit-scrollbar-track{background:transparent;}
@@ -316,6 +373,9 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
       </div>
       <button class="new-btn" onclick="newNote()">＋ Nouvelle note</button>
     </div>
+    <div class="fav-filter">
+      <button class="fav-btn" id="fav-filter-btn" onclick="toggleFavFilter()">⭐ Favoris</button>
+    </div>
     <div class="tag-filter" id="tag-filter"></div>
     <div class="note-list" id="note-list"></div>
   </div>
@@ -330,14 +390,19 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
       <button class="btn sm" onclick="pushToDrive()">↑ Push</button>
     </div>
 
+    <!-- Tabs bar -->
+    <div class="tabs-bar" id="tabs-bar">
+      <button class="tabs-bar-new" onclick="newNote()" title="Nouvelle note">＋</button>
+    </div>
+
     <!-- No note selected -->
-    <div class="editor-empty" id="editor-empty">
+    <div class="editor-empty" id="editor-empty" style="display:flex;">
       <div class="big-icon">📝</div>
       <p>Sélectionne une note ou crée-en une</p>
     </div>
 
     <!-- Active editor -->
-    <div id="editor-active" style="display:none;flex:1;display:flex;flex-direction:column;overflow:hidden;">
+    <div id="editor-active" style="display:none;flex-direction:column;overflow:hidden;flex:1;">
 
       <div class="editor-toolbar">
         <div class="toolbar-left">
@@ -364,7 +429,7 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
 
       <div class="editor-body" id="editor-body">
         <div class="editor-raw" id="editor-raw">
-          <textarea id="note-textarea" placeholder="Commence à écrire…&#10;&#10;Utilise des #tags dans ton texte.&#10;La première ligne devient le titre." spellcheck="true" oninput="onNoteInput()"></textarea>
+          <textarea id="note-textarea" placeholder="Commence à écrire…&#10;&#10;Utilise des #tags dans ton texte.&#10;La première ligne devient le titre.&#10;Colle une image ou une URL YouTube directement." spellcheck="true" oninput="onNoteInput()" onpaste="onPaste(event)"></textarea>
         </div>
         <div class="editor-preview" id="editor-preview" style="display:none;"></div>
       </div>
@@ -401,9 +466,13 @@ let S = { notes: [] };
 let curId      = null;
 let searchQ    = '';
 let activeTag  = null;
+let favFilter  = false;
 let curView    = 'raw';   // raw | split | preview
 let saveTimer  = null;
 let curTemplate = null;   // template applied to current note
+
+// Tabs (Obsidian-style open tabs)
+let openTabs   = [];      // [{id, title}]
 
 // Drive
 let driveFileId  = null;
@@ -498,6 +567,7 @@ function init() {
   applyTheme(theme);
   buildTmplMenu();
   renderList();
+  renderTabs();
   // If Drive token exists try auto connect
   if (accessToken) scheduleAutoRefresh();
   // Mobile: show sidebar first
@@ -530,6 +600,7 @@ function newNote(tmplId) {
     id: uid(),
     body: tmpl.placeholder || '',
     template: tmpl.id,
+    favorite: false,
     created: Date.now(),
     updated: Date.now()
   };
@@ -547,13 +618,15 @@ function openNote(id) {
   document.getElementById('note-textarea').value = n.body || '';
   document.getElementById('editor-empty').style.display = 'none';
   document.getElementById('editor-active').style.display = 'flex';
+  document.getElementById('editor-active').style.flex = '1';
+
+  // Add to tabs if not already open
+  if (!openTabs.find(t => t.id === id)) {
+    openTabs.push({id});
+  }
+  renderTabs();
   renderList();
   updatePreview();
-  if (curView !== 'raw') updatePreview();
-  // Update active in list
-  document.querySelectorAll('.note-item').forEach(el => {
-    el.classList.toggle('active', el.dataset.id === id);
-  });
   updateExportBar();
 }
 
@@ -563,15 +636,99 @@ function deleteNote() {
   if (!n) return;
   const title = noteTitle(n) || 'cette note';
   if (!confirm('Supprimer "' + title + '" ?')) return;
+  const deletedId = curId;
   S.notes = S.notes.filter(x => x.id !== curId);
+  openTabs = openTabs.filter(t => t.id !== deletedId);
   curId = null;
   curTemplate = null;
-  document.getElementById('editor-empty').style.display = '';
-  document.getElementById('editor-active').style.display = 'none';
+  // Open next tab if any
+  const next = openTabs[openTabs.length - 1];
+  if (next) {
+    openNote(next.id);
+  } else {
+    document.getElementById('editor-empty').style.display = 'flex';
+    document.getElementById('editor-active').style.display = 'none';
+  }
   autoSave();
   renderList();
+  renderTabs();
   if (window.innerWidth <= 680) mobileBack();
   toast('Note supprimée');
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+function renderTabs() {
+  const bar = document.getElementById('tabs-bar');
+  const tabsHtml = openTabs.map(t => {
+    const n = S.notes.find(x => x.id === t.id);
+    const title = n ? (noteTitle(n) || 'Sans titre') : 'Sans titre';
+    const isActive = t.id === curId;
+    return `<div class="tab-item${isActive?' active':''}" onclick="openNote('${t.id}')">
+      <span class="tab-item-title" title="${esc(title)}">${esc(title)}</span>
+      <button class="tab-close" onclick="closeTab(event,'${t.id}')" title="Fermer">×</button>
+    </div>`;
+  }).join('');
+  bar.innerHTML = tabsHtml + `<button class="tabs-bar-new" onclick="newNote()" title="Nouvelle note">＋</button>`;
+}
+
+function closeTab(e, id) {
+  e.stopPropagation();
+  openTabs = openTabs.filter(t => t.id !== id);
+  if (curId === id) {
+    // Switch to last remaining tab or show empty
+    const last = openTabs[openTabs.length - 1];
+    if (last) {
+      openNote(last.id);
+    } else {
+      curId = null;
+      curTemplate = null;
+      document.getElementById('editor-active').style.display = 'none';
+      document.getElementById('editor-empty').style.display = 'flex';
+    }
+  }
+  renderTabs();
+  renderList();
+}
+
+// ── Favorites ─────────────────────────────────────────────────────────────────
+function toggleFav(e, id) {
+  e.stopPropagation();
+  const n = S.notes.find(x => x.id === id);
+  if (!n) return;
+  n.favorite = !n.favorite;
+  autoSave();
+  renderList();
+  toast(n.favorite ? '⭐ Ajouté aux favoris' : 'Retiré des favoris');
+}
+
+function toggleFavFilter() {
+  favFilter = !favFilter;
+  document.getElementById('fav-filter-btn').classList.toggle('active', favFilter);
+  renderList();
+}
+
+// ── Image paste ───────────────────────────────────────────────────────────────
+function onPaste(e) {
+  const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      e.preventDefault();
+      const file = item.getAsFile();
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const b64 = ev.target.result; // data:image/png;base64,...
+        const tag = '\n[img:' + b64 + ']\n';
+        const ta = document.getElementById('note-textarea');
+        const pos = ta.selectionStart;
+        ta.value = ta.value.slice(0, pos) + tag + ta.value.slice(pos);
+        ta.selectionStart = ta.selectionEnd = pos + tag.length;
+        onNoteInput();
+        toast('Image collée ✓');
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+  }
 }
 
 function onNoteInput() {
@@ -583,7 +740,7 @@ function onNoteInput() {
   debounceSave();
   // Refresh list item lazily
   clearTimeout(window._listRefreshTimer);
-  window._listRefreshTimer = setTimeout(renderList, 800);
+  window._listRefreshTimer = setTimeout(() => { renderList(); renderTabs(); }, 800);
 }
 
 // ── Note meta helpers ─────────────────────────────────────────────────────────
@@ -620,13 +777,18 @@ function formatDate(ts) {
 function renderList() {
   const q = searchQ.toLowerCase();
   let notes = S.notes.filter(n => {
+    if (favFilter && !n.favorite) return false;
     if (activeTag && !noteTags(n).includes(activeTag)) return false;
     if (!q) return true;
     return (n.body || '').toLowerCase().includes(q);
   });
 
-  // Sort by updated desc
-  notes = notes.sort((a,b) => b.updated - a.updated);
+  // Favorites first, then by updated desc
+  notes = notes.sort((a,b) => {
+    if (a.favorite && !b.favorite) return -1;
+    if (!a.favorite && b.favorite) return 1;
+    return b.updated - a.updated;
+  });
 
   // Collect all tags
   const allTags = [...new Set(S.notes.flatMap(noteTags))].sort();
@@ -637,19 +799,26 @@ function renderList() {
 
   const list = document.getElementById('note-list');
   if (!notes.length) {
-    list.innerHTML = `<div class="note-empty">${q || activeTag ? 'Aucun résultat' : 'Aucune note — crée-en une !'}</div>`;
+    list.innerHTML = `<div class="note-empty">${q || activeTag || favFilter ? 'Aucun résultat' : 'Aucune note — crée-en une !'}</div>`;
     return;
   }
+
+  const hl = q ? (s => s.replace(new RegExp('('+escRe(q)+')', 'gi'), '<mark class="search-mark">$1</mark>')) : (s => esc(s));
 
   list.innerHTML = notes.map(n => {
     const title = noteTitle(n) || null;
     const preview = notePreview(n);
     const tags = noteTags(n).slice(0, 3);
     const isActive = n.id === curId;
-    const hl = q ? (s => s.replace(new RegExp('('+escRe(q)+')', 'gi'), '<mark class="search-mark">$1</mark>')) : (s => esc(s));
+    const isFav = !!n.favorite;
     return `<div class="note-item${isActive?' active':''}" data-id="${n.id}" onclick="openNote('${n.id}')${window.innerWidth<=680?';showEditor()':''}">
-      <div class="note-item-title${!title?' untitled':''}">${title ? hl(title) : 'Sans titre'}</div>
-      ${preview ? `<div class="note-item-preview">${hl(preview)}</div>` : ''}
+      <div style="display:flex;align-items:flex-start;gap:6px;">
+        <div style="flex:1;min-width:0;">
+          <div class="note-item-title${!title?' untitled':''}">${title ? hl(title) : 'Sans titre'}</div>
+          ${preview ? `<div class="note-item-preview">${hl(preview)}</div>` : ''}
+        </div>
+        <button class="note-item-fav${isFav?' on':''}" onclick="toggleFav(event,'${n.id}')" title="${isFav?'Retirer des favoris':'Ajouter aux favoris'}">⭐</button>
+      </div>
       <div class="note-item-meta">
         <span class="note-item-date">${formatDate(n.updated)}</span>
         <div class="note-item-tags">${tags.map(t=>`<span class="note-tag-badge">${esc(t)}</span>`).join('')}</div>
@@ -772,6 +941,56 @@ function updatePreview() {
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
 
+// ── Rich text helpers ─────────────────────────────────────────────────────────
+function ytVideoId(url) {
+  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
+function renderRichLine(line) {
+  // Escape first
+  let s = esc(line);
+  // Links → clickable (after escape so we work with HTML entities)
+  // We re-detect on original line
+  return line.replace(/(https?:\/\/[^\s]+)/g, url => {
+    const vid = ytVideoId(url);
+    if (vid) return `__YT:${vid}__`;
+    return `<a class="pr-link" href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a>`;
+  }).replace(/&/g,'&amp;').replace(/<(?!a |\/a>)/g,'&lt;');
+  // Note: this approach has limitations — using a cleaner method below
+}
+
+function renderRichBody(body) {
+  // Process line by line
+  const lines = body.split('\n');
+  const out = [];
+  for (const line of lines) {
+    // Image tag [img:data:...]
+    const imgMatch = line.match(/^\[img:(data:[^)]+)\]$/);
+    if (imgMatch) {
+      out.push(`<img class="pr-img" src="${imgMatch[1]}" alt="image collée">`);
+      continue;
+    }
+    // Detect YouTube URL on this line
+    const ytMatch = line.match(/https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+    if (ytMatch) {
+      const vid = ytMatch[1];
+      out.push(`<div class="pr-yt-wrap"><iframe src="https://www.youtube-nocookie.com/embed/${vid}" allowfullscreen loading="lazy"></iframe></div>`);
+      continue;
+    }
+    // Regular line with clickable links
+    const escaped = line
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/(https?:\/\/[^\s<>"]+)/g, url =>
+        `<a class="pr-link" href="${url}" target="_blank" rel="noopener">${url}</a>`
+      );
+    out.push(escaped);
+  }
+  return out.join('\n');
+}
+
 function renderFree(body) {
   if (!body || !body.trim()) return '<div class="pr-empty">Note vide</div>';
   const lines = body.split('\n');
@@ -781,7 +1000,7 @@ function renderFree(body) {
   return `
     ${title ? `<div class="pr-title">${esc(title)}</div>` : ''}
     ${tags ? `<div style="margin-bottom:14px;">${tags}</div>` : ''}
-    <div class="pr-note-body">${esc(rest)}</div>
+    <div class="pr-note-body">${renderRichBody(rest)}</div>
   `;
 }
 
