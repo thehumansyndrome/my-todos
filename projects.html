@@ -1916,8 +1916,8 @@ function renderGlobal() {
       h += `<div style="font-size:11px;font-weight:600;color:${grp.color};margin:10px 0 4px;text-transform:uppercase;letter-spacing:.04em;">${esc(pk)} — ${active} actives / ${grp.items.length} total</div>`;
       grp.items.forEach(b => {
         const priCol = b.pri==='p1'?'var(--red)':b.pri==='p2'?'var(--amber)':'var(--muted)';
-        h += `<div class="suivi-row" style="${b.done?'opacity:.5':''}">
-          <input type="checkbox" ${b.done?'checked':''} data-action="toggleGlobalTask" data-id="${b.id}" style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);flex-shrink:0;">
+        h += `<div class="suivi-row" style="cursor:pointer;${b.done?'opacity:.5':''}" onclick="if(!event.target.closest('input'))openTD('${b.id}')">
+          <input type="checkbox" ${b.done?'checked':''} data-action="toggleGlobalTask" data-id="${b.id}" style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);flex-shrink:0;" onclick="event.stopPropagation()">
           <span class="suivi-row-title"${b.done?' style="text-decoration:line-through;color:var(--muted)"':''}>${esc(b.text||'')}</span>
           ${b.pri?`<span style="font-size:11px;font-weight:600;color:${priCol}">${b.pri.toUpperCase()}</span>`:''}
           <span style="display:inline-flex;gap:3px;">${adminBadgeHtml(b)}</span>
