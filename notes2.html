@@ -691,19 +691,21 @@ function renderTabs() {
     const title = n ? (noteTitle(n) || 'Sans titre') : 'Sans titre';
     const isActive = t.id === curId;
     const isPinned = !!t.pinned;
-    return `<div class="tab-item${isActive?' active':''}${isPinned?' pinned':''}"
-        data-idx="${idx}"
-        onclick="openNote('${t.id}')"
-        draggable="true"
-        ondragstart="onTabDragStart(event,${idx})"
-        ondragover="onTabDragOver(event,${idx})"
-        ondrop="onTabDrop(event,${idx})"
-        ondragend="onTabDragEnd(event)"
-        ondragleave="onTabDragLeave(event)">
-      <button class="tab-pin" onclick="toggleTabPin(event,'${t.id}')" title="${isPinned?'Désépingler':'Épingler'}">📌</button>
-      <span class="tab-item-title" title="${esc(title)}">${esc(title)}</span>
-      ${isPinned ? '' : `<button class="tab-close" onclick="closeTab(event,'${t.id}')" title="Fermer">×</button>`}
-    </div>`;
+    const closeBtn = isPinned ? '' : '<button class="tab-close" onclick="closeTab(event,\''+t.id+'\');" title="Fermer">×</button>';
+    const pinTitle = isPinned ? 'Désépingler' : 'Épingler';
+    return '<div class="tab-item'+(isActive?' active':'')+(isPinned?' pinned':'')+'"'
+      +' data-idx="'+idx+'"'
+      +' onclick="openNote(\''+t.id+'\');"'
+      +' draggable="true"'
+      +' ondragstart="onTabDragStart(event,'+idx+')"'
+      +' ondragover="onTabDragOver(event,'+idx+')"'
+      +' ondrop="onTabDrop(event,'+idx+')"'
+      +' ondragend="onTabDragEnd(event)"'
+      +' ondragleave="onTabDragLeave(event)">'
+      +'<button class="tab-pin" onclick="toggleTabPin(event,\''+t.id+'\');" title="'+pinTitle+'">&#128204;</button>'
+      +'<span class="tab-item-title" title="'+esc(title)+'">'+esc(title)+'</span>'
+      +closeBtn
+      +'</div>';
   }).join('');
   bar.innerHTML = tabsHtml + `<button class="tabs-bar-new" onclick="newNote()" title="Nouvelle note">＋</button>`;
 }
