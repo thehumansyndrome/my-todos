@@ -557,6 +557,7 @@ prochaine action: `,
 // ── Init ──────────────────────────────────────────────────────────────────────
 function ensureState() {
   if (!Array.isArray(S.notes)) S.notes = [];
+  S.notes.forEach(n => { if (!n.images) n.images = {}; });
 }
 
 function init() {
@@ -716,8 +717,13 @@ function onPaste(e) {
       const file = item.getAsFile();
       const reader = new FileReader();
       reader.onload = ev => {
-        const b64 = ev.target.result; // data:image/png;base64,...
-        const tag = '\n[img:' + b64 + ']\n';
+        const b64 = ev.target.result;
+        const n = S.notes.find(x => x.id === curId);
+        if (!n) return;
+        if (!n.images) n.images = {};
+        const imgId = uid();
+        n.images[imgId] = b64;
+        const tag = '\n[img:' + imgId + ']\n';
         const ta = document.getElementById('note-textarea');
         const pos = ta.selectionStart;
         ta.value = ta.value.slice(0, pos) + tag + ta.value.slice(pos);
@@ -961,14 +967,18 @@ function renderRichLine(line) {
 }
 
 function renderRichBody(body) {
+  // Get current note for image lookup
+  const _n = S.notes.find(x => x.id === curId);
+  const _imgs = (_n && _n.images) ? _n.images : {};
   // Process line by line
   const lines = body.split('\n');
   const out = [];
   for (const line of lines) {
-    // Image tag [img:data:...]
-    const imgMatch = line.match(/^\[img:(data:[^)]+)\]$/);
+    // Image tag [img:shortId] — resolve from note.images
+    const imgMatch = line.match(/^\[img:([a-z0-9]+)\]$/);
     if (imgMatch) {
-      out.push(`<img class="pr-img" src="${imgMatch[1]}" alt="image collée">`);
+      const src = _imgs[imgMatch[1]];
+      if (src) out.push(`<img class="pr-img" src="${src}" alt="image collée">`);
       continue;
     }
     // Detect YouTube URL on this line
