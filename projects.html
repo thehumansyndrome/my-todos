@@ -93,6 +93,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .s-pause{color:var(--amber);border-color:var(--amber);}
 .s-termine{color:var(--blue);border-color:var(--blue);}
 .s-archive{color:var(--muted);border-color:var(--muted);}
+.s-abandonne{color:var(--red);border-color:var(--red);}
 
 /* ── PROGRESS BAR ── */
 .progress-wrap{height:6px;background:var(--border);border-radius:3px;margin:8px 0 4px;overflow:hidden;}
@@ -252,6 +253,8 @@ input,select,textarea{background:var(--bg);color:var(--text);}
           <option value="actif">● Actif</option>
           <option value="pause">⏸ En pause</option>
           <option value="termine">✓ Terminé</option>
+          <option value="archive">□ Archivé</option>
+          <option value="abandonne">✕ Abandonné</option>
         </select>
       </div>
     </div>
@@ -286,7 +289,8 @@ input,select,textarea{background:var(--bg);color:var(--text);}
     <button class="btn sm"        id="sf-actif"   onclick="setProjFilter('actif')"  >Actif</button>
     <button class="btn sm"        id="sf-pause"   onclick="setProjFilter('pause')"  >Pause</button>
     <button class="btn sm"        id="sf-termine" onclick="setProjFilter('termine')">Terminé</button>
-    <button class="btn sm"        id="sf-archive" onclick="setProjFilter('archive')">Archivé</button>
+    <button class="btn sm"        id="sf-archive"    onclick="setProjFilter('archive')">Archivé</button>
+    <button class="btn sm"        id="sf-abandonne" onclick="setProjFilter('abandonne')">Abandonné</button>
     <button class="btn primary sm" onclick="newProject()" style="margin-left:auto;">+ Nouveau</button>
   </div>
 
@@ -422,7 +426,7 @@ const THEME_ICONS = {light:'☀︎',sand:'○',navy:'◑',dark:'☾'};
 
 const PROJ_COLORS = ['#E53E3E','#DD6B20','#38A169','#3182CE','#6B46C1','#D53F8C','#2C7A7B','#718096','#5B4FE8','#0F766E'];
 const TEAM_COLORS = ['#E53E3E','#DD6B20','#38A169','#3182CE','#6B46C1','#D53F8C','#2C7A7B','#718096'];
-const STATUS_LABELS = {actif:'Actif',pause:'En pause',termine:'Terminé',archive:'Archivé'};
+const STATUS_LABELS = {actif:'Actif',pause:'En pause',termine:'Terminé',archive:'Archivé',abandonne:'Abandonné'};
 const STATUS_CLS   = {actif:'s-actif',pause:'s-pause',termine:'s-termine',archive:'s-archive'};
 const STATUS_CYCLE = ['actif','pause','termine','archive'];
 
@@ -520,7 +524,7 @@ let editingProjId = null;
 
 function setProjFilter(f) {
   projFilter = f;
-  ['tous','actif','pause','termine','archive'].forEach(k => {
+  ['tous','actif','pause','termine','archive','abandonne'].forEach(k => {
     const b = document.getElementById('sf-'+k);
     if (b) { b.className = 'btn sm'+(f===k?' active':''); b.style.borderColor = f===k?'var(--accent)':''; b.style.color = f===k?'var(--accent)':''; }
   });
