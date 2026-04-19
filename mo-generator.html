@@ -1604,11 +1604,12 @@ const DRIVE_FILE = 'mo-generator.json';
 function initDrive() {
   if (!window.google) { setTimeout(initDrive, 500); return; }
   tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: CLIENT_ID, scope: SCOPE,
+    client_id: CLIENT_ID, scope: SCOPE, prompt: '',
     callback: (resp) => {
       if (resp.error) { setSyncDot('error'); return; }
       accessToken = resp.access_token;
       sessionStorage.setItem(TOK_KEY, accessToken);
+      sessionStorage.setItem(TOK_KEY+'_exp', Date.now()+3500000);
       updateDriveUI(true);
       pushToDrive();
       loadSharedProjects();
@@ -1617,6 +1618,17 @@ function initDrive() {
   if (accessToken) { updateDriveUI(true); loadSharedProjects(); }
 }
 
+function refreshTokenIfNeeded(cb) {
+  const exp = parseInt(sessionStorage.getItem(TOK_KEY+'_exp')||'0', 10);
+  if (!accessToken || Date.now() > exp - 60000) {
+    accessToken = '';
+    if (tokenClient) {
+      const origCb = tokenClient.callback;
+      tokenClient.callback = (resp) => { if (!resp.error) cb(); if (origCb) origCb(resp); };
+      tokenClient.requestAccessToken({prompt:''});
+    }
+  } else { cb(); }
+}
 function handleDriveBtn() {
   if (!tokenClient) { toast('Drive non initialisé'); return; }
   if (accessToken) { pushToDrive(); toast('Synchronisation…'); }
