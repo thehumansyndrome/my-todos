@@ -641,7 +641,7 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
     <button class="btn sm" id="pull-btn" onclick="pullFromDrive()" style="display:none;">Load from Drive</button>
   </div>
   <div class="search-bar" style="margin-bottom:8px;">
-    <input class="search-input" id="us-search" placeholder="🔍 Rechercher une US…" oninput="renderHistory()" type="search">
+    <input class="search-input" id="us-search" placeholder="🔍 Rechercher une US…" type="search">
   </div>
   <div id="history-container"></div>
 </div>
@@ -3037,6 +3037,8 @@ function tdRenderHistory(t){
   }).join('');
 }
 function tdSave(){writeTodoFile();renderTaches();refreshTD();}
+
+document.getElementById("us-search").addEventListener("input",renderHistory);
 </script>
 
 <!-- Task Detail Drawer -->
