@@ -809,7 +809,11 @@ async function loadSuiviData() {
     } catch(e) { console.warn('suivi load', f.name, e); }
   }
   renderSuivi();
-  toast('✓ Données chargées');
+  const _diagCR = suiviData.cr||[];
+  const _diagProj = document.getElementById('suivi-proj-sel').value;
+  console.log('[Suivi] CR chargés:', _diagCR.length, '| projId sélectionné:', _diagProj);
+  _diagCR.forEach(function(e){ console.log('  CR:', e.title||e.titre, '| e.projet:', e.projet); });
+  toast('✓ ' + _diagCR.length + ' CR · ' + (suiviData.us||[]).length + ' US · ' + (suiviData.mo||[]).length + ' MO chargés');
 }
 
 
