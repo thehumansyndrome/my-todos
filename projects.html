@@ -1137,6 +1137,9 @@ function driveAuth() {
         toast('✓ Drive connecté');
         drivePull();
         if (pollSecs > 0) startPolling();
+        // Auto-load suivi data if suivi tab is active or has a project selected
+        const suiviProj = document.getElementById('suivi-proj-sel');
+        if (suiviProj && suiviProj.value) loadSuiviData();
       }
     });
     cl.requestAccessToken();
