@@ -230,6 +230,7 @@ input,select,textarea{background:var(--bg);color:var(--text);}
 <div class="tabs" id="tabs">
   <button class="tab active" onclick="switchTab('projets')">Projets</button>
   <button class="tab" onclick="switchTab('suivi')">Suivi</button>
+  <button class="tab" onclick="switchTab('global')">Vue globale</button>
   <button class="tab" onclick="switchTab('equipe')">Équipe</button>
   <button class="tab" onclick="switchTab('log')">Log</button>
 </div>
@@ -307,6 +308,15 @@ input,select,textarea{background:var(--bg);color:var(--text);}
     <button class="btn sm" onclick="debugSuivi()" style="color:var(--amber);border-color:var(--amber);">🔍 Debug</button>
   </div>
   <div id="suivi-content"><div class="empty"><div class="empty-icon">📊</div>Sélectionnez un projet pour voir son suivi</div></div>
+</div>
+
+<!-- ══ VUE GLOBALE ══ -->
+<div id="tab-global" class="section">
+  <div class="suivi-header">
+    <button class="btn sm" onclick="loadGlobalData()">↻ Actualiser</button>
+    <span id="global-status" style="font-size:12px;color:var(--muted);flex:1;text-align:right;"></span>
+  </div>
+  <div id="global-content"><div class="empty"><div class="empty-icon">🌐</div>Cliquez sur Actualiser pour charger la vue globale</div></div>
 </div>
 
 <!-- ══ ÉQUIPE ══ -->
@@ -472,7 +482,7 @@ function setSync(state) {
 }
 
 /* ══ TABS ══ */
-const TABS = ['projets','suivi','equipe','log'];
+const TABS = ['projets','suivi','global','equipe','log'];
 function switchTab(t) {
   document.querySelectorAll('.tab').forEach((b,i) => b.classList.toggle('active', TABS[i]===t));
   TABS.forEach(id => {
@@ -480,6 +490,7 @@ function switchTab(t) {
     if (el) el.classList.toggle('active', id===t);
   });
   if (t==='suivi')  { populateSuiviSel(); renderSuivi(); }
+  if (t==='global') { loadGlobalData(); }
   if (t==='equipe') renderTeam();
   if (t==='projets') renderProjects();
 }
@@ -1823,6 +1834,135 @@ async function _docSave(toastMsg) {
 // ── Make US/MO/CR rows clickable ──
 // Patched into renderSuivi via _docIndex
 var _docIndex = {};
+async function loadGlobalData() {
+  const el = document.getElementById('global-content');
+  const st = document.getElementById('global-status');
+  if (!accessToken) { el.innerHTML = '<div class="empty"><div class="empty-icon">☁</div>Connectez Drive pour charger les données</div>'; return; }
+  st.textContent = 'Chargement…';
+  const files = [
+    {key:'us',name:'us-generator.json'},{key:'mo',name:'mo-generator.json'},
+    {key:'cr',name:'cr-generator.json'},{key:'todos',name:'projet001.json'},{key:'shared',name:'shared.json'}
+  ];
+  for (const f of files) {
+    try {
+      const q = encodeURIComponent(`name='${f.name}' and trashed=false`);
+      const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)&orderBy=modifiedTime+desc`,{headers:{Authorization:'Bearer '+accessToken}});
+      const d = await res.json();
+      if (d.files && d.files[0]) {
+        const r = await fetch(`https://www.googleapis.com/drive/v3/files/${d.files[0].id}?alt=media`,{headers:{Authorization:'Bearer '+accessToken}});
+        const data = await r.json();
+        if (f.key==='todos') { suiviData.backlog=Array.isArray(data.backlog)?data.backlog:[]; projet001FullData=data; }
+        else if (f.key==='shared') { suiviData.sharedProjects=Array.isArray(data.projects)?data.projects:[]; suiviData.sharedTeam=Array.isArray(data.team)?data.team:[]; }
+        else { suiviData[f.key]=data.history||data.entries||[]; suiviData[f.key+'FullData']=data; suiviData[f.key+'FileId']=d.files[0].id; }
+      }
+    } catch(e) { console.warn('global load', f.name, e); }
+  }
+  renderGlobal();
+  st.textContent = `${(suiviData.cr||[]).length} CR · ${(suiviData.mo||[]).length} MO · ${(suiviData.us||[]).length} US · ${(suiviData.backlog||[]).length} tâches`;
+}
+
+function renderGlobal() {
+  const el = document.getElementById('global-content'); if (!el) return;
+  const allUS = suiviData.us||[], allMO = suiviData.mo||[], allCR = suiviData.cr||[], allBL = suiviData.backlog||[];
+  const usValide = allUS.filter(e=>e.status==='valide').length;
+  const crValide = allCR.filter(e=>e.status==='valide').length;
+  const moValide = allMO.filter(e=>e.status==='valide').length;
+  const blActive = allBL.filter(e=>!e.done).length, blDone = allBL.filter(e=>!!e.done).length;
+  const usPct = allUS.length ? Math.round(usValide/allUS.length*100) : 0;
+
+  if (!allUS.length && !allMO.length && !allCR.length && !allBL.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🌐</div>Aucune donnée. Cliquez sur ↻ Actualiser après avoir connecté Drive.</div>';
+    return;
+  }
+
+  let h = '<div class="kpi-grid">';
+  h += `<div class="kpi-box"><div class="kpi-n">${allUS.length}</div><div class="kpi-l">US totales</div></div>`;
+  h += `<div class="kpi-box"><div class="kpi-n" style="color:var(--green)">${usValide}</div><div class="kpi-l">US validées</div></div>`;
+  h += `<div class="kpi-box"><div class="kpi-n">${allMO.length}</div><div class="kpi-l">Modes op.</div></div>`;
+  h += `<div class="kpi-box"><div class="kpi-n" style="color:var(--green)">${moValide}</div><div class="kpi-l">MO validés</div></div>`;
+  h += `<div class="kpi-box"><div class="kpi-n">${allCR.length}</div><div class="kpi-l">Comptes rendus</div></div>`;
+  h += `<div class="kpi-box"><div class="kpi-n" style="color:var(--green)">${crValide}</div><div class="kpi-l">CR validés</div></div>`;
+  h += `<div class="kpi-box"><div class="kpi-n">${blActive}</div><div class="kpi-l">Tâches actives</div></div>`;
+  h += `<div class="kpi-box"><div class="kpi-n" style="color:var(--green)">${blDone}</div><div class="kpi-l">Tâches terminées</div></div>`;
+  h += '</div>';
+
+  if (allUS.length) {
+    h += `<div style="margin-bottom:20px;"><div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-size:12px;font-weight:500;">Progression US globale</span><span style="font-size:12px;color:var(--muted);">${usValide}/${allUS.length} — ${usPct}%</span></div><div class="progress-wrap"><div class="progress-fill${usPct===100?' done':''}" style="width:${usPct}%"></div></div></div>`;
+  }
+
+  // Helper: get project for an entry
+  function getProj(id) { return S.projects.find(p=>p.id===id) || (suiviData.sharedProjects||[]).find(p=>p.id===id) || null; }
+
+  // Tâches actives groupées par projet
+  if (blActive) {
+    const byProj = {};
+    allBL.filter(e=>!e.done).forEach(b => {
+      const p = getProj(b.projId);
+      const key = p ? p.name : 'Sans projet'; const col = p ? p.color : 'var(--muted)';
+      if (!byProj[key]) byProj[key] = {items:[], color:col};
+      byProj[key].items.push(b);
+    });
+    h += `<div class="suivi-section"><div class="suivi-section-title">Tâches actives (${blActive})</div>`;
+    Object.keys(byProj).sort().forEach(pk => {
+      const grp = byProj[pk];
+      h += `<div style="font-size:11px;font-weight:600;color:${grp.color};margin:10px 0 4px;text-transform:uppercase;letter-spacing:.04em;">${esc(pk)} (${grp.items.length})</div>`;
+      grp.items.slice(0,5).forEach(b => {
+        const priCol = b.pri==='p1'?'var(--red)':b.pri==='p2'?'var(--amber)':'var(--muted)';
+        h += `<div class="suivi-row" style="${b.done?'opacity:.6':''}"><input type="checkbox" ${b.done?'checked':''} data-action="toggleGlobalTask" data-id="${b.id}" style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);flex-shrink:0;"><span class="suivi-row-title">${esc(b.text||'')}</span>${b.pri?`<span style="font-size:11px;font-weight:600;color:${priCol}">${b.pri.toUpperCase()}</span>`:''}<span style="display:inline-flex;gap:3px;">${adminBadgeHtml(b)}</span></div>`;
+      });
+      if (grp.items.length > 5) h += `<div style="font-size:12px;color:var(--muted);padding:4px 12px;">+ ${grp.items.length-5} autres…</div>`;
+    });
+    h += '</div>';
+  }
+
+  // US groupées par projet
+  if (allUS.length) {
+    const usByProj = {};
+    allUS.forEach((e,i) => {
+      _docIndex['usg'+i]=e;
+      const p = getProj(e.projet); const key = p?p.name:'Sans projet'; const col = p?p.color:'var(--muted)';
+      if (!usByProj[key]) usByProj[key] = {items:[], color:col, idxs:[]};
+      usByProj[key].items.push(e); usByProj[key].idxs.push(i);
+    });
+    h += `<div class="suivi-section"><div class="suivi-section-title">User Stories (${allUS.length})</div>`;
+    Object.keys(usByProj).sort().forEach(pk => {
+      const grp = usByProj[pk];
+      h += `<div style="font-size:11px;font-weight:600;color:${grp.color};margin:10px 0 4px;text-transform:uppercase;letter-spacing:.04em;">${esc(pk)}</div>`;
+      grp.items.forEach((e,li) => {
+        const st=e.status||'brouillon', idx=grp.idxs[li];
+        const stCls={brouillon:'s-archive',validation:'s-pause',valide:'s-actif',renvoye:'s-termine',archive:'s-archive'}[st]||'s-archive';
+        const SLBL={brouillon:'Brouillon',validation:'En validation',valide:'Validé ✓',renvoye:'Renvoyé',archive:'Archivé'};
+        h += `<div class="suivi-row" style="cursor:pointer;${st==='valide'?'opacity:.75':''}" onclick="openDocDrawer('us',_docIndex['usg${idx}'].id)">${st==='valide'?'<span style="color:var(--green);font-size:13px;flex-shrink:0;">✓</span>':'<span style="color:var(--muted);font-size:13px;flex-shrink:0;">○</span>'}<span class="suivi-row-title"${st==='valide'?' style="text-decoration:line-through;color:var(--muted)"':''}>${esc(e.titre||'Sans titre')}</span>${e.est?`<span style="font-family:var(--mono);font-size:10px;color:var(--blue);border:1px solid var(--blue);padding:1px 5px;border-radius:2px;">${e.est}pts</span>`:''}<span class="status-pill ${stCls}" style="cursor:default;font-size:10px;">${SLBL[st]||st}</span></div>`;
+      });
+    });
+    h += '</div>';
+  }
+
+  // CR récents
+  if (allCR.length) {
+    const sorted = allCR.slice().sort((a,b)=>(b.savedAt||'').localeCompare(a.savedAt||'')).slice(0,15);
+    h += `<div class="suivi-section"><div class="suivi-section-title">Comptes Rendus récents (${allCR.length} total)</div>`;
+    sorted.forEach((e,i) => {
+      _docIndex['crg'+i]=e;
+      const st=e.status||'brouillon';
+      const stCls={brouillon:'s-archive',validation:'s-pause',valide:'s-actif',renvoye:'s-termine'}[st]||'s-archive';
+      const SLBL2={brouillon:'Brouillon',valide:'Validé ✓',renvoye:'Renvoyé',archive:'Archivé'};
+      const p=getProj(e.projet);
+      h += `<div class="suivi-row" style="cursor:pointer;${st==='valide'?'opacity:.75':''}" onclick="openDocDrawer('cr',_docIndex['crg${i}'].id)">${st==='valide'?'<span style="color:var(--green);font-size:13px;flex-shrink:0;">✓</span>':'<span style="color:var(--muted);font-size:13px;flex-shrink:0;">○</span>'}<span class="suivi-row-title"${st==='valide'?' style="text-decoration:line-through;color:var(--muted)"':''}>${esc(e.title||e.titre||'Sans titre')}</span>${p?`<span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:12px;border:1px solid ${p.color};color:${p.color};">${esc(p.name)}</span>`:''}<span class="status-pill ${stCls}" style="cursor:default;font-size:10px;">${SLBL2[st]||st}</span>${e.savedAt?`<span style="font-size:10px;color:var(--muted);white-space:nowrap;">${e.savedAt}</span>`:''}</div>`;
+    });
+    h += '</div>';
+  }
+
+  el.innerHTML = h;
+  el.onchange = ev => {
+    const cb = ev.target.closest('[data-action="toggleGlobalTask"]');
+    if (cb && projet001FullData) {
+      const t = projet001FullData.backlog.find(x=>x.id===cb.dataset.id);
+      if (t) { t.done=!t.done; writeProjet001('✓ Tâche mise à jour'); renderGlobal(); }
+    }
+  };
+}
+
 function debugSuivi() {
   var lines = [];
   lines.push('=== SUIVI DEBUG ===');
