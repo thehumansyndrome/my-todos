@@ -1454,9 +1454,9 @@ function onEdit() {
 
 function initDrive() {
   if (!window.google){setTimeout(initDrive,500);return;}
-  tokenClient=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:SCOPE,callback:function(resp){
+  tokenClient=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:SCOPE,prompt:'',callback:function(resp){
     if(resp.error){setSyncDot('error');return;}
-    accessToken=resp.access_token; sessionStorage.setItem(TOK,accessToken);
+    accessToken=resp.access_token; sessionStorage.setItem(TOK,accessToken); sessionStorage.setItem(TOK+'_exp', Date.now()+3500000);
     updateDriveUI(true); pushToDrive(); loadSharedProjects();
   }});
   if (accessToken){updateDriveUI(true); loadSharedProjects();}
@@ -1467,6 +1467,23 @@ function updateDriveUI(c){
   document.getElementById('drive-action-btn').textContent=c?'Send to Drive':'Connecter';
   document.getElementById('pull-btn').style.display=c?'':'none';
   document.getElementById('shared-btn').style.display=c?'':'none';
+}
+function refreshTokenIfNeeded(cb) {
+  var exp = parseInt(sessionStorage.getItem(TOK+'_exp')||'0',10);
+  if (!accessToken || Date.now() > exp - 60000) {
+    // Token missing or expiring in <1min — refresh silently
+    accessToken = '';
+    if (tokenClient) {
+      var origCb = tokenClient.callback;
+      tokenClient.callback = function(resp) {
+        if (!resp.error) cb();
+        if (origCb) origCb(resp);
+      };
+      tokenClient.requestAccessToken({prompt:''});
+    }
+  } else {
+    cb();
+  }
 }
 function pushToDrive(){
   if(!accessToken){console.warn('[CR] pushToDrive: no accessToken');return;} setSyncDot('pending');
@@ -1483,6 +1500,11 @@ function pushToDrive(){
     });
   }).then(function(r){
     console.log('[CR] push response status:', r&&r.status);
+    if(r&&(r.status===401||r.status===403)){
+      accessToken=''; sessionStorage.removeItem(TOK||TOK_KEY||'td_tok_cr-generator');
+      setSyncDot('error'); toast('⚠ Session expirée — reconnectez Drive');
+      return;
+    }
     if(r&&!r.ok) r.json().then(function(e){console.error('[CR] push error:', e);});
     setSyncDot('ok');
   }).catch(function(e){console.error('[CR] push failed:', e); setSyncDot('error');});
