@@ -5130,12 +5130,7 @@ function renderBacklog(){
     const p=getProject(b.projId);
     const projBadge=p?`<span class="bl-proj-badge" style="background:${p.color}22;color:${p.color};border:1px solid ${p.color}44;">${esc(p.name)}</span>`:'';
     const priCls={p1:'p1',p2:'p2',p3:'p3'};
-    const bSt=b.status||'brouillon';
-    const bStBadge=bSt==='valide'
-      ?`<span style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--green);border:1px solid var(--green);padding:1px 5px;border-radius:2px;letter-spacing:.04em;">Validé ✓</span>`
-      :bSt==='abandonne'
-      ?`<span style="font-family:var(--mono);font-size:9px;font-weight:600;color:var(--red);border:1px solid var(--red);padding:1px 5px;border-radius:2px;letter-spacing:.04em;">Abandonné</span>`
-      :`<span style="font-family:var(--mono);font-size:9px;color:var(--muted);border:1px solid var(--muted);padding:1px 5px;border-radius:2px;letter-spacing:.04em;">Brouillon</span>`;
+    const bStBadge='';
     return`<div class="bl-item${b.done?' done':''}" onclick="if(!event.target.closest('input,button,.del'))openUD('backlog','${b.id}')" style="cursor:pointer;">
       <input type="checkbox" class="item-check" ${b.done?'checked':''} onchange="toggleBacklog('${b.id}')">
       <div class="item-body">
