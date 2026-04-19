@@ -1929,27 +1929,19 @@ function renderGlobal() {
 
   // ── User Stories ──
   if (allUS.length) {
-    const usByProj = {};
+    h += `<div class="suivi-section"><div class="suivi-section-title">User Stories (${allUS.length})</div>`;
     allUS.forEach((e,i) => {
       _docIndex['usg'+i]=e;
-      const p = getProj(e.projet); const key = p?p.name:'Sans projet'; const col = p?p.color:'var(--muted)';
-      if (!usByProj[key]) usByProj[key] = {items:[], color:col, idxs:[]};
-      usByProj[key].items.push(e); usByProj[key].idxs.push(i);
-    });
-    h += `<div class="suivi-section"><div class="suivi-section-title">User Stories (${allUS.length})</div>`;
-    Object.keys(usByProj).sort().forEach(pk => {
-      const grp = usByProj[pk];
-      h += `<div style="font-size:11px;font-weight:600;color:${grp.color};margin:10px 0 4px;text-transform:uppercase;letter-spacing:.04em;">${esc(pk)}</div>`;
-      grp.items.forEach((e,li) => {
-        const st=e.status||'brouillon', idx=grp.idxs[li];
-        h += `<div class="suivi-row" style="cursor:pointer;" onclick="openDocDrawer('us',_docIndex['usg${idx}'].id)">
-          ${rowIcon(st)}
-          <span class="suivi-row-title"${st==='valide'?' style="text-decoration:line-through;color:var(--muted)"':''}>${esc(e.titre||'Sans titre')}</span>
-          ${e.est?`<span style="font-family:var(--mono);font-size:10px;color:var(--blue);border:1px solid var(--blue);padding:1px 5px;border-radius:2px;">${e.est}pts</span>`:''}
-          <span class="status-pill ${STCLS[st]||'s-archive'}" style="cursor:default;font-size:10px;">${STLBL[st]||st}</span>
-          ${e.savedAt?`<span style="font-size:10px;color:var(--muted);white-space:nowrap;">${e.savedAt}</span>`:''}
-        </div>`;
-      });
+      const st=e.status||'brouillon';
+      const p=getProj(e.projet);
+      h += `<div class="suivi-row" style="cursor:pointer;" onclick="openDocDrawer('us',_docIndex['usg${i}'].id)">
+        ${rowIcon(st)}
+        <span class="suivi-row-title">${esc(e.titre||'Sans titre')}</span>
+        ${projBadge(p)}
+        ${e.est?`<span style="font-family:var(--mono);font-size:10px;color:var(--blue);border:1px solid var(--blue);padding:1px 5px;border-radius:2px;">${e.est}pts</span>`:''}
+        <span class="status-pill ${STCLS[st]||'s-archive'}" style="cursor:default;font-size:10px;">${STLBL[st]||st}</span>
+        ${e.savedAt?`<span style="font-size:10px;color:var(--muted);white-space:nowrap;">${e.savedAt}</span>`:''}
+      </div>`;
     });
     h += '</div>';
   }
