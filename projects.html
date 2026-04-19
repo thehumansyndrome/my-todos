@@ -1138,6 +1138,7 @@ function driveAuth() {
         if (r.error) { setSync('error'); toast('❌ '+r.error); return; }
         accessToken = r.access_token;
         sessionStorage.setItem(TOK, accessToken);
+        sessionStorage.setItem(TOK+'_exp', Date.now()+3500000);
         setSync('ok');
         updateDriveUI();
         toast('✓ Drive connecté');
