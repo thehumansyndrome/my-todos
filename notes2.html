@@ -6,8 +6,6 @@
 <title>Notes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/turndown/7.1.2/turndown.min.js"></script>
 <style>
 /* ── Tokens ── */
 :root{
@@ -360,51 +358,6 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
 .pr-yt-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0;}
 .pr-img{max-width:100%;border-radius:var(--radius);margin:8px 0;display:block;border:1px solid var(--border);}
 
-/* ── WYSIWYG / Live edit ── */
-.editor-preview[contenteditable="true"]{
-  outline:none;cursor:text;caret-color:var(--text);
-}
-.editor-preview[contenteditable="true"]:focus{
-  box-shadow:inset 0 0 0 2px var(--accent)22;
-}
-.editor-preview h1,.editor-preview h2,.editor-preview h3{
-  font-weight:600;letter-spacing:-.02em;margin:20px 0 8px;line-height:1.3;
-}
-.editor-preview h1{font-size:22px;}
-.editor-preview h2{font-size:18px;}
-.editor-preview h3{font-size:15px;}
-.editor-preview p{margin:6px 0;line-height:1.75;}
-.editor-preview ul,.editor-preview ol{padding-left:22px;margin:6px 0;}
-.editor-preview li{margin:3px 0;line-height:1.65;}
-.editor-preview blockquote{
-  border-left:3px solid var(--border);margin:8px 0;padding:4px 12px;
-  color:var(--muted);font-style:italic;
-}
-.editor-preview code{
-  font-family:var(--mono);font-size:12px;background:var(--bg);
-  border:1px solid var(--border);border-radius:3px;padding:1px 5px;
-}
-.editor-preview pre{
-  background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);
-  padding:12px 16px;overflow-x:auto;margin:8px 0;
-}
-.editor-preview pre code{background:none;border:none;padding:0;}
-.editor-preview strong{font-weight:600;}
-.editor-preview em{font-style:italic;}
-.editor-preview a{color:var(--blue);text-decoration:none;}
-.editor-preview a:hover{text-decoration:underline;}
-.editor-preview hr{border:none;border-top:1px solid var(--border);margin:16px 0;}
-.editor-preview input[type="checkbox"]{margin-right:6px;accent-color:var(--accent);}
-.editor-preview table{border-collapse:collapse;width:100%;margin:8px 0;font-size:13px;}
-.editor-preview th,.editor-preview td{border:1px solid var(--border);padding:6px 10px;text-align:left;}
-.editor-preview th{background:var(--bg);font-weight:600;}
-/* wysiwyg mode indicator */
-.wysiwyg-badge{
-  font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;
-  border:1px solid var(--green);color:var(--green);margin-left:6px;
-  letter-spacing:.04em;text-transform:uppercase;
-}
-
 /* Scrollbar */
 ::-webkit-scrollbar{width:4px;}
 ::-webkit-scrollbar-track{background:transparent;}
@@ -485,9 +438,8 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
           <div class="view-toggle" id="view-toggle">
             <button class="view-toggle-btn active" id="vt-raw" onclick="setView('raw')">Brut</button>
             <button class="view-toggle-btn" id="vt-split" onclick="setView('split')">Split</button>
-            <button class="view-toggle-btn" id="vt-preview" onclick="setView('preview')">Live</button>
+            <button class="view-toggle-btn" id="vt-preview" onclick="setView('preview')">Rendu</button>
           </div>
-          <span class="wysiwyg-badge" id="wysiwyg-badge" style="display:none;">édition</span>
         </div>
 
         <div class="toolbar-right">
@@ -703,417 +655,8 @@ function openNote(id) {
   updatePreview();
   updateExportBar();
   updateDateFooter();
-  // Wire WYSIWYG input event (idempotent)
-  const pv = document.getElementById('editor-preview');
-  pv.oninput = onWysiwygInput;
 }
 
-function onWysiwygInput() {
-  const preview = document.getElementById('editor-preview');
-  if (preview.contentEditable !== 'true') return;
-  // Debounced flush
-  clearTimeout(window._wysiwygTimer);
-  window._wysiwygTimer = setTimeout(() => {
-    const n = S.notes.find(x => x.id === curId);
-    if (!n) return;
-    try {
-      const td = new TurndownService({ headingStyle: 'atx', bulletListMarker: '-', codeBlockStyle: 'fenced' });
-      td.addRule('img-tag', {
-        filter: node => node.nodeName === 'IMG' && node.dataset.imgid,
-        replacement: (c, node) => '\n[img:' + node.dataset.imgid + ']\n'
-      });
-      td.addRule('yt-embed', {
-        filter: node => node.nodeName === 'IFRAME' && node.src && node.src.includes('youtube'),
-        replacement: (c, node) => { const m = node.src.match(/embed\/([A-Za-z0-9_-]{11})/); return m ? '\nhttps://youtu.be/' + m[1] + '\n' : ''; }
-      });
-      const md = td.turndown(preview.innerHTML);
-      n.body = md;
-      document.getElementById('note-textarea').value = md;
-      n.updated = Date.now();
-      updateDateFooter();
-      debounceSave();
-      clearTimeout(window._listRefreshTimer);
-      window._listRefreshTimer = setTimeout(() => { renderList(); renderTabs(); }, 1000);
-    } catch(e) { console.warn('wysiwyg input error:', e); }
-  }, 600);
-}
-
-function deleteNote() {
-  if (!curId) return;
-  const n = S.notes.find(x => x.id === curId);
-  if (!n) return;
-  const title = noteTitle(n) || 'cette note';
-  if (!confirm('Supprimer "' + title + '" ?')) return;
-  const deletedId = curId;
-  S.notes = S.notes.filter(x => x.id !== curId);
-  openTabs = openTabs.filter(t => t.id !== deletedId);
-  curId = null;
-  curTemplate = null;
-  // Open next tab if any
-  const next = openTabs[openTabs.length - 1];
-  if (next) {
-    openNote(next.id);
-  } else {
-    document.getElementById('editor-empty').style.display = 'flex';
-    document.getElementById('editor-active').style.display = 'none';
-  }
-  autoSave();
-  renderList();
-  renderTabs();
-  if (window.innerWidth <= 680) mobileBack();
-  toast('Note supprimée');
-}
-
-// ── Tabs ──────────────────────────────────────────────────────────────────────
-function renderTabs() {
-  const bar = document.getElementById('tabs-bar');
-  const tabsHtml = openTabs.map((t, idx) => {
-    const n = S.notes.find(x => x.id === t.id);
-    const title = n ? (noteTitle(n) || 'Sans titre') : 'Sans titre';
-    const isActive = t.id === curId;
-    const isPinned = !!t.pinned;
-    const closeBtn = isPinned ? '' : '<button class="tab-close" onclick="closeTab(event,\''+t.id+'\');" title="Fermer">×</button>';
-    const pinTitle = isPinned ? 'Désépingler' : 'Épingler';
-    return '<div class="tab-item'+(isActive?' active':'')+(isPinned?' pinned':'')+'"'
-      +' data-idx="'+idx+'"'
-      +' onclick="openNote(\''+t.id+'\');"'
-      +' draggable="true"'
-      +' ondragstart="onTabDragStart(event,'+idx+')"'
-      +' ondragover="onTabDragOver(event,'+idx+')"'
-      +' ondrop="onTabDrop(event,'+idx+')"'
-      +' ondragend="onTabDragEnd(event)"'
-      +' ondragleave="onTabDragLeave(event)">'
-      +'<button class="tab-pin" onclick="toggleTabPin(event,\''+t.id+'\');" title="'+pinTitle+'">&#128204;</button>'
-      +'<span class="tab-item-title" title="'+esc(title)+'">'+esc(title)+'</span>'
-      +closeBtn
-      +'</div>';
-  }).join('');
-  bar.innerHTML = tabsHtml + `<button class="tabs-bar-new" onclick="newNote()" title="Nouvelle note">＋</button>`;
-}
-
-function toggleTabPin(e, id) {
-  e.stopPropagation();
-  const t = openTabs.find(x => x.id === id);
-  if (!t) return;
-  t.pinned = !t.pinned;
-  // Pinned tabs go to front
-  const pinned = openTabs.filter(x => x.pinned);
-  const unpinned = openTabs.filter(x => !x.pinned);
-  openTabs = [...pinned, ...unpinned];
-  renderTabs();
-  toast(t.pinned ? '📌 Onglet épinglé' : 'Onglet désépinglé');
-}
-
-function closeTab(e, id) {
-  e.stopPropagation();
-  // Cannot close pinned tab without unpinning first
-  const t = openTabs.find(x => x.id === id);
-  if (t && t.pinned) { toast('Désépingle l\'onglet d\'abord'); return; }
-  openTabs = openTabs.filter(t => t.id !== id);
-  if (curId === id) {
-    const last = openTabs[openTabs.length - 1];
-    if (last) {
-      openNote(last.id);
-    } else {
-      curId = null;
-      curTemplate = null;
-      document.getElementById('editor-active').style.display = 'none';
-      document.getElementById('editor-empty').style.display = 'flex';
-      updateDateFooter();
-    }
-  }
-  renderTabs();
-  renderList();
-}
-
-// ── Tab drag & drop ───────────────────────────────────────────────────────────
-function onTabDragStart(e, idx) {
-  dragSrcIdx = idx;
-  e.currentTarget.classList.add('dragging');
-  e.dataTransfer.effectAllowed = 'move';
-}
-function onTabDragOver(e, idx) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-  document.querySelectorAll('.tab-item').forEach((el,i) => {
-    el.classList.toggle('drag-over', i === idx && i !== dragSrcIdx);
-  });
-}
-function onTabDragLeave(e) {
-  e.currentTarget.classList.remove('drag-over');
-}
-function onTabDrop(e, idx) {
-  e.preventDefault();
-  if (dragSrcIdx === null || dragSrcIdx === idx) return;
-  // Respect pinned boundary: can't drag unpinned before pinned
-  const src = openTabs[dragSrcIdx];
-  const pinnedCount = openTabs.filter(x => x.pinned).length;
-  const targetPinned = openTabs[idx] && openTabs[idx].pinned;
-  if (!src.pinned && targetPinned) { toast('Ne peut pas déplacer avant un onglet épinglé'); return; }
-  if (src.pinned && !openTabs[idx].pinned && idx >= pinnedCount) { src.pinned = false; }
-  openTabs.splice(dragSrcIdx, 1);
-  openTabs.splice(idx, 0, src);
-  dragSrcIdx = null;
-  renderTabs();
-}
-function onTabDragEnd(e) {
-  dragSrcIdx = null;
-  document.querySelectorAll('.tab-item').forEach(el => {
-    el.classList.remove('dragging','drag-over');
-  });
-}
-
-// ── Favorites ─────────────────────────────────────────────────────────────────
-function toggleFav(e, id) {
-  e.stopPropagation();
-  const n = S.notes.find(x => x.id === id);
-  if (!n) return;
-  n.favorite = !n.favorite;
-  autoSave();
-  renderList();
-  toast(n.favorite ? '⭐ Ajouté aux favoris' : 'Retiré des favoris');
-}
-
-function toggleFavFilter() {
-  favFilter = !favFilter;
-  document.getElementById('fav-filter-btn').classList.toggle('active', favFilter);
-  renderList();
-}
-
-// ── Image paste ───────────────────────────────────────────────────────────────
-function onPaste(e) {
-  const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-  for (const item of items) {
-    if (item.type.startsWith('image/')) {
-      e.preventDefault();
-      const file = item.getAsFile();
-      const reader = new FileReader();
-      reader.onload = ev => {
-        const b64 = ev.target.result;
-        const n = S.notes.find(x => x.id === curId);
-        if (!n) return;
-        if (!n.images) n.images = {};
-        const imgId = uid();
-        n.images[imgId] = b64;
-        const tag = '\n[img:' + imgId + ']\n';
-        const ta = document.getElementById('note-textarea');
-        const pos = ta.selectionStart;
-        ta.value = ta.value.slice(0, pos) + tag + ta.value.slice(pos);
-        ta.selectionStart = ta.selectionEnd = pos + tag.length;
-        onNoteInput();
-        toast('Image collée ✓');
-      };
-      reader.readAsDataURL(file);
-      return;
-    }
-  }
-}
-
-function onNoteInput() {
-  const n = S.notes.find(x => x.id === curId);
-  if (!n) return;
-  n.body = document.getElementById('note-textarea').value;
-  n.updated = Date.now();
-  if (curView !== 'raw') updatePreview();
-  updateDateFooter();
-  debounceSave();
-  // Refresh list item lazily
-  clearTimeout(window._listRefreshTimer);
-  window._listRefreshTimer = setTimeout(() => { renderList(); renderTabs(); }, 800);
-}
-
-// ── Note meta helpers ─────────────────────────────────────────────────────────
-function noteTitle(n) {
-  const lines = (n.body || '').split('\n');
-  const first = lines.find(l => l.trim());
-  return first ? first.replace(/^#+\s*/, '').trim() : '';
-}
-
-function notePreview(n) {
-  const lines = (n.body || '').split('\n').filter(l => l.trim());
-  // Skip title line
-  const rest = lines.slice(1).find(l => l.trim() && !l.startsWith('#'));
-  return rest ? rest.replace(/^[-*]\s*/, '').trim() : '';
-}
-
-function noteTags(n) {
-  const matches = (n.body || '').match(/#[\w\u00C0-\u024F]+/g) || [];
-  return [...new Set(matches.map(t => t.toLowerCase()))];
-}
-
-function formatDate(ts) {
-  const d = new Date(ts);
-  const now = new Date();
-  const diff = (now - d) / 1000;
-  if (diff < 60) return 'maintenant';
-  if (diff < 3600) return Math.floor(diff/60) + ' min';
-  if (diff < 86400) return Math.floor(diff/3600) + ' h';
-  if (diff < 172800) return 'hier';
-  return d.toLocaleDateString('fr-FR', {day:'numeric', month:'short'});
-}
-
-// ── Render list ───────────────────────────────────────────────────────────────
-function renderList() {
-  const q = searchQ.toLowerCase();
-  let notes = S.notes.filter(n => {
-    if (favFilter && !n.favorite) return false;
-    if (activeTag && !noteTags(n).includes(activeTag)) return false;
-    if (!q) return true;
-    return (n.body || '').toLowerCase().includes(q);
-  });
-
-  // Favorites first, then by updated desc
-  notes = notes.sort((a,b) => {
-    if (a.favorite && !b.favorite) return -1;
-    if (!a.favorite && b.favorite) return 1;
-    return b.updated - a.updated;
-  });
-
-  // Collect all tags
-  const allTags = [...new Set(S.notes.flatMap(noteTags))].sort();
-  const tagFilter = document.getElementById('tag-filter');
-  tagFilter.innerHTML = allTags.map(t =>
-    `<span class="tag-pill${activeTag===t?' active':''}" onclick="filterTag('${t}')">${t}</span>`
-  ).join('');
-
-  const list = document.getElementById('note-list');
-  if (!notes.length) {
-    list.innerHTML = `<div class="note-empty">${q || activeTag || favFilter ? 'Aucun résultat' : 'Aucune note — crée-en une !'}</div>`;
-    return;
-  }
-
-  const hl = q ? (s => s.replace(new RegExp('('+escRe(q)+')', 'gi'), '<mark class="search-mark">$1</mark>')) : (s => esc(s));
-
-  list.innerHTML = notes.map(n => {
-    const title = noteTitle(n) || null;
-    const preview = notePreview(n);
-    const tags = noteTags(n).slice(0, 3);
-    const isActive = n.id === curId;
-    const isFav = !!n.favorite;
-    return `<div class="note-item${isActive?' active':''}" data-id="${n.id}" onclick="openNote('${n.id}')${window.innerWidth<=680?';showEditor()':''}">
-      <div style="display:flex;align-items:flex-start;gap:6px;">
-        <div style="flex:1;min-width:0;">
-          <div class="note-item-title${!title?' untitled':''}">${title ? hl(title) : 'Sans titre'}</div>
-          ${preview ? `<div class="note-item-preview">${hl(preview)}</div>` : ''}
-        </div>
-        <button class="note-item-fav${isFav?' on':''}" onclick="toggleFav(event,'${n.id}')" title="${isFav?'Retirer des favoris':'Ajouter aux favoris'}">⭐</button>
-      </div>
-      <div class="note-item-meta">
-        <span class="note-item-date">${formatDate(n.updated)}</span>
-        <div class="note-item-tags">${tags.map(t=>`<span class="note-tag-badge">${esc(t)}</span>`).join('')}</div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function filterTag(t) {
-  activeTag = activeTag === t ? null : t;
-  renderList();
-}
-
-function onSearch() {
-  searchQ = document.getElementById('search-input').value;
-  renderList();
-}
-
-// ── View modes ────────────────────────────────────────────────────────────────
-function setView(v) {
-  // Flush WYSIWYG edits before switching away from preview
-  if (curView === 'preview') flushWysiwyg();
-
-  curView = v;
-  const raw = document.getElementById('editor-raw');
-  const preview = document.getElementById('editor-preview');
-  const body = document.getElementById('editor-body');
-  const badge = document.getElementById('wysiwyg-badge');
-  document.querySelectorAll('.view-toggle-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('vt-' + v).classList.add('active');
-
-  if (v === 'raw') {
-    raw.style.display = '';
-    preview.style.display = 'none';
-    preview.contentEditable = 'false';
-    body.classList.remove('editor-split');
-    badge.style.display = 'none';
-  } else if (v === 'split') {
-    raw.style.display = '';
-    preview.style.display = '';
-    preview.contentEditable = 'false';
-    body.classList.add('editor-split');
-    body.style.flexDirection = 'row';
-    badge.style.display = 'none';
-    updatePreview();
-  } else { // preview = Live WYSIWYG
-    raw.style.display = 'none';
-    preview.style.display = '';
-    body.classList.remove('editor-split');
-    badge.style.display = '';
-    updatePreview();
-    // Make editable after render
-    setTimeout(() => {
-      preview.contentEditable = 'true';
-      preview.focus();
-    }, 50);
-  }
-  updateExportBar();
-}
-
-// Flush WYSIWYG contenteditable → back to markdown in textarea
-function flushWysiwyg() {
-  const preview = document.getElementById('editor-preview');
-  if (preview.contentEditable !== 'true') return;
-  preview.contentEditable = 'false';
-  const n = S.notes.find(x => x.id === curId);
-  if (!n) return;
-  try {
-    const td = new TurndownService({
-      headingStyle: 'atx',
-      bulletListMarker: '-',
-      codeBlockStyle: 'fenced'
-    });
-    // Preserve image tags
-    td.addRule('img-tag', {
-      filter: node => node.nodeName === 'IMG' && node.dataset.imgid,
-      replacement: (content, node) => '\n[img:' + node.dataset.imgid + ']\n'
-    });
-    // Preserve YouTube iframes
-    td.addRule('yt-embed', {
-      filter: node => node.nodeName === 'IFRAME' && node.src && node.src.includes('youtube'),
-      replacement: (content, node) => {
-        const m = node.src.match(/embed\/([A-Za-z0-9_-]{11})/);
-        return m ? '\nhttps://youtu.be/' + m[1] + '\n' : '';
-      }
-    });
-    const md = td.turndown(preview.innerHTML);
-    n.body = md;
-    document.getElementById('note-textarea').value = md;
-    n.updated = Date.now();
-    updateDateFooter();
-    debounceSave();
-    renderList();
-    renderTabs();
-  } catch(e) {
-    console.warn('Turndown error:', e);
-  }
-}
-
-function updateExportBar() {
-  const bar = document.getElementById('export-bar');
-  const tmpl = TEMPLATES.find(t => t.id === (curTemplate || 'none'));
-  bar.style.display = (curView !== 'raw' && tmpl && tmpl.id !== 'none') ? '' : 'none';
-}
-
-function updateDateFooter() {
-  const footer = document.getElementById('note-date-footer');
-  const label  = document.getElementById('note-date-text');
-  const n = S.notes.find(x => x.id === curId);
-  if (!n) { footer.style.display = 'none'; return; }
-  footer.style.display = '';
-  const d = new Date(n.updated);
-  label.textContent = 'Modifiée le ' + d.toLocaleDateString('fr-FR', {
-    weekday:'long', year:'numeric', month:'long', day:'numeric'
-  }) + ' à ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
-}
 
 // ── Template menu ─────────────────────────────────────────────────────────────
 function buildTmplMenu() {
@@ -1175,125 +718,47 @@ function applyTemplate(tmplId) {
 function updatePreview() {
   const preview = document.getElementById('editor-preview');
   if (preview.style.display === 'none') return;
-  // Don't re-render while user is typing in WYSIWYG mode
-  if (preview.contentEditable === 'true' && document.activeElement === preview) return;
-
   const n = S.notes.find(x => x.id === curId);
   if (!n) { preview.innerHTML = '<div class="pr-empty">Aucune note</div>'; return; }
   const tmpl = TEMPLATES.find(t => t.id === (curTemplate || n.template || 'none'));
-
-  // Use template renderer for structured templates, marked for free notes
-  if (tmpl && tmpl.id !== 'none' && tmpl.render) {
-    preview.innerHTML = tmpl.render(n.body);
-  } else {
-    preview.innerHTML = renderWithMarked(n.body, n.images || {});
-  }
+  preview.innerHTML = tmpl && tmpl.render ? tmpl.render(n.body) : renderFree(n.body);
 }
 
-function renderWithMarked(body, images) {
-  if (!body || !body.trim()) return '<div class="pr-empty">Note vide</div>';
-
-  // Pre-process: replace [img:id] with placeholder, replace yt urls
-  const _n = S.notes.find(x => x.id === curId);
-  const _imgs = images || ((_n && _n.images) ? _n.images : {});
-
-  let processed = body;
-
-  // Replace [img:id] with a special marker before markdown parsing
-  processed = processed.replace(/\[img:([a-z0-9]+)\]/g, (_, id) => {
-    const src = _imgs[id];
-    if (!src) return '';
-    // Use a fake markdown image that we'll post-process
-    return '![__img__' + id + '__](__img__' + id + '__)';
-  });
-
-  // Replace bare youtube URLs with markdown link (marked handles them)
-  processed = processed.replace(
-    /(^|\n)(https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})[^\s]*)/gm,
-    (_, pre, url, vid) => pre + '__YT__' + vid + '__'
-  );
-
-  // Configure marked
-  if (typeof marked !== 'undefined') {
-    marked.setOptions({
-      breaks: true,
-      gfm: true
-    });
-  }
-
-  let html = (typeof marked !== 'undefined') ? marked.parse(processed) : esc(processed).replace(/\n/g, '<br>');
-
-  // Post-process: restore images with data-imgid for flush
-  html = html.replace(/<img[^>]*src="__img__([a-z0-9]+)__"[^>]*>/g, (_, id) => {
-    const src = _imgs[id];
-    if (!src) return '';
-    return '<img class="pr-img" src="' + src + '" data-imgid="' + id + '" alt="image">';
-  });
-
-  // Post-process: restore YouTube embeds
-  html = html.replace(/__YT__([A-Za-z0-9_-]{11})__/g, (_, vid) => {
-    return '<div class="pr-yt-wrap"><iframe src="https://www.youtube-nocookie.com/embed/' + vid + '" allowfullscreen loading="lazy"></iframe></div>';
-  });
-
-  // Make links open in new tab
-  html = html.replace(/<a href=/g, '<a target="_blank" rel="noopener" href=');
-
-  return html;
-}
-
-// ── Renderers ─────────────────────────────────────────────────────────────────
-function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
-
-// ── Rich text helpers ─────────────────────────────────────────────────────────
+// ── Rich body renderer ────────────────────────────────────────────────────────
 function ytVideoId(url) {
-  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/);
+  var m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/);
   return m ? m[1] : null;
 }
 
-function renderRichLine(line) {
-  // Escape first
-  let s = esc(line);
-  // Links → clickable (after escape so we work with HTML entities)
-  // We re-detect on original line
-  return line.replace(/(https?:\/\/[^\s]+)/g, url => {
-    const vid = ytVideoId(url);
-    if (vid) return `__YT:${vid}__`;
-    return `<a class="pr-link" href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a>`;
-  }).replace(/&/g,'&amp;').replace(/<(?!a |\/a>)/g,'&lt;');
-  // Note: this approach has limitations — using a cleaner method below
-}
-
 function renderRichBody(body) {
-  // Get current note for image lookup
-  const _n = S.notes.find(x => x.id === curId);
-  const _imgs = (_n && _n.images) ? _n.images : {};
-  // Process line by line
-  const lines = body.split('\n');
-  const out = [];
-  for (const line of lines) {
-    // Image tag [img:shortId] — resolve from note.images
-    const imgMatch = line.match(/^\[img:([a-z0-9]+)\]$/);
+  var _n = S.notes.find(function(x){ return x.id === curId; });
+  var _imgs = (_n && _n.images) ? _n.images : {};
+  var lines = body.split('\n');
+  var out = [];
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    // Image tag [img:shortId]
+    var imgMatch = line.match(/^\[img:([a-z0-9]+)\]$/);
     if (imgMatch) {
-      const src = _imgs[imgMatch[1]];
-      if (src) out.push(`<img class="pr-img" src="${src}" alt="image collée">`);
+      var src = _imgs[imgMatch[1]];
+      if (src) out.push('<img class="pr-img" src="' + src + '" alt="image">');
       continue;
     }
-    // Detect YouTube URL on this line
-    const ytMatch = line.match(/https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+    // YouTube URL on its own line
+    var ytMatch = line.match(/https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
     if (ytMatch) {
-      const vid = ytMatch[1];
-      out.push(`<div class="pr-yt-wrap"><iframe src="https://www.youtube-nocookie.com/embed/${vid}" allowfullscreen loading="lazy"></iframe></div>`);
+      var vid = ytMatch[1];
+      out.push('<div class="pr-yt-wrap"><iframe src="https://www.youtube-nocookie.com/embed/' + vid + '" allowfullscreen loading="lazy"></iframe></div>');
       continue;
     }
-    // Regular line with clickable links
-    const escaped = line
-      .replace(/&/g,'&amp;')
-      .replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;')
-      .replace(/(https?:\/\/[^\s<>"]+)/g, url =>
-        `<a class="pr-link" href="${url}" target="_blank" rel="noopener">${url}</a>`
-      );
+    // Regular line — escape then make links clickable
+    var escaped = line
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/(https?:\/\/[^\s<>"]+)/g, function(url) {
+        return '<a class="pr-link" href="' + url + '" target="_blank" rel="noopener">' + url + '</a>';
+      });
     out.push(escaped);
   }
   return out.join('\n');
