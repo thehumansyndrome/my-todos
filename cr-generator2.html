@@ -857,8 +857,10 @@ function resolveAlias(mention) {
 }
 function aliasAvatarHtml(mention) {
   var m = resolveAlias(mention);
-  if (!m) return '<span class="tag-item" style="vertical-align:middle;"><span class="tag-item-avatar c'+pColor(mention)+'">'+esc(pInitials(mention))+'</span>'+esc(mention)+'</span>';
-  return '<span style="display:inline-flex;align-items:center;gap:3px;vertical-align:middle;background:'+m.color+'22;color:'+m.color+';border:1px solid '+m.color+'44;border-radius:10px;padding:1px 6px;font-size:11px;font-weight:600;">'    +'<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:'+m.color+';font-size:8px;font-weight:700;color:#fff;">'+esc(m.initiales)+'</span>'    +esc(m.nom.split(' ')[0])+'</span>';
+  var nom = m ? m.nom : mention;
+  var ini = m ? m.initiales : pInitials(mention);
+  var col = m ? pColor(m.nom) : pColor(mention);
+  return '<span class="tag-item" style="vertical-align:middle;"><span class="tag-item-avatar c'+col+'">'+esc(ini)+'</span>'+esc(nom)+'</span>';
 }
 function renderParticipantChips(participants) {
   if (!participants) return '';
@@ -945,6 +947,7 @@ function saveCR() {
       existing.raw        = raw;
       existing.savedAt    = new Date().toLocaleDateString('fr-FR');
       existing.projet     = curCRProjet||'';
+      existing.projetName = _getProjetName() || cr.projet || '';
       existing.redacteurs = curRedact.slice();
       existing.valideurs  = curValid.slice();
       persist(); renderHistory(); renderEditorMeta();
@@ -959,7 +962,8 @@ function saveCR() {
     dCount:     cr.decisions.length,
     aCount:     cr.actions.length,
     status:     'brouillon',
-    projet:     curCRProjet || cr.projet || '',
+    projet:     curCRProjet || '',
+    projetName: _getProjetName() || cr.projet || '',
     redacteurs: curRedact.slice(),
     valideurs:  curValid.slice(),
     versions:   [],
@@ -1342,8 +1346,8 @@ function deleteEntry(id) {
 function newCR() {
   if (document.getElementById('raw-input').value.trim() &&
       !confirm('Créer un nouveau CR ? Le contenu non enregistré sera perdu.')) return;
-  document.getElementById('raw-input').value = TEMPLATE;
-  curCRProjet = ''; editingEntryId = null;
+  // Keep projet selection, reset entry
+  editingEntryId = null;
   var aid = typeof getAdminId === 'function' ? getAdminId() : null;
   curRedact = aid ? [aid] : [];
   curValid  = aid ? [aid] : [];
@@ -1351,22 +1355,35 @@ function newCR() {
   tags = [];
   renderChips('chips-red', curRedact, 'red');
   renderChips('chips-val', curValid, 'val');
+  _loadFreshTemplate();
   renderPreview();
   toast('Nouveau CR');
 }
-function resetTemplate() {
+function _getProjetName() {
+  // Get project name string from curCRProjet (which is an id)
+  var p = (sharedProjects||[]).find(function(x){return x.id===curCRProjet;});
+  return p ? p.name : '';
+}
+function _loadFreshTemplate() {
   var aid = typeof getAdminId === 'function' ? getAdminId() : null;
   var adminMember = aid ? (sharedTeam||[]).find(function(m){return m.id===aid;}) : null;
   crParticipants = adminMember ? [adminMember.nom] : [];
-  curCRProjet=''; editingEntryId=null;
-  curRedact = aid ? [aid] : [];
-  curValid  = aid ? [aid] : [];
-  // Rebuild TMPL with admin in participants line then load
-  var tmpl = TMPL.replace(/^title:.*$/m, 'title: '+buildCRTitle(''))
-                 .replace(/^participants:.*$/m, 'participants: '+(adminMember?adminMember.nom:''));
-  document.getElementById('raw-input').value=tmpl;
+  var projetName = _getProjetName();
+  var tmpl = TMPL
+    .replace(/^title:.*$/m,       'title: '+buildCRTitle(projetName))
+    .replace(/^projet:.*$/m,      'projet: '+projetName)
+    .replace(/^participants:.*$/m,'participants: '+(adminMember?adminMember.nom:''));
+  document.getElementById('raw-input').value = tmpl;
   renderTagWrap(); saveMetaState(); renderEditorMeta(); renderPreview();
   localStorage.removeItem(SK+'_draft');
+}
+function resetTemplate() {
+  curCRProjet = (document.getElementById('cr-projet-select')||{}).value || curCRProjet || '';
+  editingEntryId = null;
+  var aid = typeof getAdminId === 'function' ? getAdminId() : null;
+  curRedact = aid ? [aid] : [];
+  curValid  = aid ? [aid] : [];
+  _loadFreshTemplate();
 }
 
 // ── Équipe ────────────────────────────────────────────────────────────────────
