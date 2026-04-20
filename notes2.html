@@ -286,11 +286,14 @@ var driveFileId=null, tokenClient=null, pollTimer=null;
 var accessToken=sessionStorage.getItem(TOK)||null;
 
 // ── Templates ─────────────────────────────────────────────────────────────────
+function getTodayCR(){var d=new Date();return String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+d.getFullYear();}
+
 var TMPLS=[
   {id:'none',name:'Note libre',desc:'Texte brut, aucun rendu',
    placeholder:'Titre\n\nÉcris ici…'},
-  {id:'cr',name:'Compte Rendu',desc:'Réunion → décisions, actions',
-   placeholder:'Titre de la réunion\n\ndate: \nparticipants: \nduree: \nobjectif: \n\n## Décisions\n- \n\n## Actions\n- [ ] Texte @Assigné 2026-01-01\n- [ ] \n\n## Prochaine réunion\ndate: \nordre du jour: '},
+  {id:'cr',name:'Compte Rendu',desc:'Réunion → décisions, actions (format CR Generator)',
+   placeholder:'---\ntitle: \ndate: '+getTodayCR()+'\nduree: \nparticipants: \nobjectif: \nnext-date: \nnext-agenda: \n---\n\nD: \nD: \n\nA:   '+getTodayCR()+'\nA:   '+getTodayCR()+
+   ''},
   {id:'standup',name:'Standup',desc:"Hier / Aujourd'hui / Blocages",
    placeholder:"Standup\n\nhier: \n- \n\naujourd'hui: \n- \n\nblocages: \n- "},
   {id:'reflexion',name:'Note de réflexion',desc:'Problème → options → décision',
@@ -691,61 +694,74 @@ function renderFree(body){
 }
 
 function parseCR(body){
-  var lines=body.split('\n'),title=lines[0].replace(/^#+\s*/,'').trim();
-  var meta={},decisions=[],actions=[],nextDate='',nextOdj='',section=null;
-  lines.slice(1).forEach(function(line){
-    var l=line.trim();if(!l)return;
-    if(/^##\s*d[ée]cisions?/i.test(l)){section='dec';return;}
-    if(/^##\s*actions?/i.test(l)){section='act';return;}
-    if(/^##\s*prochaine/i.test(l)){section='next';return;}
-    if(l.startsWith('#')){section=null;return;}
-    var mm=l.match(/^(date|participants?|dur[ée]e?|objectif)\s*:\s*(.+)/i);
-    if(mm&&!section){meta[mm[1].toLowerCase().replace(/[éè]/g,'e')]=mm[2].trim();return;}
-    if(section==='dec'&&l.startsWith('-')){var t=l.replace(/^-\s*/,'').trim();if(t)decisions.push(t);}
-    if(section==='act'){
-      var m2=l.match(/^-\s*\[[ x]\]\s*(.+)/i);
-      if(m2){var r=m2[1],assignee=(r.match(/@(\S+)/)||[])[1]||'',due=(r.match(/(\d{4}-\d{2}-\d{2})/)||[])[1]||'';
-        actions.push({text:r.replace(/@\S+/,'').replace(/\d{4}-\d{2}-\d{2}/,'').trim(),assignee:assignee,due:due,done:/\[x\]/i.test(l)});}
+  var cr={title:'',date:'',duree:'',participants:'',objectif:'',nextDate:'',nextAgenda:'',decisions:[],actions:[]};
+  var lines=body.split('\n'), inYaml=false;
+  for(var i=0;i<lines.length;i++){
+    var line=lines[i].trim(), m;
+    if(line==='---'){inYaml=!inYaml;continue;}
+    if(inYaml){
+      if((m=line.match(/^title\s*:\s*(.*)/i)))        cr.title       =m[1].trim();
+      else if((m=line.match(/^date\s*:\s*(.*)/i)))    cr.date        =m[1].trim();
+      else if((m=line.match(/^dur[eé]e\s*:\s*(.*)/i)))cr.duree       =m[1].trim();
+      else if((m=line.match(/^participants\s*:\s*(.*)/i)))cr.participants=m[1].trim();
+      else if((m=line.match(/^objectif\s*:\s*(.*)/i)))cr.objectif    =m[1].trim();
+      else if((m=line.match(/^next-date\s*:\s*(.*)/i)))cr.nextDate   =m[1].trim();
+      else if((m=line.match(/^next-agenda\s*:\s*(.*)/i)))cr.nextAgenda=m[1].trim();
+    } else {
+      if((m=line.match(/^D\s*:\s*(.+)/i)))cr.decisions.push(m[1].trim());
+      else if((m=line.match(/^A\s*:\s*(.+)/i))){
+        var raw=m[1].trim(),assignee='',due='',txt=raw;
+        var am=raw.match(/@(\S+)/),dm=raw.match(/\b(\d{2}-\d{2}-\d{4})\b/);
+        if(am){assignee=am[1];txt=txt.replace(am[0],'').trim();}
+        if(dm){due=dm[1];txt=txt.replace(dm[0],'').trim();}
+        cr.actions.push({text:txt,assignee:assignee,due:due});
+      }
     }
-    if(section==='next'){
-      var dm=l.match(/^date\s*:\s*(.+)/i),om=l.match(/^(?:ordre du jour|odj)\s*:\s*(.+)/i);
-      if(dm)nextDate=dm[1].trim();if(om)nextOdj=om[2].trim();
-    }
-  });
-  return{title:title,meta:meta,decisions:decisions,actions:actions,nextDate:nextDate,nextOdj:nextOdj};
+  }
+  return cr;
 }
 
 function renderCR(body){
   var cr=parseCR(body);
-  if(!cr.title&&!cr.decisions.length&&!cr.actions.length)return renderFree(body);
-  var h=cr.title?'<div class="pr-title">'+esc(cr.title)+'</div>':'';
-  [{k:'date',l:'Date'},{k:'participants',l:'Participants'},{k:'duree',l:'Durée'},{k:'objectif',l:'Objectif'}].forEach(function(e){
-    if(cr.meta[e.k])h+='<div class="pr-meta"><span class="pr-meta-label">'+e.l+'</span>'+esc(cr.meta[e.k])+'</div>';
-  });
+  var hasContent=cr.title||cr.decisions.length||cr.actions.length||cr.participants||cr.date;
+  if(!hasContent)return renderFree(body);
+  var h='';
+  if(cr.title)h+='<div class="pr-title">'+esc(cr.title)+'</div>';
+  if(cr.date)h+='<div class="pr-meta"><span class="pr-meta-label">Date</span>'+esc(cr.date)+'</div>';
+  if(cr.duree)h+='<div class="pr-meta"><span class="pr-meta-label">Dur\u00e9e</span>'+esc(cr.duree)+'</div>';
+  if(cr.objectif)h+='<div class="pr-meta"><span class="pr-meta-label">Objectif</span>'+esc(cr.objectif)+'</div>';
+  if(cr.participants){
+    h+='<div class="pr-meta"><span class="pr-meta-label">Participants</span>';
+    cr.participants.split(',').forEach(function(p){
+      var name=p.trim();if(!name)return;
+      h+='<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 10px 3px 5px;border-radius:20px;border:1px solid var(--border);background:var(--bg);margin:2px 4px 2px 0;">'+esc(name)+'</span>';
+    });
+    h+='</div>';
+  }
   if(cr.decisions.length){
-    h+='<div class="pr-section"><div class="pr-section-label">Décisions ('+cr.decisions.length+')</div>';
-    h+=cr.decisions.map(function(d){return '<div class="pr-item"><span class="pr-icon">▶</span><div class="pr-body">'+esc(d)+'</div></div>';}).join('');
+    h+='<div class="pr-section"><div class="pr-section-label">D\u00e9cisions</div>';
+    cr.decisions.forEach(function(d,i){h+='<div class="pr-item"><span class="pr-icon" style="font-family:var(--mono);font-size:12px;min-width:20px;">'+(i+1)+'.</span><div class="pr-body">'+esc(d)+'</div></div>';});
     h+='</div>';
   }
   if(cr.actions.length){
-    h+='<div class="pr-section"><div class="pr-section-label">Actions ('+cr.actions.length+')</div>';
-    h+=cr.actions.map(function(a){
-      return '<div class="pr-item"><span class="pr-icon">'+(a.done?'✅':'☐')+'</span><div class="pr-body">'+esc(a.text)
-        +(a.assignee?'<span style="color:var(--blue);font-weight:600;margin-left:6px;">@'+esc(a.assignee)+'</span>':'')
-        +(a.due?'<span style="color:var(--amber);margin-left:6px;">📅 '+esc(a.due)+'</span>':'')
-        +'<span class="pr-badge '+(a.done?'done':'action')+'">'+(a.done?'Fait':'Action')+'</span></div></div>';
-    }).join('');
+    h+='<div class="pr-section"><div class="pr-section-label">Actions</div>';
+    cr.actions.forEach(function(a,i){
+      h+='<div class="pr-item"><span class="pr-icon" style="font-family:var(--mono);font-size:12px;min-width:20px;">'+(i+1)+'.</span><div class="pr-body">'+esc(a.text);
+      if(a.assignee)h+=' <span style="color:var(--blue);font-weight:600;">@'+esc(a.assignee)+'</span>';
+      if(a.due)h+=' <span style="color:var(--amber);font-size:12px;">\uD83D\uDCC5 '+esc(a.due)+'</span>';
+      h+='</div></div>';
+    });
     h+='</div>';
   }
-  if(cr.nextDate||cr.nextOdj){
-    h+='<div class="pr-section"><div class="pr-section-label">Prochaine réunion</div>'
-      +'<div style="padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border);font-size:13px;background:var(--bg);">'
-      +(cr.nextDate?'📅 <strong>'+esc(cr.nextDate)+'</strong>':'')
-      +(cr.nextOdj?'<span style="color:var(--muted);margin-left:8px;">— '+esc(cr.nextOdj)+'</span>':'')
-      +'</div></div>';
+  if(cr.nextDate||cr.nextAgenda){
+    h+='<div style="margin-top:14px;padding:8px 12px;border-radius:var(--radius);border:1px solid var(--border);font-size:13px;background:var(--bg);">';
+    if(cr.nextDate)h+='\uD83D\uDCC5 <span style="color:var(--blue);font-weight:500;">Prochaine r\u00e9union : '+esc(cr.nextDate)+'</span>';
+    if(cr.nextAgenda)h+=(cr.nextDate?' \u2014 ':'')+esc(cr.nextAgenda);
+    h+='</div>';
   }
   return h;
 }
+
 
 function parseStandup(body){
   var lines=body.split('\n'),title=lines[0].replace(/^#+\s*/,'').trim();
