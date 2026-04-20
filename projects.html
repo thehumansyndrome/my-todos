@@ -1407,15 +1407,37 @@ load();
 let tdTaskId = null;
 function tdFmt(d){return d?new Date(d).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}):''}
 function tdGetTask(){
-  if(!projet001FullData) return null;
-  const numId = typeof tdTaskId==='string'?parseInt(tdTaskId,10):tdTaskId;
-  return (projet001FullData.backlog||[]).find(t=>t.id===numId||t.id===tdTaskId)||null;
+  if(!projet001FullData && !suiviData.backlog.length) return null;
+  const backlog = (projet001FullData ? projet001FullData.backlog||[] : []);
+  // Exact string match first (handles alphanumeric IDs like "mn03ah2xo8mb")
+  let t = backlog.find(x => String(x.id) === String(tdTaskId));
+  if (!t) {
+    // Also check suiviData.backlog (Vue Globale source)
+    t = (suiviData.backlog||[]).find(x => String(x.id) === String(tdTaskId));
+  }
+  return t || null;
 }
 function tdGetAdmin(){return (S.team||[]).find(m=>m.appRole==='Admin')||null;}
 
 function openTD(rawId){
-  // rawId may come from data-id (string) — keep as-is, tdGetTask handles both
   tdTaskId = rawId;
+  const t = tdGetTask();
+  if (!t) {
+    // Task not in projet001FullData — build minimal display from suiviData.backlog
+    const sb = (suiviData.backlog||[]).find(x => String(x.id) === String(rawId));
+    if (!sb) { toast('⚠ Tâche introuvable'); return; }
+    // Show drawer with available data
+    const ta = document.getElementById('td-title');
+    if (ta) { ta.value = sb.text||''; tdAutoResize(ta); }
+    const badges = document.getElementById('td-badges');
+    if (badges) badges.innerHTML = '';
+    ['td-team-body','td-comments-body','td-history-body'].forEach(function(id){
+      const el = document.getElementById(id); if(el) el.innerHTML = '<span style="color:var(--muted);font-size:12px;">—</span>';
+    });
+    document.getElementById('td-overlay').classList.add('open');
+    document.getElementById('td-drawer').classList.add('open');
+    return;
+  }
   refreshTD();
   document.getElementById('td-overlay').classList.add('open');
   document.getElementById('td-drawer').classList.add('open');
@@ -1988,7 +2010,7 @@ function renderGlobal() {
   el.onchange = ev => {
     const cb = ev.target.closest('[data-action="toggleGlobalTask"]');
     if (cb && projet001FullData) {
-      const t = projet001FullData.backlog.find(x=>x.id===cb.dataset.id);
+      const t = projet001FullData.backlog.find(x=>String(x.id)===String(cb.dataset.id));
       if (t) { t.done=!t.done; writeProjet001('✓ Tâche mise à jour'); renderGlobal(); }
     }
   };
