@@ -170,6 +170,17 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
   .mob-back{display:flex !important;}
 }
 .mob-back{display:none;align-items:center;gap:6px;font-size:13px;color:var(--muted);}
+/* Avatar mini (people chips) */
+.pr-avatar-mini{width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;}
+.pr-avatar-mini.c0{background:#E53E3E;}
+.pr-avatar-mini.c1{background:#DD6B20;}
+.pr-avatar-mini.c2{background:#38A169;}
+.pr-avatar-mini.c3{background:#3182CE;}
+.pr-avatar-mini.c4{background:#6B46C1;}
+.pr-avatar-mini.c5{background:#D53F8C;}
+.pr-avatar-mini.c6{background:#2C7A7B;}
+.pr-avatar-mini.c7{background:#718096;}
+
 /* Scrollbar */
 ::-webkit-scrollbar{width:4px;}
 ::-webkit-scrollbar-track{background:transparent;}
@@ -787,10 +798,7 @@ function renderCR(body){
   if(cr.objectif)h+='<div class="pr-meta"><span class="pr-meta-label">Objectif</span>'+esc(cr.objectif)+'</div>';
   if(cr.participants){
     h+='<div class="pr-meta"><span class="pr-meta-label">Participants</span>';
-    cr.participants.split(',').forEach(function(p){
-      var name=p.trim();if(!name)return;
-      h+='<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 10px 3px 5px;border-radius:20px;border:1px solid var(--border);background:var(--bg);margin:2px 4px 2px 0;">'+esc(name)+'</span>';
-    });
+    h+=renderParticipantChips(cr.participants);
     h+='</div>';
   }
   if(cr.decisions.length){
@@ -802,7 +810,7 @@ function renderCR(body){
     h+='<div class="pr-section"><div class="pr-section-label">Actions</div>';
     cr.actions.forEach(function(a,i){
       h+='<div class="pr-item"><span class="pr-icon" style="font-family:var(--mono);font-size:12px;min-width:20px;">'+(i+1)+'.</span><div class="pr-body">'+esc(a.text);
-      if(a.assignee)h+=' <span style="color:var(--blue);font-weight:600;">@'+esc(a.assignee)+'</span>';
+      if(a.assignee)h+=' '+aliasAvatarHtml(a.assignee);
       if(a.due)h+=' <span style="color:var(--amber);font-size:12px;">\uD83D\uDCC5 '+esc(a.due)+'</span>';
       h+='</div></div>';
     });
@@ -920,8 +928,50 @@ function setSyncDot(s){var m={local:'⚫ Local',pending:'🟡 Pending',sync:'�
 var _tt;
 function toast(msg){var el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(function(){el.classList.remove('show');},2500);}
 
+// ── People helpers ────────────────────────────────────────────────────────────
+function pInitials(nom){
+  nom=(nom||'').trim();
+  var parts=nom.split(/\s+/);
+  return parts.length>=2?(parts[0][0]+parts[parts.length-1][0]).toUpperCase():nom.slice(0,2).toUpperCase();
+}
+function pColor(nom){var h=0;for(var i=0;i<nom.length;i++)h=(h*31+nom.charCodeAt(i))&0xFFFF;return h%8;}
+
+function resolveAlias(mention){
+  var key=(mention||'').replace(/^@/,'').toLowerCase();
+  return (sharedTeam||[]).find(function(m){
+    var al=(m.alias||m.initiales||'').toLowerCase();
+    return al===key;
+  })||null;
+}
+
+function aliasAvatarHtml(mention){
+  var m=resolveAlias(mention);
+  var nom=m?m.nom:mention;
+  var ini=m?m.initiales:pInitials(mention);
+  var col=pColor(nom);
+  return '<span style="display:inline-flex;align-items:center;gap:4px;vertical-align:middle;font-size:12px;padding:2px 7px 2px 4px;border-radius:12px;border:1px solid var(--border);background:var(--bg);">'
+    +'<span class="pr-avatar-mini c'+col+'">'+esc(ini)+'</span>'+esc(nom)+'</span>';
+}
+
+function renderParticipantChips(participants){
+  if(!participants)return'';
+  var names=participants.split(',').map(function(n){return n.trim();}).filter(Boolean);
+  if(!names.length)return'';
+  var h='<div style="display:flex;flex-wrap:wrap;gap:5px;margin:4px 0;">';
+  names.forEach(function(nom){
+    var resolved=nom.startsWith('@')?resolveAlias(nom):null;
+    var displayNom=resolved?resolved.nom:nom;
+    var ini=resolved?resolved.initiales:pInitials(nom);
+    var col=pColor(displayNom);
+    h+='<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 10px 3px 5px;border-radius:20px;border:1px solid var(--border);background:var(--bg);">'
+      +'<span class="pr-avatar-mini c'+col+'">'+esc(ini)+'</span>'+esc(displayNom)+'</span>';
+  });
+  return h+'</div>';
+}
+
 // ── Shared state (projet001 + shared.json) ────────────────────────────────────
 var sharedProjects = [];
+var sharedTeam = [];
 var todoFileId = null;
 var todoFullData = null;
 
@@ -940,6 +990,7 @@ function loadSharedData(){
   .then(function(data){
     if(!data)return;
     if(Array.isArray(data.projects))sharedProjects=data.projects;
+    if(Array.isArray(data.team))sharedTeam=data.team;
   }).catch(function(){});
 
   // Load projet001.json for backlog
@@ -991,6 +1042,16 @@ function validateCRNote(){
       return t.text===action.text&&t.projId===projId&&!t.done;
     });
     if(exists)return;
+    // Resolve @assignee to team member id
+    var assigneeIds=[];
+    if(action.assignee){
+      var hint=action.assignee.toLowerCase();
+      var member=(sharedTeam||[]).find(function(m){
+        return (m.alias||m.initiales||'').toLowerCase()===hint
+          ||(m.nom||'').toLowerCase().indexOf(hint)>=0;
+      });
+      if(member)assigneeIds=[member.id];
+    }
     var task={
       id:'cr'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
       text:action.text,
@@ -998,6 +1059,7 @@ function validateCRNote(){
       pri:'p2',
       done:false,
       ts:Date.now(),
+      assigneeIds:assigneeIds,
       source:'cr',
       crTitle:cr.title||(n.body.split('\n')[0])||''
     };
