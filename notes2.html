@@ -257,6 +257,7 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
         <button class="btn sm" onclick="doExport('md')">↓ .md</button>
         <button class="btn sm" onclick="doExport('txt')">↓ .txt</button>
         <button class="btn sm primary" onclick="copyRendered()">⎘ Copier</button>
+        <button class="btn sm" id="validate-btn" onclick="validateCRNote()" style="display:none;color:var(--green);border-color:var(--green);">✓ Valider → projet001</button>
       </div>
 
       <div class="date-footer" id="date-footer" style="display:none;">
@@ -327,7 +328,7 @@ function init(){
   buildTmplMenu();
   renderList();
   renderTabs();
-  if(accessToken)scheduleRefresh();
+  if(accessToken){scheduleRefresh();loadSharedData();}
   if(window.innerWidth>680)document.getElementById('editor-pane').classList.remove('hidden');
   else document.getElementById('mob-back').style.display='none';
 }
@@ -634,7 +635,10 @@ function setView(v){
 
 function updateExportBar(){
   var tmpl=TMPLS.find(function(t){return t.id===(curTmpl||'none');});
-  document.getElementById('export-bar').style.display=(curView!=='raw'&&tmpl&&tmpl.id!=='none')?'':'none';
+  var show=(curView!=='raw'&&tmpl&&tmpl.id!=='none');
+  document.getElementById('export-bar').style.display=show?'':'none';
+  var vbtn=document.getElementById('validate-btn');
+  if(vbtn) vbtn.style.display=(show&&tmpl&&tmpl.id==='cr'&&accessToken)?'':'none';
 }
 
 function updateDateFooter(){
@@ -916,6 +920,100 @@ function setSyncDot(s){var m={local:'⚫ Local',pending:'🟡 Pending',sync:'�
 var _tt;
 function toast(msg){var el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(function(){el.classList.remove('show');},2500);}
 
+// ── Shared state (projet001 + shared.json) ────────────────────────────────────
+var sharedProjects = [];
+var todoFileId = null;
+var todoFullData = null;
+
+function loadSharedData(){
+  if(!accessToken)return;
+  // Load shared.json for project list
+  var q=encodeURIComponent("name='shared.json' and trashed=false");
+  fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id)&orderBy=modifiedTime+desc',
+    {headers:{Authorization:'Bearer '+accessToken}})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(!d.files||!d.files[0])return;
+    return fetch('https://www.googleapis.com/drive/v3/files/'+d.files[0].id+'?alt=media',
+      {headers:{Authorization:'Bearer '+accessToken}});
+  }).then(function(r){return r?r.json():null;})
+  .then(function(data){
+    if(!data)return;
+    if(Array.isArray(data.projects))sharedProjects=data.projects;
+  }).catch(function(){});
+
+  // Load projet001.json for backlog
+  var q2=encodeURIComponent("name='projet001.json' and trashed=false");
+  fetch('https://www.googleapis.com/drive/v3/files?q='+q2+'&fields=files(id)&orderBy=modifiedTime+desc',
+    {headers:{Authorization:'Bearer '+accessToken}})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    todoFileId=d.files&&d.files[0]?d.files[0].id:null;
+    if(!todoFileId)return null;
+    return fetch('https://www.googleapis.com/drive/v3/files/'+todoFileId+'?alt=media',
+      {headers:{Authorization:'Bearer '+accessToken}});
+  }).then(function(r){return r?r.json():null;})
+  .then(function(data){
+    if(data)todoFullData=data;
+  }).catch(function(){});
+}
+
+function writeTodoFile(){
+  if(!accessToken||!todoFullData||!todoFileId)return;
+  fetch('https://www.googleapis.com/upload/drive/v3/files/'+todoFileId+'?uploadType=media',
+    {method:'PATCH',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
+     body:JSON.stringify(todoFullData)})
+  .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);})
+  .catch(function(e){toast('❌ projet001 : '+e.message);});
+}
+
+function validateCRNote(){
+  var n=S.notes.find(function(x){return x.id===curId;});
+  if(!n)return;
+  var cr=parseCR(n.body);
+  if(!cr.actions.length){toast('Aucune action à exporter');return;}
+  if(!todoFullData){toast('⚠ projet001.json non chargé — connexion Drive requise');return;}
+  todoFullData.backlog=todoFullData.backlog||[];
+
+  // Resolve projet by name from cr.projet field
+  var projId=null;
+  if(cr.projet){
+    var matchedProj=(sharedProjects||[]).find(function(p){
+      return p.name.toLowerCase()===cr.projet.toLowerCase();
+    });
+    if(matchedProj)projId=matchedProj.id;
+  }
+
+  var added=0;
+  cr.actions.forEach(function(action){
+    if(!action.text)return;
+    var exists=todoFullData.backlog.some(function(t){
+      return t.text===action.text&&t.projId===projId&&!t.done;
+    });
+    if(exists)return;
+    var task={
+      id:'cr'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
+      text:action.text,
+      projId:projId,
+      pri:'p2',
+      done:false,
+      ts:Date.now(),
+      source:'cr',
+      crTitle:cr.title||(n.body.split('\n')[0])||''
+    };
+    if(action.due)task.dueDate=action.due;
+    todoFullData.backlog.unshift(task);
+    added++;
+  });
+
+  if(added>0){
+    writeTodoFile();
+    toast('✓ '+added+' action'+(added>1?'s':'')+' → projet001'+(cr.projet?' ['+cr.projet+']':''));
+  } else {
+    toast('Actions déjà dans projet001');
+  }
+}
+
 // ── Drive ─────────────────────────────────────────────────────────────────────
 function handleDriveBtn(){if(accessToken)pullFromDrive();else initDriveAuth();}
 function initDriveAuth(){
@@ -926,7 +1024,7 @@ function initDriveAuth(){
       if(resp.error){toast('Auth erreur: '+resp.error);return;}
       accessToken=resp.access_token;sessionStorage.setItem(TOK,accessToken);
       document.getElementById('drive-bar').style.display='';
-      pullFromDrive();scheduleRefresh();
+      pullFromDrive();scheduleRefresh();loadSharedData();
     }
   });
   tokenClient.requestAccessToken({prompt:'consent'});
