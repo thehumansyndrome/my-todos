@@ -515,12 +515,36 @@ function onNoteInput(){
 // ── Note meta ─────────────────────────────────────────────────────────────────
 function noteTitle(n){
   var lines=(n.body||'').split('\n');
+  // If YAML front matter, extract title: field
+  if(lines[0]&&lines[0].trim()==='---'){
+    for(var i=1;i<lines.length;i++){
+      if(lines[i].trim()==='---') break;
+      var m=lines[i].match(/^title\s*:\s*(.+)/i);
+      if(m&&m[1].trim()) return m[1].trim();
+    }
+    return ''; // title field empty or not found
+  }
   var f=lines.find(function(l){return l.trim();});
   return f?f.replace(/^#+\s*/,'').trim():'';
 }
 function notePreview(n){
-  var lines=(n.body||'').split('\n').filter(function(l){return l.trim();});
-  var r=lines.slice(1).find(function(l){return l.trim()&&!l.startsWith('#');});
+  var body=n.body||'';
+  var lines=body.split('\n');
+  // Skip YAML front matter
+  if(lines[0]&&lines[0].trim()==='---'){
+    var endYaml=-1;
+    for(var i=1;i<lines.length;i++){if(lines[i].trim()==='---'){endYaml=i;break;}}
+    if(endYaml>0){
+      // Show first D: or A: line after YAML as preview
+      for(var j=endYaml+1;j<lines.length;j++){
+        var l=lines[j].trim();
+        if(l.match(/^[DA]:\s*.+/))return l;
+      }
+    }
+    return '';
+  }
+  var filtered=lines.filter(function(l){return l.trim();});
+  var r=filtered.slice(1).find(function(l){return l.trim()&&!l.startsWith('#');});
   return r?r.replace(/^[-*]\s*/,'').trim():'';
 }
 function noteTags(n){
@@ -643,7 +667,17 @@ function applyTmpl(tmplId){
   if(!tmpl)return;
   var n=S.notes.find(function(x){return x.id===curId;});
   if(!n){newNote(tmplId);return;}
-  if(!n.body.trim()){n.body=tmpl.placeholder||'';document.getElementById('note-ta').value=n.body;}
+  var isEmpty=!n.body.trim();
+  var sameTemplate=n.template===tmplId;
+  // Load placeholder if note is empty, or same template (refresh), or user confirms
+  if(isEmpty||sameTemplate){
+    n.body=tmpl.placeholder||'';
+    document.getElementById('note-ta').value=n.body;
+  } else if(tmpl.id!=='none'){
+    if(!confirm('Remplacer le contenu par le template "'+tmpl.name+'" ?'))return;
+    n.body=tmpl.placeholder||'';
+    document.getElementById('note-ta').value=n.body;
+  }
   n.template=tmplId;curTmpl=tmplId;n.updated=Date.now();
   autoSave();updatePreview();updateExportBar();
   if(curView==='raw')setView('split');
