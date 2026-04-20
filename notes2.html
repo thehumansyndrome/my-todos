@@ -304,16 +304,26 @@ function getCRTitleDate(){
   var months=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
   return d.getDate()+' '+months[d.getMonth()]+' '+d.getFullYear();
 }
-function buildCRTitle(projet){
+function buildCRDateTitle(){
   var dateStr=getCRTitleDate();
-  return (projet?'['+projet+'] ':'')+"CR de la réunion du "+dateStr;
+  return "CR de la réunion du "+dateStr;
+}
+function buildCRTitle(projet){
+  // Legacy: called with projet only → generates full auto title
+  return (projet?'['+projet+'] ':'')+buildCRDateTitle();
+}
+function buildCRDisplayTitle(projet, titleContent){
+  // Main display logic: [projet] titleContent
+  // titleContent = what's in title: field (may be empty)
+  var base = titleContent || buildCRDateTitle();
+  return projet ? '['+projet+'] '+base : base;
 }
 
 var TMPLS=[
   {id:'none',name:'Note libre',desc:'Texte brut, aucun rendu',
    placeholder:'Titre\n\nÉcris ici…'},
   {id:'cr',name:'Compte Rendu',desc:'Réunion → décisions, actions (format CR Generator)',
-   get placeholder(){return '---\ntitle: '+buildCRTitle('')+'\ndate: '+getTodayCR()+'\nprojet: \nduree: \nparticipants: \nobjectif: \nnext-date: \nnext-agenda: \n---\n\nD: \nD: \n\nA:   '+getTodayCR()+'\nA:   '+getTodayCR();}},
+   get placeholder(){return '---\ntitle: \ndate: '+getTodayCR()+'\nprojet: \nduree: \nparticipants: \nobjectif: \nnext-date: \nnext-agenda: \n---\n\nD: \nD: \n\nA:   '+getTodayCR()+'\nA:   '+getTodayCR();}},
   {id:'standup',name:'Standup',desc:"Hier / Aujourd'hui / Blocages",
    placeholder:"Standup\n\nhier: \n- \n\naujourd'hui: \n- \n\nblocages: \n- "},
   {id:'reflexion',name:'Note de réflexion',desc:'Problème → options → décision',
@@ -545,9 +555,8 @@ function noteTitle(n){
       var mp=lines[i].match(/^projet\s*:\s*(.*)/i);
       if(mp) projetVal=mp[1].trim();
     }
-    if(titleVal) return titleVal;
-    // Auto-build from projet if title empty
-    return buildCRTitle(projetVal);
+    // Always compose [projet] title
+    return buildCRDisplayTitle(projetVal, titleVal);
   }
   var f=lines.find(function(l){return l.trim();});
   return f?f.replace(/^#+\s*/,'').trim():'';
@@ -789,8 +798,8 @@ function renderCR(body){
   var hasContent=cr.title||cr.decisions.length||cr.actions.length||cr.participants||cr.date;
   if(!hasContent)return renderFree(body);
   var h='';
-  // Auto-build title if empty
-  var displayTitle=cr.title||buildCRTitle(cr.projet);
+  // Compose [projet] title (projet always prefixes, title: content is optional)
+  var displayTitle=buildCRDisplayTitle(cr.projet, cr.title);
   if(displayTitle)h+='<div class="pr-title">'+esc(displayTitle)+'</div>';
   if(cr.projet)h+='<div class="pr-meta"><span class="pr-meta-label">Projet</span><span style="display:inline-block;font-size:12px;font-weight:600;padding:2px 10px;border-radius:12px;border:1px solid var(--accent);color:var(--accent);">'+esc(cr.projet)+'</span></div>';
   if(cr.date)h+='<div class="pr-meta"><span class="pr-meta-label">Date</span>'+esc(cr.date)+'</div>';
@@ -1061,7 +1070,7 @@ function validateCRNote(){
       ts:Date.now(),
       assigneeIds:assigneeIds,
       source:'cr',
-      crTitle:cr.title||(n.body.split('\n')[0])||''
+      crTitle:buildCRDisplayTitle(cr.projet, cr.title)
     };
     if(action.due)task.dueDate=action.due;
     todoFullData.backlog.unshift(task);
