@@ -1012,7 +1012,16 @@ function pushCRActionsToProjets(e) {
     return;
   }
   todoFullData.backlog = todoFullData.backlog || [];
-  var projId = appProjId || e.projet || null;
+  // Priority: 1) projet: field in YAML (match by name), 2) select projet ID, 3) appProjId
+  var projId = null;
+  if (cr.projet) {
+    var matchedProj = (sharedProjects||[]).find(function(p){
+      return p.name.toLowerCase() === cr.projet.toLowerCase();
+    });
+    if (matchedProj) projId = matchedProj.id;
+  }
+  if (!projId) projId = e.projet || null;  // ID from select
+  if (!projId) projId = appProjId || null;  // fallback: CR Generator app project
   var added  = 0;
   cr.actions.forEach(function(action) {
     var exists = todoFullData.backlog.some(function(t){
