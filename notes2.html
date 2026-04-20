@@ -287,13 +287,21 @@ var accessToken=sessionStorage.getItem(TOK)||null;
 
 // ── Templates ─────────────────────────────────────────────────────────────────
 function getTodayCR(){var d=new Date();return String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+d.getFullYear();}
+function getCRTitleDate(){
+  var d=new Date();
+  var months=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  return d.getDate()+' '+months[d.getMonth()]+' '+d.getFullYear();
+}
+function buildCRTitle(projet){
+  var dateStr=getCRTitleDate();
+  return (projet?'['+projet+'] ':'')+"CR de la réunion du "+dateStr;
+}
 
 var TMPLS=[
   {id:'none',name:'Note libre',desc:'Texte brut, aucun rendu',
    placeholder:'Titre\n\nÉcris ici…'},
   {id:'cr',name:'Compte Rendu',desc:'Réunion → décisions, actions (format CR Generator)',
-   placeholder:'---\ntitle: \ndate: '+getTodayCR()+'\nduree: \nparticipants: \nobjectif: \nnext-date: \nnext-agenda: \n---\n\nD: \nD: \n\nA:   '+getTodayCR()+'\nA:   '+getTodayCR()+
-   ''},
+   get placeholder(){return '---\ntitle: '+buildCRTitle('')+'\ndate: '+getTodayCR()+'\nprojet: \nduree: \nparticipants: \nobjectif: \nnext-date: \nnext-agenda: \n---\n\nD: \nD: \n\nA:   '+getTodayCR()+'\nA:   '+getTodayCR();}},
   {id:'standup',name:'Standup',desc:"Hier / Aujourd'hui / Blocages",
    placeholder:"Standup\n\nhier: \n- \n\naujourd'hui: \n- \n\nblocages: \n- "},
   {id:'reflexion',name:'Note de réflexion',desc:'Problème → options → décision',
@@ -517,12 +525,17 @@ function noteTitle(n){
   var lines=(n.body||'').split('\n');
   // If YAML front matter, extract title: field
   if(lines[0]&&lines[0].trim()==='---'){
+    var titleVal='',projetVal='';
     for(var i=1;i<lines.length;i++){
       if(lines[i].trim()==='---') break;
-      var m=lines[i].match(/^title\s*:\s*(.+)/i);
-      if(m&&m[1].trim()) return m[1].trim();
+      var m=lines[i].match(/^title\s*:\s*(.*)/i);
+      if(m) titleVal=m[1].trim();
+      var mp=lines[i].match(/^projet\s*:\s*(.*)/i);
+      if(mp) projetVal=mp[1].trim();
     }
-    return ''; // title field empty or not found
+    if(titleVal) return titleVal;
+    // Auto-build from projet if title empty
+    return buildCRTitle(projetVal);
   }
   var f=lines.find(function(l){return l.trim();});
   return f?f.replace(/^#+\s*/,'').trim():'';
@@ -728,7 +741,7 @@ function renderFree(body){
 }
 
 function parseCR(body){
-  var cr={title:'',date:'',duree:'',participants:'',objectif:'',nextDate:'',nextAgenda:'',decisions:[],actions:[]};
+  var cr={title:'',date:'',projet:'',duree:'',participants:'',objectif:'',nextDate:'',nextAgenda:'',decisions:[],actions:[]};
   var lines=body.split('\n'), inYaml=false;
   for(var i=0;i<lines.length;i++){
     var line=lines[i].trim(), m;
@@ -739,6 +752,7 @@ function parseCR(body){
       else if((m=line.match(/^dur[eé]e\s*:\s*(.*)/i)))cr.duree       =m[1].trim();
       else if((m=line.match(/^participants\s*:\s*(.*)/i)))cr.participants=m[1].trim();
       else if((m=line.match(/^objectif\s*:\s*(.*)/i)))cr.objectif    =m[1].trim();
+      else if((m=line.match(/^projet\s*:\s*(.*)/i)))  cr.projet      =m[1].trim();
       else if((m=line.match(/^next-date\s*:\s*(.*)/i)))cr.nextDate   =m[1].trim();
       else if((m=line.match(/^next-agenda\s*:\s*(.*)/i)))cr.nextAgenda=m[1].trim();
     } else {
@@ -760,7 +774,10 @@ function renderCR(body){
   var hasContent=cr.title||cr.decisions.length||cr.actions.length||cr.participants||cr.date;
   if(!hasContent)return renderFree(body);
   var h='';
-  if(cr.title)h+='<div class="pr-title">'+esc(cr.title)+'</div>';
+  // Auto-build title if empty
+  var displayTitle=cr.title||buildCRTitle(cr.projet);
+  if(displayTitle)h+='<div class="pr-title">'+esc(displayTitle)+'</div>';
+  if(cr.projet)h+='<div class="pr-meta"><span class="pr-meta-label">Projet</span><span style="display:inline-block;font-size:12px;font-weight:600;padding:2px 10px;border-radius:12px;border:1px solid var(--accent);color:var(--accent);">'+esc(cr.projet)+'</span></div>';
   if(cr.date)h+='<div class="pr-meta"><span class="pr-meta-label">Date</span>'+esc(cr.date)+'</div>';
   if(cr.duree)h+='<div class="pr-meta"><span class="pr-meta-label">Dur\u00e9e</span>'+esc(cr.duree)+'</div>';
   if(cr.objectif)h+='<div class="pr-meta"><span class="pr-meta-label">Objectif</span>'+esc(cr.objectif)+'</div>';
