@@ -127,6 +127,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .kpi-l{font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.04em;}
 .suivi-section{margin-bottom:20px;}
 .suivi-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px;}
+.global-add-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 0 4px;margin-bottom:8px;border-bottom:1px solid var(--border);}
+.global-add-bar input,.global-add-bar select{font-family:var(--sans);font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;}
+.global-add-bar input:focus,.global-add-bar select:focus{border-color:var(--accent);}
+.global-add-bar input[type=text]{flex:1;min-width:180px;}
 .suivi-row{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:6px;font-size:13px;}
 .suivi-row-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
@@ -1891,6 +1895,34 @@ function toggleGlobalDone() {
   if (btn) btn.textContent = _globalHideDone ? 'Afficher terminées' : 'Masquer terminées';
   renderGlobal();
 }
+function addGlobalTask() {
+  const input = document.getElementById('global-add-text');
+  const projSel = document.getElementById('global-add-proj');
+  const priSel  = document.getElementById('global-add-pri');
+  const text = (input ? input.value.trim() : '');
+  if (!text) { toast('Saisissez une tâche'); return; }
+  if (!projet001FullData) { toast('⚠ Cliquez Actualiser d\'abord'); return; }
+  projet001FullData.backlog = projet001FullData.backlog || [];
+  const projId = projSel ? projSel.value || null : null;
+  const pri    = priSel  ? priSel.value  || 'p2' : 'p2';
+  const admin  = getAdminMember();
+  const task = {
+    id: 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
+    text: text,
+    projId: projId || null,
+    pri: pri,
+    done: false,
+    ts: Date.now(),
+    assigneeIds: admin ? [admin.id] : [],
+    source: 'global'
+  };
+  projet001FullData.backlog.unshift(task);
+  suiviData.backlog.unshift(task);
+  writeProjet001('✓ Tâche ajoutée au backlog');
+  if (input) input.value = '';
+  renderGlobal();
+}
+
 function renderGlobal() {
   const el = document.getElementById('global-content'); if (!el) return;
   const allUS = suiviData.us||[], allMO = suiviData.mo||[], allCR = suiviData.cr||[], allBL = suiviData.backlog||[];
@@ -1921,6 +1953,21 @@ function renderGlobal() {
   const STCLS = {brouillon:'s-archive',validation:'s-pause',valide:'s-actif',renvoye:'s-termine',archive:'s-archive'};
   function rowIcon(st) { return st==='valide'?'<span style="color:var(--green);font-size:13px;flex-shrink:0;">✓</span>':'<span style="color:var(--muted);font-size:13px;flex-shrink:0;">○</span>'; }
   function projBadge(p) { return p?`<span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:12px;border:1px solid ${p.color};color:${p.color};">${esc(p.name)}</span>`:''; }
+
+  // ── Quick-add bar (always shown when projet001 loaded) ──
+  if (projet001FullData) {
+    const projOptions = (suiviData.sharedProjects||[]).concat(
+      S.projects.filter(p => !(suiviData.sharedProjects||[]).find(sp=>sp.id===p.id))
+    );
+    h += '<div class="global-add-bar">';
+    h += '<input type="text" id="global-add-text" placeholder="Nouvelle t\u00e2che\u2026" onkeydown="if(event.key===&#39;Enter&#39;)addGlobalTask()">';
+    h += '<select id="global-add-proj"><option value="">— Projet —</option>';
+    projOptions.forEach(p => { h += `<option value="${p.id}">${esc(p.name)}</option>`; });
+    h += '</select>';
+    h += '<select id="global-add-pri"><option value="p2">P2</option><option value="p1">P1</option><option value="p3">P3</option></select>';
+    h += '<button class="btn sm primary" onclick="addGlobalTask()">+ Ajouter</button>';
+    h += '</div>';
+  }
 
   // ── Tâches (actives + terminées) ──
   if (allBL.length) {
