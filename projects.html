@@ -22,6 +22,7 @@
   --blue:    #2563EB;
   --r:       6px;
   --r2:      10px;
+  --radius:  6px;
   --sans:    'Geist', system-ui, sans-serif;
   --mono:    'Geist Mono', monospace;
 }
@@ -450,7 +451,7 @@ const THEME_ICONS = {light:'☀︎',sand:'○',navy:'◑',dark:'☾'};
 const PROJ_COLORS = ['#E53E3E','#DD6B20','#38A169','#3182CE','#6B46C1','#D53F8C','#2C7A7B','#718096','#5B4FE8','#0F766E'];
 const TEAM_COLORS = ['#E53E3E','#DD6B20','#38A169','#3182CE','#6B46C1','#D53F8C','#2C7A7B','#718096'];
 const STATUS_LABELS = {actif:'Actif',pause:'En pause',termine:'Terminé',archive:'Archivé',abandonne:'Abandonné'};
-const STATUS_CLS   = {actif:'s-actif',pause:'s-pause',termine:'s-termine',archive:'s-archive'};
+const STATUS_CLS   = {actif:'s-actif',pause:'s-pause',termine:'s-termine',archive:'s-archive',abandonne:'s-abandonne'};
 const STATUS_CYCLE = ['actif','pause','termine','archive'];
 
 /* ══ STATE ══ */
@@ -597,6 +598,7 @@ function saveProject() {
     dateStart: document.getElementById('pf-start').value,
     dateEnd:   document.getElementById('pf-end').value,
   };
+  const wasEditing = !!editingProjId;
   if (editingProjId) {
     const p = S.projects.find(x => x.id===editingProjId);
     if (p) Object.assign(p, data);
@@ -605,8 +607,7 @@ function saveProject() {
   }
   cancelProjEdit();
   autoSave(); syncShared(); renderProjects();
-  toast(editingProjId ? '✓ Projet mis à jour' : '✓ Projet créé');
-  editingProjId = null;
+  toast(wasEditing ? '✓ Projet mis à jour' : '✓ Projet créé');
 }
 
 function editProject(id) {
@@ -1116,7 +1117,7 @@ function loadGlobalCache() {
   } catch(e) { return false; }
 }
 
-function syncShared() {
+async function syncShared() {
   if (!accessToken) return;
   try {
     const body = JSON.stringify({
@@ -1525,7 +1526,7 @@ function openTD(rawId){
     if (ta) { ta.value = sb.text||''; tdAutoResize(ta); }
     const badges = document.getElementById('td-badges');
     if (badges) badges.innerHTML = '';
-    ['td-team-body','td-comments-body','td-history-body'].forEach(function(id){
+    ['td-team','td-comments','td-history'].forEach(function(id){
       const el = document.getElementById(id); if(el) el.innerHTML = '<span style="color:var(--muted);font-size:12px;">—</span>';
     });
     document.getElementById('td-overlay').classList.add('open');
@@ -2004,7 +2005,7 @@ function updateCacheStatusBar() {
     const age   = Date.now() - c.ts;
     const mins  = Math.floor(age / 60000);
     const hours = Math.floor(age / 3600000);
-    const ageStr = age < 60000 ? 'à l'instant'
+    const ageStr = age < 60000 ? "à l'instant"
                  : mins < 60  ? 'il y a ' + mins + ' min'
                  : hours < 24 ? 'il y a ' + hours + ' h'
                  : 'il y a ' + Math.floor(hours/24) + ' j';
