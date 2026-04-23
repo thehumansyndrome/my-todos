@@ -1594,7 +1594,10 @@ div:hover>.item-img-del{display:block;}
       </select>
       <button class="add-btn" onclick="addBacklogItem()">+ Add</button>
     </div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px;" id="bl-filters"></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 4px;align-items:center;" id="bl-filters-row">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;flex:1;" id="bl-filters"></div>
+      <button class="archive-btn" id="bl-archive-done-btn" onclick="archiveBacklogDone()" style="display:none;">⬜ Archiver terminées</button>
+    </div>
     <div id="bl-list" style="display:flex;flex-direction:column;gap:0;margin-top:4px;"></div>
   </div>
 
@@ -5104,6 +5107,21 @@ function delBacklogItem(id){
   autoSave();renderBacklog();
 }
 
+function archiveBacklogDone(){
+  if(!S.backlog) return;
+  const done = S.backlog.filter(b => b.done);
+  if(!done.length){ toast('Aucune tâche terminée à archiver'); return; }
+  if(!confirm('Archiver ' + done.length + ' tâche' + (done.length>1?'s':'') + ' terminée' + (done.length>1?'s':'') + ' ?')) return;
+  // Push to archive
+  silentArchive(done.map(b=>({...b, _archiveType:'backlog', catLabel:'Backlog'})), 'backlog');
+  // Remove from backlog
+  S.backlog = S.backlog.filter(b => !b.done);
+  autoSave();
+  renderBacklog();
+  toast('✓ ' + done.length + ' tâche' + (done.length>1?'s':'') + ' archivée' + (done.length>1?'s':''));
+  logA('backlog', '⬜ ' + done.length + ' tâche(s) archivée(s)');
+}
+
 function renderBacklog(){
   ensureAdminOnItems();
   if(!S.backlog)S.backlog=[];
@@ -5125,6 +5143,9 @@ function renderBacklog(){
   items.sort((a,b)=>a.done-b.done||b.ts-a.ts);
   const active=S.backlog.filter(b=>!b.done).length;
   const done=S.backlog.filter(b=>b.done).length;
+  // Show archive button only when there are done tasks
+  const archBtn=document.getElementById('bl-archive-done-btn');
+  if(archBtn) archBtn.style.display=done>0?'':'none';
   const el=document.getElementById('bl-list');
   if(!items.length){el.innerHTML='<div class="empty">Aucune tâche</div>';return;}
   el.innerHTML=items.map(b=>{
