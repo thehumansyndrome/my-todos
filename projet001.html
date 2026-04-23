@@ -5078,6 +5078,7 @@ function populateBacklogProjSelect(){
 
 /* ══ BACKLOG ══ */
 let blFilter='all';
+let blHideInactive=true; // hide tasks from non-active projects by default
 
 function addBacklogItem(){
   const text=document.getElementById('bl-in').value.trim();
@@ -5126,17 +5127,29 @@ function renderBacklog(){
   ensureAdminOnItems();
   if(!S.backlog)S.backlog=[];
   populateBacklogProjSelect();
-  // filters
-  const fk=['all',...(S.projects||[]).map(p=>p.id),'none'];
+  // filters — only show active projects by default
+  const activeProjs=(S.projects||[]).filter(p=>(p.status||'actif')==='actif');
+  const allProjs=(S.projects||[]);
+  const projsToShow=blHideInactive?activeProjs:allProjs;
+  const fk=['all',...projsToShow.map(p=>p.id),'none'];
   const fl={all:'Tous',none:'Sans projet'};
-  (S.projects||[]).forEach(p=>{fl[p.id]=p.name;});
-  document.getElementById('bl-filters').innerHTML=fk.map(k=>{
-    const p=S.projects&&S.projects.find(x=>x.id===k);
-    const dot=p?`<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${p.color};margin-right:4px;vertical-align:middle;"></span>`:'';
-    return`<button class="fb${blFilter===k?' on':''}" onclick="blFilter='${k}';renderBacklog()">${dot}${fl[k]||k}</button>`;
-  }).join('');
+  allProjs.forEach(p=>{fl[p.id]=p.name;});
+  // Toggle "actifs seulement" button + project filter pills
+  const inactiveCount=allProjs.length-activeProjs.length;
+  document.getElementById('bl-filters').innerHTML=
+    `<button class="fb${blHideInactive?' on':''}" onclick="blHideInactive=!blHideInactive;if(blHideInactive&&blFilter!=='all'&&blFilter!=='none'){const p=allProjs.find(x=>x.id===blFilter);if(p&&(p.status||'actif')!=='actif')blFilter='all';}renderBacklog()" style="border-color:var(--green);${blHideInactive?'background:var(--green);color:#fff;':'color:var(--green);'}">✦ Actifs${inactiveCount>0?' ('+inactiveCount+' masqués)':''}</button>`
+    +fk.map(k=>{
+      const p=allProjs.find(x=>x.id===k);
+      const dot=p?`<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${p.color};margin-right:4px;vertical-align:middle;"></span>`:'';
+      return`<button class="fb${blFilter===k?' on':''}" onclick="blFilter='${k}';renderBacklog()">${dot}${fl[k]||k}</button>`;
+    }).join('');
   // filter & sort
   let items=[...S.backlog];
+  // Apply hide-inactive filter first (unless a specific project filter is set)
+  if(blHideInactive && blFilter==='all'){
+    const activeIds=new Set(activeProjs.map(p=>p.id));
+    items=items.filter(b=>!b.projId||activeIds.has(b.projId));
+  }
   if(blFilter==='none') items=items.filter(b=>!b.projId);
   else if(blFilter!=='all') items=items.filter(b=>b.projId===blFilter);
   // active first, then done
