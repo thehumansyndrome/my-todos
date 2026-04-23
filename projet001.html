@@ -3420,7 +3420,7 @@ function renderArchive(){
       const body = a.body ? `<div style="font-size:11px;color:var(--text3);margin-top:2px;white-space:pre-wrap;">${escapeHtml(a.body.slice(0,120))}${a.body.length>120?'…':''}</div>` : '';
       const metaParts = [typeIcon+' '+cat, priStr, dateStr, subtaskCount ? subtaskCount+' sous-tâche'+(subtaskCount>1?'s':'') : ''].filter(Boolean).join(' · ');
       const canRestore = !a._archiveType || a._archiveType==='todo';
-      html += `<div class="arch-item">
+      html += `<div class="arch-item" style="cursor:pointer;" onclick="openArchiveDrawer(${realIdx})">
         <div style="flex:1;min-width:0;">
           <div class="arch-item-text">${label}</div>
           ${body}
@@ -5477,12 +5477,25 @@ function udFmt(d){return d?new Date(d).toLocaleString('fr-FR',{day:'2-digit',mon
 function udGetItem(){
   if(udType==='todo') return S.todos.find(x=>x.id===udId)||null;
   if(udType==='backlog') return (S.backlog||[]).find(x=>x.id===udId)||null;
+  if(udType==='archive') return (archiveData&&archiveData.archives)?archiveData.archives[udId]||null:null;
   return null;
 }
 function udGetAdmin(){return (S.sharedTeam||[]).find(m=>m.appRole==='Admin')||null;}
 function udGetAdminId(){const a=udGetAdmin();return a?a.id:null;}
 function getAdminId(){return udGetAdminId();}
 function defaultAssigneesFn(){const aid=getAdminId();return aid?[aid]:[];}
+
+function openArchiveDrawer(idx){
+  if(!archiveData||!archiveData.archives[idx]) return;
+  const a=archiveData.archives[idx];
+  udType='archive'; udId=idx; udScrollTarget=null;
+  const ta=document.getElementById('ud-title');
+  if(ta){ ta.value=a.text||a.title||''; udAutoResize(ta); ta.readOnly=true; }
+  udRenderBadges(a);
+  udRenderArchiveBody(a);
+  document.getElementById('ud-overlay').classList.add('open');
+  document.getElementById('ud-drawer').classList.add('open');
+}
 
 function openUD(type,id,scrollTo){
   udType=type; udId=id; udScrollTarget=scrollTo||null;
@@ -5508,6 +5521,8 @@ function openUD(type,id,scrollTo){
 function closeUD(){
   document.getElementById('ud-overlay').classList.remove('open');
   document.getElementById('ud-drawer').classList.remove('open');
+  const ta=document.getElementById('ud-title');
+  if(ta) ta.readOnly=false;
   udType=null; udId=null; udScrollTarget=null;
 }
 function openTD(id){openUD('backlog',id);}
@@ -5546,6 +5561,13 @@ function udRenderBadges(t){
     const tstClass=tst==='valide'?'ud-status-valide':tst==='abandonne'?'ud-status-abandonne':'ud-status-brouillon';
     const tstLabel=tst==='valide'?'Valide\u0301 \u2713':tst==='abandonne'?'Abandonn\u00e9':'Brouillon';
     html+=`<span class="ud-status-badge ${tstClass}" onclick="udCycleTaskStatus()" title="Cliquer pour changer">${tstLabel}</span>`;
+  } else if(udType==='archive'){
+    const typeLabels={todo:'Tâche',backlog:'Backlog',note:'Note',reminder:'Rappel',course:'Course'};
+    const typeIcon={todo:'✓',backlog:'✓',note:'📝',reminder:'🔔',course:'🛒'};
+    const aType=t._archiveType||'todo';
+    html+=`<span class="ud-status-badge ud-status-abandonne" style="cursor:default;">⬜ Archivé</span>`;
+    html+=`<span style="font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:2px;border:1px solid var(--line2);color:var(--text3);">${typeIcon[aType]||'✓'} ${typeLabels[aType]||aType}</span>`;
+    if(t.pri) html+=`<span class="tag p${(t.pri||'p2').slice(1)}">${(t.pri||'P2').toUpperCase()}</span>`;
   } else {
     const st=t.status||'brouillon';
     const stCls=st==='valide'?'ud-status-valide':st==='abandonne'?'ud-status-abandonne':'ud-status-brouillon';
@@ -5573,6 +5595,10 @@ function udCycleTaskStatus(){
 }
 
 function udRenderBody(t){
+  if(udType==='archive'){
+    udRenderArchiveBody(t);
+    return;
+  }
   const body=document.getElementById('ud-body');
   body.innerHTML='';
   const SEL='font-family:var(--sans);font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;';
@@ -5879,6 +5905,85 @@ function udDeleteTodo(){
 }
 
 // Save
+function udRenderArchiveBody(a){
+  const el=document.getElementById('ud-body'); if(!el||!a) return;
+  const dateStr=a.archivedAt?new Date(a.archivedAt).toLocaleString('fr-FR',{weekday:'long',day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+  const createdStr=a.ts?new Date(a.ts).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'}):'';
+  const canRestore=!a._archiveType||a._archiveType==='todo'||a._archiveType==='backlog';
+  const realIdx=archiveData?archiveData.archives.indexOf(a):-1;
+
+  // Project badge
+  let projHtml='';
+  if(a.projId){
+    const p=(S.projects||[]).find(x=>x.id===a.projId);
+    if(p) projHtml=`<span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:12px;background:${p.color}22;color:${p.color};border:1px solid ${p.color}44;">${esc(p.name)}</span>`;
+  }
+
+  // Assignees
+  let assigneeHtml='';
+  if(a.assigneeIds&&a.assigneeIds.length){
+    assigneeHtml=(a.assigneeIds||[]).map(id=>{
+      const m=(S.team||[]).find(x=>x.id===id);
+      if(!m)return'';
+      return`<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 9px 3px 4px;border-radius:20px;border:1px solid var(--line2);background:var(--surface);margin:2px 4px 2px 0;">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:${m.color};font-size:9px;font-weight:700;color:#fff;">${esc(m.initiales)}</span>
+        ${esc(m.nom)}</span>`;
+    }).join('');
+  }
+
+  // Subtasks
+  let subtasksHtml='';
+  if(a.subtasks&&a.subtasks.length){
+    subtasksHtml='<div class="ud-sec" id="ud-sec-subtasks"><div class="ud-sec-title">Sous-tâches</div>';
+    a.subtasks.forEach(function(s){
+      const sid=typeof s==='object'?s.id:s;
+      const sObj=typeof s==='object'?s:null;
+      const sText=sObj?sObj.text:('Sous-tâche '+sid);
+      subtasksHtml+=`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--line3);font-size:13px;">
+        <span style="font-size:12px;">${sObj&&sObj.done?'✅':'☐'}</span>
+        <span style="${sObj&&sObj.done?'text-decoration:line-through;color:var(--text3)':''}">${esc(sText)}</span>
+      </div>`;
+    });
+    subtasksHtml+='</div>';
+  }
+
+  // Comments
+  let commentsHtml='';
+  const comments=a.comments||[];
+  if(comments.length){
+    commentsHtml='<div class="ud-sec" id="ud-sec-comments"><div class="ud-sec-title">Commentaires ('+comments.length+')</div>';
+    comments.forEach(function(c){
+      const m=(S.team||[]).find(x=>x.id===c.authorId);
+      commentsHtml+=`<div style="background:var(--bg2);border-radius:var(--r);padding:8px 10px;margin-bottom:6px;">
+        <div style="font-size:13px;line-height:1.5;">${esc(c.text||'')}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;">${m?esc(m.nom)+' · ':''}${esc(c.date||'')}</div>
+      </div>`;
+    });
+    commentsHtml+='</div>';
+  }
+
+  el.innerHTML=`
+    <div class="ud-sec" id="ud-sec-info">
+      <div class="ud-sec-title">Informations</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+        ${projHtml}
+      </div>
+      ${assigneeHtml?'<div style="margin-bottom:8px;">'+assigneeHtml+'</div>':''}
+      <div style="font-size:12px;color:var(--text3);display:flex;flex-direction:column;gap:4px;">
+        ${createdStr?'<span>📝 Créé le '+createdStr+'</span>':''}
+        ${dateStr?'<span>⬜ Archivé le '+dateStr+'</span>':''}
+        ${a.catLabel?'<span>🏷 '+esc(a.catLabel)+'</span>':''}
+        ${a.dueDate?'<span>📅 Échéance : '+esc(a.dueDate)+'</span>':''}
+      </div>
+    </div>
+    ${subtasksHtml}
+    ${commentsHtml}
+    <div class="ud-sec" style="display:flex;gap:8px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--line3);">
+      ${canRestore&&realIdx>=0?`<button class="arch-restore-btn" onclick="restoreArchiveItem(${realIdx});closeUD();" style="padding:6px 14px;">↩ Restaurer dans les todos</button>`:''}
+      ${realIdx>=0?`<button class="arch-del-btn" onclick="if(confirm('Supprimer définitivement ?')){deleteArchiveItem(${realIdx});closeUD();}">✕ Supprimer</button>`:''}
+    </div>`;
+}
+
 function udSave(){
   autoSave();
   if(udType==='todo')renderTodos();else renderBacklog();
