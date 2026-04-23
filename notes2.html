@@ -181,35 +181,6 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
 .pr-avatar-mini.c6{background:#2C7A7B;}
 .pr-avatar-mini.c7{background:#718096;}
 
-/* ── /todo syntax highlighting ── */
-.note-ta-wrap{position:relative;flex:1;display:flex;flex-direction:column;overflow:hidden;}
-.todo-highlight-layer{
-  position:absolute;top:0;left:0;right:0;bottom:0;
-  padding:20px 24px;font-size:14px;line-height:1.7;
-  font-family:var(--mono);pointer-events:none;
-  white-space:pre-wrap;word-break:break-word;
-  color:transparent;overflow:hidden;
-}
-.todo-line-mark{
-  background:rgba(37,99,235,.10);border-radius:3px;
-  display:inline;
-}
-[data-theme="dark"] .todo-line-mark,[data-theme="navy"] .todo-line-mark{
-  background:rgba(96,165,250,.12);
-}
-.todo-done-mark{
-  background:rgba(22,163,74,.10);border-radius:3px;display:inline;
-}
-.todo-badge{
-  display:inline-flex;align-items:center;gap:5px;
-  font-size:11px;font-weight:600;padding:3px 10px;border-radius:10px;
-  border:1px solid var(--blue);color:var(--blue);cursor:pointer;
-  transition:all .15s;background:transparent;
-}
-.todo-badge:hover{background:var(--blue);color:#fff;}
-.todo-badge.has-todos{animation:todo-pulse .4s ease;}
-@keyframes todo-pulse{0%{transform:scale(1);}50%{transform:scale(1.06);}100%{transform:scale(1);}}
-
 /* Scrollbar */
 ::-webkit-scrollbar{width:4px;}
 ::-webkit-scrollbar-track{background:transparent;}
@@ -279,20 +250,15 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
           </div>
         </div>
         <div class="toolbar-right">
-          <button class="todo-badge" id="todo-create-btn" style="display:none;" onclick="createTodosFromNote()">⚡ <span id="todo-create-count">0</span> tâche(s)</button>
           <button class="btn danger sm" onclick="deleteNote()">Supprimer</button>
         </div>
       </div>
 
       <div class="editor-body" id="editor-body">
         <div class="editor-raw" id="editor-raw">
-          <div class="note-ta-wrap">
-            <div id="todo-hl-layer" class="todo-highlight-layer" aria-hidden="true"></div>
-            <textarea id="note-ta" spellcheck="true"
-              placeholder="Commence à écrire…&#10;&#10;Utilise des #tags dans ton texte.&#10;La première ligne devient le titre.&#10;Colle une image (Ctrl+V) ou une URL YouTube.&#10;/todo texte #projet @alias !p1 📅JJ-MM-AAAA"
-              oninput="onNoteInput()" onpaste="onPaste(event)"
-              style="background:transparent;position:relative;z-index:1;"></textarea>
-          </div>
+          <textarea id="note-ta" spellcheck="true"
+            placeholder="Commence à écrire…&#10;&#10;Utilise des #tags dans ton texte.&#10;La première ligne devient le titre.&#10;Colle une image (Ctrl+V) ou une URL YouTube."
+            oninput="onNoteInput()" onpaste="onPaste(event)"></textarea>
         </div>
         <div class="editor-preview" id="editor-preview" style="display:none;"></div>
       </div>
@@ -317,7 +283,7 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 // ── Constants ─────────────────────────────────────────────────────────────────
-var APP='notes2', SK='td_v4_notes2', TK='td_theme_notes2', TOK='td_tok_notes2', TABS_KEY='td_tabs_notes2';
+var APP='notes2', SK='td_v4_notes2', TK='td_theme_notes2', TOK='td_tok_notes2';
 var CLIENT_ID='962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com';
 var SCOPE='https://www.googleapis.com/auth/drive.file';
 var THEMES=['light','sand','navy','dark'];
@@ -364,32 +330,6 @@ var TMPLS=[
    placeholder:'Titre\n\ncontexte: \n\nproblème: \n\noptions:\n1. \n2. \n3. \n\ndécision: \n\nprochaine action: '}
 ];
 
-// ── Tabs persistence ─────────────────────────────────────────────────────────
-function saveTabs(){
-  try{
-    localStorage.setItem(TABS_KEY, JSON.stringify({tabs:openTabs, curId:curId}));
-  }catch(e){}
-}
-function restoreTabs(){
-  try{
-    var raw=localStorage.getItem(TABS_KEY);
-    if(!raw)return;
-    var saved=JSON.parse(raw);
-    var tabs=Array.isArray(saved.tabs)?saved.tabs:[];
-    // Filter out tabs whose note no longer exists
-    var validIds=new Set(S.notes.map(function(n){return n.id;}));
-    tabs=tabs.filter(function(t){return validIds.has(t.id);});
-    if(!tabs.length)return;
-    // Pinned first, then unpinned — preserve order within each group
-    var pinned=tabs.filter(function(t){return t.pinned;});
-    var unpinned=tabs.filter(function(t){return !t.pinned;});
-    openTabs=pinned.concat(unpinned);
-    // Restore active note (prefer saved curId, fallback to last tab)
-    var restoredId=saved.curId&&validIds.has(saved.curId)?saved.curId:openTabs[openTabs.length-1].id;
-    openNote(restoredId);
-  }catch(e){}
-}
-
 // ── Utils ─────────────────────────────────────────────────────────────────────
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function escRe(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
@@ -408,7 +348,6 @@ function init(){
   applyTheme(localStorage.getItem(TK)||'light');
   buildTmplMenu();
   renderList();
-  restoreTabs();       // restore tabs from last session
   renderTabs();
   if(accessToken){scheduleRefresh();loadSharedData();}
   if(window.innerWidth>680)document.getElementById('editor-pane').classList.remove('hidden');
@@ -447,13 +386,10 @@ function openNote(id){
   if(!openTabs.find(function(t){return t.id===id;}))
     openTabs.push({id:id,pinned:false});
   renderTabs();
-  saveTabs();
   renderList();
   updatePreview();
   updateExportBar();
   updateDateFooter();
-  updateTodoHighlight();
-  updateTodoBadge();
 }
 
 function deleteNote(){
@@ -471,7 +407,7 @@ function deleteNote(){
     document.getElementById('editor-empty').style.display='flex';
     updateDateFooter();
   }
-  autoSave();renderList();renderTabs();saveTabs();
+  autoSave();renderList();renderTabs();
   if(window.innerWidth<=680)mobileBack();
   toast('Note supprimée');
 }
@@ -510,7 +446,6 @@ function togglePin(e,id){
   var unpinned=openTabs.filter(function(x){return !x.pinned;});
   openTabs=pinned.concat(unpinned);
   renderTabs();
-  saveTabs();
   toast(t.pinned?'📌 Épinglé':'Désépinglé');
 }
 
@@ -529,7 +464,7 @@ function closeTab(e,id){
       updateDateFooter();
     }
   }
-  renderTabs();saveTabs();renderList();
+  renderTabs();renderList();
 }
 
 function onTabDragStart(e,idx){dragIdx=idx;e.currentTarget.classList.add('dragging');e.dataTransfer.effectAllowed='move';}
@@ -544,7 +479,7 @@ function onTabDrop(e,idx){
   var src=openTabs[dragIdx];
   if(!src.pinned&&openTabs[idx]&&openTabs[idx].pinned){toast('Ne peut pas déplacer avant un onglet épinglé');return;}
   openTabs.splice(dragIdx,1);openTabs.splice(idx,0,src);
-  dragIdx=null;renderTabs();saveTabs();
+  dragIdx=null;renderTabs();
 }
 function onTabDragEnd(){
   dragIdx=null;
@@ -602,8 +537,6 @@ function onNoteInput(){
   n.updated=Date.now();
   if(curView!=='raw')updatePreview();
   updateDateFooter();
-  updateTodoHighlight();
-  updateTodoBadge();
   debounceSave();
   clearTimeout(window._lt);
   window._lt=setTimeout(function(){renderList();renderTabs();},800);
@@ -1199,166 +1132,6 @@ async function pushToDrive(){
     if(!driveFileId){var d=await r.json();driveFileId=d.id;}
     setSyncDot('sync');
   }catch(e){setSyncDot('error');}
-}
-
-// ── /todo syntax system ─────────────────────────────────────────────────────
-function slugForMatch(s){
-  return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
-}
-
-function resolveProjectSlug(slug){
-  // Exact slug match
-  var p=(sharedProjects||[]).find(function(p){ return slugForMatch(p.name)===slug; });
-  if(p) return p;
-  // Partial match (slug is contained in project name slug)
-  p=(sharedProjects||[]).find(function(p){ return slugForMatch(p.name).indexOf(slug)===0; });
-  if(p) return p;
-  // Slug contained
-  return (sharedProjects||[]).find(function(p){ return slugForMatch(p.name).indexOf(slug)>=0; })||null;
-}
-
-function parseTodoLines(body){
-  var lines=body.split('\n');
-  var todos=[];
-  lines.forEach(function(line,idx){
-    var m=line.match(/^\/todo\s+(.+)/i);
-    if(!m) return;
-    var raw=m[1].trim();
-    var projSlug='', assignee='', pri='p2', due='', text=raw;
-
-    // Extract #projet-slug
-    var pm=text.match(/#([\w-]+)/);
-    if(pm){ projSlug=pm[1]; text=text.replace(pm[0],'').trim(); }
-
-    // Extract @alias
-    var am=text.match(/@(\S+)/);
-    if(am){ assignee=am[1]; text=text.replace(am[0],'').trim(); }
-
-    // Extract !p1/!p2/!p3
-    var im=text.match(/!(p[123])/i);
-    if(im){ pri=im[1].toLowerCase(); text=text.replace(im[0],'').trim(); }
-
-    // Extract 📅JJ-MM-AAAA or 📅AAAA-MM-JJ
-    var dm=text.match(/📅(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})/);
-    if(dm){ due=dm[1]; text=text.replace(dm[0],'').trim(); }
-
-    // Clean double spaces
-    text=text.replace(/\s+/g,' ').trim();
-    if(!text) return;
-
-    todos.push({lineIdx:idx, text:text, projSlug:projSlug, assignee:assignee, pri:pri, due:due, rawLine:line});
-  });
-  return todos;
-}
-
-function updateTodoBadge(){
-  var n=S.notes.find(function(x){return x.id===curId;});
-  var btn=document.getElementById('todo-create-btn');
-  var countEl=document.getElementById('todo-create-count');
-  if(!n||!btn||!countEl){if(btn)btn.style.display='none';return;}
-  var todos=parseTodoLines(n.body||'').filter(function(t){return !t.rawLine.match(/^✓todo/i);});
-  if(todos.length>0){
-    btn.style.display='';
-    countEl.textContent=todos.length;
-    btn.classList.add('has-todos');
-    setTimeout(function(){btn.classList.remove('has-todos');},400);
-  } else {
-    btn.style.display='none';
-  }
-}
-
-function updateTodoHighlight(){
-  var layer=document.getElementById('todo-hl-layer');
-  var ta=document.getElementById('note-ta');
-  if(!layer||!ta) return;
-  var body=ta.value;
-  // Sync scroll
-  layer.scrollTop=ta.scrollTop;
-  var lines=body.split('\n');
-  var html=lines.map(function(line){
-    if(line.match(/^\/todo\s+/i)){
-      return '<span class="todo-line-mark">'+escHl(line)+'</span>';
-    }
-    if(line.match(/^✓todo\s+/i)){
-      return '<span class="todo-done-mark">'+escHl(line)+'</span>';
-    }
-    return escHl(line);
-  }).join('\n');
-  layer.innerHTML=html;
-}
-
-function escHl(s){
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-function createTodosFromNote(){
-  var n=S.notes.find(function(x){return x.id===curId;});
-  if(!n) return;
-  var todos=parseTodoLines(n.body||'').filter(function(t){return !t.rawLine.match(/^✓todo/i);});
-  if(!todos.length){ toast('Aucune ligne /todo trouvée'); return; }
-  if(!todoFullData){ toast('⚠ Drive requis pour créer des tâches'); return; }
-  todoFullData.backlog=todoFullData.backlog||[];
-
-  var added=0, skipped=0;
-  todos.forEach(function(t){
-    // Resolve project
-    var projId=null;
-    if(t.projSlug){
-      var proj=resolveProjectSlug(t.projSlug);
-      if(proj) projId=proj.id;
-    }
-    // Resolve assignee
-    var assigneeIds=[];
-    if(t.assignee){
-      var member=resolveAlias(t.assignee);
-      if(member) assigneeIds=[member.id];
-    }
-    // Deduplicate
-    var exists=todoFullData.backlog.some(function(b){
-      return b.text===t.text&&b.projId===projId&&!b.done;
-    });
-    if(exists){ skipped++; return; }
-    var task={
-      id:'nt'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
-      text:t.text,
-      projId:projId,
-      pri:t.pri,
-      done:false,
-      ts:Date.now(),
-      assigneeIds:assigneeIds,
-      source:'notes2',
-      noteId:curId
-    };
-    if(t.due) task.dueDate=t.due;
-    todoFullData.backlog.unshift(task);
-    added++;
-  });
-
-  if(added>0){
-    writeTodoFile();
-    // Mark /todo lines as ✓todo in the note
-    var lines=n.body.split('\n');
-    var changed=false;
-    todos.forEach(function(t){
-      if(lines[t.lineIdx]&&lines[t.lineIdx].match(/^\/todo\s+/i)){
-        lines[t.lineIdx]=lines[t.lineIdx].replace(/^\/todo\s+/i,'✓todo ');
-        changed=true;
-      }
-    });
-    if(changed){
-      n.body=lines.join('\n');
-      document.getElementById('note-ta').value=n.body;
-      n.updated=Date.now();
-      autoSave();
-      updateTodoHighlight();
-      updateTodoBadge();
-    }
-    var msg='✓ '+added+' tâche'+(added>1?'s':'')+' créée'+(added>1?'s':'')+' dans projet001';
-    if(skipped) msg+=' ('+skipped+' doublon'+(skipped>1?'s':'')+')';
-    toast(msg);
-  } else {
-    toast('Toutes les tâches existent déjà ('+skipped+' doublon'+(skipped>1?'s':'')+')');
-  }
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
