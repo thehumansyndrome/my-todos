@@ -1917,7 +1917,8 @@ function addGlobalTask() {
     source: 'global'
   };
   projet001FullData.backlog.unshift(task);
-  suiviData.backlog.unshift(task);
+  // Keep suiviData.backlog in sync (same reference if possible, else copy)
+  suiviData.backlog = projet001FullData.backlog;
   writeProjet001('✓ Tâche ajoutée au backlog');
   if (input) input.value = '';
   renderGlobal();
