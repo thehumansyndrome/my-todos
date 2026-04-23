@@ -283,7 +283,7 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 // ── Constants ─────────────────────────────────────────────────────────────────
-var APP='notes2', SK='td_v4_notes2', TK='td_theme_notes2', TOK='td_tok_notes2';
+var APP='notes2', SK='td_v4_notes2', TK='td_theme_notes2', TOK='td_tok_notes2', TABS_KEY='td_tabs_notes2';
 var CLIENT_ID='962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com';
 var SCOPE='https://www.googleapis.com/auth/drive.file';
 var THEMES=['light','sand','navy','dark'];
@@ -330,6 +330,32 @@ var TMPLS=[
    placeholder:'Titre\n\ncontexte: \n\nproblème: \n\noptions:\n1. \n2. \n3. \n\ndécision: \n\nprochaine action: '}
 ];
 
+// ── Tabs persistence ─────────────────────────────────────────────────────────
+function saveTabs(){
+  try{
+    localStorage.setItem(TABS_KEY, JSON.stringify({tabs:openTabs, curId:curId}));
+  }catch(e){}
+}
+function restoreTabs(){
+  try{
+    var raw=localStorage.getItem(TABS_KEY);
+    if(!raw)return;
+    var saved=JSON.parse(raw);
+    var tabs=Array.isArray(saved.tabs)?saved.tabs:[];
+    // Filter out tabs whose note no longer exists
+    var validIds=new Set(S.notes.map(function(n){return n.id;}));
+    tabs=tabs.filter(function(t){return validIds.has(t.id);});
+    if(!tabs.length)return;
+    // Pinned first, then unpinned — preserve order within each group
+    var pinned=tabs.filter(function(t){return t.pinned;});
+    var unpinned=tabs.filter(function(t){return !t.pinned;});
+    openTabs=pinned.concat(unpinned);
+    // Restore active note (prefer saved curId, fallback to last tab)
+    var restoredId=saved.curId&&validIds.has(saved.curId)?saved.curId:openTabs[openTabs.length-1].id;
+    openNote(restoredId);
+  }catch(e){}
+}
+
 // ── Utils ─────────────────────────────────────────────────────────────────────
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function escRe(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
@@ -348,6 +374,7 @@ function init(){
   applyTheme(localStorage.getItem(TK)||'light');
   buildTmplMenu();
   renderList();
+  restoreTabs();       // restore tabs from last session
   renderTabs();
   if(accessToken){scheduleRefresh();loadSharedData();}
   if(window.innerWidth>680)document.getElementById('editor-pane').classList.remove('hidden');
@@ -386,6 +413,7 @@ function openNote(id){
   if(!openTabs.find(function(t){return t.id===id;}))
     openTabs.push({id:id,pinned:false});
   renderTabs();
+  saveTabs();
   renderList();
   updatePreview();
   updateExportBar();
@@ -407,7 +435,7 @@ function deleteNote(){
     document.getElementById('editor-empty').style.display='flex';
     updateDateFooter();
   }
-  autoSave();renderList();renderTabs();
+  autoSave();renderList();renderTabs();saveTabs();
   if(window.innerWidth<=680)mobileBack();
   toast('Note supprimée');
 }
@@ -446,6 +474,7 @@ function togglePin(e,id){
   var unpinned=openTabs.filter(function(x){return !x.pinned;});
   openTabs=pinned.concat(unpinned);
   renderTabs();
+  saveTabs();
   toast(t.pinned?'📌 Épinglé':'Désépinglé');
 }
 
@@ -464,7 +493,7 @@ function closeTab(e,id){
       updateDateFooter();
     }
   }
-  renderTabs();renderList();
+  renderTabs();saveTabs();renderList();
 }
 
 function onTabDragStart(e,idx){dragIdx=idx;e.currentTarget.classList.add('dragging');e.dataTransfer.effectAllowed='move';}
@@ -479,7 +508,7 @@ function onTabDrop(e,idx){
   var src=openTabs[dragIdx];
   if(!src.pinned&&openTabs[idx]&&openTabs[idx].pinned){toast('Ne peut pas déplacer avant un onglet épinglé');return;}
   openTabs.splice(dragIdx,1);openTabs.splice(idx,0,src);
-  dragIdx=null;renderTabs();
+  dragIdx=null;renderTabs();saveTabs();
 }
 function onTabDragEnd(){
   dragIdx=null;
