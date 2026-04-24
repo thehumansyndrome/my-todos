@@ -219,6 +219,54 @@ input,select,textarea{background:var(--bg);color:var(--text);}
 .td-comment-text{font-size:13px;line-height:1.5;}
 .td-comment-meta{font-size:11px;color:var(--muted);margin-top:3px;}
 
+
+/* ── Autocomplete dropdown ── */
+.autocomplete-dropdown{
+  position:fixed;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  box-shadow:0 4px 12px rgba(0,0,0,.1);
+  max-height:200px;
+  overflow-y:auto;
+  z-index:1000;
+  display:none;
+  min-width:200px;
+}
+.autocomplete-dropdown.show{display:block;}
+.autocomplete-item{
+  padding:8px 12px;
+  cursor:pointer;
+  font-size:13px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  transition:background .12s;
+}
+.autocomplete-item:hover,.autocomplete-item.selected{
+  background:var(--bg);
+}
+.autocomplete-item .ac-avatar{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  font-size:9px;
+  font-weight:700;
+  color:#fff;
+  flex-shrink:0;
+}
+.autocomplete-item .ac-label{
+  flex:1;
+  font-family:var(--sans);
+}
+.autocomplete-item .ac-tag{
+  font-family:var(--mono);
+  font-size:10px;
+  color:var(--muted);
+}
 </style>
 </head>
 <body>
@@ -1895,27 +1943,111 @@ function toggleGlobalDone() {
   if (btn) btn.textContent = _globalHideDone ? 'Afficher terminées' : 'Masquer terminées';
   renderGlobal();
 }
+// ── Smart task parsing (same as notes2) ──
+function slugForMatch(s){
+  return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+}
+
+function resolveProjectSlug(slug){
+  const projects=suiviData.projects||[];
+  // Exact match
+  let p=projects.find(p=>slugForMatch(p.name)===slug);
+  if(p) return p;
+  // Partial match
+  p=projects.find(p=>slugForMatch(p.name).indexOf(slug)===0);
+  if(p) return p;
+  // Contains
+  return projects.find(p=>slugForMatch(p.name).indexOf(slug)>=0)||null;
+}
+
+function resolveAlias(mention){
+  const key=(mention||'').replace(/^@/,'').toLowerCase();
+  const team=suiviData.team||[];
+  return team.find(m=>{
+    const al=(m.alias||m.initiales||'').toLowerCase();
+    return al===key;
+  })||null;
+}
+
+function parseTaskText(text){
+  let projSlugs=[], assignees=[], pri='p2', cleanText=text;
+  
+  // Extract ALL #projet-slug
+  const projMatches=cleanText.match(/#([\w-]+)/g);
+  if(projMatches){
+    projSlugs=projMatches.map(p=>p.slice(1));
+    projMatches.forEach(p=>{ cleanText=cleanText.replace(p,''); });
+  }
+  
+  // Extract ALL @alias
+  const aliasMatches=cleanText.match(/@([\w-]+)/g);
+  if(aliasMatches){
+    assignees=aliasMatches.map(a=>a.slice(1));
+    aliasMatches.forEach(a=>{ cleanText=cleanText.replace(a,''); });
+  }
+  
+  // Extract !p1/!p2/!p3
+  const priMatch=cleanText.match(/!(p[123])/i);
+  if(priMatch){
+    pri=priMatch[1].toLowerCase();
+    cleanText=cleanText.replace(priMatch[0],'');
+  }
+  
+  // Clean double spaces
+  cleanText=cleanText.replace(/\s+/g,' ').trim();
+  
+  return {text:cleanText, projSlugs, assignees, pri};
+}
+
 function addGlobalTask() {
   const input = document.getElementById('global-add-text');
-  const projSel = document.getElementById('global-add-proj');
-  const priSel  = document.getElementById('global-add-pri');
-  const text = (input ? input.value.trim() : '');
-  if (!text) { toast('Saisissez une tâche'); return; }
+  const rawText = (input ? input.value.trim() : '');
+  if (!rawText) { toast('Saisissez une tâche'); return; }
   if (!projet001FullData) { toast('⚠ Cliquez Actualiser d\'abord'); return; }
+  
   projet001FullData.backlog = projet001FullData.backlog || [];
-  const projId = projSel ? projSel.value || null : null;
-  const pri    = priSel  ? priSel.value  || 'p2' : 'p2';
-  const admin  = getAdminMember();
+  
+  // Parse text for @mentions, #projects, !priority
+  const parsed=parseTaskText(rawText);
+  if(!parsed.text){ toast('Texte de tâche vide'); return; }
+  
+  // Resolve project (first found)
+  let projId=null;
+  if(parsed.projSlugs.length>0){
+    for(let i=0;i<parsed.projSlugs.length;i++){
+      const proj=resolveProjectSlug(parsed.projSlugs[i]);
+      if(proj){ projId=proj.id; break; }
+    }
+  }
+  
+  // Resolve assignees
+  const assigneeIds=[];
+  if(parsed.assignees.length>0){
+    parsed.assignees.forEach(alias=>{
+      const member=resolveAlias(alias);
+      if(member&&assigneeIds.indexOf(member.id)===-1){
+        assigneeIds.push(member.id);
+      }
+    });
+  }
+  
+  // Add admin if no assignees found
+  if(assigneeIds.length===0){
+    const admin=getAdminMember();
+    if(admin) assigneeIds.push(admin.id);
+  }
+  
   const task = {
     id: 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
-    text: text,
+    text: parsed.text,
     projId: projId || null,
-    pri: pri,
+    pri: parsed.pri,
     done: false,
     ts: Date.now(),
-    assigneeIds: admin ? [admin.id] : [],
+    assigneeIds: assigneeIds,
     source: 'global'
   };
+  
   projet001FullData.backlog.unshift(task);
   writeProjet001('✓ Tâche ajoutée au backlog');
   if (input) input.value = '';
@@ -1959,11 +2091,7 @@ function renderGlobal() {
       S.projects.filter(p => !(suiviData.sharedProjects||[]).find(sp=>sp.id===p.id))
     );
     h += '<div class="global-add-bar">';
-    h += '<input type="text" id="global-add-text" placeholder="Nouvelle t\u00e2che\u2026" onkeydown="if(event.key===&#39;Enter&#39;)addGlobalTask()">';
-    h += '<select id="global-add-proj"><option value="">— Projet —</option>';
-    projOptions.forEach(p => { h += `<option value="${p.id}">${esc(p.name)}</option>`; });
-    h += '</select>';
-    h += '<select id="global-add-pri"><option value="p2">P2</option><option value="p1">P1</option><option value="p3">P3</option></select>';
+    h += '<input type="text" id="global-add-text" placeholder="Nouvelle tâche @jv #projet !p1" onkeydown="if(event.key===&#39;Enter&#39;)addGlobalTask()">';
     h += '<button class="btn sm primary" onclick="addGlobalTask()">+ Ajouter</button>';
     h += '</div>';
   }
@@ -2060,6 +2188,9 @@ function renderGlobal() {
       if (t) { t.done=!t.done; writeProjet001('✓ Tâche mise à jour'); renderGlobal(); }
     }
   };
+  
+  // Attach autocomplete to input
+  setTimeout(attachAutocomplete, 0);
 }
 
 function debugSuivi() {
@@ -2076,6 +2207,209 @@ function debugSuivi() {
   lines.push('Projets S.projects: ' + S.projects.map(function(p){return p.name+'('+p.id+')';}).join(', '));
   alert(lines.join('\n'));
 }
+
+// ── Autocomplete system ──────────────────────────────────────────────────────
+let autocompleteState={
+  visible:false,
+  input:null,
+  trigger:null,
+  query:'',
+  selectedIndex:0,
+  items:[]
+};
+
+function createAutocompleteDropdown(){
+  let dropdown=document.getElementById('autocomplete-dropdown');
+  if(!dropdown){
+    dropdown=document.createElement('div');
+    dropdown.id='autocomplete-dropdown';
+    dropdown.className='autocomplete-dropdown';
+    document.body.appendChild(dropdown);
+  }
+  return dropdown;
+}
+
+function showAutocomplete(input,trigger,query){
+  const dropdown=createAutocompleteDropdown();
+  autocompleteState.input=input;
+  autocompleteState.trigger=trigger;
+  autocompleteState.query=query.toLowerCase();
+  autocompleteState.selectedIndex=0;
+  
+  let items=[];
+  if(trigger==='@'){
+    const team=suiviData.team||[];
+    items=team.map(m=>({
+      type:'member',
+      id:m.id,
+      label:m.nom,
+      tag:'@'+(m.alias||m.initiales).toLowerCase(),
+      color:m.color||'#888',
+      initiales:m.initiales
+    })).filter(i=>
+      i.label.toLowerCase().indexOf(autocompleteState.query)>=0||
+      i.tag.indexOf(autocompleteState.query)>=0
+    );
+  } else if(trigger==='#'){
+    const projects=suiviData.projects||[];
+    items=projects.map(p=>{
+      const slug=slugForMatch(p.name);
+      return {
+        type:'project',
+        id:p.id,
+        label:p.name,
+        tag:'#'+slug,
+        color:p.color||'#888'
+      };
+    }).filter(i=>
+      i.label.toLowerCase().indexOf(autocompleteState.query)>=0||
+      i.tag.indexOf(autocompleteState.query)>=0
+    );
+  } else if(trigger==='!'){
+    items=[
+      {type:'priority',id:'p1',label:'Priorité P1',tag:'!p1',color:'#DC2626'},
+      {type:'priority',id:'p2',label:'Priorité P2',tag:'!p2',color:'#D97706'},
+      {type:'priority',id:'p3',label:'Priorité P3',tag:'!p3',color:'#16A34A'}
+    ].filter(i=>i.tag.indexOf(autocompleteState.query)>=0);
+  }
+  
+  autocompleteState.items=items;
+  if(!items.length){hideAutocomplete();return;}
+  
+  dropdown.innerHTML=items.map((item,idx)=>{
+    let avatar='';
+    if(item.type==='member'){
+      avatar='<span class="ac-avatar" style="background:'+item.color+'">'+esc(item.initiales)+'</span>';
+    } else if(item.type==='project'){
+      avatar='<span class="ac-avatar" style="background:'+item.color+';border-radius:4px;">📁</span>';
+    } else if(item.type==='priority'){
+      avatar='<span class="ac-avatar" style="background:'+item.color+';border-radius:4px;">⚡</span>';
+    }
+    return '<div class="autocomplete-item'+(idx===0?' selected':'')+'" data-index="'+idx+'">'+
+      avatar+
+      '<span class="ac-label">'+esc(item.label)+'</span>'+
+      '<span class="ac-tag">'+item.tag+'</span>'+
+    '</div>';
+  }).join('');
+  
+  const rect=input.getBoundingClientRect();
+  dropdown.style.left=rect.left+'px';
+  dropdown.style.top=(rect.top+input.offsetHeight+4)+'px';
+  dropdown.classList.add('show');
+  autocompleteState.visible=true;
+  
+  dropdown.querySelectorAll('.autocomplete-item').forEach((el,idx)=>{
+    el.onclick=()=>selectAutocompleteItem(idx);
+  });
+}
+
+function hideAutocomplete(){
+  const dropdown=document.getElementById('autocomplete-dropdown');
+  if(dropdown)dropdown.classList.remove('show');
+  autocompleteState.visible=false;
+}
+
+function selectAutocompleteItem(index){
+  if(!autocompleteState.visible||!autocompleteState.items.length)return;
+  const item=autocompleteState.items[index];
+  if(!item)return;
+  
+  const input=autocompleteState.input;
+  const text=input.value;
+  const cursorPos=input.selectionStart;
+  
+  let start=cursorPos-1;
+  while(start>0&&text[start]!==autocompleteState.trigger)start--;
+  
+  const before=text.substring(0,start);
+  const after=text.substring(cursorPos);
+  input.value=before+item.tag+' '+after;
+  
+  const newPos=before.length+item.tag.length+1;
+  input.selectionStart=input.selectionEnd=newPos;
+  
+  hideAutocomplete();
+  input.focus();
+}
+
+function moveAutocompleteSelection(direction){
+  if(!autocompleteState.visible)return;
+  const items=autocompleteState.items;
+  if(!items.length)return;
+  
+  autocompleteState.selectedIndex+=direction;
+  if(autocompleteState.selectedIndex<0)autocompleteState.selectedIndex=items.length-1;
+  if(autocompleteState.selectedIndex>=items.length)autocompleteState.selectedIndex=0;
+  
+  const dropdown=document.getElementById('autocomplete-dropdown');
+  if(!dropdown)return;
+  dropdown.querySelectorAll('.autocomplete-item').forEach((el,idx)=>{
+    if(idx===autocompleteState.selectedIndex)el.classList.add('selected');
+    else el.classList.remove('selected');
+  });
+}
+
+function handleAutocompleteInput(e){
+  const input=e.target;
+  const text=input.value;
+  const cursorPos=input.selectionStart;
+  
+  let triggerPos=-1;
+  let trigger=null;
+  
+  for(let i=cursorPos-1;i>=0;i--){
+    const char=text[i];
+    if(char===' '||char==='\n')break;
+    if(char==='@'||char==='#'||char==='!'){
+      trigger=char;
+      triggerPos=i;
+      break;
+    }
+  }
+  
+  if(trigger&&triggerPos>=0){
+    const query=text.substring(triggerPos+1,cursorPos);
+    showAutocomplete(input,trigger,query);
+  } else {
+    hideAutocomplete();
+  }
+}
+
+function handleAutocompleteKeydown(e){
+  if(!autocompleteState.visible)return;
+  
+  if(e.key==='ArrowDown'){
+    e.preventDefault();
+    moveAutocompleteSelection(1);
+  } else if(e.key==='ArrowUp'){
+    e.preventDefault();
+    moveAutocompleteSelection(-1);
+  } else if(e.key==='Enter'||e.key==='Tab'){
+    if(autocompleteState.visible){
+      e.preventDefault();
+      selectAutocompleteItem(autocompleteState.selectedIndex);
+    }
+  } else if(e.key==='Escape'){
+    hideAutocomplete();
+  }
+}
+
+// Attach autocomplete after render
+function attachAutocomplete(){
+  const input=document.getElementById('global-add-text');
+  if(input&&!input.dataset.autocompleteAttached){
+    input.dataset.autocompleteAttached='true';
+    input.addEventListener('input',handleAutocompleteInput);
+    input.addEventListener('keydown',handleAutocompleteKeydown);
+  }
+}
+
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.autocomplete-dropdown')&&!e.target.closest('input')){
+    hideAutocomplete();
+  }
+});
+
 </script>
 
 <!-- Task Detail Drawer -->
