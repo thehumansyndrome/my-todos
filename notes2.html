@@ -1293,10 +1293,10 @@ function parseTodoLines(body){
     var im=text.match(/!(p[123])/i);
     if(im){ pri=im[1].toLowerCase(); text=text.replace(im[0],'').trim(); }
 
-    // Extract date: JJ-MM-AAAA or AAAA-MM-JJ (with optional 📅)
-    var dm=text.match(/(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})/);
+    // Extract date: JJ-MM-AAAA, JJ/MM/AAAA, AAAA-MM-JJ, or AAAA/MM/JJ
+    var dm=text.match(/(\d{2}[-\/]\d{2}[-\/]\d{4}|\d{4}[-\/]\d{2}[-\/]\d{2})/);
     if(dm){
-      due=dm[1];
+      due=dm[1].replace(/\//g,'-'); // Normalize to -
       // Remove the date (and any emoji or spaces around it)
       text=text.replace(dm[0],'').replace('📅','').trim();
     }
