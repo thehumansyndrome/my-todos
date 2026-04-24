@@ -232,11 +232,11 @@ input,select,textarea{background:var(--bg);color:var(--text);}
 </div>
 
 <div class="tabs" id="tabs">
-  <button class="tab active" data-tab="projets">Projets</button>
-  <button class="tab" data-tab="suivi">Suivi</button>
-  <button class="tab" data-tab="global">Vue globale</button>
-  <button class="tab" data-tab="equipe">Équipe</button>
-  <button class="tab" data-tab="log">Log</button>
+  <button class="tab active" onclick="switchTab('projets')">Projets</button>
+  <button class="tab" onclick="switchTab('suivi')">Suivi</button>
+  <button class="tab" onclick="switchTab('global')">Vue globale</button>
+  <button class="tab" onclick="switchTab('equipe')">Équipe</button>
+  <button class="tab" onclick="switchTab('log')">Log</button>
 </div>
 
 <div class="page">
@@ -2212,13 +2212,6 @@ function debugSuivi() {
   lines.push('Projets S.projects: ' + S.projects.map(function(p){return p.name+'('+p.id+')';}).join(', '));
   alert(lines.join('\n'));
 }
-
-// Init tabs
-document.querySelectorAll('.tab[data-tab]').forEach(function(btn) {
-  btn.addEventListener('click', function() {
-    switchTab(this.getAttribute('data-tab'));
-  });
-});
 </script>
 
 <!-- Task Detail Drawer -->
