@@ -6162,6 +6162,13 @@ function udRenderBody(t){
     udRenderArchiveBody(t);
     return;
   }
+  
+  // Reminders: pas de drawer, utiliser l'édition inline
+  if(udType==='reminder'){
+    closeUD();
+    return;
+  }
+  
   const body=document.getElementById('ud-body');
   body.innerHTML='';
   const SEL='font-family:var(--sans);font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;';
