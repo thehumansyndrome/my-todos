@@ -1970,7 +1970,7 @@ function resolveAlias(mention){
 }
 
 function parseTaskText(text){
-  let projSlugs=[], assignees=[], pri='p2', cleanText=text;
+  let projSlugs=[], assignees=[], pri='p2', due='', cleanText=text;
   
   // Extract ALL #projet-slug
   const projMatches=cleanText.match(/#([\w-]+)/g);
@@ -1993,10 +1993,17 @@ function parseTaskText(text){
     cleanText=cleanText.replace(priMatch[0],'');
   }
   
+  // Extract date: 📅JJ-MM-AAAA, 📅AAAA-MM-JJ, JJ-MM-AAAA, or AAAA-MM-JJ
+  const dateMatch=cleanText.match(/📅?(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})/);
+  if(dateMatch){
+    due=dateMatch[1];
+    cleanText=cleanText.replace(dateMatch[0],'');
+  }
+  
   // Clean double spaces
   cleanText=cleanText.replace(/\s+/g,' ').trim();
   
-  return {text:cleanText, projSlugs, assignees, pri};
+  return {text:cleanText, projSlugs, assignees, pri, due};
 }
 
 function addGlobalTask() {
@@ -2037,6 +2044,19 @@ function addGlobalTask() {
     if(admin) assigneeIds.push(admin.id);
   }
   
+  // Convert date from JJ-MM-AAAA to AAAA-MM-JJ if needed
+  let dueDate=null;
+  if(parsed.due){
+    if(parsed.due.match(/^\d{2}-\d{2}-\d{4}$/)){
+      // Format JJ-MM-AAAA → AAAA-MM-JJ
+      const parts=parsed.due.split('-');
+      dueDate=parts[2]+'-'+parts[1]+'-'+parts[0];
+    } else if(parsed.due.match(/^\d{4}-\d{2}-\d{2}$/)){
+      // Déjà au bon format AAAA-MM-JJ
+      dueDate=parsed.due;
+    }
+  }
+  
   const task = {
     id: 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
     text: parsed.text,
@@ -2047,6 +2067,8 @@ function addGlobalTask() {
     assigneeIds: assigneeIds,
     source: 'global'
   };
+  
+  if(dueDate) task.dueDate=dueDate;
   
   projet001FullData.backlog.unshift(task);
   writeProjet001('✓ Tâche ajoutée au backlog');
@@ -2091,7 +2113,7 @@ function renderGlobal() {
       S.projects.filter(p => !(suiviData.sharedProjects||[]).find(sp=>sp.id===p.id))
     );
     h += '<div class="global-add-bar">';
-    h += '<input type="text" id="global-add-text" placeholder="Nouvelle tâche @jv #projet !p1" onkeydown="if(event.key===&#39;Enter&#39;)addGlobalTask()">';
+    h += '<input type="text" id="global-add-text" placeholder="Nouvelle tâche @jv #projet !p1 26-04-2026" onkeydown="if(event.key===&#39;Enter&#39;)addGlobalTask()">';
     h += '<button class="btn sm primary" onclick="addGlobalTask()">+ Ajouter</button>';
     h += '</div>';
   }
