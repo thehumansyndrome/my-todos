@@ -5877,14 +5877,26 @@ function udRenderBody(t){
     const adminId=udGetAdminId(); const ids=t.assigneeIds||[];
     const chips=team.map(m=>{
       const on=ids.includes(m.id); const isAdmin=m.id===adminId;
-      const cf=isAdmin?'event.stopPropagation();':'event.stopPropagation();udToggleAssignee('+JSON.stringify(m.id)+');';
-      return '<span onclick="'+cf+'" style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:600;margin:0 4px 4px 0;cursor:'+(isAdmin?'default':'pointer')+';background:'+(on?m.color:'transparent')+';color:'+(on?'#fff':'var(--muted)')+';border:1px solid '+(on?m.color:'var(--border)')+';transition:all .15s;user-select:none;"><span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:'+(on?'rgba(255,255,255,.25)':m.color)+';color:#fff;font-size:9px;font-weight:700;">'+m.initiales+'</span>'+m.nom.split(' ')[0]+'</span>';
+      return '<span class="ud-team-chip'+(isAdmin?' is-admin':'')+'" data-member-id="'+m.id+'" style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:600;margin:0 4px 4px 0;cursor:'+(isAdmin?'default':'pointer')+';background:'+(on?m.color:'transparent')+';color:'+(on?'#fff':'var(--muted)')+';border:1px solid '+(on?m.color:'var(--border)')+';transition:all .15s;user-select:none;"><span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:'+(on?'rgba(255,255,255,.25)':m.color)+';color:#fff;font-size:9px;font-weight:700;">'+m.initiales+'</span>'+m.nom.split(' ')[0]+'</span>';
     }).join('');
-    teamSec.innerHTML='<div class="ud-section-title">\ud83d\udc65 \u00c9quipe</div><div style="display:flex;flex-wrap:wrap;">'+chips+'</div>';
+    teamSec.innerHTML='<div class="ud-section-title">\ud83d\udc65 \u00c9quipe</div><div id="ud-team-chips" style="display:flex;flex-wrap:wrap;">'+chips+'</div>';
   } else {
     teamSec.innerHTML='<div class="ud-section-title">\ud83d\udc65 \u00c9quipe</div><span style="font-size:13px;color:var(--muted)">Aucun membre \u2014 connectez Drive et chargez Projets & \u00c9quipe</span>';
   }
   body.appendChild(teamSec);
+  
+  // Ajouter les event listeners pour les chips d'équipe
+  setTimeout(()=>{
+    const chipsContainer=document.getElementById('ud-team-chips');
+    if(chipsContainer){
+      chipsContainer.addEventListener('click',e=>{
+        const chip=e.target.closest('.ud-team-chip');
+        if(!chip||chip.classList.contains('is-admin'))return;
+        const memberId=chip.dataset.memberId;
+        if(memberId)udToggleAssignee(memberId);
+      });
+    }
+  },0);
 
   // Sous-taches (todo)
   if(udType==='todo'){
