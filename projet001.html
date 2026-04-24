@@ -5355,6 +5355,7 @@ function renderBacklog(){
           ${assigneeBadgesHtml(b.assigneeIds,b.id,'backlog')}
           ${bStBadge}
           ${projBadge}
+          ${b.dueDate?`<span class="meta-date" style="background:var(--amber)22;color:var(--amber);border:1px solid var(--amber)44;font-weight:500;">📅 ${b.dueDate.split('-').reverse().join('/')}</span>`:''}
           <span class="meta-date">${fd(b.ts)}</span>
         </div>
       </div>
@@ -6181,6 +6182,7 @@ function udRenderBody(t){
           <option value="p3"${t.pri==='p3'?' selected':''}>P3</option>
         </select>
         <select id="ud-proj" onchange="udSaveParams()" style="${SEL};max-width:200px;">${projOpts}</select>
+        <input id="ud-duedate" type="date" value="${t.dueDate||''}" onchange="udSaveParams()" style="${SEL}" placeholder="Date d'échéance">
       </div>`;
     body.appendChild(sec);
   }
@@ -6322,9 +6324,11 @@ function udRenderBody(t){
 function udSaveParams(){
   const t=udGetItem(); if(!t) return;
   if(udType==='backlog'){
-    const pP=t.pri, pProj=t.projId||'';
+    const pP=t.pri, pProj=t.projId||'', pDue=t.dueDate||'';
     const priEl=document.getElementById('ud-pri');
     const projEl=document.getElementById('ud-proj');
+    const dueEl=document.getElementById('ud-duedate');
+    
     if(priEl){const v=priEl.value;if(v!==pP){udLog(t,'priorit\u00e9',pP,v);t.pri=v;}}
     if(projEl){
       const nv=projEl.value||null;
@@ -6332,6 +6336,13 @@ function udSaveParams(){
         const on=(S.projects||[]).find(p=>p.id===pProj)?.name||pProj||'\u2014';
         const nn=nv?(S.projects||[]).find(p=>p.id===nv)?.name||nv:'\u2014';
         udLog(t,'projet',on,nn);t.projId=nv;
+      }
+    }
+    if(dueEl){
+      const nDue=dueEl.value||null;
+      if((nDue||'')!==(pDue||'')){
+        udLog(t,'échéance',pDue||'—',nDue||'—');
+        t.dueDate=nDue;
       }
     }
     udSave();return;
