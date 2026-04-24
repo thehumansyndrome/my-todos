@@ -4484,7 +4484,7 @@ function renderReminders(){
   const bc={overdue:'ts-overdue',today:'ts-today',soon:'ts-soon',upcoming:'ts-upcoming',done:'ts-done'};
   const el=document.getElementById('rem-list');
   el.innerHTML=items.length?items.map(r=>`
-    <div class="item${r._s==='overdue'?' rem-overdue':r._s==='today'?' rem-today':''}${r.done?' done':''}" ${IS_TOUCH?'':'draggable="true"'} data-id="${r.id}">
+    <div class="item${r._s==='overdue'?' rem-overdue':r._s==='today'?' rem-today':''}${r.done?' done':''}" ${IS_TOUCH?'':'draggable="true"'} data-id="${r.id}" onclick="if(!event.target.closest('input,button,.del,label'))openUD('reminder','${r.id}')" style="cursor:pointer;">
       <div class="dh"><span></span><span></span><span></span></div>
       <div class="reorder-btns">
         <button class="rb" onclick="moveItem('reminders','${r.id}',-1,renderReminders)">↑</button>
@@ -4492,7 +4492,7 @@ function renderReminders(){
       </div>
       <input type="checkbox" class="item-check" ${r.done?'checked':''} onchange="toggleRem('${r.id}')">
       <div class="item-body">
-        <div class="item-text" id="qtext-${r.id}" ${IS_TOUCH?`onclick="if(!document.getElementById('ef-${r.id}').classList.contains('open'))quickEditInline('${r.id}','reminders',renderReminders)" style="cursor:pointer;"`:''} >${esc(r.text)}</div>
+        <div class="item-text" id="qtext-${r.id}">${esc(r.text)}</div>
         ${itemImgsHtml(r,'reminders')}
         <div class="item-meta-row">
           <div class="item-meta" style="margin-top:4px">
@@ -4503,35 +4503,10 @@ function renderReminders(){
           <div class="mobile-actions">
             <label class="img-btn${r.images&&r.images.length?' has-img':''}" title="Caméra" style="cursor:pointer;background:none;border:none;font-size:14px;padding:3px 4px;opacity:.5;line-height:1;display:flex;align-items:center;">📷<input type="file" accept="image/*" capture="environment" style="display:none" onchange="genericItemImgPickFile(this,'${r.id}','reminders',renderReminders)"></label>
             <label class="img-btn${r.images&&r.images.length?' has-img':''}" title="Galerie" style="cursor:pointer;background:none;border:none;font-size:14px;padding:3px 4px;opacity:.5;line-height:1;display:flex;align-items:center;">🖼<input type="file" accept="image/*" style="display:none" onchange="genericItemImgPickFile(this,'${r.id}','reminders',renderReminders)"></label>
-            <button onclick="openEdit('${r.id}')" title="Modifier date/récurrence" style="background:none;border:none;cursor:pointer;font-size:13px;padding:3px 4px;opacity:.5;line-height:1;">✎</button>
-            <div class="mobile-reorder">
-              <button class="rb" onclick="moveItem('reminders','${r.id}',-1,renderReminders)">↑</button>
-              <button class="rb" onclick="moveItem('reminders','${r.id}',1,renderReminders)">↓</button>
-            </div>
             <button class="del" onclick="delRem('${r.id}')">×</button>
           </div>
         </div>
-        <div class="edit-form" id="ef-${r.id}" data-id="${r.id}">
-          <div class="edit-row">
-            <input class="edit-in rem-text-field" id="ert-${r.id}" type="text" value="${esc(r.text)}" onkeydown="if(event.key==='Escape')closeEdit('${r.id}')">
-          </div>
-          <div class="edit-row">
-            <input class="edit-in sm" id="erd-${r.id}" type="date" value="${r.date||''}">
-            <select class="edit-in sm" id="err-${r.id}">
-              <option value="none"${r.recur==='none'?' selected':''}>Once</option>
-              <option value="daily"${r.recur==='daily'?' selected':''}>Daily</option>
-              <option value="weekly"${r.recur==='weekly'?' selected':''}>Weekly</option>
-              <option value="monthly"${r.recur==='monthly'?' selected':''}>Monthly</option>
-            </select>
-          </div>
-          <div class="eact">
-            <button class="save-btn" onclick="saveReminder('${r.id}')">Enregistrer</button>
-            <button class="cancel-btn" onclick="closeEdit('${r.id}')">Annuler</button>
-          </div>
-        </div>
       </div>
-      <button class="edit-btn" onclick="openEdit('${r.id}')" title="Modifier">✎</button>
-      <button class="del" onclick="delRem('${r.id}')">×</button>
     </div>`).join(''):`<div class="empty">Aucun rappel</div>`;
   setupDrag(el,'reminders',renderReminders);
   const tot=S.reminders.length,ov=S.reminders.filter(r=>remSt(r)==='overdue').length,td=S.reminders.filter(r=>remSt(r)==='today').length,dn=S.reminders.filter(r=>r.done).length;
@@ -5682,6 +5657,7 @@ function udFmt(d){return d?new Date(d).toLocaleString('fr-FR',{day:'2-digit',mon
 function udGetItem(){
   if(udType==='todo') return S.todos.find(x=>x.id===udId)||null;
   if(udType==='backlog') return (S.backlog||[]).find(x=>x.id===udId)||null;
+  if(udType==='reminder') return (S.reminders||[]).find(x=>x.id===udId)||null;
   if(udType==='archive') return (archiveData&&archiveData.archives)?archiveData.archives[udId]||null:null;
   return null;
 }
@@ -6163,12 +6139,6 @@ function udRenderBody(t){
     return;
   }
   
-  // Reminders: pas de drawer, utiliser l'édition inline
-  if(udType==='reminder'){
-    closeUD();
-    return;
-  }
-  
   const body=document.getElementById('ud-body');
   body.innerHTML='';
   const SEL='font-family:var(--sans);font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;';
@@ -6215,11 +6185,30 @@ function udRenderBody(t){
     body.appendChild(sec);
   }
 
-  // Equipe
-  const teamSec=document.createElement('div');
-  teamSec.id='ud-sec-equipe';
-  const team=S.sharedTeam||[];
-  if(team.length){
+  // Params reminder
+  if(udType==='reminder'){
+    const sec=document.createElement('div');
+    sec.id='ud-sec-params';
+    const recur=t.recur||'none';
+    sec.innerHTML=`<div class="ud-section-title">⚙ Paramètres</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <input id="ud-rem-date" type="date" value="${t.date||''}" onchange="udSaveParamsReminder()" style="${SEL}">
+        <select id="ud-rem-recur" onchange="udSaveParamsReminder()" style="${SEL}">
+          <option value="none"${recur==='none'?' selected':''}>Une fois</option>
+          <option value="daily"${recur==='daily'?' selected':''}>Quotidien</option>
+          <option value="weekly"${recur==='weekly'?' selected':''}>Hebdomadaire</option>
+          <option value="monthly"${recur==='monthly'?' selected':''}>Mensuel</option>
+        </select>
+      </div>`;
+    body.appendChild(sec);
+  }
+
+  // Equipe (pas pour reminders)
+  if(udType!=='reminder'){
+    const teamSec=document.createElement('div');
+    teamSec.id='ud-sec-equipe';
+    const team=S.sharedTeam||[];
+    if(team.length){
     const adminId=udGetAdminId(); const ids=t.assigneeIds||[];
     const chips=team.map(m=>{
       const on=ids.includes(m.id); const isAdmin=m.id===adminId;
@@ -6243,6 +6232,7 @@ function udRenderBody(t){
       });
     }
   },0);
+  } // Fin if udType !== 'reminder'
 
   // Sous-taches (todo)
   if(udType==='todo'){
@@ -6280,6 +6270,20 @@ function udRenderBody(t){
       +'<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">'
       +'<label class="btn sm" style="cursor:pointer;">\ud83d\udcf7 Cam\u00e9ra<input type="file" accept="image/*" capture="environment" style="display:none" onchange="udImgPickFile(this)"></label>'
       +'<label class="btn sm" style="cursor:pointer;">\ud83d\uddbc\ufe0f Galerie<input type="file" accept="image/*" style="display:none" onchange="udImgPickFile(this)"></label>'
+      +'</div>';
+    body.appendChild(imgSec);
+  }
+
+  // Images (reminder)
+  if(udType==='reminder'){
+    const imgSec=document.createElement('div');
+    imgSec.id='ud-sec-images';
+    const imgs=t.images||[];
+    imgSec.innerHTML='<div class="ud-section-title">🖼️ Images</div>'
+      +'<div id="ud-img-list">'+(imgs.length?itemImgsHtml(t,'reminders'):'<span style="font-size:13px;color:var(--muted)">Aucune image</span>')+'</div>'
+      +'<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">'
+      +'<label class="btn sm" style="cursor:pointer;">📷 Caméra<input type="file" accept="image/*" capture="environment" style="display:none" onchange="udImgPickFile(this)"></label>'
+      +'<label class="btn sm" style="cursor:pointer;">🖼️ Galerie<input type="file" accept="image/*" style="display:none" onchange="udImgPickFile(this)"></label>'
       +'</div>';
     body.appendChild(imgSec);
   }
@@ -6342,6 +6346,30 @@ function udSaveParams(){
   if(t.pri!==pP)udLog(t,'priorit\u00e9',pP,t.pri);
   if(t.hz!==pH)udLog(t,'horizon',pH,t.hz);
   (t.subtasks||[]).forEach(sid=>{const s=S.todos.find(x=>x.id===sid);if(s){s.cat=t.cat;s.pri=t.pri;s.hz=t.hz;}});
+  udSave();
+}
+
+function udSaveParamsReminder(){
+  const t=udGetItem(); if(!t) return;
+  const dateEl=document.getElementById('ud-rem-date');
+  const recurEl=document.getElementById('ud-rem-recur');
+  
+  if(dateEl){
+    const newDate=dateEl.value||'';
+    if(newDate!==t.date){
+      udLog(t,'date',t.date||'—',newDate||'—');
+      t.date=newDate;
+    }
+  }
+  
+  if(recurEl){
+    const newRecur=recurEl.value||'none';
+    if(newRecur!==t.recur){
+      udLog(t,'récurrence',t.recur||'none',newRecur);
+      t.recur=newRecur;
+    }
+  }
+  
   udSave();
 }
 
@@ -6568,7 +6596,9 @@ function udRenderArchiveBody(a){
 
 function udSave(){
   autoSave();
-  if(udType==='todo')renderTodos();else renderBacklog();
+  if(udType==='todo')renderTodos();
+  else if(udType==='backlog')renderBacklog();
+  else if(udType==='reminder')renderReminders();
   refreshUD();
 }
 
