@@ -2470,6 +2470,31 @@ function setupHabitDrag(el){
     save();renderHabits();logA('habit','Réordonné');
   });
 }
+
+/* ══ CHALLENGE DRAG & DROP ══ */
+let chDgId=null;
+function setupChallengeDrag(el){
+  el.addEventListener('dragstart',e=>{
+    const cc=e.target.closest('.ch-card[draggable]');if(!cc)return;
+    chDgId=cc.dataset.id;cc.classList.add('dragging');e.dataTransfer.effectAllowed='move';
+  });
+  el.addEventListener('dragend',()=>{
+    document.querySelectorAll('.ch-card').forEach(c=>c.classList.remove('dragging','drag-over'));chDgId=null;
+  });
+  el.addEventListener('dragover',e=>{
+    e.preventDefault();
+    const cc=e.target.closest('.ch-card[draggable]');if(!cc||cc.dataset.id===chDgId)return;
+    document.querySelectorAll('.ch-card').forEach(c=>c.classList.remove('drag-over'));cc.classList.add('drag-over');
+  });
+  el.addEventListener('drop',e=>{
+    e.preventDefault();
+    const cc=e.target.closest('.ch-card[draggable]');if(!cc||cc.dataset.id===chDgId)return;
+    const fi=S.challenges.findIndex(x=>x.id===chDgId),ti=S.challenges.findIndex(x=>x.id===cc.dataset.id);
+    if(fi===-1||ti===-1)return;
+    const[m]=S.challenges.splice(fi,1);S.challenges.splice(ti,0,m);
+    save();renderChallenges();logA('challenge','Réordonné');
+  });
+}
 function moveItem(key,id,dir,renderFn){
   const arr=S[key];const i=arr.findIndex(x=>x.id===id);if(i===-1)return;const ni=i+dir;if(ni<0||ni>=arr.length)return;[arr[i],arr[ni]]=[arr[ni],arr[i]];save();renderFn();}
 
@@ -4941,7 +4966,7 @@ function renderChallenges(){
       </div>
     </div>`;
 
-    return `<div class="ch-card${st!=='active'?' done':''}">
+    return `<div class="ch-card${st!=='active'?' done':''}" ${IS_TOUCH?'':'draggable="true"'} data-id="${ch.id}">
       <div class="ch-header">
         <div>
           <div class="ch-title">${esc(ch.text)}</div>
@@ -4950,7 +4975,13 @@ function renderChallenges(){
             <span>${ch.type==='days'?ch.days.length+' jour(s) prévu(s)':'Objectif: '+ch.target}</span>
           </div>
         </div>
-        <span class="ch-badge ${st}">${st==='active'?'Actif':st==='done'?'Réussi':st==='failed'?'Échoué':'Abandonné'}</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="ch-badge ${st}">${st==='active'?'Actif':st==='done'?'Réussi':st==='failed'?'Échoué':'Abandonné'}</span>
+          <div class="reorder-btns">
+            <button class="rb" onclick="moveItem('challenges','${ch.id}',-1,renderChallenges)" title="Monter">▲</button>
+            <button class="rb" onclick="moveItem('challenges','${ch.id}',1,renderChallenges)" title="Descendre">▼</button>
+          </div>
+        </div>
       </div>
       <div class="ch-progress">
         <div class="ch-bar-bg"><div class="ch-bar ${barClass}" style="width:${p.pct}%"></div></div>
@@ -4966,6 +4997,7 @@ function renderChallenges(){
       </div>
     </div>`;
   }).join('');
+  setupChallengeDrag(el);
   renderChStats();
 }
 
