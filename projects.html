@@ -1997,7 +1997,7 @@ function parseTaskText(text){
   const dateMatch=cleanText.match(/(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})/);
   if(dateMatch){
     due=dateMatch[1];
-    cleanText=cleanText.replace(/📅?\s*(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})/,'');
+    cleanText=cleanText.replace(dateMatch[0],'').replace('📅','').trim();
   }
   
   // Clean double spaces
