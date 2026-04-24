@@ -1224,15 +1224,21 @@ function parseTodoLines(body){
     var m=line.match(/^\/todo\s+(.+)/i);
     if(!m) return;
     var raw=m[1].trim();
-    var projSlug='', assignee='', pri='p2', due='', text=raw;
+    var projSlugs=[], assignees=[], pri='p2', due='', text=raw;
 
-    // Extract #projet-slug
-    var pm=text.match(/#([\w-]+)/);
-    if(pm){ projSlug=pm[1]; text=text.replace(pm[0],'').trim(); }
+    // Extract ALL #projet-slug
+    var projMatches=text.match(/#([\w-]+)/g);
+    if(projMatches){
+      projSlugs=projMatches.map(function(p){ return p.slice(1); });
+      projMatches.forEach(function(p){ text=text.replace(p,''); });
+    }
 
-    // Extract @alias
-    var am=text.match(/@(\S+)/);
-    if(am){ assignee=am[1]; text=text.replace(am[0],'').trim(); }
+    // Extract ALL @alias
+    var aliasMatches=text.match(/@([\w-]+)/g);
+    if(aliasMatches){
+      assignees=aliasMatches.map(function(a){ return a.slice(1); });
+      aliasMatches.forEach(function(a){ text=text.replace(a,''); });
+    }
 
     // Extract !p1/!p2/!p3
     var im=text.match(/!(p[123])/i);
@@ -1246,7 +1252,7 @@ function parseTodoLines(body){
     text=text.replace(/\s+/g,' ').trim();
     if(!text) return;
 
-    todos.push({lineIdx:idx, text:text, projSlug:projSlug, assignee:assignee, pri:pri, due:due, rawLine:line});
+    todos.push({lineIdx:idx, text:text, projSlugs:projSlugs, assignees:assignees, pri:pri, due:due, rawLine:line});
   });
   return todos;
 }
@@ -1301,17 +1307,23 @@ function createTodosFromNote(){
 
   var added=0, skipped=0;
   todos.forEach(function(t){
-    // Resolve project
+    // Resolve projects (prendre le premier trouvé)
     var projId=null;
-    if(t.projSlug){
-      var proj=resolveProjectSlug(t.projSlug);
-      if(proj) projId=proj.id;
+    if(t.projSlugs && t.projSlugs.length>0){
+      for(var i=0; i<t.projSlugs.length; i++){
+        var proj=resolveProjectSlug(t.projSlugs[i]);
+        if(proj){ projId=proj.id; break; }
+      }
     }
-    // Resolve assignee
+    // Resolve ALL assignees
     var assigneeIds=[];
-    if(t.assignee){
-      var member=resolveAlias(t.assignee);
-      if(member) assigneeIds=[member.id];
+    if(t.assignees && t.assignees.length>0){
+      t.assignees.forEach(function(alias){
+        var member=resolveAlias(alias);
+        if(member && assigneeIds.indexOf(member.id)===-1){
+          assigneeIds.push(member.id);
+        }
+      });
     }
     // Deduplicate
     var exists=todoFullData.backlog.some(function(b){
