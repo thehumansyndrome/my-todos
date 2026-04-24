@@ -728,6 +728,55 @@ div:hover>.item-img-del{display:block;}
 @keyframes pulse-age{0%,100%{transform:scale(1);}50%{transform:scale(1.05);}}
 .task-age-zombie{animation:pulse-age 2s ease-in-out infinite;}
 .task-age-urgent{animation:pulse-age 3s ease-in-out infinite;}
+
+/* Autocomplete dropdown */
+.autocomplete-dropdown{
+  position:absolute;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  box-shadow:0 4px 12px rgba(0,0,0,.1);
+  max-height:200px;
+  overflow-y:auto;
+  z-index:1000;
+  display:none;
+  min-width:180px;
+}
+.autocomplete-dropdown.show{display:block;}
+.autocomplete-item{
+  padding:8px 12px;
+  cursor:pointer;
+  font-size:13px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  transition:background .12s;
+}
+.autocomplete-item:hover,.autocomplete-item.selected{
+  background:var(--bg2);
+}
+.autocomplete-item .ac-avatar{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  font-size:9px;
+  font-weight:700;
+  color:#fff;
+  flex-shrink:0;
+}
+.autocomplete-item .ac-label{
+  flex:1;
+  font-family:var(--sans);
+}
+.autocomplete-item .ac-tag{
+  font-family:var(--mono);
+  font-size:10px;
+  color:var(--text3);
+}
+
 .kaizen-history{
   font-family:var(--mono);font-size:10px;color:var(--muted);
   border-top:1px solid var(--border);padding:8px 0 4px;margin-top:2px;
@@ -5694,6 +5743,8 @@ function refreshUD(){
   ta.value=t.text||''; udAutoResize(ta);
   udRenderBadges(t);
   udRenderBody(t);
+  // Attacher l'autocomplete au textarea du drawer
+  setTimeout(()=>attachAutocomplete('#ud-title'),0);
 }
 function udAutoResize(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
 // Extraction et auto-affectation des mentions @
@@ -5752,6 +5803,230 @@ function extractPriority(text){
   if(!match)return null;
   return match[0].slice(1).toLowerCase(); // Retourne p1, p2 ou p3
 }
+
+/* ══════════════════════════════════
+   AUTOCOMPLETE SYSTEM
+══════════════════════════════════ */
+let autocompleteState={
+  visible:false,
+  input:null,
+  trigger:null, // '@', '#', '!'
+  query:'',
+  selectedIndex:0,
+  items:[],
+  insertStart:0,
+  insertEnd:0
+};
+
+function createAutocompleteDropdown(){
+  let dropdown=document.getElementById('autocomplete-dropdown');
+  if(!dropdown){
+    dropdown=document.createElement('div');
+    dropdown.id='autocomplete-dropdown';
+    dropdown.className='autocomplete-dropdown';
+    document.body.appendChild(dropdown);
+  }
+  return dropdown;
+}
+
+function showAutocomplete(input,trigger,query,cursorPos){
+  const dropdown=createAutocompleteDropdown();
+  autocompleteState.input=input;
+  autocompleteState.trigger=trigger;
+  autocompleteState.query=query.toLowerCase();
+  autocompleteState.selectedIndex=0;
+  
+  // Générer les items selon le trigger
+  let items=[];
+  if(trigger==='@'){
+    const team=S.sharedTeam||[];
+    items=team.map(m=>({
+      type:'member',
+      id:m.id,
+      label:m.nom,
+      tag:'@'+m.initiales.toLowerCase(),
+      color:m.color,
+      initiales:m.initiales
+    })).filter(i=>
+      i.label.toLowerCase().includes(autocompleteState.query)||
+      i.tag.includes(autocompleteState.query)
+    );
+  } else if(trigger==='#'){
+    const projects=S.projects||[];
+    items=projects.map(p=>({
+      type:'project',
+      id:p.id,
+      label:p.name||p.nom,
+      tag:'#'+(p.name||p.nom||'').toLowerCase().replace(/\s+/g,'-'),
+      color:p.color
+    })).filter(i=>
+      i.label.toLowerCase().includes(autocompleteState.query)||
+      i.tag.includes(autocompleteState.query)
+    );
+  } else if(trigger==='!'){
+    items=[
+      {type:'priority',id:'p1',label:'Priorité P1',tag:'!p1',color:'var(--red)'},
+      {type:'priority',id:'p2',label:'Priorité P2',tag:'!p2',color:'var(--amber)'},
+      {type:'priority',id:'p3',label:'Priorité P3',tag:'!p3',color:'var(--green)'}
+    ].filter(i=>i.tag.includes(autocompleteState.query));
+  }
+  
+  autocompleteState.items=items;
+  
+  if(!items.length){
+    hideAutocomplete();
+    return;
+  }
+  
+  // Render items
+  dropdown.innerHTML=items.map((item,idx)=>{
+    let avatar='';
+    if(item.type==='member'){
+      avatar=`<span class="ac-avatar" style="background:${item.color}">${item.initiales}</span>`;
+    } else if(item.type==='project'){
+      avatar=`<span class="ac-avatar" style="background:${item.color};border-radius:4px;">📁</span>`;
+    } else if(item.type==='priority'){
+      avatar=`<span class="ac-avatar" style="background:${item.color};border-radius:4px;">⚡</span>`;
+    }
+    return `<div class="autocomplete-item${idx===0?' selected':''}" data-index="${idx}">
+      ${avatar}
+      <span class="ac-label">${esc(item.label)}</span>
+      <span class="ac-tag">${item.tag}</span>
+    </div>`;
+  }).join('');
+  
+  // Position dropdown
+  const rect=input.getBoundingClientRect();
+  const lineHeight=parseInt(window.getComputedStyle(input).lineHeight)||20;
+  dropdown.style.left=rect.left+'px';
+  dropdown.style.top=(rect.top+lineHeight+4)+'px';
+  dropdown.classList.add('show');
+  autocompleteState.visible=true;
+  
+  // Add click handlers
+  dropdown.querySelectorAll('.autocomplete-item').forEach((el,idx)=>{
+    el.onclick=()=>selectAutocompleteItem(idx);
+  });
+}
+
+function hideAutocomplete(){
+  const dropdown=document.getElementById('autocomplete-dropdown');
+  if(dropdown)dropdown.classList.remove('show');
+  autocompleteState.visible=false;
+  autocompleteState.selectedIndex=0;
+}
+
+function selectAutocompleteItem(index){
+  if(!autocompleteState.visible||!autocompleteState.items.length)return;
+  const item=autocompleteState.items[index];
+  if(!item)return;
+  
+  const input=autocompleteState.input;
+  const text=input.value;
+  const cursorPos=input.selectionStart;
+  
+  // Trouver le début du trigger
+  let start=cursorPos-1;
+  while(start>0&&text[start]!==autocompleteState.trigger)start--;
+  
+  // Remplacer par le tag
+  const before=text.substring(0,start);
+  const after=text.substring(cursorPos);
+  input.value=before+item.tag+' '+after;
+  
+  // Placer le curseur après
+  const newPos=before.length+item.tag.length+1;
+  input.selectionStart=input.selectionEnd=newPos;
+  
+  hideAutocomplete();
+  input.focus();
+}
+
+function moveAutocompleteSelection(direction){
+  if(!autocompleteState.visible)return;
+  const items=autocompleteState.items;
+  if(!items.length)return;
+  
+  autocompleteState.selectedIndex+=direction;
+  if(autocompleteState.selectedIndex<0)autocompleteState.selectedIndex=items.length-1;
+  if(autocompleteState.selectedIndex>=items.length)autocompleteState.selectedIndex=0;
+  
+  // Update UI
+  const dropdown=document.getElementById('autocomplete-dropdown');
+  if(!dropdown)return;
+  dropdown.querySelectorAll('.autocomplete-item').forEach((el,idx)=>{
+    el.classList.toggle('selected',idx===autocompleteState.selectedIndex);
+  });
+}
+
+function handleAutocompleteInput(e){
+  const input=e.target;
+  const text=input.value;
+  const cursorPos=input.selectionStart;
+  
+  // Détecter le trigger actif
+  let triggerPos=-1;
+  let trigger=null;
+  
+  // Chercher en arrière depuis le curseur
+  for(let i=cursorPos-1;i>=0;i--){
+    const char=text[i];
+    if(char===' '||char==='\n')break; // Stop au premier espace
+    if(char==='@'||char==='#'||char==='!'){
+      trigger=char;
+      triggerPos=i;
+      break;
+    }
+  }
+  
+  if(trigger&&triggerPos>=0){
+    const query=text.substring(triggerPos+1,cursorPos);
+    showAutocomplete(input,trigger,query,cursorPos);
+  } else {
+    hideAutocomplete();
+  }
+}
+
+function handleAutocompleteKeydown(e){
+  if(!autocompleteState.visible)return;
+  
+  if(e.key==='ArrowDown'){
+    e.preventDefault();
+    moveAutocompleteSelection(1);
+  } else if(e.key==='ArrowUp'){
+    e.preventDefault();
+    moveAutocompleteSelection(-1);
+  } else if(e.key==='Enter'||e.key==='Tab'){
+    if(autocompleteState.visible){
+      e.preventDefault();
+      selectAutocompleteItem(autocompleteState.selectedIndex);
+    }
+  } else if(e.key==='Escape'){
+    hideAutocomplete();
+  }
+}
+
+// Attacher l'autocomplete aux inputs pertinents
+function attachAutocomplete(selector){
+  document.querySelectorAll(selector).forEach(input=>{
+    if(input.dataset.autocompleteAttached)return;
+    input.dataset.autocompleteAttached='true';
+    input.addEventListener('input',handleAutocompleteInput);
+    input.addEventListener('keydown',handleAutocompleteKeydown);
+  });
+}
+
+// Attacher au chargement et après chaque render
+setTimeout(()=>{
+  attachAutocomplete('#todo-in, #bl-in, #ud-title');
+},500);
+
+// Cacher l'autocomplete si on clique ailleurs
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.autocomplete-dropdown')&&!e.target.closest('input,textarea')){
+    hideAutocomplete();
+  }
+});
 
 function autoAssignFromMentions(text,item){
   const mentions=extractMentions(text);
