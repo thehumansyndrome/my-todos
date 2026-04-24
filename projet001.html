@@ -5374,7 +5374,7 @@ function renderBacklog(){
     return`<div class="bl-item${b.done?' done':''}" onclick="if(!event.target.closest('input,button,.del'))openUD('backlog','${b.id}')" style="cursor:pointer;">
       <input type="checkbox" class="item-check" ${b.done?'checked':''} onchange="toggleBacklog('${b.id}')">
       <div class="item-body">
-        <div class="bl-text" onclick="quickEditInlineBacklog('${b.id}')" id="blt-${b.id}">${esc(b.text)}</div>
+        <div class="bl-text" id="blt-${b.id}">${esc(b.text)}</div>
         <div class="bl-meta item-meta">
           <span class="tag ${priCls[b.pri]||'p2'}">${b.pri.toUpperCase()}</span>
           ${assigneeBadgesHtml(b.assigneeIds,b.id,'backlog')}
