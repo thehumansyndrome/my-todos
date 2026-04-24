@@ -725,6 +725,9 @@ div:hover>.item-img-del{display:block;}
   cursor:pointer;animation:pulse-hint 1.5s ease-in-out infinite;
 }
 @keyframes pulse-hint{0%,100%{opacity:1;}50%{opacity:.6;}}
+@keyframes pulse-age{0%,100%{transform:scale(1);}50%{transform:scale(1.05);}}
+.task-age-zombie{animation:pulse-age 2s ease-in-out infinite;}
+.task-age-urgent{animation:pulse-age 3s ease-in-out infinite;}
 .kaizen-history{
   font-family:var(--mono);font-size:10px;color:var(--muted);
   border-top:1px solid var(--border);padding:8px 0 4px;margin-top:2px;
@@ -1303,6 +1306,7 @@ div:hover>.item-img-del{display:block;}
       <label class="cam-btn" title="Prendre une photo" style="cursor:pointer;">📷<input type="file" accept="image/*" capture="environment" style="display:none" onchange="handleAddRowPhoto(this,'tab-todos')"></label>
     </div>
     <div id="pending-imgs-tab-todos" style="display:none;flex-wrap:wrap;gap:6px;margin:4px 0 2px 0;"></div>
+    <div id="todo-age-stats" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:8px 0 4px;min-height:28px;"></div>
     <div class="filters" id="todo-filters"></div>
     <div class="filters" id="todo-hz-filters" style="margin-top:4px;"></div>
     <div class="list" id="todo-list"></div>
@@ -3300,6 +3304,23 @@ function inlineAddSub(parentId){
   logA('todo','Sous-tâche ajoutée: "'+text+'" → "'+parent.text+'"');
 }
 
+function getTaskAgeBadge(ts){
+  const now = Date.now();
+  const ageInDays = Math.floor((now - ts) / (1000 * 60 * 60 * 24));
+  
+  if(ageInDays <= 2){
+    return {emoji:'🆕', label:'Nouveau', color:'#10b981', days:ageInDays, level:'new'};
+  } else if(ageInDays <= 7){
+    return {emoji:'⏱️', label:`${ageInDays}j`, color:'#6b7280', days:ageInDays, level:'fresh'};
+  } else if(ageInDays <= 14){
+    return {emoji:'⚠️', label:`${ageInDays}j`, color:'#f59e0b', days:ageInDays, level:'warning'};
+  } else if(ageInDays <= 30){
+    return {emoji:'🔥', label:`${ageInDays}j`, color:'#ef4444', days:ageInDays, level:'urgent'};
+  } else {
+    return {emoji:'💀', label:`${ageInDays}j`, color:'#8b5cf6', days:ageInDays, level:'zombie'};
+  }
+}
+
 function todoItemHtml(t){
   const cat = getCatById(t.cat);
   const isDarkMode = document.documentElement.getAttribute('data-theme')==='dark';
@@ -3311,6 +3332,10 @@ function todoItemHtml(t){
   const HZ_LABELS={now:'Now',today:'Today',later:'Later',waiting:'Waiting'};
   const hz=t.hz==='someday'?'later':(t.hz||'later');
   const hzBadge=`<span class="hz-${hz}" style="font-family:var(--mono);font-size:9px;font-weight:500;letter-spacing:.04em;padding:1px 4px;border-radius:2px;border:1px solid currentColor;opacity:.8;">${HZ_LABELS[hz]||hz}</span>`;
+  
+  // Task age badge
+  const age = getTaskAgeBadge(t.ts);
+  const ageBadge = `<span class="task-age-badge task-age-${age.level}" style="font-family:var(--mono);font-size:9px;font-weight:600;padding:2px 5px;border-radius:3px;background:${age.color}22;color:${age.color};border:1px solid ${age.color};display:inline-flex;align-items:center;gap:2px;" title="Créée il y a ${age.days} jour${age.days>1?'s':''}">${age.emoji} ${age.label}</span>`;
 
   // Subtask badges
   let subtaskBadgeHtml = '';
@@ -3352,6 +3377,7 @@ function todoItemHtml(t){
           <span class="tag ${pl[t.pri]||'p2'}">${t.pri.toUpperCase()}</span>
           ${catBadge}
           ${hzBadge}
+          ${ageBadge}
           ${assigneeBadgesHtml(t.assigneeIds,'${t.id}','todo')}
           ${subtaskBadgeHtml}
           ${t.dueDate ? relDue(t.dueDate) : ''}
@@ -3789,6 +3815,23 @@ function renderTodos(){
   const totalActive=S.todos.filter(x=>!x.done&&!x.parentId).length;
   const totalDone=S.todos.filter(x=>x.done&&!x.parentId).length;
   const p1=S.todos.filter(x=>x.pri==='p1'&&!x.done&&!x.parentId).length;
+  
+  // Task age stats
+  const activeTodos=S.todos.filter(x=>!x.done&&!x.parentId);
+  const zombies=activeTodos.filter(t=>{ const age=Math.floor((Date.now()-t.ts)/(1000*60*60*24)); return age>30; }).length;
+  const urgent=activeTodos.filter(t=>{ const age=Math.floor((Date.now()-t.ts)/(1000*60*60*24)); return age>14&&age<=30; }).length;
+  const warning=activeTodos.filter(t=>{ const age=Math.floor((Date.now()-t.ts)/(1000*60*60*24)); return age>7&&age<=14; }).length;
+  
+  // Update age stats display
+  const ageStatsEl=document.getElementById('todo-age-stats');
+  if(ageStatsEl){
+    ageStatsEl.innerHTML=`
+      ${zombies>0?`<span style="font-family:var(--mono);font-size:11px;padding:3px 8px;border-radius:4px;background:#8b5cf622;color:#8b5cf6;border:1px solid #8b5cf6;font-weight:600;">💀 ${zombies} Zombie${zombies>1?'s':''}</span>`:''}
+      ${urgent>0?`<span style="font-family:var(--mono);font-size:11px;padding:3px 8px;border-radius:4px;background:#ef444422;color:#ef4444;border:1px solid #ef4444;font-weight:600;">🔥 ${urgent} Urgent${urgent>1?'s':''}</span>`:''}
+      ${warning>0?`<span style="font-family:var(--mono);font-size:11px;padding:3px 8px;border-radius:4px;background:#f59e0b22;color:#f59e0b;border:1px solid #f59e0b;">⚠️ ${warning}</span>`:''}
+      ${zombies===0&&urgent===0&&warning===0?`<span style="font-family:var(--mono);font-size:11px;color:var(--text3);">✨ Toutes les tâches sont fraîches !</span>`:''}
+    `;
+  }
 }
 
 
