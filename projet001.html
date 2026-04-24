@@ -2887,6 +2887,10 @@ function addTodo(){
 
   const t={id:parentId,text:v,cat,pri,hz,done:false,ts:Date.now(),
     comment:'',subtasks:subtaskIds,parentId:null,type:typeKey||null,assigneeIds:defaultAssigneesFn()};
+  
+  // Auto-affectation via mentions @
+  autoAssignFromMentions(v,t);
+  
   // Attach pending pasted images
   if(pendingItemImgs['tab-todos']&&pendingItemImgs['tab-todos'].length){
     t.images=[...pendingItemImgs['tab-todos']];
@@ -5224,7 +5228,13 @@ function addBacklogItem(){
   const projId=document.getElementById('bl-proj').value||'';
   const pri=document.getElementById('bl-pri').value||'p2';
   if(!S.backlog)S.backlog=[];
-  S.backlog.unshift({id:uid(),text,projId,pri,done:false,status:'valide',ts:Date.now(),assigneeIds:defaultAssigneesFn()});
+  
+  const newItem={id:uid(),text,projId,pri,done:false,status:'valide',ts:Date.now(),assigneeIds:defaultAssigneesFn()};
+  
+  // Auto-affectation via mentions @
+  autoAssignFromMentions(text,newItem);
+  
+  S.backlog.unshift(newItem);
   document.getElementById('bl-in').value='';
   autoSave();renderBacklog();
   logA('backlog','Ajouté: "'+text+'"');
@@ -5678,10 +5688,68 @@ function refreshUD(){
   udRenderBody(t);
 }
 function udAutoResize(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
+// Extraction et auto-affectation des mentions @
+function extractMentions(text){
+  // Matches @initiales (2+ lettres) ou @prénom (avec accents)
+  const regex=/@([a-zA-ZÀ-ÿ]{2,})/gi;
+  const matches=text.match(regex);
+  if(!matches)return[];
+  
+  const team=S.sharedTeam||[];
+  const mentioned=[];
+  
+  matches.forEach(m=>{
+    const tag=m.slice(1).toLowerCase(); // enlever @ et mettre en minuscules
+    // Chercher par initiales
+    let member=team.find(t=>t.initiales.toLowerCase()===tag);
+    // Si pas trouvé, chercher par prénom
+    if(!member){
+      const firstName=team.find(t=>{
+        const prenom=(t.nom||'').split(' ')[0].toLowerCase();
+        return prenom===tag || prenom.startsWith(tag);
+      });
+      member=firstName;
+    }
+    if(member&&!mentioned.includes(member.id)){
+      mentioned.push(member.id);
+    }
+  });
+  
+  return mentioned;
+}
+
+function autoAssignFromMentions(text,item){
+  const mentions=extractMentions(text);
+  if(!mentions.length)return false;
+  
+  const adminId=getAdminId();
+  if(!item.assigneeIds)item.assigneeIds=adminId?[adminId]:[];
+  
+  let changed=false;
+  mentions.forEach(memberId=>{
+    if(!item.assigneeIds.includes(memberId)){
+      item.assigneeIds.push(memberId);
+      changed=true;
+    }
+  });
+  
+  return changed;
+}
+
 function udSaveTitle(){
   const t=udGetItem(); if(!t) return;
   const v=document.getElementById('ud-title').value.trim();
   if(!v||v===t.text) return;
+  
+  // Auto-affectation via mentions @
+  const wasAutoAssigned=autoAssignFromMentions(v,t);
+  if(wasAutoAssigned){
+    const mentions=extractMentions(v);
+    const team=S.sharedTeam||[];
+    const names=mentions.map(id=>(team.find(m=>m.id===id)?.nom||'').split(' ')[0]).join(', ');
+    toast('👤 '+names+' affecté'+(mentions.length>1?'s':''));
+  }
+  
   udLog(t,'texte',t.text,v); t.text=v; udSave();
 }
 function udRenderBadges(t){
