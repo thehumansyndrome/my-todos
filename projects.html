@@ -228,7 +228,7 @@ input,select,textarea{background:var(--bg);color:var(--text);}
   <div class="sync-dot" id="sync-dot"></div>
   <span class="sync-label" id="sync-label">Local</span>
   <button class="hbtn" id="theme-btn" onclick="toggleTheme()" title="Thème">☀︎</button>
-  <button class="hbtn" id="hbtn-cloud" title="Connecter Google Drive">☁</button>
+  <button class="hbtn" id="hbtn-cloud" onclick="accessToken ? switchTab('log') : driveAuth()" title="Connecter Google Drive">☁</button>
 </div>
 
 <div class="tabs" id="tabs">
@@ -2213,35 +2213,11 @@ function debugSuivi() {
   alert(lines.join('\n'));
 }
 
-// ══ INIT ══
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('DOMContentLoaded fired');
-  
-  // Attach tab click handlers
-  const tabs = document.querySelectorAll('.tab[data-tab]');
-  console.log('Found tabs:', tabs.length);
-  tabs.forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      console.log('Tab clicked:', this.getAttribute('data-tab'));
-      switchTab(this.getAttribute('data-tab'));
-    });
+// Init tabs
+document.querySelectorAll('.tab[data-tab]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    switchTab(this.getAttribute('data-tab'));
   });
-  
-  // Attach cloud button handler
-  const cloudBtn = document.getElementById('hbtn-cloud');
-  console.log('Cloud button:', cloudBtn);
-  if (cloudBtn) {
-    cloudBtn.addEventListener('click', function() {
-      console.log('Cloud button clicked');
-      if (accessToken) {
-        switchTab('log');
-      } else {
-        driveAuth();
-      }
-    });
-  }
-  
-  console.log('Init complete');
 });
 </script>
 
