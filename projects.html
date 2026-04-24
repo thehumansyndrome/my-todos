@@ -1993,10 +1993,10 @@ function parseTaskText(text){
     cleanText=cleanText.replace(priMatch[0],'');
   }
   
-  // Extract date: JJ-MM-AAAA or AAAA-MM-JJ (with optional 📅)
-  const dateMatch=cleanText.match(/(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})/);
+  // Extract date: JJ-MM-AAAA, JJ/MM/AAAA, AAAA-MM-JJ, or AAAA/MM/JJ
+  const dateMatch=cleanText.match(/(\d{2}[-\/]\d{2}[-\/]\d{4}|\d{4}[-\/]\d{2}[-\/]\d{2})/);
   if(dateMatch){
-    due=dateMatch[1];
+    due=dateMatch[1].replace(/\//g,'-'); // Normalize to -
     cleanText=cleanText.replace(dateMatch[0],'').replace('📅','').trim();
   }
   
