@@ -5720,20 +5720,33 @@ function extractMentions(text){
 
 function autoAssignFromMentions(text,item){
   const mentions=extractMentions(text);
-  if(!mentions.length)return false;
-  
   const adminId=getAdminId();
   if(!item.assigneeIds)item.assigneeIds=adminId?[adminId]:[];
   
-  let changed=false;
+  let added=[];
+  let removed=[];
+  
+  // Ajouter les nouvelles mentions
   mentions.forEach(memberId=>{
     if(!item.assigneeIds.includes(memberId)){
       item.assigneeIds.push(memberId);
-      changed=true;
+      added.push(memberId);
     }
   });
   
-  return changed;
+  // Retirer les personnes dont la mention a été supprimée (sauf admin)
+  const team=S.sharedTeam||[];
+  team.forEach(m=>{
+    if(m.id===adminId)return; // Ne jamais retirer l'admin
+    const wasMentioned=mentions.includes(m.id);
+    const isAssigned=item.assigneeIds.includes(m.id);
+    if(!wasMentioned&&isAssigned){
+      item.assigneeIds=item.assigneeIds.filter(id=>id!==m.id);
+      removed.push(m.id);
+    }
+  });
+  
+  return {added,removed,changed:added.length>0||removed.length>0};
 }
 
 function udSaveTitle(){
@@ -5742,12 +5755,17 @@ function udSaveTitle(){
   if(!v||v===t.text) return;
   
   // Auto-affectation via mentions @
-  const wasAutoAssigned=autoAssignFromMentions(v,t);
-  if(wasAutoAssigned){
-    const mentions=extractMentions(v);
+  const result=autoAssignFromMentions(v,t);
+  if(result.changed){
     const team=S.sharedTeam||[];
-    const names=mentions.map(id=>(team.find(m=>m.id===id)?.nom||'').split(' ')[0]).join(', ');
-    toast('👤 '+names+' affecté'+(mentions.length>1?'s':''));
+    if(result.added.length>0){
+      const names=result.added.map(id=>(team.find(m=>m.id===id)?.nom||'').split(' ')[0]).join(', ');
+      toast('👤 '+names+' affecté'+(result.added.length>1?'s':''));
+    }
+    if(result.removed.length>0){
+      const names=result.removed.map(id=>(team.find(m=>m.id===id)?.nom||'').split(' ')[0]).join(', ');
+      toast('👋 '+names+' désaffecté'+(result.removed.length>1?'s':''));
+    }
   }
   
   udLog(t,'texte',t.text,v); t.text=v; udSave();
@@ -5859,8 +5877,8 @@ function udRenderBody(t){
     const adminId=udGetAdminId(); const ids=t.assigneeIds||[];
     const chips=team.map(m=>{
       const on=ids.includes(m.id); const isAdmin=m.id===adminId;
-      const cf=isAdmin?'':'udToggleAssignee('+JSON.stringify(m.id)+');';
-      return '<span onclick="'+cf+'" style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:600;margin:0 4px 4px 0;cursor:'+(isAdmin?'default':'pointer')+';background:'+(on?m.color:'transparent')+';color:'+(on?'#fff':'var(--muted)')+';border:1px solid '+(on?m.color:'var(--border)')+';transition:all .15s;"><span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:'+(on?'rgba(255,255,255,.25)':m.color)+';color:#fff;font-size:9px;font-weight:700;">'+m.initiales+'</span>'+m.nom.split(' ')[0]+'</span>';
+      const cf=isAdmin?'event.stopPropagation();':'event.stopPropagation();udToggleAssignee('+JSON.stringify(m.id)+');';
+      return '<span onclick="'+cf+'" style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:600;margin:0 4px 4px 0;cursor:'+(isAdmin?'default':'pointer')+';background:'+(on?m.color:'transparent')+';color:'+(on?'#fff':'var(--muted)')+';border:1px solid '+(on?m.color:'var(--border)')+';transition:all .15s;user-select:none;"><span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:'+(on?'rgba(255,255,255,.25)':m.color)+';color:#fff;font-size:9px;font-weight:700;">'+m.initiales+'</span>'+m.nom.split(' ')[0]+'</span>';
     }).join('');
     teamSec.innerHTML='<div class="ud-section-title">\ud83d\udc65 \u00c9quipe</div><div style="display:flex;flex-wrap:wrap;">'+chips+'</div>';
   } else {
