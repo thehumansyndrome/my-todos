@@ -1293,9 +1293,13 @@ function parseTodoLines(body){
     var im=text.match(/!(p[123])/i);
     if(im){ pri=im[1].toLowerCase(); text=text.replace(im[0],'').trim(); }
 
-    // Extract date: 📅JJ-MM-AAAA, 📅AAAA-MM-JJ, JJ-MM-AAAA, or AAAA-MM-JJ
-    var dm=text.match(/📅?(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})/);
-    if(dm){ due=dm[1]; text=text.replace(dm[0],'').trim(); }
+    // Extract date: JJ-MM-AAAA or AAAA-MM-JJ (with optional 📅)
+    var dm=text.match(/(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})/);
+    if(dm){
+      due=dm[1];
+      // Remove date and optional emoji before it
+      text=text.replace(/📅?\s*(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})/,'').trim();
+    }
 
     // Clean double spaces
     text=text.replace(/\s+/g,' ').trim();
