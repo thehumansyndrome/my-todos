@@ -338,7 +338,7 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
           <div class="note-ta-wrap">
             <div id="todo-hl-layer" class="todo-highlight-layer" aria-hidden="true"></div>
             <textarea id="note-ta" spellcheck="true"
-              placeholder="Commence à écrire…&#10;&#10;Utilise des #tags dans ton texte.&#10;La première ligne devient le titre.&#10;Colle une image (Ctrl+V) ou une URL YouTube.&#10;/todo texte #projet @alias !p1 📅JJ-MM-AAAA"
+              placeholder="Commence à écrire…&#10;&#10;Utilise des #tags dans ton texte.&#10;La première ligne devient le titre.&#10;Colle une image (Ctrl+V) ou une URL YouTube.&#10;/todo texte #projet @alias !p1 26-04-2026"
               oninput="onNoteInput()" onpaste="onPaste(event)"
               style="background:transparent;position:relative;z-index:1;"></textarea>
           </div>
@@ -1293,8 +1293,8 @@ function parseTodoLines(body){
     var im=text.match(/!(p[123])/i);
     if(im){ pri=im[1].toLowerCase(); text=text.replace(im[0],'').trim(); }
 
-    // Extract 📅JJ-MM-AAAA or 📅AAAA-MM-JJ
-    var dm=text.match(/📅(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})/);
+    // Extract date: 📅JJ-MM-AAAA, 📅AAAA-MM-JJ, JJ-MM-AAAA, or AAAA-MM-JJ
+    var dm=text.match(/📅?(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})/);
     if(dm){ due=dm[1]; text=text.replace(dm[0],'').trim(); }
 
     // Clean double spaces
@@ -1379,6 +1379,20 @@ function createTodosFromNote(){
       return b.text===t.text&&b.projId===projId&&!b.done;
     });
     if(exists){ skipped++; return; }
+    
+    // Convert date from JJ-MM-AAAA to AAAA-MM-JJ if needed
+    var dueDate=null;
+    if(t.due){
+      if(t.due.match(/^\d{2}-\d{2}-\d{4}$/)){
+        // Format JJ-MM-AAAA → AAAA-MM-JJ
+        var parts=t.due.split('-');
+        dueDate=parts[2]+'-'+parts[1]+'-'+parts[0];
+      } else if(t.due.match(/^\d{4}-\d{2}-\d{2}$/)){
+        // Déjà au bon format AAAA-MM-JJ
+        dueDate=t.due;
+      }
+    }
+    
     var task={
       id:'nt'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
       text:t.text,
@@ -1390,7 +1404,7 @@ function createTodosFromNote(){
       source:'notes2',
       noteId:curId
     };
-    if(t.due) task.dueDate=t.due;
+    if(dueDate) task.dueDate=dueDate;
     todoFullData.backlog.unshift(task);
     added++;
   });
