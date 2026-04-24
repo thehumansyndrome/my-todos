@@ -5225,9 +5225,17 @@ let myTasksFilter=false; // show only tasks assigned to admin // hide tasks from
 function addBacklogItem(){
   const text=document.getElementById('bl-in').value.trim();
   if(!text){toast('⚠ Texte requis');return;}
-  const projId=document.getElementById('bl-proj').value||'';
-  const pri=document.getElementById('bl-pri').value||'p2';
+  let projId=document.getElementById('bl-proj').value||'';
+  let pri=document.getElementById('bl-pri').value||'p2';
   if(!S.backlog)S.backlog=[];
+  
+  // Auto-détection du projet via #nom-projet
+  const detectedProj=extractProject(text);
+  if(detectedProj)projId=detectedProj;
+  
+  // Auto-détection de la priorité via !p1, !p2, !p3
+  const detectedPri=extractPriority(text);
+  if(detectedPri)pri=detectedPri;
   
   const newItem={id:uid(),text,projId,pri,done:false,status:'valide',ts:Date.now(),assigneeIds:defaultAssigneesFn()};
   
@@ -5718,6 +5726,33 @@ function extractMentions(text){
   return mentioned;
 }
 
+// Extraction du projet depuis #nom-projet
+function extractProject(text){
+  const regex=/#([a-zA-Z0-9_-]+)/g;
+  const matches=text.match(regex);
+  if(!matches)return null;
+  
+  const projects=S.projects||[];
+  for(const match of matches){
+    const tag=match.slice(1).toLowerCase(); // enlever # et mettre en minuscules
+    // Chercher un projet dont le nom contient ce tag
+    const project=projects.find(p=>{
+      const pname=(p.name||p.nom||'').toLowerCase().replace(/\s+/g,'-');
+      return pname===tag || pname.includes(tag);
+    });
+    if(project)return project.id;
+  }
+  return null;
+}
+
+// Extraction de la priorité depuis !p1, !p2, !p3
+function extractPriority(text){
+  const regex=/!(p[123])\b/gi;
+  const match=text.match(regex);
+  if(!match)return null;
+  return match[0].slice(1).toLowerCase(); // Retourne p1, p2 ou p3
+}
+
 function autoAssignFromMentions(text,item){
   const mentions=extractMentions(text);
   const adminId=getAdminId();
@@ -5754,18 +5789,47 @@ function udSaveTitle(){
   const v=document.getElementById('ud-title').value.trim();
   if(!v||v===t.text) return;
   
+  let notifications=[];
+  
   // Auto-affectation via mentions @
   const result=autoAssignFromMentions(v,t);
   if(result.changed){
     const team=S.sharedTeam||[];
     if(result.added.length>0){
       const names=result.added.map(id=>(team.find(m=>m.id===id)?.nom||'').split(' ')[0]).join(', ');
-      toast('👤 '+names+' affecté'+(result.added.length>1?'s':''));
+      notifications.push('👤 '+names+' affecté'+(result.added.length>1?'s':''));
     }
     if(result.removed.length>0){
       const names=result.removed.map(id=>(team.find(m=>m.id===id)?.nom||'').split(' ')[0]).join(', ');
-      toast('👋 '+names+' désaffecté'+(result.removed.length>1?'s':''));
+      notifications.push('👋 '+names+' désaffecté'+(result.removed.length>1?'s':''));
     }
+  }
+  
+  // Auto-assignation du projet via #nom-projet (backlog seulement)
+  if(udType==='backlog'){
+    const projId=extractProject(v);
+    if(projId&&projId!==t.projId){
+      const proj=(S.projects||[]).find(p=>p.id===projId);
+      if(proj){
+        const oldProj=t.projId?(S.projects||[]).find(p=>p.id===t.projId):null;
+        udLog(t,'projet',oldProj?(oldProj.name||oldProj.nom):'—',proj.name||proj.nom);
+        t.projId=projId;
+        notifications.push('📁 '+proj.name||proj.nom);
+      }
+    }
+  }
+  
+  // Auto-assignation de la priorité via !p1, !p2, !p3
+  const pri=extractPriority(v);
+  if(pri&&pri!==t.pri){
+    udLog(t,'priorité',t.pri,pri);
+    t.pri=pri;
+    notifications.push('⚡ '+pri.toUpperCase());
+  }
+  
+  // Afficher toutes les notifications
+  if(notifications.length>0){
+    toast(notifications.join(' • '));
   }
   
   udLog(t,'texte',t.text,v); t.text=v; udSave();
