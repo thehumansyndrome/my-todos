@@ -5282,16 +5282,18 @@ function addBacklogItem(){
     text=text.replace(/!(p[123])\b/gi,'');
   }
   
-  // Extract date
-  const dateMatch=text.match(/(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})/);
+  // Extract date (supports both - and / as separators)
+  const dateMatch=text.match(/(\d{2}[-\/]\d{2}[-\/]\d{4}|\d{4}[-\/]\d{2}[-\/]\d{2})/);
   if(dateMatch){
     const rawDate=dateMatch[1];
+    // Normalize separators to -
+    const normalized=rawDate.replace(/\//g,'-');
     // Convert JJ-MM-AAAA to AAAA-MM-JJ
-    if(rawDate.match(/^\d{2}-\d{2}-\d{4}$/)){
-      const parts=rawDate.split('-');
+    if(normalized.match(/^\d{2}-\d{2}-\d{4}$/)){
+      const parts=normalized.split('-');
       dueDate=parts[2]+'-'+parts[1]+'-'+parts[0];
     } else {
-      dueDate=rawDate;
+      dueDate=normalized;
     }
     // Remove from text
     text=text.replace(dateMatch[0],'').replace('📅','');
