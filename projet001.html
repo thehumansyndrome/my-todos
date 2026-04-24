@@ -2916,13 +2916,56 @@ function updateFabVisibility(tab){
 }
 
 function addTodo(){
-  const v=document.getElementById('todo-in').value.trim();if(!v)return;
-  const cat=document.getElementById('todo-cat').value;
-  const pri=document.getElementById('todo-pri').value;
+  const rawText=document.getElementById('todo-in').value.trim();if(!rawText)return;
+  let text=rawText;
+  let cat=document.getElementById('todo-cat').value;
+  let pri=document.getElementById('todo-pri').value;
   const hz=document.getElementById('todo-hz')?.value||'later';
   const typeKey=document.getElementById('todo-type')?.value||'';
   const parentId=uid();
   const subtaskIds=[];
+  let dueDate=null;
+  const assigneeIds=[];
+
+  // Parse text intelligently
+  
+  // Extract ALL @mentions
+  const mentions=extractMentions(text);
+  if(mentions.length>0){
+    assigneeIds.push(...mentions);
+    text.match(/@([a-zA-ZÀ-ÿ]{2,})/gi)?.forEach(m=>{text=text.replace(m,'');});
+  }
+  
+  // Extract !priority
+  const detectedPri=extractPriority(text);
+  if(detectedPri){
+    pri=detectedPri;
+    text=text.replace(/!(p[123])\b/gi,'');
+  }
+  
+  // Extract date (supports both - and / as separators)
+  const dateMatch=text.match(/(\d{2}[-\/]\d{2}[-\/]\d{4}|\d{4}[-\/]\d{2}[-\/]\d{2})/);
+  if(dateMatch){
+    const rawDate=dateMatch[1];
+    const normalized=rawDate.replace(/\//g,'-');
+    if(normalized.match(/^\d{2}-\d{2}-\d{4}$/)){
+      const parts=normalized.split('-');
+      dueDate=parts[2]+'-'+parts[1]+'-'+parts[0];
+    } else {
+      dueDate=normalized;
+    }
+    text=text.replace(dateMatch[0],'').replace('📅','');
+  }
+  
+  // Clean text
+  text=text.replace(/\s+/g,' ').trim();
+  if(!text)return;
+  
+  // Add admin if no assignees
+  if(assigneeIds.length===0){
+    const admin=defaultAssigneesFn();
+    if(admin)assigneeIds.push(...admin);
+  }
 
   if(typeKey && TMPL[typeKey]){
     const subs=TMPL[typeKey].subtasks||[];
@@ -2934,11 +2977,10 @@ function addTodo(){
     });
   }
 
-  const t={id:parentId,text:v,cat,pri,hz,done:false,ts:Date.now(),
-    comment:'',subtasks:subtaskIds,parentId:null,type:typeKey||null,assigneeIds:defaultAssigneesFn()};
+  const t={id:parentId,text,cat,pri,hz,done:false,ts:Date.now(),
+    comment:'',subtasks:subtaskIds,parentId:null,type:typeKey||null,assigneeIds};
   
-  // Auto-affectation via mentions @
-  autoAssignFromMentions(v,t);
+  if(dueDate)t.dueDate=dueDate;
   
   // Attach pending pasted images
   if(pendingItemImgs['tab-todos']&&pendingItemImgs['tab-todos'].length){
@@ -6220,6 +6262,7 @@ function udRenderBody(t){
           <option value="later"${hz==='later'?' selected':''}>Later</option>
           <option value="waiting"${hz==='waiting'?' selected':''}>Waiting</option>
         </select>
+        <input id="ud-todo-duedate" type="date" value="${t.dueDate||''}" onchange="udSaveParams()" style="${SEL}" placeholder="Date d'échéance">
       </div>`;
     body.appendChild(sec);
   }
@@ -6404,10 +6447,20 @@ function udSaveParams(){
     udSave();return;
   }
   if(udType!=='todo')return;
-  const pC=t.cat,pP=t.pri,pH=t.hz;
+  const pC=t.cat,pP=t.pri,pH=t.hz,pDue=t.dueDate||'';
   t.cat=document.getElementById('ud-cat').value;
   t.pri=document.getElementById('ud-pri').value;
   t.hz=document.getElementById('ud-hz').value;
+  
+  const dueEl=document.getElementById('ud-todo-duedate');
+  if(dueEl){
+    const nDue=dueEl.value||null;
+    if((nDue||'')!==(pDue||'')){
+      udLog(t,'échéance',pDue||'—',nDue||'—');
+      t.dueDate=nDue;
+    }
+  }
+  
   if(hzF!=='all'&&t.hz!==hzF)hzF='all';
   if(t.cat!==pC)udLog(t,'cat\u00e9gorie',pC,t.cat);
   if(t.pri!==pP)udLog(t,'priorit\u00e9',pP,t.pri);
