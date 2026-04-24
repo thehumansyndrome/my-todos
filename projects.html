@@ -1949,7 +1949,7 @@ function slugForMatch(s){
 }
 
 function resolveProjectSlug(slug){
-  const projects=suiviData.projects||[];
+  const projects=S.projects||[];
   // Exact match
   let p=projects.find(p=>slugForMatch(p.name)===slug);
   if(p) return p;
@@ -1962,7 +1962,7 @@ function resolveProjectSlug(slug){
 
 function resolveAlias(mention){
   const key=(mention||'').replace(/^@/,'').toLowerCase();
-  const team=suiviData.team||[];
+  const team=S.team||[];
   return team.find(m=>{
     const al=(m.alias||m.initiales||'').toLowerCase();
     return al===key;
@@ -2238,7 +2238,7 @@ function showAutocomplete(input,trigger,query){
   
   let items=[];
   if(trigger==='@'){
-    const team=suiviData.team||[];
+    const team=S.team||[];
     items=team.map(m=>({
       type:'member',
       id:m.id,
@@ -2251,7 +2251,7 @@ function showAutocomplete(input,trigger,query){
       i.tag.indexOf(autocompleteState.query)>=0
     );
   } else if(trigger==='#'){
-    const projects=suiviData.projects||[];
+    const projects=S.projects||[];
     items=projects.map(p=>{
       const slug=slugForMatch(p.name);
       return {
