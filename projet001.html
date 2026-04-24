@@ -5247,24 +5247,78 @@ let blHideInactive=true;
 let myTasksFilter=false; // show only tasks assigned to admin // hide tasks from non-active projects by default
 
 function addBacklogItem(){
-  const text=document.getElementById('bl-in').value.trim();
-  if(!text){toast('⚠ Texte requis');return;}
-  let projId=document.getElementById('bl-proj').value||'';
-  let pri=document.getElementById('bl-pri').value||'p2';
+  const rawText=document.getElementById('bl-in').value.trim();
+  if(!rawText){toast('⚠ Texte requis');return;}
   if(!S.backlog)S.backlog=[];
   
-  // Auto-détection du projet via #nom-projet
+  // Parse text intelligently
+  let text=rawText;
+  let projId=document.getElementById('bl-proj').value||'';
+  let pri=document.getElementById('bl-pri').value||'p2';
+  let dueDate=null;
+  const assigneeIds=[];
+  
+  // Extract ALL @mentions
+  const mentions=extractMentions(text);
+  if(mentions.length>0){
+    assigneeIds.push(...mentions);
+    // Remove from text
+    text.match(/@([a-zA-ZÀ-ÿ]{2,})/gi)?.forEach(m=>{text=text.replace(m,'');});
+  }
+  
+  // Extract #project
   const detectedProj=extractProject(text);
-  if(detectedProj)projId=detectedProj;
+  if(detectedProj){
+    projId=detectedProj;
+    // Remove from text
+    text.match(/#([a-zA-Z0-9_-]+)/g)?.forEach(m=>{text=text.replace(m,'');});
+  }
   
-  // Auto-détection de la priorité via !p1, !p2, !p3
+  // Extract !priority
   const detectedPri=extractPriority(text);
-  if(detectedPri)pri=detectedPri;
+  if(detectedPri){
+    pri=detectedPri;
+    // Remove from text
+    text=text.replace(/!(p[123])\b/gi,'');
+  }
   
-  const newItem={id:uid(),text,projId,pri,done:false,status:'valide',ts:Date.now(),assigneeIds:defaultAssigneesFn()};
+  // Extract date
+  const dateMatch=text.match(/(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})/);
+  if(dateMatch){
+    const rawDate=dateMatch[1];
+    // Convert JJ-MM-AAAA to AAAA-MM-JJ
+    if(rawDate.match(/^\d{2}-\d{2}-\d{4}$/)){
+      const parts=rawDate.split('-');
+      dueDate=parts[2]+'-'+parts[1]+'-'+parts[0];
+    } else {
+      dueDate=rawDate;
+    }
+    // Remove from text
+    text=text.replace(dateMatch[0],'').replace('📅','');
+  }
   
-  // Auto-affectation via mentions @
-  autoAssignFromMentions(text,newItem);
+  // Clean text
+  text=text.replace(/\s+/g,' ').trim();
+  if(!text){toast('⚠ Texte vide après extraction');return;}
+  
+  // Add admin if no assignees
+  if(assigneeIds.length===0){
+    const admin=defaultAssigneesFn();
+    if(admin)assigneeIds.push(...admin);
+  }
+  
+  const newItem={
+    id:uid(),
+    text,
+    projId,
+    pri,
+    done:false,
+    status:'valide',
+    ts:Date.now(),
+    assigneeIds
+  };
+  
+  if(dueDate)newItem.dueDate=dueDate;
   
   S.backlog.unshift(newItem);
   document.getElementById('bl-in').value='';
