@@ -1297,8 +1297,8 @@ function parseTodoLines(body){
     var dm=text.match(/(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})/);
     if(dm){
       due=dm[1];
-      // Remove date and optional emoji before it
-      text=text.replace(/📅?\s*(\d{2}-\d{2}-\d{4}|\d{4}-\d{2}-\d{2})/,'').trim();
+      // Remove the date (and any emoji or spaces around it)
+      text=text.replace(dm[0],'').replace('📅','').trim();
     }
 
     // Clean double spaces
