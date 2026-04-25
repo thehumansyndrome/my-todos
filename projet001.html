@@ -2867,15 +2867,60 @@ function closeQA(){
 }
 
 function submitQA(){
-  const text=document.getElementById('qa-text').value.trim();
-  if(!text && qaCurrentTab!=='notes') return;
+  const rawText=document.getElementById('qa-text').value.trim();
+  if(!rawText && qaCurrentTab!=='notes') return;
   const photos=[...qaPendingPhotos];
 
   if(qaCurrentTab==='todos'){
-    const cat=document.getElementById('qa-cat').value;
-    const pri=document.getElementById('qa-pri').value;
-    const hz=document.getElementById('qa-hz').value;
-    const t={id:uid(),text,cat,pri,hz,done:false,ts:Date.now(),comment:'',subtasks:[],parentId:null,type:null,images:photos,attachments:[]};
+    let text=rawText;
+    let cat=document.getElementById('qa-cat').value;
+    let pri=document.getElementById('qa-pri').value;
+    let hz=document.getElementById('qa-hz').value;
+    let dueDate=null;
+    const assigneeIds=[];
+
+    // Parse text intelligently (same logic as addTodo)
+    
+    // Extract ALL @mentions
+    const mentions=extractMentions(text);
+    if(mentions.length>0){
+      assigneeIds.push(...mentions);
+      text.match(/@([a-zA-ZÀ-ÿ]{2,})/gi)?.forEach(m=>{text=text.replace(m,'');});
+    }
+    
+    // Extract !priority
+    const detectedPri=extractPriority(text);
+    if(detectedPri){
+      pri=detectedPri;
+      text=text.replace(/!(p[123])\b/gi,'');
+    }
+    
+    // Extract date (supports both - and / as separators)
+    const dateMatch=text.match(/(\d{2}[-\/]\d{2}[-\/]\d{4}|\d{4}[-\/]\d{2}[-\/]\d{2})/);
+    if(dateMatch){
+      const rawDate=dateMatch[1];
+      const normalized=rawDate.replace(/\//g,'-');
+      if(normalized.match(/^\d{2}-\d{2}-\d{4}$/)){
+        const parts=normalized.split('-');
+        dueDate=parts[2]+'-'+parts[1]+'-'+parts[0];
+      } else {
+        dueDate=normalized;
+      }
+      text=text.replace(dateMatch[0],'').replace('📅','');
+    }
+    
+    // Clean text
+    text=text.replace(/\s+/g,' ').trim();
+    if(!text)return;
+    
+    // Add admin if no assignees
+    if(assigneeIds.length===0){
+      const admin=defaultAssigneesFn();
+      if(admin)assigneeIds.push(...admin);
+    }
+
+    const t={id:uid(),text,cat,pri,hz,done:false,ts:Date.now(),comment:'',subtasks:[],parentId:null,type:null,images:photos,attachments:[],assigneeIds};
+    if(dueDate)t.dueDate=dueDate;
     S.todos.unshift(t);
     expandedForAdd.add(t.id);
     autoSave();renderTodos();
@@ -2883,29 +2928,29 @@ function submitQA(){
 
   } else if(qaCurrentTab==='notes'){
     const body=document.getElementById('qa-note-body').value.trim();
-    if(!text&&!body) return;
-    const n={id:uid(),title:text,body,tags:[],images:photos,ts:Date.now(),large:true};
+    if(!rawText&&!body) return;
+    const n={id:uid(),title:rawText,body,tags:[],images:photos,ts:Date.now(),large:true};
     S.notes.unshift(n);
     autoSave();renderNotes();
-    logA('note','Ajouté (FAB): "'+(text||body.slice(0,40))+'"');
+    logA('note','Ajouté (FAB): "'+(rawText||body.slice(0,40))+'"');
 
   } else if(qaCurrentTab==='courses'){
-    S.courses.push({id:uid(),text,bought:false,ts:Date.now(),images:photos});
+    S.courses.push({id:uid(),text:rawText,bought:false,ts:Date.now(),images:photos});
     autoSave();renderCourses();
-    logA('course','Ajouté (FAB): "'+text+'"');
+    logA('course','Ajouté (FAB): "'+rawText+'"');
 
   } else if(qaCurrentTab==='reminders'){
     const date=document.getElementById('qa-rem-date').value||null;
     const recur=document.getElementById('qa-rem-recur').value;
-    S.reminders.push({id:uid(),text,date,recur,done:false,ts:Date.now(),images:photos});
+    S.reminders.push({id:uid(),text:rawText,date,recur,done:false,ts:Date.now(),images:photos});
     autoSave();renderReminders();
-    logA('reminder','Ajouté (FAB): "'+text+'"');
+    logA('reminder','Ajouté (FAB): "'+rawText+'"');
   }
 
   qaPendingPhotos=[];
   renderQAPhotoPreview();
   closeQA();
-  toast('✓ "'+text.slice(0,30)+(text.length>30?'…':'')+'" ajouté');
+  toast('✓ "'+rawText.slice(0,30)+(rawText.length>30?'…':'')+'" ajouté');
 }
 
 /* Show/hide FAB based on active tab */
