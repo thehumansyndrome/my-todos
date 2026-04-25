@@ -1,0 +1,2485 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Projects</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS ── */
+:root {
+  --bg:      #F7F6F3;
+  --surface: #FFFFFF;
+  --border:  #E5E4E0;
+  --text:    #1A1917;
+  --text2:   #3D3C39;
+  --muted:   #8A8880;
+  --accent:  #5B4FE8;
+  --green:   #16A34A;
+  --red:     #DC2626;
+  --amber:   #D97706;
+  --blue:    #2563EB;
+  --r:       6px;
+  --r2:      10px;
+  --sans:    'Geist', system-ui, sans-serif;
+  --mono:    'Geist Mono', monospace;
+}
+[data-theme="sand"] {
+  --bg:#F8F7FF; --surface:#FFFFFF; --border:#E4E2F5;
+  --text:#1A1830; --text2:#3D3B55; --muted:#8A88A8; --accent:#5B4FE8;
+}
+[data-theme="dark"] {
+  --bg:#111113; --surface:#1C1C1F; --border:#2A2A2E;
+  --text:#F0EFE9; --text2:#C4C3BC; --muted:#6B6A65; --accent:#7C6FE8;
+  --green:#22C55E; --red:#F87171; --amber:#FCD34D; --blue:#60A5FA;
+}
+[data-theme="navy"] {
+  --bg:#161925; --surface:#1E2233; --border:#2A2F45;
+  --text:#E8EAF2; --text2:#B0B4CC; --muted:#606480; --accent:#7C6FE8;
+  --green:#34D399; --red:#F87171; --amber:#FCD34D; --blue:#60A5FA;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;}
+
+/* ── HEADER ── */
+.header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border);padding:0 16px;height:44px;display:flex;align-items:center;gap:12px;}
+.app-name{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:-.01em;}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0;}
+.sync-dot.ok{background:var(--green);}
+.sync-dot.pending{background:var(--amber);}
+.sync-dot.error{background:var(--red);}
+.sync-label{font-family:var(--mono);font-size:11px;color:var(--muted);}
+.hbtn{margin-left:auto;background:none;border:none;cursor:pointer;font-size:14px;color:var(--muted);padding:4px 6px;border-radius:var(--r);transition:background .15s;}
+.hbtn:hover{background:var(--border);}
+
+/* ── TABS ── */
+.tabs{position:sticky;top:44px;z-index:99;background:var(--bg);border-bottom:1px solid var(--border);display:flex;gap:0;padding:0 16px;overflow-x:auto;}
+.tab{padding:10px 14px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;transition:color .15s;}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab:hover{color:var(--text2);}
+
+/* ── PAGE ── */
+.page{max-width:860px;margin:0 auto;padding:20px 16px 80px;}
+.section{display:none;}
+.section.active{display:block;}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:border-color .15s;}
+.card:hover{border-color:var(--accent);}
+.card.selected{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);}
+
+/* ── ADD ROW ── */
+.add-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.add-row input,.add-row select,.add-row textarea{font-family:var(--sans);font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;transition:border-color .15s;}
+.add-row input:focus,.add-row select:focus{border-color:var(--accent);}
+.main-in{flex:1;min-width:160px;}
+
+/* ── BUTTONS ── */
+.btn{font-family:var(--sans);font-size:12px;font-weight:500;padding:6px 12px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.btn:hover{border-color:var(--accent);color:var(--accent);}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+.btn.primary:hover{opacity:.88;}
+.btn.danger{color:var(--red);border-color:var(--red);}
+.btn.danger:hover{background:var(--red);color:#fff;}
+.btn.sm{padding:4px 8px;font-size:11px;}
+.add-btn{font-family:var(--sans);font-size:12px;font-weight:500;padding:7px 14px;border-radius:var(--r);border:none;background:var(--accent);color:#fff;cursor:pointer;white-space:nowrap;}
+.add-btn:hover{opacity:.88;}
+
+/* ── STATUS BADGES ── */
+.status-pill{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid;cursor:pointer;user-select:none;}
+.s-actif{color:var(--green);border-color:var(--green);}
+.s-pause{color:var(--amber);border-color:var(--amber);}
+.s-termine{color:var(--blue);border-color:var(--blue);}
+.s-archive{color:var(--muted);border-color:var(--muted);}
+.s-abandonne{color:var(--red);border-color:var(--red);}
+
+/* ── PROGRESS BAR ── */
+.progress-wrap{height:6px;background:var(--border);border-radius:3px;margin:8px 0 4px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:3px;background:var(--accent);transition:width .3s;}
+.progress-fill.done{background:var(--green);}
+
+/* ── PROJECT FORM ── */
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:16px;margin-bottom:16px;}
+.form-card.hidden{display:none;}
+.field{display:flex;flex-direction:column;gap:5px;flex:1;}
+.field label{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
+.field input,.field select,.field textarea{font-family:var(--sans);font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);}
+.field-row{display:flex;gap:10px;flex-wrap:wrap;}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;}
+
+/* ── TEAM ── */
+.member-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:10px 14px;display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+.avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0;}
+.role-chip{font-size:11px;font-weight:500;padding:2px 8px;border-radius:12px;border:1px solid;}
+.role-red{color:var(--red);border-color:var(--red);}
+.role-val{color:var(--green);border-color:var(--green);}
+.role-btn{padding:4px 10px;border-radius:12px;font-size:12px;font-weight:500;cursor:pointer;background:transparent;transition:all .15s;}
+
+/* ── SUIVI ── */
+.suivi-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
+.suivi-sel{font-family:var(--sans);font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;flex:1;min-width:180px;}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:20px;}
+.kpi-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:14px 16px;}
+.kpi-n{font-size:24px;font-weight:600;line-height:1;}
+.kpi-l{font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.04em;}
+.suivi-section{margin-bottom:20px;}
+.suivi-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px;}
+.global-add-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 0 4px;margin-bottom:8px;border-bottom:1px solid var(--border);}
+.global-add-bar input,.global-add-bar select{font-family:var(--sans);font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;}
+.global-add-bar input:focus,.global-add-bar select:focus{border-color:var(--accent);}
+.global-add-bar input[type=text]{flex:1;min-width:180px;}
+.suivi-row{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:6px;font-size:13px;}
+.suivi-row-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* ── COLOR PICKER ── */
+.color-picker{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.color-dot{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;flex-shrink:0;transition:border-color .15s;}
+.color-dot.selected{border-color:var(--text);}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:var(--bg);padding:9px 18px;border-radius:20px;font-size:13px;font-weight:500;opacity:0;transition:all .25s;z-index:999;pointer-events:none;white-space:nowrap;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:60px 20px;color:var(--muted);font-size:14px;}
+.empty-icon{font-size:32px;margin-bottom:10px;}
+
+/* ── LOG ── */
+.log-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);margin-bottom:12px;overflow:hidden;}
+.log-head{padding:12px 16px;font-size:13px;font-weight:500;border-bottom:1px solid var(--border);}
+.log-body{padding:14px 16px;}
+.log-note{font-size:12px;color:var(--muted);line-height:1.6;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:600px){
+  .field-row{flex-direction:column;}
+  .kpi-grid{grid-template-columns:1fr 1fr;}
+}
+input,select,textarea{background:var(--bg);color:var(--text);}
+[data-theme="dark"] input,[data-theme="dark"] select,[data-theme="dark"] textarea{color-scheme:dark;}
+
+/* ── Task Detail Drawer ── */
+.td-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:300;opacity:0;pointer-events:none;transition:opacity .2s;}
+.td-overlay.open{opacity:1;pointer-events:all;}
+.td-drawer{position:fixed;top:0;right:0;width:min(480px,100vw);height:100vh;background:var(--surface);border-left:1px solid var(--border);z-index:301;transform:translateX(100%);transition:transform .25s;display:flex;flex-direction:column;overflow:hidden;}
+.td-drawer.open{transform:translateX(0);}
+.td-drawer-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;}
+.td-drawer-title{font-size:15px;font-weight:500;flex:1;line-height:1.4;outline:none;border:none;background:transparent;color:var(--text);font-family:var(--sans);resize:none;padding:0;width:100%;}
+.td-drawer-title:focus{outline:1px solid var(--accent);border-radius:3px;padding:2px 4px;}
+.td-drawer-close{width:28px;height:28px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0;cursor:pointer;background:none;border:none;font-size:16px;}
+.td-drawer-close:hover{background:var(--border);}
+/* Doc drawer (US/MO/CR) */
+.doc-drawer{position:fixed;top:0;right:0;width:min(520px,100vw);height:100vh;background:var(--surface);border-left:1px solid var(--border);z-index:302;transform:translateX(100%);transition:transform .25s;display:flex;flex-direction:column;overflow:hidden;}
+.doc-drawer.open{transform:translateX(0);}
+.doc-drawer-header{padding:14px 16px 12px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.doc-drawer-body{flex:1;overflow-y:auto;padding:16px;padding-bottom:env(safe-area-inset-bottom,32px);-webkit-overflow-scrolling:touch;}
+.doc-drawer-section{margin-bottom:20px;}
+.doc-drawer-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px;}
+.doc-breadcrumb{font-size:11px;color:var(--muted);margin-bottom:4px;}
+.doc-drawer-title{font-size:16px;font-weight:600;line-height:1.35;margin-bottom:8px;}
+.doc-story-box{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;font-size:13px;line-height:1.8;margin-bottom:10px;}
+.doc-ac-item{display:flex;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.doc-ac-item:last-child{border-bottom:none;}
+.doc-mo-meta{font-size:13px;margin-bottom:4px;}
+.doc-mo-steps{padding-left:16px;margin:8px 0;}
+.doc-mo-step{font-size:13px;margin-bottom:4px;}
+.doc-mo-substep{font-size:12px;color:var(--muted);margin-bottom:2px;list-style:circle;}
+.doc-mo-result{background:rgba(56,161,105,.08);border-left:3px solid var(--green);padding:6px 10px;font-size:13px;margin-top:8px;border-radius:0 4px 4px 0;}
+.doc-mo-error{background:rgba(229,62,62,.08);border-left:3px solid var(--red);padding:6px 10px;font-size:13px;margin-top:6px;border-radius:0 4px 4px 0;}
+.doc-version-item{padding:8px 0;border-bottom:1px solid var(--border);}
+.doc-version-item:last-child{border-bottom:none;}
+.doc-version-top{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.doc-version-tag{font-family:var(--mono);font-size:11px;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 6px;}
+.doc-version-date{font-size:12px;color:var(--muted);}
+.doc-diff-line{font-size:12px;display:flex;gap:6px;padding:2px 0;}
+.doc-diff-tag{font-family:var(--mono);font-size:10px;padding:1px 4px;border-radius:2px;flex-shrink:0;}
+.doc-diff-add{background:rgba(56,161,105,.15);color:var(--green);}
+.doc-diff-remove{background:rgba(229,62,62,.15);color:var(--red);}
+.doc-diff-change{background:rgba(245,158,11,.15);color:var(--amber);}
+.doc-comment-item{padding:8px 0;border-bottom:1px solid var(--border);}
+.doc-comment-item:last-child{border-bottom:none;}
+.doc-comment-text{font-size:13px;margin:4px 0;}
+.doc-comment-meta{font-size:11px;color:var(--muted);}
+.doc-avatar{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;}
+.td-drawer-body{flex:1;overflow-y:auto;padding:16px;padding-bottom:env(safe-area-inset-bottom,24px);-webkit-overflow-scrolling:touch;}
+.td-drawer-section{margin-bottom:20px;}
+.td-drawer-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px;}
+.td-status-badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid;user-select:none;transition:all .15s;}
+.td-status-brouillon{color:var(--muted);border-color:var(--muted);}
+.td-status-valide{color:var(--green);border-color:var(--green);}
+.td-history-item{padding:7px 10px;background:var(--bg);border-radius:var(--radius);margin-bottom:5px;font-size:12px;}
+.td-history-meta{color:var(--muted);font-size:11px;margin-bottom:3px;}
+.td-history-change{display:flex;gap:5px;align-items:baseline;margin-top:2px;font-size:11px;}
+.td-hist-tag{font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.04em;flex-shrink:0;color:var(--amber);}
+.td-comment-item{padding:8px 10px;background:var(--bg);border-radius:var(--radius);margin-bottom:6px;}
+.td-comment-text{font-size:13px;line-height:1.5;}
+.td-comment-meta{font-size:11px;color:var(--muted);margin-top:3px;}
+
+
+/* ── Autocomplete dropdown ── */
+.autocomplete-dropdown{
+  position:fixed;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  box-shadow:0 4px 12px rgba(0,0,0,.1);
+  max-height:200px;
+  overflow-y:auto;
+  z-index:1000;
+  display:none;
+  min-width:200px;
+}
+.autocomplete-dropdown.show{display:block;}
+.autocomplete-item{
+  padding:8px 12px;
+  cursor:pointer;
+  font-size:13px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  transition:background .12s;
+}
+.autocomplete-item:hover,.autocomplete-item.selected{
+  background:var(--bg);
+}
+.autocomplete-item .ac-avatar{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  font-size:9px;
+  font-weight:700;
+  color:#fff;
+  flex-shrink:0;
+}
+.autocomplete-item .ac-label{
+  flex:1;
+  font-family:var(--sans);
+}
+.autocomplete-item .ac-tag{
+  font-family:var(--mono);
+  font-size:10px;
+  color:var(--muted);
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="app-name">Projects</span>
+  <div class="sync-dot" id="sync-dot"></div>
+  <span class="sync-label" id="sync-label">Local</span>
+  <button class="hbtn" id="theme-btn" onclick="toggleTheme()" title="Thème">☀︎</button>
+  <button class="hbtn" id="hbtn-cloud" onclick="accessToken ? switchTab('log') : driveAuth()" title="Connecter Google Drive">☁</button>
+</div>
+
+<div class="tabs" id="tabs">
+  <button class="tab active" onclick="switchTab('projets')">Projets</button>
+  <button class="tab" onclick="switchTab('suivi')">Suivi</button>
+  <button class="tab" onclick="switchTab('global')">Vue globale</button>
+  <button class="tab" onclick="switchTab('equipe')">Équipe</button>
+  <button class="tab" onclick="switchTab('log')">Log</button>
+</div>
+
+<div class="page">
+
+<!-- ══ PROJETS ══ -->
+<div id="tab-projets" class="section active">
+
+  <!-- Form -->
+  <div class="form-card" id="proj-form">
+    <div style="font-size:13px;font-weight:500;margin-bottom:12px;" id="proj-form-title">Nouveau projet</div>
+    <div class="field-row">
+      <div class="field" style="flex:2">
+        <label>Nom du projet</label>
+        <input type="text" id="pf-nom" placeholder="ex: Refonte Site Web" onkeydown="if(event.key==='Enter')saveProject()">
+      </div>
+      <div class="field">
+        <label>Statut</label>
+        <select id="pf-statut">
+          <option value="actif">● Actif</option>
+          <option value="pause">⏸ En pause</option>
+          <option value="termine">✓ Terminé</option>
+          <option value="archive">□ Archivé</option>
+          <option value="abandonne">✕ Abandonné</option>
+        </select>
+      </div>
+    </div>
+    <div class="field" style="margin-top:8px;">
+      <label>Description (optionnel)</label>
+      <input type="text" id="pf-desc" placeholder="Objectif du projet…">
+    </div>
+    <div class="field-row" style="margin-top:8px;">
+      <div class="field">
+        <label>Date début</label>
+        <input type="date" id="pf-start">
+      </div>
+      <div class="field">
+        <label>Date cible</label>
+        <input type="date" id="pf-end">
+      </div>
+      <div class="field" style="flex:0">
+        <label>Couleur</label>
+        <div class="color-picker" id="proj-color-picker"></div>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="cancelProjEdit()">Annuler</button>
+      <button class="btn primary" onclick="saveProject()">Enregistrer</button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;align-items:center;">
+    <span style="font-size:12px;color:var(--muted);">Statut :</span>
+    <button class="btn sm active" id="sf-tous"    onclick="setProjFilter('tous')"   >Tous</button>
+    <button class="btn sm"        id="sf-actif"   onclick="setProjFilter('actif')"  >Actif</button>
+    <button class="btn sm"        id="sf-pause"   onclick="setProjFilter('pause')"  >Pause</button>
+    <button class="btn sm"        id="sf-termine" onclick="setProjFilter('termine')">Terminé</button>
+    <button class="btn sm"        id="sf-archive"    onclick="setProjFilter('archive')">Archivé</button>
+    <button class="btn sm"        id="sf-abandonne" onclick="setProjFilter('abandonne')">Abandonné</button>
+    <button class="btn primary sm" onclick="newProject()" style="margin-left:auto;">+ Nouveau</button>
+  </div>
+
+  <div id="proj-list"></div>
+</div>
+
+<!-- ══ SUIVI ══ -->
+<div id="tab-suivi" class="section">
+  <div class="suivi-header">
+    <select class="suivi-sel" id="suivi-proj-sel" onchange="localStorage.setItem('td_suivi_proj',this.value);loadSuiviData()">
+      <option value="">— Sélectionner un projet —</option>
+    </select>
+    <button class="btn sm" onclick="loadSuiviData()">↻ Actualiser</button>
+    <button class="btn sm" onclick="debugSuivi()" style="color:var(--amber);border-color:var(--amber);">🔍 Debug</button>
+  </div>
+  <div id="suivi-content"><div class="empty"><div class="empty-icon">📊</div>Sélectionnez un projet pour voir son suivi</div></div>
+</div>
+
+<!-- ══ VUE GLOBALE ══ -->
+<div id="tab-global" class="section">
+  <div class="suivi-header">
+    <button class="btn sm" onclick="loadGlobalData()">↻ Actualiser</button>
+    <button class="btn sm" id="global-done-btn" onclick="toggleGlobalDone()" style="margin-left:4px;">Masquer terminées</button>
+    <span id="global-status" style="font-size:12px;color:var(--muted);flex:1;text-align:right;"></span>
+  </div>
+  <div id="global-content"><div class="empty"><div class="empty-icon">🌐</div>Cliquez sur Actualiser pour charger la vue globale</div></div>
+</div>
+
+<!-- ══ ÉQUIPE ══ -->
+<div id="tab-equipe" class="section">
+  <div class="form-card" id="team-form">
+    <div style="font-size:13px;font-weight:500;margin-bottom:12px;" id="team-form-title">Nouveau membre</div>
+    <div class="field-row">
+      <div class="field" style="flex:2">
+        <label>Nom complet</label>
+        <input type="text" id="tf-nom" placeholder="Marie Dupont" maxlength="50" onkeydown="if(event.key==='Enter')saveMember()">
+      </div>
+      <div class="field" style="flex:0;min-width:80px;">
+        <label>Initiales</label>
+        <input type="text" id="tf-init" placeholder="MD" maxlength="3">
+      </div>
+      <div class="field" style="flex:0;min-width:80px;">
+        <label>Alias @</label>
+        <input type="text" id="tf-alias" placeholder="JV" maxlength="10" oninput="this.value=this.value.replace(/[^a-zA-Z0-9]/g,'')">
+      </div>
+    </div>
+    <div class="field-row" style="margin-top:8px;">
+      <div class="field">
+        <label>Couleur</label>
+        <div class="color-picker" id="team-color-picker"></div>
+      </div>
+      <div class="field">
+        <label>Rôles</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="role-btn" id="rb-red" onclick="toggleRole('red')" style="border:1px solid var(--red);color:var(--red);">Rédacteur</button>
+          <button class="role-btn" id="rb-val" onclick="toggleRole('val')" style="border:1px solid var(--border);color:var(--muted);">Valideur</button>
+        </div>
+      </div>
+      <div class="field" style="min-width:120px;">
+        <label>Fonction</label>
+        <select id="tf-approle" style="font-family:var(--sans);font-size:13px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none;width:100%;">
+          <option value="">—</option>
+          <option value="Admin">Admin</option>
+          <option value="IT">IT</option>
+          <option value="Métier">Métier</option>
+          <option value="Sales">Sales</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="cancelMemberEdit()">Annuler</button>
+      <button class="btn primary" onclick="saveMember()">Enregistrer</button>
+    </div>
+  </div>
+
+  <div id="team-list"></div>
+</div>
+
+<!-- ══ LOG ══ -->
+<div id="tab-log" class="section">
+
+  <div class="log-block">
+    <div class="log-head">☁ Google Drive</div>
+    <div class="log-body" id="drive-anchor">
+      <p class="log-note" style="margin-bottom:12px;">Projects est la source de vérité pour <code>shared.json</code> (projets + équipe) partagé avec MO Hub, CR Generator et US Generator.</p>
+      <div class="btn-row">
+        <button class="btn primary" id="btn-auth" onclick="driveAuth()">Connecter Google</button>
+        <button class="btn" id="btn-pull" onclick="drivePull()" disabled>⬇ Charger</button>
+        <button class="btn" id="btn-push" onclick="drivePush()" disabled>⬆ Sauvegarder</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;">
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted);">Auto-sync</span>
+        <select id="poll-interval" onchange="setPollInterval(this.value)"
+          style="font-family:var(--mono);font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);cursor:pointer;">
+          <option value="0">Désactivé</option>
+          <option value="10">10 s</option>
+          <option value="30" selected>30 s</option>
+          <option value="60">1 min</option>
+          <option value="300">5 min</option>
+        </select>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--muted);" id="poll-next"></span>
+      </div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:8px;" id="drive-status-detail"></div>
+    </div>
+  </div>
+
+  <div class="log-block">
+    <div class="log-head">📦 Export / Import</div>
+    <div class="log-body">
+      <div class="btn-row">
+        <button class="btn" onclick="exportData()">Copier JSON</button>
+        <button class="btn" onclick="downloadData()">↓ .json</button>
+        <button class="btn" onclick="openImport()">Importer JSON</button>
+        <button class="btn danger" onclick="clearAll()">Tout effacer</button>
+      </div>
+      <textarea id="log-area" readonly style="width:100%;height:120px;font-family:var(--mono);font-size:11px;padding:8px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);resize:vertical;" placeholder="Copier JSON pour exporter…"></textarea>
+      <div id="imp-area-wrap" style="display:none;margin-top:8px;">
+        <textarea id="imp-area" style="width:100%;height:100px;font-family:var(--mono);font-size:11px;padding:8px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);resize:vertical;" placeholder="Collez le JSON ici…"></textarea>
+        <div style="display:flex;gap:8px;margin-top:6px;">
+          <button class="btn primary" onclick="importData()">Importer</button>
+          <button class="btn" onclick="closeImport()">Annuler</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div><!-- /page -->
+
+<div id="toast"></div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+/* ══ CONSTANTS ══ */
+const SK  = 'td_v4_projects';
+const TK  = 'td_theme_projects';
+const TOK = 'td_tok_projects';
+const CLIENT_ID   = '962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com';
+const SCOPE       = 'https://www.googleapis.com/auth/drive';
+const DRIVE_FILE  = 'projects.json';
+const SHARED_FILE = 'shared.json';
+const THEMES = ['light','sand','navy','dark'];
+const THEME_ICONS = {light:'☀︎',sand:'○',navy:'◑',dark:'☾'};
+
+const PROJ_COLORS = ['#E53E3E','#DD6B20','#38A169','#3182CE','#6B46C1','#D53F8C','#2C7A7B','#718096','#5B4FE8','#0F766E'];
+const TEAM_COLORS = ['#E53E3E','#DD6B20','#38A169','#3182CE','#6B46C1','#D53F8C','#2C7A7B','#718096'];
+const STATUS_LABELS = {actif:'Actif',pause:'En pause',termine:'Terminé',archive:'Archivé',abandonne:'Abandonné'};
+const STATUS_CLS   = {actif:'s-actif',pause:'s-pause',termine:'s-termine',archive:'s-archive'};
+const STATUS_CYCLE = ['actif','pause','termine','archive'];
+
+/* ══ STATE ══ */
+let S = {projects:[], team:[]};
+
+function ensureState() {
+  if (!Array.isArray(S.projects)) S.projects = [];
+  if (!Array.isArray(S.team))     S.team     = [];
+  // Ensure alias on all team members
+  S.team.forEach(function(m){ if(!m.alias) m.alias=(m.initiales||'').toLowerCase(); });
+  S.projects.forEach(p => {
+    if (!p.status)     p.status    = 'actif';
+    if (!p.color)      p.color     = PROJ_COLORS[3];
+    if (!p.desc)       p.desc      = '';
+    if (!p.dateStart)  p.dateStart = '';
+    if (!p.dateEnd)    p.dateEnd   = '';
+  });
+  S.team.forEach(m => {
+    if (!m.roles) m.roles = [];
+    if (!m.color) m.color = TEAM_COLORS[3];
+  });
+}
+
+/* ══ PERSIST ══ */
+function save() {
+  localStorage.setItem(SK, JSON.stringify(S));
+}
+let _autoTimer = null;
+function autoSave() {
+  save();
+  setSync('pending');
+  clearTimeout(_autoTimer);
+  _autoTimer = setTimeout(() => silentPush(), 2000);
+}
+function setSync(state) {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  const map  = {local:'',ok:'ok',pending:'pending',error:'error'};
+  dot.className = 'sync-dot ' + (map[state]||'');
+  lbl.textContent = {local:'Local',ok:'Sync ✓',pending:'Sauvegarde…',error:'Erreur'}[state]||'Local';
+}
+
+/* ══ TABS ══ */
+const TABS = ['projets','suivi','global','equipe','log'];
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach((b,i) => b.classList.toggle('active', TABS[i]===t));
+  TABS.forEach(id => {
+    const el = document.getElementById('tab-'+id);
+    if (el) el.classList.toggle('active', id===t);
+  });
+  if (t==='suivi')  { populateSuiviSel(); renderSuivi(); }
+  if (t==='global') { loadGlobalData(); }
+  if (t==='equipe') renderTeam();
+  if (t==='projets') renderProjects();
+}
+
+/* ══ THEME ══ */
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t==='light'?'':t);
+  document.getElementById('theme-btn').textContent = THEME_ICONS[t]||'☀︎';
+  localStorage.setItem(TK, t);
+}
+function toggleTheme() {
+  const cur = localStorage.getItem(TK)||'light';
+  applyTheme(THEMES[(THEMES.indexOf(cur)+1)%THEMES.length]);
+}
+
+/* ══ UTILS ══ */
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function uid()  { return Date.now(); }
+function fd(d)  { if (!d) return ''; return new Date(d).toLocaleDateString('fr-FR'); }
+function toast(msg, dur=2400) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), dur);
+}
+
+/* ══ COLOR PICKERS ══ */
+let projSelectedColor = PROJ_COLORS[3];
+let teamSelectedColor = TEAM_COLORS[3];
+
+function buildColorPicker(containerId, colors, selected, onSelect) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = colors.map(c =>
+    `<div class="color-dot${c===selected?' selected':''}" style="background:${c}" onclick="(${onSelect.toString()})('${c}')"></div>`
+  ).join('');
+}
+function selectProjColor(c) { projSelectedColor=c; buildColorPicker('proj-color-picker',PROJ_COLORS,c,selectProjColor); }
+function selectTeamColor(c) { teamSelectedColor=c; buildColorPicker('team-color-picker',TEAM_COLORS,c,selectTeamColor); }
+
+/* ══ PROJECTS CRUD ══ */
+let projFilter = 'tous';
+let editingProjId = null;
+
+function setProjFilter(f) {
+  projFilter = f;
+  ['tous','actif','pause','termine','archive','abandonne'].forEach(k => {
+    const b = document.getElementById('sf-'+k);
+    if (b) { b.className = 'btn sm'+(f===k?' active':''); b.style.borderColor = f===k?'var(--accent)':''; b.style.color = f===k?'var(--accent)':''; }
+  });
+  renderProjects();
+}
+
+function newProject() {
+  editingProjId = null;
+  document.getElementById('pf-nom').value = '';
+  document.getElementById('pf-desc').value = '';
+  document.getElementById('pf-start').value = '';
+  document.getElementById('pf-end').value = '';
+  document.getElementById('pf-statut').value = 'actif';
+  document.getElementById('proj-form-title').textContent = 'Nouveau projet';
+  selectProjColor(PROJ_COLORS[3]);
+  document.getElementById('pf-nom').focus();
+  document.getElementById('proj-form').scrollIntoView({behavior:'smooth'});
+}
+
+function cancelProjEdit() {
+  editingProjId = null;
+  document.getElementById('pf-nom').value = '';
+  document.getElementById('pf-desc').value = '';
+  document.getElementById('pf-start').value = '';
+  document.getElementById('pf-end').value = '';
+  document.getElementById('proj-form-title').textContent = 'Nouveau projet';
+}
+
+function saveProject() {
+  const nom = document.getElementById('pf-nom').value.trim();
+  if (!nom) { toast('⚠ Nom requis'); return; }
+  const data = {
+    name:      nom,
+    desc:      document.getElementById('pf-desc').value.trim(),
+    status:    document.getElementById('pf-statut').value,
+    color:     projSelectedColor,
+    dateStart: document.getElementById('pf-start').value,
+    dateEnd:   document.getElementById('pf-end').value,
+  };
+  if (editingProjId) {
+    const p = S.projects.find(x => x.id===editingProjId);
+    if (p) Object.assign(p, data);
+  } else {
+    S.projects.unshift({id:'p_'+uid(), ...data});
+  }
+  cancelProjEdit();
+  autoSave(); syncShared(); renderProjects();
+  toast(editingProjId ? '✓ Projet mis à jour' : '✓ Projet créé');
+  editingProjId = null;
+}
+
+function editProject(id) {
+  const p = S.projects.find(x => x.id===id); if (!p) return;
+  editingProjId = id;
+  document.getElementById('pf-nom').value    = p.name;
+  document.getElementById('pf-desc').value   = p.desc||'';
+  document.getElementById('pf-start').value  = p.dateStart||'';
+  document.getElementById('pf-end').value    = p.dateEnd||'';
+  document.getElementById('pf-statut').value = p.status||'actif';
+  document.getElementById('proj-form-title').textContent = 'Modifier le projet';
+  selectProjColor(p.color||PROJ_COLORS[3]);
+  document.getElementById('proj-form').scrollIntoView({behavior:'smooth'});
+}
+
+function cycleProjectStatus(id) {
+  const p = S.projects.find(x => x.id===id); if (!p) return;
+  const idx = STATUS_CYCLE.indexOf(p.status||'actif');
+  p.status = STATUS_CYCLE[(idx+1)%STATUS_CYCLE.length];
+  autoSave(); syncShared(); renderProjects();
+}
+
+function archiveProject(id) {
+  const p = S.projects.find(x => x.id===id); if (!p) return;
+  p.status = p.status==='archive' ? 'actif' : 'archive';
+  autoSave(); syncShared(); renderProjects();
+  toast(p.status==='archive' ? 'Projet archivé' : 'Projet réactivé');
+}
+
+function deleteProject(id) {
+  if (!confirm('Supprimer ce projet définitivement ?')) return;
+  S.projects = S.projects.filter(x => x.id!==id);
+  autoSave(); syncShared(); renderProjects(); toast('Projet supprimé');
+}
+
+function renderProjects() {
+  const el = document.getElementById('proj-list'); if (!el) return;
+  let list = S.projects;
+  if (projFilter !== 'tous') list = list.filter(p => (p.status||'actif')===projFilter);
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📁</div>${projFilter==='tous'?'Aucun projet. Créez-en un ci-dessus.':'Aucun projet avec ce statut.'}</div>`;
+    return;
+  }
+  el.innerHTML = list.map(p => {
+    const st = p.status||'actif';
+    const stCls = STATUS_CLS[st]||'s-actif';
+    const stLbl = STATUS_LABELS[st]||st;
+    const dateStr = p.dateStart||p.dateEnd
+      ? `${p.dateStart?fd(p.dateStart):''} → ${p.dateEnd?fd(p.dateEnd):'?'}`
+      : '';
+    // Count team members assigned (all by default)
+    const memberCount = S.team.length;
+    return `
+    <div class="card" onclick="openProjectSuivi('${p.id}')">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:12px;height:44px;border-radius:4px;background:${p.color};flex-shrink:0;"></div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span style="font-size:14px;font-weight:500;">${esc(p.name)}</span>
+            <span class="status-pill ${stCls}" onclick="event.stopPropagation();cycleProjectStatus('${p.id}')">${stLbl}</span>
+          </div>
+          ${p.desc?`<div style="font-size:12px;color:var(--muted);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(p.desc)}</div>`:''}
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;display:flex;gap:12px;flex-wrap:wrap;">
+            ${dateStr?`<span>📅 ${dateStr}</span>`:''}
+            ${memberCount?`<span>👥 ${memberCount} membre${memberCount>1?'s':''}</span>`:''}
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;" onclick="event.stopPropagation()">
+          <button class="btn sm" onclick="editProject('${p.id}')">✎</button>
+          <button class="btn sm" onclick="archiveProject('${p.id}')">${st==='archive'?'↩':'⬜'}</button>
+          <button class="btn sm danger" onclick="deleteProject('${p.id}')">✕</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openProjectSuivi(id) {
+  switchTab('suivi');
+  document.getElementById('suivi-proj-sel').value = id;
+  localStorage.setItem('td_suivi_proj', id);
+  loadSuiviData();
+}
+
+/* ══ TEAM CRUD ══ */
+let editingMemberId = null;
+let teamRoleRed = true, teamRoleVal = false;
+
+function toggleRole(r) {
+  if (r==='red') teamRoleRed = !teamRoleRed;
+  else           teamRoleVal = !teamRoleVal;
+  renderRoleBtns();
+}
+function renderRoleBtns() {
+  const rr = document.getElementById('rb-red');
+  const rv = document.getElementById('rb-val');
+  if (rr) {rr.style.background=teamRoleRed?'var(--red)':'transparent';rr.style.color=teamRoleRed?'#fff':'var(--red)';}
+  if (rv) {rv.style.background=teamRoleVal?'var(--green)':'transparent';rv.style.color=teamRoleVal?'#fff':'var(--muted)';rv.style.borderColor=teamRoleVal?'var(--green)':'var(--border)';}
+}
+
+function cancelMemberEdit() {
+  editingMemberId = null;
+  document.getElementById('tf-nom').value  = '';
+  document.getElementById('tf-init').value = '';
+  teamRoleRed = true; teamRoleVal = false;
+  renderRoleBtns();
+  selectTeamColor(TEAM_COLORS[3]);
+  const _arc=document.getElementById('tf-approle');if(_arc)_arc.value='';
+  document.getElementById('team-form-title').textContent = 'Nouveau membre';
+}
+
+function saveMember() {
+  const nom  = document.getElementById('tf-nom').value.trim();
+  const initR= document.getElementById('tf-init').value.trim().toUpperCase();
+  const init = initR || nom.split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase();
+  if (!nom) { toast('⚠ Nom requis'); return; }
+  const roles = [];
+  if (teamRoleRed) roles.push('redacteur');
+  if (teamRoleVal) roles.push('valideur');
+  if (!roles.length) { toast('⚠ Au moins un rôle requis'); return; }
+  const appRole = (document.getElementById('tf-approle')||{}).value||'';
+  if (editingMemberId) {
+    const m = S.team.find(x => x.id===editingMemberId);
+    const al2=document.getElementById('tf-alias').value.trim()||init.toLowerCase();
+    if (m) Object.assign(m, {nom, initiales:init, alias:al2, color:teamSelectedColor, roles, appRole});
+  } else {
+    const al3=document.getElementById('tf-alias').value.trim()||init.toLowerCase();
+    S.team.push({id:'m_'+uid(), nom, initiales:init, alias:al3, color:teamSelectedColor, roles, appRole});
+  }
+  cancelMemberEdit();
+  autoSave(); syncShared(); renderTeam();
+  toast('✓ Membre enregistré');
+}
+
+function editMember(id) {
+  const m = S.team.find(x => x.id===id); if (!m) return;
+  editingMemberId = id;
+  document.getElementById('tf-nom').value  = m.nom;
+  document.getElementById('tf-init').value = m.initiales;
+  document.getElementById('tf-alias').value = m.alias||m.initiales.toLowerCase();
+  teamRoleRed = m.roles.includes('redacteur');
+  teamRoleVal = m.roles.includes('valideur');
+  renderRoleBtns();
+  selectTeamColor(m.color||TEAM_COLORS[3]);
+  const _ar=document.getElementById('tf-approle');if(_ar)_ar.value=m.appRole||'';
+  document.getElementById('team-form-title').textContent = 'Modifier le membre';
+  document.getElementById('tf-nom').focus();
+}
+
+function deleteMember(id) {
+  if (!confirm('Supprimer ce membre ?')) return;
+  S.team = S.team.filter(x => x.id!==id);
+  autoSave(); syncShared(); renderTeam(); toast('Membre supprimé');
+}
+
+function renderTeam() {
+  const el = document.getElementById('team-list'); if (!el) return;
+  renderRoleBtns();
+  buildColorPicker('team-color-picker', TEAM_COLORS, teamSelectedColor, selectTeamColor);
+  if (!S.team.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">👥</div>Aucun membre. Ajoutez vos collaborateurs ci-dessus.</div>`;
+    return;
+  }
+  el.innerHTML = S.team.map(m => {
+    const roleHtml = (m.roles||[]).map(r =>
+      `<span class="role-chip ${r==='redacteur'?'role-red':'role-val'}">${r==='redacteur'?'Rédacteur':'Valideur'}</span>`
+    ).join('');
+    return `
+    <div class="member-card">
+      <div class="avatar" style="background:${m.color}">${esc(m.initiales)}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:500;">${esc(m.nom)} <span style="font-family:var(--mono);font-size:11px;color:var(--muted);">@${esc(m.alias||m.initiales.toLowerCase())}</span></div>
+        <div style="display:flex;gap:5px;margin-top:4px;flex-wrap:wrap;">${roleHtml}${m.appRole?`<span style="background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:10px;font-size:11px;padding:1px 7px;">${esc(m.appRole)}</span>`:''}</div>
+      </div>
+      <button class="btn sm" onclick="editMember('${m.id}')">✎</button>
+      <button class="btn sm danger" onclick="deleteMember('${m.id}')">✕</button>
+    </div>`;
+  }).join('');
+}
+
+/* ══ SUIVI ══ */
+let suiviData = {us:[], mo:[], cr:[]};
+
+function populateSuiviSel() {
+  const sel = document.getElementById('suivi-proj-sel'); if (!sel) return;
+  const prev = sel.value || localStorage.getItem('td_suivi_proj') || '';
+  sel.innerHTML = '<option value="">— Sélectionner un projet —</option>' +
+    S.projects.filter(p=>p.status!=='archive').map(p =>
+      `<option value="${p.id}"${p.id===prev?' selected':''}>${esc(p.name)}</option>`
+    ).join('');
+  if (prev) sel.value = prev;
+}
+
+async function loadSuiviData() {
+  if (!accessToken) { toast('Connectez Drive pour charger le suivi'); return; }
+  const projId = document.getElementById('suivi-proj-sel').value;
+  if (!projId) { toast('Sélectionnez un projet'); return; }
+  toast('Chargement…');
+
+  const files = [
+    {key:'us',     name:'us-generator.json'},
+    {key:'mo',     name:'mo-generator.json'},
+    {key:'cr',     name:'cr-generator.json'},
+    {key:'todos',  name:'projet001.json'},
+    {key:'shared', name:'shared.json'},
+  ];
+  suiviData = {us:[], mo:[], cr:[], backlog:[], sharedProjects:[], sharedTeam:[], usFullData:null, usFileId:null, moFullData:null, moFileId:null, crFullData:null, crFileId:null};
+
+  for (const f of files) {
+    try {
+      const q = encodeURIComponent(`name='${f.name}' and trashed=false`);
+      const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)&orderBy=modifiedTime+desc`,
+        {headers:{Authorization:'Bearer '+accessToken}});
+      const d = await res.json();
+      console.log(`[Suivi] ${f.name}: ${d.files ? d.files.length : 'erreur'} fichier(s) trouvé(s)`, d.files||d.error||'');
+      if (d.files && d.files[0]) {
+        const fileId = d.files[0].id;
+        const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+          {headers:{Authorization:'Bearer '+accessToken}});
+        const data = await r.json();
+        if (f.key === 'todos') {
+          suiviData.backlog = Array.isArray(data.backlog) ? data.backlog : [];
+          projet001FullData = data;
+          projet001FileId = fileId;
+        } else if (f.key === 'shared') {
+          suiviData.sharedProjects = Array.isArray(data.projects) ? data.projects : [];
+          suiviData.sharedTeam = Array.isArray(data.team) ? data.team : [];
+        } else {
+          suiviData[f.key] = data.history || data.entries || [];
+          suiviData[f.key+'FullData'] = data;
+          suiviData[f.key+'FileId'] = fileId;
+        }
+      }
+    } catch(e) { console.warn('suivi load', f.name, e); }
+  }
+  renderSuivi();
+  const _diagCR = suiviData.cr||[];
+  const _diagProj = document.getElementById('suivi-proj-sel').value;
+  console.log('[Suivi] CR chargés:', _diagCR.length, '| projId sélectionné:', _diagProj);
+  _diagCR.forEach(function(e){ console.log('  CR:', e.title||e.titre, '| e.projet:', e.projet); });
+  toast('✓ ' + _diagCR.length + ' CR · ' + (suiviData.us||[]).length + ' US · ' + (suiviData.mo||[]).length + ' MO chargés');
+}
+
+
+// ── Admin helper ──────────────────────────────────────────────────────────
+function getAdminMember(){
+  return (S.team||[]).find(function(m){return m.appRole==='Admin';})||null;
+}
+function adminBadgeHtml(task){
+  // Show assignee badges; always include Admin visually if assigneeIds missing
+  const team = S.team||[];
+  const admin = getAdminMember();
+  const ids = task.assigneeIds && task.assigneeIds.length ? task.assigneeIds
+             : (admin ? [admin.id] : []);
+  return ids.map(function(id){
+    const m = team.find(function(x){return x.id===id;});
+    if(!m) return '';
+    return `<span title="${esc(m.nom)}" style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:${m.color};font-size:9px;font-weight:700;color:#fff;flex-shrink:0;">${m.initiales}</span>`;
+  }).join('');
+}
+function renderSuivi() {
+  const el = document.getElementById('suivi-content'); if (!el) return;
+  const projId = document.getElementById('suivi-proj-sel').value;
+  if (!projId) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📊</div>Sélectionnez un projet pour voir son suivi</div>`;
+    return;
+  }
+  const proj = S.projects.find(p => p.id===projId);
+  if (!proj) return;
+
+  // Filter by project — match by ID primary, project name as fallback
+  // (handles ID mismatch when todos was used before migration to Projects)
+  const blAll   = (suiviData.backlog||[]).filter(e => {
+    if (e.projId === projId) return true;
+    // Fallback: try to match by finding the project whose name matches what todos had stored
+    if (!e.projId) return false;
+    // Check if any project in shared data maps this projId to current proj
+    const todoProj = (suiviData.sharedProjects||[]).find(p => p.id === e.projId);
+    return todoProj && todoProj.name.toLowerCase() === proj.name.toLowerCase();
+  });
+  // Match by ID, or fallback by project name (handles ID mismatch across apps)
+  function matchesProj(e) {
+    if (!e.projet && e.projet !== 0) return false;
+    if (e.projet === projId) return true;
+    // Check via suiviData.sharedProjects (loaded from shared.json in loadSuiviData)
+    const entryProjInShared = (suiviData.sharedProjects||[]).find(p => p.id === e.projet);
+    if (entryProjInShared && proj && entryProjInShared.name.toLowerCase() === proj.name.toLowerCase()) return true;
+    // Check via S.projects (authoritative list from projects.json)
+    const entryProjInLocal = (S.projects||[]).find(p => p.id === e.projet);
+    if (entryProjInLocal && proj && entryProjInLocal.name.toLowerCase() === proj.name.toLowerCase()) return true;
+    // Direct name match (e.projet stored as name string instead of ID)
+    if (typeof e.projet === 'string' && proj && e.projet.toLowerCase() === proj.name.toLowerCase()) return true;
+    return false;
+  }
+  const usAll   = suiviData.us.filter(matchesProj);
+  const moAll   = suiviData.mo.filter(matchesProj);
+  const crAll   = suiviData.cr.filter(matchesProj);
+  const blActive = blAll.filter(e => !e.done);
+  const blDone   = blAll.filter(e => !!e.done);
+
+  const usValide  = usAll.filter(e => e.status==='valide').length;
+  const usBrouill = usAll.filter(e => (e.status||'brouillon')==='brouillon').length;
+  const usValid   = usAll.filter(e => e.status==='validation').length;
+  const moValide  = moAll.filter(e => e.status==='valide').length;
+  const crValide  = crAll.filter(e => e.status==='valide').length;
+
+  const totalUS = usAll.length;
+  const pct = totalUS ? Math.round(usValide/totalUS*100) : 0;
+
+  const STATUS_US  = {brouillon:'Brouillon',validation:'En validation',valide:'Validé ✓',renvoye:'Renvoyé',archive:'Archivé'};
+  const STATUS_MOC = {brouillon:'Brouillon',validation:'En validation',valide:'Validé ✓',renvoye:'Renvoyé',archive:'Archivé'};
+
+  let h = `
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+    <div style="width:14px;height:40px;border-radius:4px;background:${proj.color};flex-shrink:0;"></div>
+    <div>
+      <div style="font-size:16px;font-weight:600;">${esc(proj.name)}</div>
+      ${proj.desc?`<div style="font-size:12px;color:var(--muted);">${esc(proj.desc)}</div>`:''}
+    </div>
+    <span class="status-pill ${STATUS_CLS[proj.status||'actif']} " style="margin-left:auto">${STATUS_LABELS[proj.status||'actif']}</span>
+  </div>`;
+
+  // Progress bar US
+  if (totalUS > 0) {
+    h += `<div style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-size:12px;font-weight:500;">Progression US</span>
+        <span style="font-size:12px;color:var(--muted);">${usValide}/${totalUS} validées — ${pct}%</span>
+      </div>
+      <div class="progress-wrap"><div class="progress-fill${pct===100?' done':''}" style="width:${pct}%"></div></div>
+    </div>`;
+  }
+
+  // KPIs
+  h += `<div class="kpi-grid">
+    <div class="kpi-box"><div class="kpi-n">${totalUS}</div><div class="kpi-l">US totales</div></div>
+    <div class="kpi-box"><div class="kpi-n" style="color:var(--green)">${usValide}</div><div class="kpi-l">US validées</div></div>
+    <div class="kpi-box"><div class="kpi-n" style="color:var(--amber)">${usValid}</div><div class="kpi-l">En validation</div></div>
+    <div class="kpi-box"><div class="kpi-n">${moAll.length}</div><div class="kpi-l">Modes opératoires</div></div>
+    <div class="kpi-box"><div class="kpi-n">${crAll.length}</div><div class="kpi-l">Comptes rendus</div></div>
+    <div class="kpi-box"><div class="kpi-n" style="color:var(--green)">${crValide}</div><div class="kpi-l">CR validés</div></div>
+    ${blAll.length ? `<div class="kpi-box"><div class="kpi-n">${blActive.length}</div><div class="kpi-l">Tâches actives</div></div>
+    <div class="kpi-box"><div class="kpi-n" style="color:var(--green)">${blDone.length}</div><div class="kpi-l">Tâches terminées</div></div>` : ''}
+  </div>`;
+
+  // Tâches backlog (todos)
+  if (blAll.length) {
+    h += `<div class="suivi-section"><div class="suivi-section-title">Tâches (${blAll.length})</div>`;
+    // Active first, done after
+    const blSorted = [...blActive, ...blDone];
+    h += blSorted.map(e => {
+      const prioCls = {p1:'color:var(--red)',p2:'color:var(--amber)',p3:'color:var(--muted)'}[e.pri]||'color:var(--muted)';
+      return `<div class="suivi-row" style="${e.done?'opacity:.6':''};cursor:pointer;" onclick="if(!event.target.closest('input,button'))openTD('${e.id}')">
+        <input type="checkbox" ${e.done?'checked':''} data-action="toggleTask" data-id="${e.id}"
+          style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);flex-shrink:0;">
+        <span class="suivi-row-title"${e.done?' style="text-decoration:line-through;color:var(--muted)"':''}>${esc(e.text||'Sans titre')}</span>
+        ${e.pri?`<span style="font-size:11px;font-weight:600;${prioCls}">${e.pri.toUpperCase()}</span>`:''}
+        ${e.hz?`<span style="font-size:10px;color:var(--muted);padding:1px 6px;border:1px solid var(--border);border-radius:10px;">${e.hz}</span>`:''}
+        ${(e.status||'brouillon')==='valide'?`<span style="font-size:10px;font-weight:600;color:var(--green);border:1px solid var(--green);padding:1px 5px;border-radius:10px;">Validé ✓</span>`:''}
+        <span style="display:inline-flex;gap:3px;">${adminBadgeHtml(e)}</span>
+      </div>`;
+    }).join('');
+    h += '</div>';
+  }
+
+  // US list
+  if (usAll.length) {
+    h += `<div class="suivi-section"><div class="suivi-section-title">User Stories (${usAll.length})</div>`;
+    h += usAll.map((e,_i) => { _docIndex['us-'+_i]=e;
+      const st = e.status||'brouillon';
+      const stCls = {brouillon:'s-archive',validation:'s-pause',valide:'s-actif',renvoye:'s-termine',archive:'s-archive'}[st]||'s-archive';
+      return `<div class="suivi-row" style="cursor:pointer;" onclick="openDocDrawer('us',_docIndex['us-${_i}'].id)">
+        ${st==='valide'?'<span style="color:var(--green);font-size:11px;">✓</span>':'<span style="color:var(--muted);font-size:11px;">○</span>'}
+        <span class="suivi-row-title">${esc(e.titre||'Sans titre')}</span>
+        <span class="status-pill ${stCls}" style="cursor:default;font-size:10px;">${STATUS_US[st]||st}</span>
+        ${e.est?`<span style="font-size:11px;color:var(--muted)">${e.est}pts</span>`:''}
+      </div>`;
+    }).join('');
+    h += '</div>';
+  }
+
+  // MO list
+  if (moAll.length) {
+    h += `<div class="suivi-section"><div class="suivi-section-title">Modes Opératoires (${moAll.length})</div>`;
+    h += moAll.map((e,_i) => { _docIndex['mo-'+_i]=e;
+      const st = e.status||'brouillon';
+      const stCls = {brouillon:'s-archive',validation:'s-pause',valide:'s-actif',renvoye:'s-termine'}[st]||'s-archive';
+      return `<div class="suivi-row" style="cursor:pointer;" onclick="openDocDrawer('mo',_docIndex['mo-${_i}'].id)">
+        ${st==='valide'?'<span style="color:var(--green);font-size:11px;">✓</span>':'<span style="color:var(--muted);font-size:11px;">○</span>'}
+        <span class="suivi-row-title">${esc(e.titre||'Sans titre')}</span>
+        <span class="status-pill ${stCls}" style="cursor:default;font-size:10px;">${STATUS_MOC[st]||st}</span>
+        ${e.savedAt?`<span style="font-size:11px;color:var(--muted)">${e.savedAt}</span>`:''}
+      </div>`;
+    }).join('');
+    h += '</div>';
+  }
+
+  // CR list
+  if (crAll.length) {
+    h += `<div class="suivi-section"><div class="suivi-section-title">Comptes Rendus (${crAll.length})</div>`;
+    h += crAll.map((e,_i) => { _docIndex['cr-'+_i]=e;
+      const st = e.status||'brouillon';
+      const stCls = {brouillon:'s-archive',validation:'s-pause',valide:'s-actif',renvoye:'s-termine'}[st]||'s-archive';
+      return `<div class="suivi-row" style="cursor:pointer;" onclick="openDocDrawer('cr',_docIndex['cr-${_i}'].id)">
+        ${st==='valide'?'<span style="color:var(--green);font-size:11px;">✓</span>':'<span style="color:var(--muted);font-size:11px;">○</span>'}
+        <span class="suivi-row-title">${esc(e.title||e.titre||'Sans titre')}</span>
+        <span class="status-pill ${stCls}" style="cursor:default;font-size:10px;">${STATUS_MOC[st]||st}</span>
+        ${e.savedAt?`<span style="font-size:11px;color:var(--muted)">${e.savedAt}</span>`:''}
+      </div>`;
+    }).join('');
+    h += '</div>';
+  }
+
+  if (!totalUS && !moAll.length && !crAll.length && !blAll.length) {
+    // Diagnostic: show unmatched CR/MO/US entries to help debug project ID mismatch
+    const allCR = suiviData.cr||[];
+    const diagHtml = allCR.length
+      ? '<div style="margin-top:12px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);font-size:11px;color:var(--muted);">'
+        +'<b>Diagnostic :</b> '+allCR.length+' CR trouvés en tout · '
+        +'projet sélectionné : <code>'+projId+'</code><br>'
+        +allCR.map(function(e){return '<span style="display:block;margin-top:4px;">CR "'+esc(e.title||e.titre||'?')+'" · projet stocké : <code>'+(e.projet||'(vide)')+'</code></span>';}).join('')
+        +'</div>'
+      : '';
+    h += `<div class="empty"><div class="empty-icon">📂</div>Aucune donnée rattachée à ce projet.<br><span style="font-size:12px">Connectez Drive et actualisez, ou rattachez des éléments depuis todos, MO Hub, CR Generator et US Generator.</span></div>`+diagHtml;
+  }
+
+  el.innerHTML = h;
+
+  // Event delegation for checkboxes — avoids Brave Shield breaking inline onchange
+  el.onchange = function(ev) {
+    const cb = ev.target.closest('[data-action="toggleTask"]');
+    if (!cb) return;
+    toggleBacklogTask(cb.dataset.id);
+  };
+}
+
+/* ══ SHARED.JSON SYNC ══ */
+let sharedFileId = null;
+
+async function syncShared() {
+  if (!accessToken) return;
+  try {
+    const body = JSON.stringify({
+      projects: S.projects.map(p => ({id:p.id, name:p.name, color:p.color, status:p.status, desc:p.desc})),
+      team: S.team
+    }, null, 2);
+    if (!sharedFileId) {
+      const q = encodeURIComponent(`name='${SHARED_FILE}' and trashed=false`);
+      const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`,
+        {headers:{Authorization:'Bearer '+accessToken}});
+      const d = await res.json();
+      sharedFileId = d.files && d.files[0] ? d.files[0].id : null;
+    }
+    if (sharedFileId) {
+      await fetch(`https://www.googleapis.com/upload/drive/v3/files/${sharedFileId}?uploadType=media`,
+        {method:'PATCH', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'}, body});
+    } else {
+      const meta = {name:SHARED_FILE, mimeType:'application/json'};
+      const form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(meta)],{type:'application/json'}));
+      form.append('media', new Blob([body],{type:'application/json'}));
+      const r = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+        {method:'POST', headers:{Authorization:'Bearer '+accessToken}, body:form});
+      const d = await r.json();
+      sharedFileId = d.id;
+    }
+  } catch(e) { console.warn('syncShared:', e.message); }
+}
+
+/* ══ GOOGLE DRIVE ══ */
+// Force fresh auth if stored token was issued with old scope (drive.file → drive)
+const _storedTok = sessionStorage.getItem(TOK) || '';
+const _scopeKey = 'td_scope_projects';
+const _lastScope = localStorage.getItem(_scopeKey) || '';
+if (_lastScope !== SCOPE) {
+  sessionStorage.removeItem(TOK); // token has wrong scope, discard
+  localStorage.setItem(_scopeKey, SCOPE);
+}
+let accessToken = (_lastScope === SCOPE ? _storedTok : '');
+let driveFileId = null;
+let projet001FileId = null; // cached Drive file ID for projet001.json
+let projet001FullData = null; // full JSON to rewrite on toggle
+
+
+async function writeProjet001(toastMsg) {
+  if (!accessToken) { toast('⚠ Reconnectez Drive'); return false; }
+  if (!projet001FullData) { toast('⚠ Cliquez Actualiser d\'abord'); return false; }
+  if (!projet001FileId) {
+    const q = encodeURIComponent("name='projet001.json' and trashed=false");
+    const r = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)&orderBy=modifiedTime+desc`,
+      {headers:{Authorization:'Bearer '+accessToken}}
+    );
+    const d = await r.json();
+    if (d.error) throw new Error(d.error.message);
+    projet001FileId = d.files && d.files[0] ? d.files[0].id : null;
+  }
+  if (!projet001FileId) { toast('⚠ projet001.json introuvable'); setSync('error'); return false; }
+  setSync('pending');
+  try {
+    const bodyStr = JSON.stringify(projet001FullData);
+    let resp;
+    if (bodyStr.length > 4*1024*1024) {
+      const init = await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${projet001FileId}?uploadType=resumable`,
+        {method:'PATCH', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json','X-Upload-Content-Type':'application/json'}, body:'{}'}
+      );
+      const url = init.headers.get('Location');
+      resp = await fetch(url, {method:'PUT', headers:{'Content-Type':'application/json'}, body:bodyStr});
+    } else {
+      resp = await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${projet001FileId}?uploadType=media`,
+        {method:'PATCH', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'}, body:bodyStr}
+      );
+    }
+    if (!resp.ok) {
+      const err = await resp.json().catch(()=>({error:{message:'HTTP '+resp.status}}));
+      setSync('error');
+      if (resp.status===401||resp.status===403) { accessToken=''; toast('⚠ Reconnectez Drive'); }
+      else toast('❌ Drive HTTP '+resp.status+' : '+((err.error&&err.error.message)||''));
+      return false;
+    }
+    setSync('ok');
+    if (toastMsg) toast(toastMsg);
+    return true;
+  } catch(e) {
+    setSync('error'); toast('❌ '+e.message); return false;
+  }
+}
+async function toggleBacklogTask(taskId) {
+  const numId = typeof taskId === 'string' ? parseInt(taskId, 10) : taskId;
+
+  // 1. Update local state immediately
+  const task = suiviData.backlog.find(t => t.id === numId || t.id === taskId);
+  if (!task) { toast('⚠ Tâche introuvable'); return; }
+  task.done = !task.done;
+  if (projet001FullData && Array.isArray(projet001FullData.backlog)) {
+    const bt = projet001FullData.backlog.find(t => t.id === numId || t.id === taskId);
+    if (bt) bt.done = task.done;
+  }
+
+  // 2. Re-render immediately (optimistic UI)
+  renderSuivi();
+
+  // 3. Write to Drive via shared helper
+  await writeProjet001(task.done ? '✓ Terminée' : '↩ Réactivée');
+}
+
+function loadGIS(cb) {
+  if (window.google && window.google.accounts) { cb(); return; }
+  const s = document.createElement('script');
+  s.src = 'https://accounts.google.com/gsi/client';
+  s.onload = cb; document.head.appendChild(s);
+}
+
+function driveAuth() {
+  loadGIS(() => {
+    const cl = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID, scope: SCOPE,
+      callback: r => {
+        if (r.error) { setSync('error'); toast('❌ '+r.error); return; }
+        accessToken = r.access_token;
+        sessionStorage.setItem(TOK, accessToken);
+        sessionStorage.setItem(TOK+'_exp', Date.now()+3500000);
+        setSync('ok');
+        updateDriveUI();
+        toast('✓ Drive connecté');
+        drivePull();
+        if (pollSecs > 0) startPolling();
+        // Auto-load suivi data if suivi tab is active or has a project selected
+        const suiviProj = document.getElementById('suivi-proj-sel');
+        if (suiviProj && suiviProj.value) loadSuiviData();
+      }
+    });
+    cl.requestAccessToken();
+  });
+}
+
+function updateDriveUI() {
+  const connected = !!accessToken;
+  document.getElementById('btn-pull').disabled = !connected;
+  document.getElementById('btn-push').disabled = !connected;
+  document.getElementById('sync-label').textContent = connected ? 'Sync ✓' : 'Local';
+  document.getElementById('sync-dot').className = 'sync-dot' + (connected?' ok':'');
+  const cb = document.getElementById('hbtn-cloud');
+  if (cb) cb.title = connected ? 'Drive connecté — cliquer pour le Log' : 'Connecter Google Drive';
+}
+
+async function findOrCreateDriveFile() {
+  if (driveFileId) return driveFileId;
+  const q = encodeURIComponent(`name='${DRIVE_FILE}' and trashed=false`);
+  const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)`,
+    {headers:{Authorization:'Bearer '+accessToken}});
+  const d = await r.json();
+  if (d.files && d.files[0]) { driveFileId = d.files[0].id; return driveFileId; }
+  // Create
+  const meta = {name:DRIVE_FILE, mimeType:'application/json'};
+  const body = JSON.stringify({projects:[], team:[]});
+  const form = new FormData();
+  form.append('metadata', new Blob([JSON.stringify(meta)],{type:'application/json'}));
+  form.append('media', new Blob([body],{type:'application/json'}));
+  const cr = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+    {method:'POST', headers:{Authorization:'Bearer '+accessToken}, body:form});
+  const cd = await cr.json();
+  driveFileId = cd.id;
+  return driveFileId;
+}
+
+async function drivePull() {
+  if (!accessToken) { toast('⚠ Connectez Drive d\'abord'); return; }
+  setSync('pending');
+  try {
+    const id = await findOrCreateDriveFile();
+    // Record modifiedTime to avoid re-pulling same version
+    const mr = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?fields=modifiedTime`,
+      {headers:{Authorization:'Bearer '+accessToken}});
+    if (mr.ok) { const mm = await mr.json(); lastModifiedKnown = mm.modifiedTime||null; }
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`,
+      {headers:{Authorization:'Bearer '+accessToken}});
+    const d = await r.json();
+    S = { projects: d.projects||[], team: d.team||[] };
+    ensureState(); save();
+    renderProjects(); renderTeam();
+    populateSuiviSel();
+    setSync('ok');
+    toast('✓ Données chargées depuis Drive');
+    document.getElementById('drive-status-detail').textContent = 'Dernière synchro : '+new Date().toLocaleTimeString('fr-FR');
+    if (pollSecs > 0) startPolling();
+  } catch(e) { setSync('error'); toast('❌ '+e.message); }
+}
+
+async function drivePush() {
+  if (!accessToken) { toast('⚠ Connectez Drive d\'abord'); return; }
+  setSync('pending');
+  try {
+    const id = await findOrCreateDriveFile();
+    const body = JSON.stringify({projects:S.projects, team:S.team}, null, 2);
+    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`,
+      {method:'PATCH', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'}, body});
+    await syncShared();
+    setSync('ok');
+    toast('✓ Sauvegardé sur Drive');
+  } catch(e) { setSync('error'); toast('❌ '+e.message); }
+}
+
+async function silentPush() {
+  if (!accessToken) return;
+  setSync('pending');
+  try {
+    const id = await findOrCreateDriveFile();
+    const body = JSON.stringify({projects:S.projects, team:S.team}, null, 2);
+    const r = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`,
+      {method:'PATCH', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'}, body});
+    if (!r.ok) {
+      if (r.status===412) { setSync('ok'); return; } // conflict — polling will recover
+      if (r.status===401) { setSync('local'); accessToken=''; return; } // expired
+      throw new Error('HTTP '+r.status);
+    }
+    await syncShared();
+    lastModifiedKnown = null; // reset so next poll re-fetches modifiedTime
+    setSync('ok');
+  } catch(e) {
+    setSync('local'); // silent — no red flash
+    console.warn('[silentPush]', e.message);
+  }
+}
+
+/* ══ POLLING ══ */
+const POLL_KEY = 'td_poll_projects';
+let pollSecs = 30;
+let pollTimer = null;
+let pollCountTimer = null;
+let lastModifiedKnown = null;
+
+function isEditingInProgress() {
+  // Block poll if a form input/textarea has focus
+  const active = document.activeElement;
+  if (active && (active.tagName==='INPUT'||active.tagName==='TEXTAREA'||active.tagName==='SELECT')) return true;
+  // Block if drawer is open
+  if (document.getElementById('drawer')?.classList.contains('open')) return true;
+  // Block if project or team form has visible input (user typed something)
+  const nom = document.getElementById('pf-nom');
+  if (nom && nom.value.trim()) return true;
+  const tnom = document.getElementById('tf-nom');
+  if (tnom && tnom.value.trim()) return true;
+  return false;
+}
+
+function setPollInterval(val) {
+  pollSecs = parseInt(val, 10)||0;
+  localStorage.setItem(POLL_KEY, val);
+  stopPolling();
+  if (pollSecs > 0 && accessToken) startPolling();
+  else document.getElementById('poll-next').textContent = '';
+}
+
+function startPolling() {
+  stopPolling();
+  if (!accessToken || pollSecs <= 0) return;
+  scheduleNextPoll();
+}
+
+function stopPolling() {
+  if (pollTimer)      { clearTimeout(pollTimer);   pollTimer=null; }
+  if (pollCountTimer) { clearInterval(pollCountTimer); pollCountTimer=null; }
+  document.getElementById('poll-next').textContent = '';
+}
+
+function scheduleNextPoll() {
+  if (!accessToken || pollSecs <= 0) return;
+  let countdown = pollSecs;
+  const lbl = document.getElementById('poll-next');
+  if (lbl) lbl.textContent = 'prochain dans '+countdown+'s';
+  pollCountTimer = setInterval(() => {
+    countdown--;
+    if (lbl) lbl.textContent = 'prochain dans '+countdown+'s';
+    if (countdown <= 0) { clearInterval(pollCountTimer); pollCountTimer=null; }
+  }, 1000);
+  pollTimer = setTimeout(() => pollOnce(), pollSecs * 1000);
+}
+
+async function pollOnce() {
+  if (!accessToken) return;
+  if (document.visibilityState === 'hidden') { scheduleNextPoll(); return; }
+  if (isEditingInProgress()) { scheduleNextPoll(); return; } // user is typing — defer
+  try {
+    const id = await findOrCreateDriveFile();
+    // 1. Check modifiedTime only — lightweight
+    const r = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${id}?fields=modifiedTime`,
+      {headers:{Authorization:'Bearer '+accessToken}}
+    );
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    const meta = await r.json();
+    const remoteTs = meta.modifiedTime;
+    if (lastModifiedKnown && remoteTs === lastModifiedKnown) {
+      scheduleNextPoll(); return; // no change
+    }
+    // 2. First poll — just record, don't pull (drivePull already did it at auth)
+    if (!lastModifiedKnown) { lastModifiedKnown = remoteTs; scheduleNextPoll(); return; }
+    // 3. New version — pull
+    lastModifiedKnown = remoteTs;
+    const dr = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${id}?alt=media`,
+      {headers:{Authorization:'Bearer '+accessToken}}
+    );
+    if (!dr.ok) throw new Error('HTTP '+dr.status);
+    const d = await dr.json();
+    if (!Array.isArray(d.projects)) throw new Error('Format invalide');
+    S = {projects: d.projects||[], team: d.team||[]};
+    ensureState(); save();
+    renderProjects(); renderTeam(); populateSuiviSel();
+    const t = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    setSync('ok');
+    document.getElementById('drive-status-detail').textContent = 'Sync auto ✓ — '+t;
+  } catch(e) {
+    console.warn('[poll]', e.message);
+  }
+  scheduleNextPoll();
+}
+
+/* ══ EXPORT / IMPORT ══ */
+function exportData() {
+  const json = JSON.stringify({projects:S.projects, team:S.team}, null, 2);
+  document.getElementById('log-area').value = json;
+  navigator.clipboard?.writeText(json).then(() => toast('✓ JSON copié'));
+}
+function downloadData() {
+  const blob = new Blob([JSON.stringify({projects:S.projects,team:S.team},null,2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='projects.json'; a.click();
+}
+function openImport()  { document.getElementById('imp-area-wrap').style.display=''; document.getElementById('imp-area').focus(); }
+function closeImport() { document.getElementById('imp-area-wrap').style.display='none'; }
+function importData() {
+  try {
+    const d = JSON.parse(document.getElementById('imp-area').value);
+    S = {projects: d.projects||[], team: d.team||[]};
+    ensureState(); save();
+    renderProjects(); renderTeam(); closeImport();
+    toast('✓ Import réussi');
+  } catch(e) { toast('❌ JSON invalide'); }
+}
+function clearAll() {
+  if (!confirm('Tout effacer ?')) return;
+  S = {projects:[], team:[]};
+  save(); renderProjects(); renderTeam(); toast('Données effacées');
+}
+
+/* ══ BOOT ══ */
+function load() {
+  try {
+    const r = localStorage.getItem(SK);
+    if (r) S = JSON.parse(r);
+  } catch(e) {}
+  ensureState();
+  const t = localStorage.getItem(TK)||'light';
+  applyTheme(t);
+  buildColorPicker('proj-color-picker', PROJ_COLORS, projSelectedColor, selectProjColor);
+  buildColorPicker('team-color-picker', TEAM_COLORS, teamSelectedColor, selectTeamColor);
+  renderProjects();
+  // Restore poll preference
+  const savedPoll = localStorage.getItem(POLL_KEY);
+  if (savedPoll !== null) {
+    pollSecs = parseInt(savedPoll, 10)||0;
+    const sel = document.getElementById('poll-interval');
+    if (sel) sel.value = savedPoll;
+  }
+  if (accessToken) {
+    setSync('ok');
+    updateDriveUI();
+    if (pollSecs > 0) startPolling();
+  }
+}
+load();
+
+// ── Task Detail Drawer ──────────────────────────────────────────────────────
+let tdTaskId = null;
+function tdFmt(d){return d?new Date(d).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}):''}
+function tdGetTask(){
+  if(!projet001FullData && !suiviData.backlog.length) return null;
+  const backlog = (projet001FullData ? projet001FullData.backlog||[] : []);
+  // Exact string match first (handles alphanumeric IDs like "mn03ah2xo8mb")
+  let t = backlog.find(x => String(x.id) === String(tdTaskId));
+  if (!t) {
+    // Also check suiviData.backlog (Vue Globale source)
+    t = (suiviData.backlog||[]).find(x => String(x.id) === String(tdTaskId));
+  }
+  return t || null;
+}
+function tdGetAdmin(){return (S.team||[]).find(m=>m.appRole==='Admin')||null;}
+
+function openTD(rawId){
+  tdTaskId = rawId;
+  const t = tdGetTask();
+  if (!t) {
+    // Task not in projet001FullData — build minimal display from suiviData.backlog
+    const sb = (suiviData.backlog||[]).find(x => String(x.id) === String(rawId));
+    if (!sb) { toast('⚠ Tâche introuvable'); return; }
+    // Show drawer with available data
+    const ta = document.getElementById('td-title');
+    if (ta) { ta.value = sb.text||''; tdAutoResize(ta); }
+    const badges = document.getElementById('td-badges');
+    if (badges) badges.innerHTML = '';
+    ['td-team-body','td-comments-body','td-history-body'].forEach(function(id){
+      const el = document.getElementById(id); if(el) el.innerHTML = '<span style="color:var(--muted);font-size:12px;">—</span>';
+    });
+    document.getElementById('td-overlay').classList.add('open');
+    document.getElementById('td-drawer').classList.add('open');
+    return;
+  }
+  refreshTD();
+  document.getElementById('td-overlay').classList.add('open');
+  document.getElementById('td-drawer').classList.add('open');
+}
+function closeTD(){
+  document.getElementById('td-overlay').classList.remove('open');
+  document.getElementById('td-drawer').classList.remove('open');
+  tdTaskId = null;
+}
+function refreshTD(){
+  const t=tdGetTask(); if(!t) return;
+  const ta=document.getElementById('td-title'); ta.value=t.text||''; tdAutoResize(ta);
+  const st=t.status||'brouillon';
+  document.getElementById('td-badges').innerHTML=
+    `<span class="td-status-badge ${st==='valide'?'td-status-valide':'td-status-brouillon'}" onclick="tdToggleStatus()">${st==='valide'?'Validé ✓':'Brouillon'}</span>`;
+  tdRenderTeam(t); tdRenderComments(t); tdRenderHistory(t);
+}
+function tdAutoResize(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
+
+function tdSaveTitle(){
+  const t=tdGetTask(); if(!t) return;
+  const v=document.getElementById('td-title').value.trim(); if(!v||v===t.text) return;
+  tdLog(t,'texte',t.text,v);
+  t.text=v;
+  // Sync to suiviData too
+  const numId=typeof tdTaskId==='string'?parseInt(tdTaskId,10):tdTaskId;
+  const sb=suiviData.backlog.find(x=>x.id===numId||x.id===tdTaskId); if(sb) sb.text=v;
+  tdSave();
+}
+function tdToggleStatus(){
+  const t=tdGetTask(); if(!t) return;
+  const prev=t.status||'brouillon'; const next=prev==='valide'?'brouillon':'valide';
+  tdLog(t,'statut',prev==='valide'?'Validé':'Brouillon',next==='valide'?'Validé':'Brouillon');
+  t.status=next;
+  const numId=typeof tdTaskId==='string'?parseInt(tdTaskId,10):tdTaskId;
+  const sb=suiviData.backlog.find(x=>x.id===numId||x.id===tdTaskId); if(sb) sb.status=next;
+  tdSave();
+}
+function tdRenderTeam(t){
+  const el=document.getElementById('td-team');
+  const team=S.team||[];
+  if(!team.length){el.innerHTML='<span style="font-size:13px;color:var(--muted)">Aucun membre</span>';return;}
+  const admin=tdGetAdmin(); const adminId=admin?admin.id:null;
+  const ids=t.assigneeIds||[];
+  el.innerHTML=team.map(m=>{
+    const on=ids.includes(m.id); const isAdmin=m.id===adminId;
+    return `<span onclick="${isAdmin?'':'tdToggleAssignee(\''+m.id+'\');'}" style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:600;margin:0 4px 4px 0;cursor:${isAdmin?'default':'pointer'};background:${on?m.color:'transparent'};color:${on?'#fff':'var(--muted)'};border:1px solid ${on?m.color:'var(--border)'};transition:all .15s;">
+      <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:${on?'rgba(255,255,255,.25)':m.color};color:#fff;font-size:9px;font-weight:700;">${m.initiales}</span>
+      ${m.nom.split(' ')[0]}</span>`;
+  }).join('');
+}
+function tdToggleAssignee(memberId){
+  const t=tdGetTask(); if(!t) return;
+  const admin=tdGetAdmin(); if(admin&&memberId===admin.id) return;
+  if(!t.assigneeIds) t.assigneeIds=[];
+  const m=(S.team||[]).find(x=>x.id===memberId);
+  const idx=t.assigneeIds.indexOf(memberId);
+  tdLog(t,'assigné',idx>=0?(m?m.nom:'?'):'—',idx>=0?'—':(m?m.nom:'?'));
+  if(idx>=0) t.assigneeIds.splice(idx,1); else t.assigneeIds.push(memberId);
+  tdSave();
+}
+function tdRenderComments(t){
+  const el=document.getElementById('td-comments'); const comments=t.comments||[];
+  if(!comments.length){el.innerHTML='<span style="font-size:13px;color:var(--muted)">Aucun commentaire</span>';return;}
+  el.innerHTML=comments.map((c,i)=>{
+    const author=c.authorId?(S.team||[]).find(m=>m.id===c.authorId):null;
+    const auth=author?`<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:${author.color};color:#fff;font-size:9px;font-weight:700;margin-right:4px;">${author.initiales}</span><b>${author.nom}</b>`:'<span style="color:var(--muted)">Anonyme</span>';
+    return `<div class="td-comment-item"><div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;">${auth}</div><div class="td-comment-text">${c.text}</div><div class="td-comment-meta">${c.date} <button onclick="tdDeleteComment(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;padding:0 3px;">✕</button></div></div>`;
+  }).join('');
+}
+function tdAddComment(){
+  const t=tdGetTask(); if(!t) return;
+  const inp=document.getElementById('td-comment-input'); const text=inp.value.trim(); if(!text) return;
+  const admin=tdGetAdmin();
+  t.comments=t.comments||[];
+  t.comments.push({text,date:tdFmt(new Date()),authorId:admin?admin.id:null});
+  inp.value=''; tdSave();
+}
+function tdDeleteComment(idx){
+  const t=tdGetTask(); if(!t) return;
+  if(!confirm('Supprimer ce commentaire ?')) return;
+  (t.comments||[]).splice(idx,1); tdSave();
+}
+function tdLog(t,field,from,to){
+  if(from===to) return;
+  t.history=t.history||[];
+  const admin=tdGetAdmin();
+  t.history.unshift({date:tdFmt(new Date()),authorName:admin?admin.nom:'?',field,from,to});
+  if(t.history.length>50) t.history.length=50;
+}
+function tdRenderHistory(t){
+  const el=document.getElementById('td-history'); const hist=t.history||[];
+  if(!hist.length){el.innerHTML='<span style="font-size:13px;color:var(--muted)">Aucune modification</span>';return;}
+  el.innerHTML=hist.map(h=>`<div class="td-history-item"><div class="td-history-meta">${h.date} · <b>${h.authorName}</b></div><div class="td-history-change"><span class="td-hist-tag">~ ${h.field}</span><span style="color:var(--muted)">${h.from}</span> → <span>${h.to}</span></div></div>`).join('');
+}
+async function tdSave(){
+  await writeProjet001('✓ Sauvegardé');
+  renderSuivi();
+  refreshTD();
+}
+
+// ══ DOC DRAWER (US / MO / CR) ══════════════════════════════════════════════
+
+var _docType = null;  // 'us' | 'mo' | 'cr'
+var _docId   = null;  // entry id
+
+var DOC_STATUS_LABELS = {brouillon:'Brouillon',validation:'En validation',valide:'Validé ✓',renvoye:'Renvoyé ✗',archive:'Archivé'};
+var DOC_STATUS_CLASS  = {brouillon:'status-brouillon',validation:'status-validation',valide:'status-valide',renvoye:'status-renvoye',archive:'status-archive'};
+var DOC_STATUS_CYCLE  = ['brouillon','validation','renvoye','valide'];
+
+function openDocDrawer(type, id) {
+  _docType = type; _docId = id;
+  refreshDocDrawer();
+  document.getElementById('doc-overlay').style.opacity='1';
+  document.getElementById('doc-overlay').style.pointerEvents='all';
+  document.getElementById('doc-drawer').classList.add('open');
+}
+function closeDocDrawer() {
+  document.getElementById('doc-overlay').style.opacity='0';
+  document.getElementById('doc-overlay').style.pointerEvents='none';
+  document.getElementById('doc-drawer').classList.remove('open');
+  _docType=null; _docId=null;
+}
+function _docGetEntry() {
+  if (!_docType||_docId==null) return null;
+  var arr = suiviData[_docType]||[];
+  return arr.find(function(e){return e.id===_docId;})||null;
+}
+function _docGetTeam() { return suiviData.sharedTeam||S.team||[]; }
+function _docAvatarHtml(id,size) {
+  size=size||22;
+  var m=_docGetTeam().find(function(x){return x.id===id;});
+  return m?'<span class="doc-avatar" title="'+esc(m.nom)+'" style="width:'+size+'px;height:'+size+'px;background:'+m.color+';font-size:'+(size<20?8:10)+'px;">'+esc(m.initiales)+'</span>':'';
+}
+function _docMemberHtml(id) {
+  var m=_docGetTeam().find(function(x){return x.id===id;});
+  return m?'<span style="display:inline-flex;align-items:center;gap:4px;margin-right:8px;">'+_docAvatarHtml(id)+' <b style="font-size:13px;">'+esc(m.nom)+'</b></span>':'';
+}
+function _docSec(title) { return '<div class="doc-drawer-section-title">'+title+'</div>'; }
+function _docLinkify(s) {
+  return esc(s).replace(/https?:\/\/[^\s<"]+/g,function(u){return '<a href="'+u+'" target="_blank" rel="noopener" style="color:var(--accent);">'+u+'</a>';});
+}
+
+function refreshDocDrawer() {
+  var e=_docGetEntry(); if(!e) return;
+  var st=e.status||'brouillon';
+  var team=_docGetTeam();
+  var reds=(e.redacteurs||[]).map(_docMemberHtml).join('');
+  var vals=(e.valideurs||[]).map(_docMemberHtml).join('');
+
+  // Header
+  var proj=S.projects.find(function(p){return p.id===e.projet;})||null;
+  document.getElementById('doc-breadcrumb').textContent=
+    _docType==='us'?[proj?proj.name:'',e.epic||'','US'].filter(Boolean).join(' › ')
+    :_docType==='mo'?'Modes Opératoires'
+    :'Comptes Rendus';
+  document.getElementById('doc-drawer-title').textContent=
+    _docType==='us'?(e.titre||'Sans titre')
+    :_docType==='mo'?(e.titre||'Sans titre')
+    :(e.title||e.titre||'Sans titre');
+
+  // Badges
+  var badgesHtml='<span class="status-badge '+DOC_STATUS_CLASS[st]+'" style="cursor:pointer;" onclick="docCycleStatus()">'+DOC_STATUS_LABELS[st]+'</span>';
+  if(proj) badgesHtml+='<span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:12px;border:1px solid '+proj.color+';color:'+proj.color+';">'+esc(proj.name)+'</span>';
+  if(_docType==='us'&&e.prio) badgesHtml+='<span style="font-size:11px;padding:2px 8px;border-radius:12px;border:1px solid var(--border);color:var(--muted);">'+esc(e.prio)+'</span>';
+  if(_docType==='us'&&e.est)  badgesHtml+='<span style="font-size:11px;padding:2px 8px;border-radius:12px;border:1px solid var(--border);color:var(--muted);">'+esc(e.est)+' pts</span>';
+  if(_docType==='us'&&e.type) badgesHtml+='<span style="font-size:11px;padding:2px 8px;border-radius:12px;border:1px solid var(--border);color:var(--muted);">'+esc(e.type)+'</span>';
+  document.getElementById('doc-drawer-badges').innerHTML=badgesHtml;
+
+  // Body
+  var body='';
+
+  // ── US Content ──
+  if(_docType==='us') {
+    var us=e.raw?_parseUS(e.raw):{};
+    var ch='';
+    if(us.as||us.want||us.so) {
+      ch+='<div class="doc-story-box">';
+      if(us.as)   ch+='<div><b>As a</b> <span style="color:var(--muted)">'+esc(us.as)+'</span></div>';
+      if(us.want) ch+='<div><b>I want</b> <span style="color:var(--muted)">'+esc(us.want)+'</span></div>';
+      if(us.so)   ch+='<div><b>So that</b> <span style="color:var(--muted)">'+esc(us.so)+'</span></div>';
+      ch+='</div>';
+    }
+    if(us.ac&&us.ac.length) {
+      ch+=_docSec('Acceptance Criteria');
+      ch+='<div>'+us.ac.map(function(a){return '<div class="doc-ac-item"><span style="color:var(--muted);flex-shrink:0;">☐</span><span>'+esc(a)+'</span></div>';}).join('')+'</div>';
+    }
+    body+=_docSec('Contenu de l\'US')+ch;
+  }
+
+  // ── MO Content ──
+  if(_docType==='mo') {
+    var mo=e.raw?_parseMO(e.raw):{etapes:[]};
+    var mh='';
+    if(mo.quand)   mh+='<p class="doc-mo-meta"><b>Quand :</b> '+esc(mo.quand)+'</p>';
+    if(mo.duree)   mh+='<p class="doc-mo-meta"><b>Durée :</b> '+esc(mo.duree)+'</p>';
+    if(mo.auteur)  mh+='<p class="doc-mo-meta"><b>Auteur :</b> '+esc(mo.auteur)+'</p>';
+    if(mo.modifie) mh+='<p class="doc-mo-meta"><b>Modifié :</b> '+esc(mo.modifie)+'</p>';
+    if(mo.etapes&&mo.etapes.length) {
+      mh+='<ul class="doc-mo-steps">';
+      var n=0;
+      mo.etapes.forEach(function(et){
+        if(et.texte){n++;mh+='<li class="doc-mo-step"><b>'+n+'.</b> '+_docLinkify(et.texte)+'</li>';}
+        (et.sous_etapes||[]).forEach(function(se){mh+='<li class="doc-mo-substep">'+_docLinkify(se)+'</li>';});
+      });
+      mh+='</ul>';
+    }
+    if(mo.resultat) mh+='<div class="doc-mo-result">✅ <b>Résultat attendu :</b> '+_docLinkify(mo.resultat)+'</div>';
+    if(mo.erreur)   mh+='<div class="doc-mo-error">⚠️ <b>Erreur fréquente :</b> '+_docLinkify(mo.erreur)+'</div>';
+    body+=_docSec('Contenu du MO')+(mh||'<span style="font-size:13px;color:var(--muted)">Contenu vide</span>');
+  }
+
+  // ── CR Content ──
+  if(_docType==='cr') {
+    var cr=e.raw?_parseCR(e.raw):{decisions:[],actions:[]};
+    var crh='';
+    if(cr.date)      crh+='<p class="doc-mo-meta"><b>Date :</b> '+esc(cr.date)+'</p>';
+    if(cr.duree)     crh+='<p class="doc-mo-meta"><b>Durée :</b> '+esc(cr.duree)+'</p>';
+    if(cr.objectif)  crh+='<p class="doc-mo-meta"><b>Objectif :</b> '+esc(cr.objectif)+'</p>';
+    if(cr.participants) crh+='<p class="doc-mo-meta"><b>Participants :</b> '+esc(cr.participants)+'</p>';
+    if(cr.decisions&&cr.decisions.length) {
+      crh+=_docSec('Décisions');
+      crh+='<div>'+cr.decisions.map(function(d){return '<div class="doc-ac-item"><span style="flex-shrink:0;font-weight:700;color:var(--accent)">D</span><span>'+esc(d)+'</span></div>';}).join('')+'</div>';
+    }
+    if(cr.actions&&cr.actions.length) {
+      crh+=_docSec('Actions');
+      crh+='<div>'+cr.actions.map(function(a){return '<div class="doc-ac-item"><span style="flex-shrink:0;font-weight:700;color:var(--amber)">A</span><span>'+esc(a.text||a)+'</span>'+(a.assignee?'<span style="font-size:11px;color:var(--muted);">@'+esc(a.assignee)+'</span>':'')+(a.due?'<span style="font-size:11px;color:var(--muted);">'+esc(a.due)+'</span>':'')+'</div>';}).join('')+'</div>';
+    }
+    if(cr.nextDate) crh+='<p class="doc-mo-meta" style="margin-top:10px;"><b>Prochain RDV :</b> '+esc(cr.nextDate)+'</p>';
+    body+=_docSec('Contenu du CR')+(crh||'<span style="font-size:13px;color:var(--muted)">Contenu vide</span>');
+  }
+
+  // ── Assignés (tous) ──
+  var assHtml=(reds||vals)
+    ?( reds?'<div style="margin-bottom:6px"><span style="font-size:12px;color:var(--muted)">Rédacteur(s) : </span>'+reds+'</div>':'')+
+      ( vals?'<div><span style="font-size:12px;color:var(--muted)">Valideur(s) : </span>'+vals+'</div>':'')
+    :'<span style="font-size:13px;color:var(--muted)">Aucun assigné</span>';
+  body+=_docSec('Assignés')+assHtml;
+
+  // ── Versions ──
+  var versions=e.versions||[];
+  var versHtml=versions.length
+    ?versions.map(function(v,i){
+        var diffHtml=(v.changes||[]).map(function(ch2){
+          var t2=ch2.type==='add'?'add':ch2.type==='remove'?'remove':'change';
+          var label=ch2.type==='add'?'+ '+ch2.label:ch2.type==='remove'?'− '+ch2.label:'~ '+ch2.label;
+          var val=ch2.value||(ch2.from&&ch2.to?ch2.from+' → '+ch2.to:'');
+          return '<div class="doc-diff-line"><span class="doc-diff-tag doc-diff-'+t2+'">'+esc(label)+'</span><span>'+esc(val)+'</span></div>';
+        }).join('');
+        return '<div class="doc-version-item"><div class="doc-version-top"><span class="doc-version-tag">v'+(versions.length-i)+'</span><span class="doc-version-date">'+esc(v.savedAt||'')+'</span><button class="btn sm" style="margin-left:auto;" onclick="docRestoreVersion('+i+')">Restaurer</button></div>'+(diffHtml?'<div>'+diffHtml+'</div>':'')+'</div>';
+      }).join('')
+    :'<span style="font-size:13px;color:var(--muted)">Aucune version précédente</span>';
+  body+=_docSec('Versions précédentes')+versHtml;
+
+  // ── Commentaires ──
+  var comments=e.comments||[];
+  var commHtml=comments.length
+    ?comments.map(function(co,i){
+        var auth=co.authorId?_docGetTeam().find(function(m){return m.id===co.authorId;}):null;
+        var authHtml=auth?_docAvatarHtml(co.authorId,18)+'<b style="color:var(--text)">'+esc(auth.nom)+'</b>':'<span style="color:var(--muted)">Anonyme</span>';
+        return '<div class="doc-comment-item"><div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;">'+authHtml+'</div><div class="doc-comment-text">'+esc(co.text)+'</div><div class="doc-comment-meta">'+esc(co.date||'')+'<button onclick="docDeleteComment('+i+')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;padding:0 4px;">×</button></div></div>';
+      }).join('')
+    :'<span style="font-size:13px;color:var(--muted)">Aucun commentaire</span>';
+  var SEL='font-family:var(--sans);font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);width:100%;';
+  var authorOpts='<option value="">— Auteur —</option>'+_docGetTeam().map(function(m){return '<option value="'+m.id+'">'+esc(m.nom)+'</option>';}).join('');
+  body+=_docSec('Commentaires')+'<div id="doc-comments">'+commHtml+'</div>'
+    +'<div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">'
+    +'<select id="doc-comment-author" style="'+SEL+'">'+authorOpts+'</select>'
+    +'<div style="display:flex;gap:8px;"><textarea id="doc-comment-input" rows="2" placeholder="Ajouter un commentaire…" style="flex:1;font-family:var(--sans);font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);resize:none;outline:none;" onkeydown="if(event.key===&quot;Enter&quot;&&!event.shiftKey){event.preventDefault();docAddComment();}"></textarea>'
+    +'<button class="btn sm primary" onclick="docAddComment()">Envoyer</button></div></div>';
+
+  // ── Actions footer ──
+  var valBtn=(st==='valide'||st==='archive')?'display:none':'';
+  var archLabel=st==='archive'?'↩ Désarchiver':'⬜ Archiver';
+  var archStyle=st==='archive'?'color:var(--muted);border-color:var(--muted);':'color:var(--blue);border-color:var(--blue);';
+  body+='<div class="doc-drawer-section" style="display:flex;gap:8px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--border);">'
+    +'<button class="btn sm" onclick="docEditInApp()">✎ Ouvrir dans l\'app</button>'
+    +'<button class="btn sm" id="doc-validate-btn" style="color:var(--green);border-color:var(--green);'+valBtn+'" onclick="docValidate()">✓ Valider</button>'
+    +'<button class="btn sm" id="doc-archive-btn" style="'+archStyle+'" onclick="docArchive()">'+archLabel+'</button>'
+    +'<button class="btn sm" style="color:var(--red);border-color:var(--red);" onclick="docDelete()">Supprimer</button>'
+    +'</div>';
+
+  document.getElementById('doc-drawer-body').innerHTML=body;
+}
+
+// ── Parse helpers ──
+function _parseUS(raw) {
+  var r={as:'',want:'',so:'',prio:'',est:'',type:'',epic:'',id:'',ac:[]};
+  (raw||'').split('\n').forEach(function(l){var m=l.trim(),x;
+    if((x=m.match(/^AS\s*:\s*(.+)/i)))   r.as=x[1];
+    if((x=m.match(/^WANT\s*:\s*(.+)/i))) r.want=x[1];
+    if((x=m.match(/^SO\s*:\s*(.+)/i)))   r.so=x[1];
+    if((x=m.match(/^PRIO\s*:\s*(.+)/i))) r.prio=x[1];
+    if((x=m.match(/^EST\s*:\s*(.+)/i)))  r.est=x[1];
+    if((x=m.match(/^TYPE\s*:\s*(.+)/i))) r.type=x[1];
+    if((x=m.match(/^EPIC\s*:\s*(.+)/i))) r.epic=x[1];
+    if((x=m.match(/^ID\s*:\s*(.+)/i)))   r.id=x[1];
+    if((x=m.match(/^AC\s*:\s*(.+)/i)))   r.ac.push(x[1]);
+  });
+  return r;
+}
+function _parseMO(raw) {
+  var r={titre:'',quand:'',duree:'',auteur:'',modifie:'',etapes:[],resultat:'',erreur:''};
+  var cur=null;
+  (raw||'').split('\n').forEach(function(l){var m=l.trim(),x;
+    if((x=m.match(/^titre\s*:\s*(.+)/i)))       r.titre=x[1];
+    if((x=m.match(/^quand\s*:\s*(.+)/i)))       r.quand=x[1];
+    if((x=m.match(/^dur[eé]e\s*:\s*(.+)/i)))    r.duree=x[1];
+    if((x=m.match(/^auteur\s*:\s*(.+)/i)))      r.auteur=x[1];
+    if((x=m.match(/^modifi[eé]\s*:\s*(.+)/i)))  r.modifie=x[1];
+    if((x=m.match(/^r[eé]sultat\s*:\s*(.+)/i))) r.resultat=x[1];
+    if((x=m.match(/^erreur\s*:\s*(.+)/i)))      r.erreur=x[1];
+    if((x=m.match(/^E\s*:\s*(.+)/)))  {cur={texte:x[1],sous_etapes:[]};r.etapes.push(cur);}
+    if((x=m.match(/^SE\s*:\s*(.+)/))) {if(!cur){cur={texte:'',sous_etapes:[]};r.etapes.push(cur);}cur.sous_etapes.push(x[1]);}
+  });
+  return r;
+}
+function _parseCR(raw) {
+  var r={title:'',date:'',duree:'',participants:'',objectif:'',nextDate:'',nextAgenda:'',decisions:[],actions:[]};
+  var inYaml=false;
+  (raw||'').split('\n').forEach(function(l){var m=l.trim(),x;
+    if(m==='---'){inYaml=!inYaml;return;}
+    if(inYaml){
+      if((x=m.match(/^title\s*:\s*(.+)/i)))        r.title=x[1];
+      if((x=m.match(/^date\s*:\s*(.+)/i)))         r.date=x[1];
+      if((x=m.match(/^dur[eé]e\s*:\s*(.+)/i)))     r.duree=x[1];
+      if((x=m.match(/^participants\s*:\s*(.+)/i))) r.participants=x[1];
+      if((x=m.match(/^objectif\s*:\s*(.+)/i)))     r.objectif=x[1];
+      if((x=m.match(/^next-date\s*:\s*(.+)/i)))    r.nextDate=x[1];
+    } else {
+      if((x=m.match(/^D\s*:\s*(.+)/i))) r.decisions.push(x[1]);
+      if((x=m.match(/^A\s*:\s*(.+)/i))){var raw2=x[1],ass='',due='',txt=raw2,am=raw2.match(/@(\S+)/),dm=raw2.match(/(\d{2}-\d{2}-\d{4})/);if(am){ass=am[1];txt=txt.replace(am[0],'').trim();}if(dm){due=dm[1];txt=txt.replace(dm[0],'').trim();}r.actions.push({text:txt,assignee:ass,due:due});}
+    }
+  });
+  return r;
+}
+
+// ── Actions ──
+function docCycleStatus() {
+  var e=_docGetEntry(); if(!e) return;
+  var idx=DOC_STATUS_CYCLE.indexOf(e.status||'brouillon');
+  var next=DOC_STATUS_CYCLE[(idx+1)%DOC_STATUS_CYCLE.length];
+  var prev=e.status||'brouillon';
+  e.status=next;
+  if(next==='valide') e.publishedAt=new Date().toLocaleString('fr-FR');
+  _docSave('Statut: '+DOC_STATUS_LABELS[prev]+' → '+DOC_STATUS_LABELS[next]);
+}
+function docValidate() {
+  var e=_docGetEntry(); if(!e) return;
+  e.status='valide'; e.publishedAt=new Date().toLocaleString('fr-FR');
+  _docSave('Validé');
+}
+function docArchive() {
+  var e=_docGetEntry(); if(!e) return;
+  e.status=e.status==='archive'?'brouillon':'archive';
+  _docSave(e.status==='archive'?'Archivé':'Désarchivé');
+}
+function docDelete() {
+  if(!confirm('Supprimer définitivement ?')) return;
+  var arr=suiviData[_docType];
+  var idx=arr.findIndex(function(x){return x.id===_docId;});
+  if(idx>=0) arr.splice(idx,1);
+  _docSave('Supprimé');
+  closeDocDrawer();
+}
+function docAddComment() {
+  var e=_docGetEntry(); if(!e) return;
+  var text=document.getElementById('doc-comment-input').value.trim(); if(!text) return;
+  var authorId=document.getElementById('doc-comment-author').value||'';
+  var author=authorId?_docGetTeam().find(function(m){return m.id===authorId;}):null;
+  e.comments=e.comments||[];
+  e.comments.push({text:text,authorId:authorId,authorName:author?author.nom:'',date:new Date().toLocaleDateString('fr-FR')});
+  document.getElementById('doc-comment-input').value='';
+  _docSave('Commentaire ajouté');
+}
+function docDeleteComment(idx) {
+  var e=_docGetEntry(); if(!e) return;
+  if(!confirm('Supprimer ce commentaire ?')) return;
+  (e.comments||[]).splice(idx,1);
+  _docSave('Commentaire supprimé');
+}
+function docRestoreVersion(idx) {
+  var e=_docGetEntry(); if(!e||!e.versions) return;
+  if(!confirm('Restaurer cette version ?')) return;
+  var v=e.versions[idx];
+  var changes=_docDiff(e.raw||'',v.raw||''); // simplified
+  e.versions.unshift({raw:e.raw,savedAt:e.savedAt,changes:[{type:'change',label:'Restauration',value:'v'+(e.versions.length-idx)}]});
+  if(e.versions.length>10) e.versions.pop();
+  e.raw=v.raw;
+  e.savedAt=new Date().toLocaleDateString('fr-FR');
+  _docSave('Version restaurée');
+}
+function _docDiff(a,b){return [{type:'change',label:'Contenu',from:a.slice(0,40),to:b.slice(0,40)}];}
+function docEditInApp() {
+  var urls={us:'us-generator.html',mo:'mo-generator.html',cr:'cr-generator2.html'};
+  var base=location.origin+(location.pathname.replace(/[^/]*$/,''));
+  window.open(urls[_docType]||'#','_blank');
+}
+
+async function _docSave(toastMsg) {
+  var fullData=suiviData[_docType+'FullData'];
+  var fileId=suiviData[_docType+'FileId'];
+  if(!fullData||!fileId||!accessToken){toast('⚠ Données non disponibles — Actualisez');return;}
+  // Replace the entry in full data
+  var arr=(fullData.history||fullData.entries||[]);
+  var idx=arr.findIndex(function(x){return x.id===_docId;});
+  if(idx>=0) arr[idx]=_docGetEntry();
+  try {
+    await fetch('https://www.googleapis.com/upload/drive/v3/files/'+fileId+'?uploadType=media',
+      {method:'PATCH',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify(fullData)});
+    toast('✓ '+(toastMsg||'Sauvegardé'));
+  } catch(err) { toast('❌ Erreur sauvegarde'); }
+  refreshDocDrawer();
+  renderSuivi();
+}
+
+// ── Make US/MO/CR rows clickable ──
+// Patched into renderSuivi via _docIndex
+var _docIndex = {};
+var _globalHideDone = false;
+async function loadGlobalData() {
+  const el = document.getElementById('global-content');
+  const st = document.getElementById('global-status');
+  if (!accessToken) { el.innerHTML = '<div class="empty"><div class="empty-icon">☁</div>Connectez Drive pour charger les données</div>'; return; }
+  st.textContent = 'Chargement…';
+  const files = [
+    {key:'us',name:'us-generator.json'},{key:'mo',name:'mo-generator.json'},
+    {key:'cr',name:'cr-generator.json'},{key:'todos',name:'projet001.json'},{key:'shared',name:'shared.json'}
+  ];
+  for (const f of files) {
+    try {
+      const q = encodeURIComponent(`name='${f.name}' and trashed=false`);
+      const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)&orderBy=modifiedTime+desc`,{headers:{Authorization:'Bearer '+accessToken}});
+      const d = await res.json();
+      if (d.files && d.files[0]) {
+        const r = await fetch(`https://www.googleapis.com/drive/v3/files/${d.files[0].id}?alt=media`,{headers:{Authorization:'Bearer '+accessToken}});
+        const data = await r.json();
+        if (f.key==='todos') { suiviData.backlog=Array.isArray(data.backlog)?data.backlog:[]; projet001FullData=data; }
+        else if (f.key==='shared') { suiviData.sharedProjects=Array.isArray(data.projects)?data.projects:[]; suiviData.sharedTeam=Array.isArray(data.team)?data.team:[]; }
+        else { suiviData[f.key]=data.history||data.entries||[]; suiviData[f.key+'FullData']=data; suiviData[f.key+'FileId']=d.files[0].id; }
+      }
+    } catch(e) { console.warn('global load', f.name, e); }
+  }
+  renderGlobal();
+  st.textContent = `${(suiviData.cr||[]).length} CR · ${(suiviData.mo||[]).length} MO · ${(suiviData.us||[]).length} US · ${(suiviData.backlog||[]).length} tâches`;
+}
+
+function toggleGlobalDone() {
+  _globalHideDone = !_globalHideDone;
+  const btn = document.getElementById('global-done-btn');
+  if (btn) btn.textContent = _globalHideDone ? 'Afficher terminées' : 'Masquer terminées';
+  renderGlobal();
+}
+// ── Smart task parsing (same as notes2) ──
+function slugForMatch(s){
+  return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+}
+
+function resolveProjectSlug(slug){
+  const projects=S.projects||[];
+  // Exact match
+  let p=projects.find(p=>slugForMatch(p.name)===slug);
+  if(p) return p;
+  // Partial match
+  p=projects.find(p=>slugForMatch(p.name).indexOf(slug)===0);
+  if(p) return p;
+  // Contains
+  return projects.find(p=>slugForMatch(p.name).indexOf(slug)>=0)||null;
+}
+
+function resolveAlias(mention){
+  const key=(mention||'').replace(/^@/,'').toLowerCase();
+  const team=S.team||[];
+  return team.find(m=>{
+    const al=(m.alias||m.initiales||'').toLowerCase();
+    return al===key;
+  })||null;
+}
+
+function parseTaskText(text){
+  let projSlugs=[], assignees=[], pri='p2', due='', cleanText=text;
+  
+  // Extract ALL #projet-slug
+  const projMatches=cleanText.match(/#([\w-]+)/g);
+  if(projMatches){
+    projSlugs=projMatches.map(p=>p.slice(1));
+    projMatches.forEach(p=>{ cleanText=cleanText.replace(p,''); });
+  }
+  
+  // Extract ALL @alias
+  const aliasMatches=cleanText.match(/@([\w-]+)/g);
+  if(aliasMatches){
+    assignees=aliasMatches.map(a=>a.slice(1));
+    aliasMatches.forEach(a=>{ cleanText=cleanText.replace(a,''); });
+  }
+  
+  // Extract !p1/!p2/!p3
+  const priMatch=cleanText.match(/!(p[123])/i);
+  if(priMatch){
+    pri=priMatch[1].toLowerCase();
+    cleanText=cleanText.replace(priMatch[0],'');
+  }
+  
+  // Extract date: JJ-MM-AAAA, JJ/MM/AAAA, AAAA-MM-JJ, or AAAA/MM/JJ
+  const dateMatch=cleanText.match(/(\d{2}[-\/]\d{2}[-\/]\d{4}|\d{4}[-\/]\d{2}[-\/]\d{2})/);
+  if(dateMatch){
+    due=dateMatch[1].replace(/\//g,'-'); // Normalize to -
+    cleanText=cleanText.replace(dateMatch[0],'').replace('📅','').trim();
+  }
+  
+  // Clean double spaces
+  cleanText=cleanText.replace(/\s+/g,' ').trim();
+  
+  return {text:cleanText, projSlugs, assignees, pri, due};
+}
+
+function addGlobalTask() {
+  const input = document.getElementById('global-add-text');
+  const rawText = (input ? input.value.trim() : '');
+  if (!rawText) { toast('Saisissez une tâche'); return; }
+  if (!projet001FullData) { toast('⚠ Cliquez Actualiser d\'abord'); return; }
+  
+  projet001FullData.backlog = projet001FullData.backlog || [];
+  
+  // Parse text for @mentions, #projects, !priority
+  const parsed=parseTaskText(rawText);
+  if(!parsed.text){ toast('Texte de tâche vide'); return; }
+  
+  // Resolve project (first found)
+  let projId=null;
+  if(parsed.projSlugs.length>0){
+    for(let i=0;i<parsed.projSlugs.length;i++){
+      const proj=resolveProjectSlug(parsed.projSlugs[i]);
+      if(proj){ projId=proj.id; break; }
+    }
+  }
+  
+  // Resolve assignees
+  const assigneeIds=[];
+  if(parsed.assignees.length>0){
+    parsed.assignees.forEach(alias=>{
+      const member=resolveAlias(alias);
+      if(member&&assigneeIds.indexOf(member.id)===-1){
+        assigneeIds.push(member.id);
+      }
+    });
+  }
+  
+  // Add admin if no assignees found
+  if(assigneeIds.length===0){
+    const admin=getAdminMember();
+    if(admin) assigneeIds.push(admin.id);
+  }
+  
+  // Convert date from JJ-MM-AAAA to AAAA-MM-JJ if needed
+  let dueDate=null;
+  if(parsed.due){
+    if(parsed.due.match(/^\d{2}-\d{2}-\d{4}$/)){
+      // Format JJ-MM-AAAA → AAAA-MM-JJ
+      const parts=parsed.due.split('-');
+      dueDate=parts[2]+'-'+parts[1]+'-'+parts[0];
+    } else if(parsed.due.match(/^\d{4}-\d{2}-\d{2}$/)){
+      // Déjà au bon format AAAA-MM-JJ
+      dueDate=parsed.due;
+    }
+  }
+  
+  const task = {
+    id: 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
+    text: parsed.text,
+    projId: projId || null,
+    pri: parsed.pri,
+    done: false,
+    ts: Date.now(),
+    assigneeIds: assigneeIds,
+    source: 'global'
+  };
+  
+  if(dueDate) task.dueDate=dueDate;
+  
+  projet001FullData.backlog.unshift(task);
+  writeProjet001('✓ Tâche ajoutée au backlog');
+  if (input) input.value = '';
+  renderGlobal();
+}
+
+function renderGlobal() {
+  const el = document.getElementById('global-content'); if (!el) return;
+  const allUS = suiviData.us||[], allMO = suiviData.mo||[], allCR = suiviData.cr||[], allBL = suiviData.backlog||[];
+  const usValide = allUS.filter(e=>e.status==='valide').length;
+  const crValide = allCR.filter(e=>e.status==='valide').length;
+  const moValide = allMO.filter(e=>e.status==='valide').length;
+  const blActive = allBL.filter(e=>!e.done).length, blDone = allBL.filter(e=>!!e.done).length;
+
+  if (!allUS.length && !allMO.length && !allCR.length && !allBL.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🌐</div>Aucune donnée. Cliquez sur ↻ Actualiser après avoir connecté Drive.</div>';
+    return;
+  }
+
+  // KPIs
+  let h = '<div class="kpi-grid">';
+  h += `<div class="kpi-box"><div class="kpi-n">${allUS.length}</div><div class="kpi-l">US totales</div></div>`;
+  h += `<div class="kpi-box"><div class="kpi-n" style="color:var(--green)">${usValide}</div><div class="kpi-l">US validées</div></div>`;
+  h += `<div class="kpi-box"><div class="kpi-n">${allMO.length}</div><div class="kpi-l">Modes op.</div></div>`;
+  h += `<div class="kpi-box"><div class="kpi-n" style="color:var(--green)">${moValide}</div><div class="kpi-l">MO validés</div></div>`;
+  h += `<div class="kpi-box"><div class="kpi-n">${allCR.length}</div><div class="kpi-l">Comptes rendus</div></div>`;
+  h += `<div class="kpi-box"><div class="kpi-n" style="color:var(--green)">${crValide}</div><div class="kpi-l">CR validés</div></div>`;
+  h += `<div class="kpi-box"><div class="kpi-n">${blActive}</div><div class="kpi-l">Tâches actives</div></div>`;
+  h += `<div class="kpi-box"><div class="kpi-n" style="color:var(--green)">${blDone}</div><div class="kpi-l">Tâches terminées</div></div>`;
+  h += '</div>';
+
+  function getProj(id) { return S.projects.find(p=>p.id===id) || (suiviData.sharedProjects||[]).find(p=>p.id===id) || null; }
+  const STLBL = {brouillon:'Brouillon',validation:'En validation',valide:'Validé ✓',renvoye:'Renvoyé',archive:'Archivé'};
+  const STCLS = {brouillon:'s-archive',validation:'s-pause',valide:'s-actif',renvoye:'s-termine',archive:'s-archive'};
+  function rowIcon(st) { return st==='valide'?'<span style="color:var(--green);font-size:13px;flex-shrink:0;">✓</span>':'<span style="color:var(--muted);font-size:13px;flex-shrink:0;">○</span>'; }
+  function projBadge(p) { return p?`<span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:12px;border:1px solid ${p.color};color:${p.color};">${esc(p.name)}</span>`:''; }
+
+  // ── Quick-add bar (always shown when projet001 loaded) ──
+  if (projet001FullData) {
+    const projOptions = (suiviData.sharedProjects||[]).concat(
+      S.projects.filter(p => !(suiviData.sharedProjects||[]).find(sp=>sp.id===p.id))
+    );
+    h += '<div class="global-add-bar">';
+    h += '<input type="text" id="global-add-text" placeholder="Nouvelle tâche @jv #projet !p1 26-04-2026" onkeydown="if(event.key===&#39;Enter&#39;)addGlobalTask()">';
+    h += '<button class="btn sm primary" onclick="addGlobalTask()">+ Ajouter</button>';
+    h += '</div>';
+  }
+
+  // ── Tâches (actives + terminées) ──
+  if (allBL.length) {
+    const byProj = {};
+    allBL.filter(b => !(_globalHideDone && b.done)).forEach(b => {
+      const p = getProj(b.projId);
+      const key = p ? p.name : 'Sans projet'; const col = p ? p.color : 'var(--muted)';
+      if (!byProj[key]) byProj[key] = {items:[], color:col};
+      byProj[key].items.push(b);
+    });
+    h += `<div class="suivi-section"><div class="suivi-section-title">Tâches (${allBL.length})</div>`;
+    Object.keys(byProj).sort().forEach(pk => {
+      const grp = byProj[pk];
+      const active = grp.items.filter(b=>!b.done).length;
+      h += `<div style="font-size:11px;font-weight:600;color:${grp.color};margin:10px 0 4px;text-transform:uppercase;letter-spacing:.04em;">${esc(pk)} — ${active} actives / ${grp.items.length} total</div>`;
+      grp.items.forEach(b => {
+        const priCol = b.pri==='p1'?'var(--red)':b.pri==='p2'?'var(--amber)':'var(--muted)';
+        h += `<div class="suivi-row" style="cursor:pointer;${b.done?'opacity:.5':''}" onclick="if(!event.target.closest('input'))openTD('${b.id}')">
+          <input type="checkbox" ${b.done?'checked':''} data-action="toggleGlobalTask" data-id="${b.id}" style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);flex-shrink:0;" onclick="event.stopPropagation()">
+          <span class="suivi-row-title"${b.done?' style="text-decoration:line-through;color:var(--muted)"':''}>${esc(b.text||'')}</span>
+          ${b.pri?`<span style="font-size:11px;font-weight:600;color:${priCol}">${b.pri.toUpperCase()}</span>`:''}
+          <span style="display:inline-flex;gap:3px;">${adminBadgeHtml(b)}</span>
+        </div>`;
+      });
+    });
+    h += '</div>';
+  }
+
+  // ── User Stories ──
+  if (allUS.length) {
+    h += `<div class="suivi-section"><div class="suivi-section-title">User Stories (${allUS.length})</div>`;
+    allUS.forEach((e,i) => {
+      _docIndex['usg'+i]=e;
+      const st=e.status||'brouillon';
+      const p=getProj(e.projet);
+      h += `<div class="suivi-row" style="cursor:pointer;" onclick="openDocDrawer('us',_docIndex['usg${i}'].id)">
+        ${rowIcon(st)}
+        <span class="suivi-row-title">${esc(e.titre||'Sans titre')}</span>
+        ${projBadge(p)}
+        ${e.est?`<span style="font-family:var(--mono);font-size:10px;color:var(--blue);border:1px solid var(--blue);padding:1px 5px;border-radius:2px;">${e.est}pts</span>`:''}
+        <span class="status-pill ${STCLS[st]||'s-archive'}" style="cursor:default;font-size:10px;">${STLBL[st]||st}</span>
+        ${e.savedAt?`<span style="font-size:10px;color:var(--muted);white-space:nowrap;">${e.savedAt}</span>`:''}
+      </div>`;
+    });
+    h += '</div>';
+  }
+
+  // ── Modes Opératoires ──
+  if (allMO.length) {
+    h += `<div class="suivi-section"><div class="suivi-section-title">Modes Opératoires (${allMO.length})</div>`;
+    allMO.forEach((e,i) => {
+      _docIndex['mog'+i]=e;
+      const st=e.status||'brouillon';
+      const p=getProj(e.projet);
+      h += `<div class="suivi-row" style="cursor:pointer;" onclick="openDocDrawer('mo',_docIndex['mog${i}'].id)">
+        ${rowIcon(st)}
+        <span class="suivi-row-title">${esc(e.titre||'Sans titre')}</span>
+        ${projBadge(p)}
+        <span class="status-pill ${STCLS[st]||'s-archive'}" style="cursor:default;font-size:10px;">${STLBL[st]||st}</span>
+        ${e.savedAt?`<span style="font-size:10px;color:var(--muted);white-space:nowrap;">${e.savedAt}</span>`:''}
+      </div>`;
+    });
+    h += '</div>';
+  }
+
+  // ── Comptes Rendus (tous) ──
+  if (allCR.length) {
+    const sorted = allCR.slice().sort((a,b)=>(b.savedAt||'').localeCompare(a.savedAt||''));
+    h += `<div class="suivi-section"><div class="suivi-section-title">Comptes Rendus (${allCR.length})</div>`;
+    sorted.forEach((e,i) => {
+      _docIndex['crg'+i]=e;
+      const st=e.status||'brouillon';
+      const p=getProj(e.projet);
+      h += `<div class="suivi-row" style="cursor:pointer;" onclick="openDocDrawer('cr',_docIndex['crg${i}'].id)">
+        ${rowIcon(st)}
+        <span class="suivi-row-title">${esc(e.title||e.titre||'Sans titre')}</span>
+        ${projBadge(p)}
+        ${e.dCount?`<span style="font-size:10px;color:var(--muted);">${e.dCount} déc. · ${e.aCount||0} act.</span>`:''}
+        <span class="status-pill ${STCLS[st]||'s-archive'}" style="cursor:default;font-size:10px;">${STLBL[st]||st}</span>
+        ${e.savedAt?`<span style="font-size:10px;color:var(--muted);white-space:nowrap;">${e.savedAt}</span>`:''}
+      </div>`;
+    });
+    h += '</div>';
+  }
+
+  el.innerHTML = h;
+  el.onchange = ev => {
+    const cb = ev.target.closest('[data-action="toggleGlobalTask"]');
+    if (cb && projet001FullData) {
+      const t = projet001FullData.backlog.find(x=>String(x.id)===String(cb.dataset.id));
+      if (t) { t.done=!t.done; writeProjet001('✓ Tâche mise à jour'); renderGlobal(); }
+    }
+  };
+  
+  // Attach autocomplete to input
+  setTimeout(attachAutocomplete, 0);
+}
+
+function debugSuivi() {
+  var lines = [];
+  lines.push('=== SUIVI DEBUG ===');
+  lines.push('Drive connecté: ' + (accessToken ? 'OUI' : 'NON'));
+  lines.push('Projet sélectionné: ' + (document.getElementById('suivi-proj-sel').value||'(aucun)'));
+  lines.push('CR chargés: ' + (suiviData.cr||[]).length);
+  (suiviData.cr||[]).forEach(function(e,i){
+    lines.push('  CR'+i+': "'+( e.title||e.titre||'?')+'" | projet: "'+( e.projet||'(vide)')+'"');
+  });
+  lines.push('MO chargés: ' + (suiviData.mo||[]).length);
+  lines.push('US chargés: ' + (suiviData.us||[]).length);
+  lines.push('Projets S.projects: ' + S.projects.map(function(p){return p.name+'('+p.id+')';}).join(', '));
+  alert(lines.join('\n'));
+}
+
+// ── Autocomplete system ──────────────────────────────────────────────────────
+let autocompleteState={
+  visible:false,
+  input:null,
+  trigger:null,
+  query:'',
+  selectedIndex:0,
+  items:[]
+};
+
+function createAutocompleteDropdown(){
+  let dropdown=document.getElementById('autocomplete-dropdown');
+  if(!dropdown){
+    dropdown=document.createElement('div');
+    dropdown.id='autocomplete-dropdown';
+    dropdown.className='autocomplete-dropdown';
+    document.body.appendChild(dropdown);
+  }
+  return dropdown;
+}
+
+function showAutocomplete(input,trigger,query){
+  const dropdown=createAutocompleteDropdown();
+  autocompleteState.input=input;
+  autocompleteState.trigger=trigger;
+  autocompleteState.query=query.toLowerCase();
+  autocompleteState.selectedIndex=0;
+  
+  let items=[];
+  if(trigger==='@'){
+    const team=S.team||[];
+    items=team.map(m=>({
+      type:'member',
+      id:m.id,
+      label:m.nom,
+      tag:'@'+(m.alias||m.initiales).toLowerCase(),
+      color:m.color||'#888',
+      initiales:m.initiales
+    })).filter(i=>
+      i.label.toLowerCase().indexOf(autocompleteState.query)>=0||
+      i.tag.indexOf(autocompleteState.query)>=0
+    );
+  } else if(trigger==='#'){
+    const projects=S.projects||[];
+    items=projects.map(p=>{
+      const slug=slugForMatch(p.name);
+      return {
+        type:'project',
+        id:p.id,
+        label:p.name,
+        tag:'#'+slug,
+        color:p.color||'#888'
+      };
+    }).filter(i=>
+      i.label.toLowerCase().indexOf(autocompleteState.query)>=0||
+      i.tag.indexOf(autocompleteState.query)>=0
+    );
+  } else if(trigger==='!'){
+    items=[
+      {type:'priority',id:'p1',label:'Priorité P1',tag:'!p1',color:'#DC2626'},
+      {type:'priority',id:'p2',label:'Priorité P2',tag:'!p2',color:'#D97706'},
+      {type:'priority',id:'p3',label:'Priorité P3',tag:'!p3',color:'#16A34A'}
+    ].filter(i=>i.tag.indexOf(autocompleteState.query)>=0);
+  }
+  
+  autocompleteState.items=items;
+  if(!items.length){hideAutocomplete();return;}
+  
+  dropdown.innerHTML=items.map((item,idx)=>{
+    let avatar='';
+    if(item.type==='member'){
+      avatar='<span class="ac-avatar" style="background:'+item.color+'">'+esc(item.initiales)+'</span>';
+    } else if(item.type==='project'){
+      avatar='<span class="ac-avatar" style="background:'+item.color+';border-radius:4px;">📁</span>';
+    } else if(item.type==='priority'){
+      avatar='<span class="ac-avatar" style="background:'+item.color+';border-radius:4px;">⚡</span>';
+    }
+    return '<div class="autocomplete-item'+(idx===0?' selected':'')+'" data-index="'+idx+'">'+
+      avatar+
+      '<span class="ac-label">'+esc(item.label)+'</span>'+
+      '<span class="ac-tag">'+item.tag+'</span>'+
+    '</div>';
+  }).join('');
+  
+  const rect=input.getBoundingClientRect();
+  dropdown.style.left=rect.left+'px';
+  dropdown.style.top=(rect.top+input.offsetHeight+4)+'px';
+  dropdown.classList.add('show');
+  autocompleteState.visible=true;
+  
+  dropdown.querySelectorAll('.autocomplete-item').forEach((el,idx)=>{
+    el.onclick=()=>selectAutocompleteItem(idx);
+  });
+}
+
+function hideAutocomplete(){
+  const dropdown=document.getElementById('autocomplete-dropdown');
+  if(dropdown)dropdown.classList.remove('show');
+  autocompleteState.visible=false;
+}
+
+function selectAutocompleteItem(index){
+  if(!autocompleteState.visible||!autocompleteState.items.length)return;
+  const item=autocompleteState.items[index];
+  if(!item)return;
+  
+  const input=autocompleteState.input;
+  const text=input.value;
+  const cursorPos=input.selectionStart;
+  
+  let start=cursorPos-1;
+  while(start>0&&text[start]!==autocompleteState.trigger)start--;
+  
+  const before=text.substring(0,start);
+  const after=text.substring(cursorPos);
+  input.value=before+item.tag+' '+after;
+  
+  const newPos=before.length+item.tag.length+1;
+  input.selectionStart=input.selectionEnd=newPos;
+  
+  hideAutocomplete();
+  input.focus();
+}
+
+function moveAutocompleteSelection(direction){
+  if(!autocompleteState.visible)return;
+  const items=autocompleteState.items;
+  if(!items.length)return;
+  
+  autocompleteState.selectedIndex+=direction;
+  if(autocompleteState.selectedIndex<0)autocompleteState.selectedIndex=items.length-1;
+  if(autocompleteState.selectedIndex>=items.length)autocompleteState.selectedIndex=0;
+  
+  const dropdown=document.getElementById('autocomplete-dropdown');
+  if(!dropdown)return;
+  dropdown.querySelectorAll('.autocomplete-item').forEach((el,idx)=>{
+    if(idx===autocompleteState.selectedIndex)el.classList.add('selected');
+    else el.classList.remove('selected');
+  });
+}
+
+function handleAutocompleteInput(e){
+  const input=e.target;
+  const text=input.value;
+  const cursorPos=input.selectionStart;
+  
+  let triggerPos=-1;
+  let trigger=null;
+  
+  for(let i=cursorPos-1;i>=0;i--){
+    const char=text[i];
+    if(char===' '||char==='\n')break;
+    if(char==='@'||char==='#'||char==='!'){
+      trigger=char;
+      triggerPos=i;
+      break;
+    }
+  }
+  
+  if(trigger&&triggerPos>=0){
+    const query=text.substring(triggerPos+1,cursorPos);
+    showAutocomplete(input,trigger,query);
+  } else {
+    hideAutocomplete();
+  }
+}
+
+function handleAutocompleteKeydown(e){
+  if(!autocompleteState.visible)return;
+  
+  if(e.key==='ArrowDown'){
+    e.preventDefault();
+    moveAutocompleteSelection(1);
+  } else if(e.key==='ArrowUp'){
+    e.preventDefault();
+    moveAutocompleteSelection(-1);
+  } else if(e.key==='Enter'||e.key==='Tab'){
+    if(autocompleteState.visible){
+      e.preventDefault();
+      selectAutocompleteItem(autocompleteState.selectedIndex);
+    }
+  } else if(e.key==='Escape'){
+    hideAutocomplete();
+  }
+}
+
+// Attach autocomplete after render
+function attachAutocomplete(){
+  const input=document.getElementById('global-add-text');
+  if(input&&!input.dataset.autocompleteAttached){
+    input.dataset.autocompleteAttached='true';
+    input.addEventListener('input',handleAutocompleteInput);
+    input.addEventListener('keydown',handleAutocompleteKeydown);
+  }
+}
+
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.autocomplete-dropdown')&&!e.target.closest('input')){
+    hideAutocomplete();
+  }
+});
+
+</script>
+
+<!-- Task Detail Drawer -->
+<div class="td-overlay" id="td-overlay" onclick="closeTD()"></div>
+<div class="td-drawer" id="td-drawer">
+  <div class="td-drawer-header">
+    <div style="flex:1;min-width:0;">
+      <textarea class="td-drawer-title" id="td-title" rows="2" oninput="tdAutoResize(this)" onblur="tdSaveTitle()"></textarea>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;" id="td-badges"></div>
+    </div>
+    <button class="td-drawer-close" onclick="closeTD()">&#x2715;</button>
+  </div>
+  <div class="td-drawer-body">
+    <div class="td-drawer-section">
+      <div class="td-drawer-section-title">&#x1F465; &Eacute;quipe</div>
+      <div id="td-team"></div>
+    </div>
+    <div class="td-drawer-section">
+      <div class="td-drawer-section-title">&#x1F4AC; Commentaires</div>
+      <div id="td-comments"></div>
+      <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
+        <textarea id="td-comment-input" rows="2" placeholder="Ajouter un commentaire…"
+          style="font-family:var(--sans);font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);resize:none;outline:none;width:100%;box-sizing:border-box;"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();tdAddComment();}"></textarea>
+        <button class="btn sm primary" onclick="tdAddComment()" style="align-self:flex-end;">Envoyer</button>
+      </div>
+    </div>
+    <div class="td-drawer-section">
+      <div class="td-drawer-section-title">&#x1F4CB; Historique</div>
+      <div id="td-history"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Doc Drawer (US / MO / CR) -->
+<div id="doc-overlay" onclick="closeDocDrawer()" style="position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:301;opacity:0;transition:opacity .2s;pointer-events:none;"></div>
+<div class="doc-drawer" id="doc-drawer">
+  <div class="doc-drawer-header">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+      <div style="flex:1;min-width:0;">
+        <div class="doc-breadcrumb" id="doc-breadcrumb"></div>
+        <div class="doc-drawer-title" id="doc-drawer-title"></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;" id="doc-drawer-badges"></div>
+      </div>
+      <button class="td-drawer-close" onclick="closeDocDrawer()">&#x2715;</button>
+    </div>
+  </div>
+  <div class="doc-drawer-body" id="doc-drawer-body"></div>
+</div>
+</body>
+</html>
