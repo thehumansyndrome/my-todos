@@ -1526,22 +1526,11 @@ function showAutocomplete(input,trigger,query,cursorPos){
     '</div>';
   }).join('');
   
-  // Position dropdown near cursor using a better calculation
+  // Position dropdown at bottom of textarea (like backlog)
   var rect=input.getBoundingClientRect();
-  
-  // Get approximate cursor position based on line breaks
-  var textBeforeCursor=input.value.substring(0,cursorPos);
-  var lines=textBeforeCursor.split('\n');
-  var lineNumber=lines.length-1;
-  var lineHeight=parseInt(window.getComputedStyle(input).lineHeight)||20;
-  
-  // Calculate vertical position: input top + scroll offset + line position + line height
-  var scrollTop=input.scrollTop||0;
-  var topPos=rect.top+(lineNumber*lineHeight)-scrollTop+lineHeight+4;
-  
-  // Horizontal: simple left alignment with input
   dropdown.style.left=rect.left+'px';
-  dropdown.style.top=topPos+'px';
+  dropdown.style.top=(rect.bottom+4)+'px';
+  dropdown.style.width=(rect.width)+'px';
   dropdown.classList.add('show');
   autocompleteState.visible=true;
   
@@ -1626,14 +1615,9 @@ function handleAutocompleteInput(e){
     }
   }
   
-  // Only show autocomplete if at least 1 character after trigger
   if(trigger&&triggerPos>=0){
     var query=text.substring(triggerPos+1,cursorPos);
-    if(query.length>0){
-      showAutocomplete(input,trigger,query,cursorPos);
-    } else {
-      hideAutocomplete();
-    }
+    showAutocomplete(input,trigger,query,cursorPos);
   } else {
     hideAutocomplete();
   }
