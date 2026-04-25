@@ -567,6 +567,34 @@ let accessToken = sessionStorage.getItem(TOK_KEY) || null;
 let saveTimer   = null;
 let undoStack   = [];  // [{entry, index}] — suppression annulable
 let undoTimer   = null;
+let lastSharedModTime = null;
+let syncInterval = null;
+
+function startRealtimeSync(){
+  if(syncInterval||!accessToken)return;
+  syncInterval=setInterval(async()=>{
+    if(!accessToken||!sharedFileId)return;
+    try{
+      const r=await fetch(`https://www.googleapis.com/drive/v3/files/${sharedFileId}?fields=modifiedTime`,
+        {headers:{Authorization:`Bearer ${accessToken}`}});
+      const data=await r.json();
+      const modTime=data.modifiedTime;
+      if(lastSharedModTime&&modTime!==lastSharedModTime){
+        console.log('🔄 Sync shared.json détectée');
+        await loadSharedProjects();
+      }
+      lastSharedModTime=modTime;
+    }catch(e){}
+  },5000);
+  console.log('✓ Sync temps réel activée (MO Generator)');
+}
+
+function stopRealtimeSync(){
+  if(syncInterval){
+    clearInterval(syncInterval);
+    syncInterval=null;
+  }
+}
 
 // Editor meta state
 let curProjet    = '';
@@ -1570,6 +1598,12 @@ async function loadSharedProjects() {
     const id = sharedFileId || await findSharedFile();
     if (!id) { toast('shared.json introuvable — créez des projets dans Projects'); return; }
     sharedFileId = id;
+    
+    // Récupérer modifiedTime
+    const metaRes = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?fields=modifiedTime`, {headers:{Authorization:`Bearer ${accessToken}`}});
+    const metaData = await metaRes.json();
+    lastSharedModTime = metaData.modifiedTime;
+    
     const res = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, {headers:{Authorization:`Bearer ${accessToken}`}});
     const data = await res.json();
     if (Array.isArray(data.projects)) {
@@ -1595,6 +1629,9 @@ async function loadSharedProjects() {
       if (!curValid.length)  { curValid  = [_aidDef]; renderEditorMeta(); }
     }
     toast('✓ ' + S.projets.length + ' projets · ' + sharedTeam.length + ' membres chargés');
+    
+    // Démarrer la sync temps réel
+    if(!syncInterval) startRealtimeSync();
   } catch(e) { toast('Erreur chargement projets partagés'); console.error(e); }
 }
 
