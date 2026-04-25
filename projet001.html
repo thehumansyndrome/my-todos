@@ -3656,6 +3656,33 @@ async function restoreArchiveItem(idx){
   if(!archiveData) return;
   const a = archiveData.archives[idx];
   if(!a) return;
+  
+  // Check if it's a reminder
+  if(a._archiveType === 'reminder'){
+    const restored = {
+      id: 'r'+Date.now(),
+      text: a.text||'',
+      date: a.date||null,
+      recur: a.recur||'none',
+      done: false,
+      images: a.images||[],
+      ts: Date.now()
+    };
+    S.reminders.unshift(restored);
+    autoSave();
+    renderReminders();
+    archiveData.archives.splice(idx,1);
+    const ok = await saveArchiveToDrive();
+    if(ok){
+      toast('↩ Rappel restauré dans les Reminders');
+      logA('reminder','↩ Restauré depuis archive : "'+restored.text+'"');
+      renderArchive();
+      populateArchiveCatFilter();
+    }
+    return;
+  }
+  
+  // Default: restore as todo
   const restored = {
     id: 'r'+Date.now(),
     text: a.text||'',
@@ -3792,6 +3819,31 @@ async function archiveDone(){
   toast('✓ '+doneItems.length+' tâche(s) archivée(s) → projet001-archive.json');
   logA('drive','Archive → '+ARCHIVE_FILENAME+' ('+doneItems.length+' tâches)');
 }
+
+async function archiveDoneReminders(){
+  const doneItems=S.reminders.filter(x=>x.done);
+  if(!doneItems.length){toast('Aucun rappel terminé à archiver');return;}
+  if(!drTok){
+    toastAction('⚠ Drive non connecté — relie Drive pour archiver','Connecter',()=>driveAuth());
+    return;
+  }
+  if(!confirm('Archiver '+doneItems.length+' rappel(s) terminé(s) ?\n\nIls seront sauvegardés dans projet001-archive.json sur Drive et supprimés de la liste.'))return;
+  toast('💾 Archivage en cours…');
+  // Enrich with _archiveType metadata
+  const enriched = doneItems.map(r=>({...r, _archiveType:'reminder'}));
+  const ok = await pushToArchive(enriched);
+  if(!ok) return; // pushToArchive already toasted the error — don't delete
+  // Only remove from reminders if Drive write succeeded
+  doneItems.forEach(r=>{
+    logA('reminder','✓ Archivé: "'+r.text+'"');
+  });
+  S.reminders=S.reminders.filter(x=>!x.done);
+  archiveData=null; // invalidate cache so Archive tab reloads fresh
+  autoSave();renderReminders();
+  toast('✓ '+doneItems.length+' rappel(s) archivé(s) → projet001-archive.json');
+  logA('drive','Archive → '+ARCHIVE_FILENAME+' ('+doneItems.length+' rappels)');
+}
+
 
 function todoImgPick(id){
   const inp=document.getElementById('img-pick-'+id);
@@ -4519,7 +4571,12 @@ const rSL={overdue:'Overdue',today:'Today',soon:'This week',upcoming:'Upcoming',
 const rRL={none:'',daily:'Daily',weekly:'Weekly',monthly:'Monthly'};
 function renderReminders(){
   const fk=['all','overdue','today','soon','upcoming','done'],fl={all:'All',overdue:'Overdue',today:'Today',soon:'This week',upcoming:'Upcoming',done:'Done'};
-  document.getElementById('rem-filters').innerHTML=fk.map(f=>`<button class="fb${rF===f?' on':''}" onclick="rF='${f}';renderReminders()">${fl[f]}</button>`).join('');
+  const doneCount=S.reminders.filter(r=>r.done).length;
+  let filtersHtml=fk.map(f=>`<button class="fb${rF===f?' on':''}" onclick="rF='${f}';renderReminders()">${fl[f]}</button>`).join('');
+  if(rF==='done'&&doneCount>0){
+    filtersHtml+=`<button class="archive-btn" onclick="archiveDoneReminders()" title="Archiver dans le Log" style="margin-left:8px;">↓ Archiver</button>`;
+  }
+  document.getElementById('rem-filters').innerHTML=filtersHtml;
   let items=S.reminders.map(r=>({...r,_s:remSt(r)}));if(rF!=='all')items=items.filter(x=>x._s===rF);
   const ord={overdue:0,today:1,soon:2,upcoming:3,done:4};
   items.sort((a,b)=>{const d=ord[a._s]-ord[b._s];if(d)return d;if(a.date&&b.date)return a.date.localeCompare(b.date);return a.ts-b.ts;});
@@ -6639,8 +6696,12 @@ function udRenderArchiveBody(a){
   const el=document.getElementById('ud-body'); if(!el||!a) return;
   const dateStr=a.archivedAt?new Date(a.archivedAt).toLocaleString('fr-FR',{weekday:'long',day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'}):'';
   const createdStr=a.ts?new Date(a.ts).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'}):'';
-  const canRestore=!a._archiveType||a._archiveType==='todo'||a._archiveType==='backlog';
+  const canRestore=!a._archiveType||a._archiveType==='todo'||a._archiveType==='backlog'||a._archiveType==='reminder';
   const realIdx=archiveData?archiveData.archives.indexOf(a):-1;
+  
+  // Determine restore button text
+  let restoreText='↩ Restaurer dans les todos';
+  if(a._archiveType==='reminder') restoreText='↩ Restaurer dans les reminders';
 
   // Project badge
   let projHtml='';
@@ -6709,7 +6770,7 @@ function udRenderArchiveBody(a){
     ${subtasksHtml}
     ${commentsHtml}
     <div class="ud-sec" style="display:flex;gap:8px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--line3);">
-      ${canRestore&&realIdx>=0?`<button class="arch-restore-btn" onclick="restoreArchiveItem(${realIdx});closeUD();" style="padding:6px 14px;">↩ Restaurer dans les todos</button>`:''}
+      ${canRestore&&realIdx>=0?`<button class="arch-restore-btn" onclick="restoreArchiveItem(${realIdx});closeUD();" style="padding:6px 14px;">${restoreText}</button>`:''}
       ${realIdx>=0?`<button class="arch-del-btn" onclick="if(confirm('Supprimer définitivement ?')){deleteArchiveItem(${realIdx});closeUD();}">✕ Supprimer</button>`:''}
     </div>`;
 }
