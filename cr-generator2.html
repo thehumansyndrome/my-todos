@@ -510,6 +510,34 @@ var accessToken  = sessionStorage.getItem(TOK) || null;
 var saveTimer    = null;
 var undoStack    = [];
 var undoTimer    = null;
+var lastSharedModTime = null;
+var syncInterval = null;
+
+function startRealtimeSync(){
+  if(syncInterval||!accessToken)return;
+  syncInterval=setInterval(function(){
+    if(!accessToken||!sharedFileId)return;
+    fetch('https://www.googleapis.com/drive/v3/files/'+sharedFileId+'?fields=modifiedTime',
+      {headers:{Authorization:'Bearer '+accessToken}})
+    .then(function(r){return r.json();})
+    .then(function(data){
+      var modTime=data.modifiedTime;
+      if(lastSharedModTime&&modTime!==lastSharedModTime){
+        console.log('🔄 Sync shared.json détectée');
+        loadSharedProjects();
+      }
+      lastSharedModTime=modTime;
+    }).catch(function(){});
+  },5000);
+  console.log('✓ Sync temps réel activée (CR Generator)');
+}
+
+function stopRealtimeSync(){
+  if(syncInterval){
+    clearInterval(syncInterval);
+    syncInterval=null;
+  }
+}
 
 // Editor state
 var curCRProjet    = '';
@@ -1575,7 +1603,12 @@ function loadSharedProjects(){
   findSharedFile().then(function(id){
     if(!id){toast('shared.json introuvable — créez des projets dans Projects');return;}
     sharedFileId=id;
-    return fetch('https://www.googleapis.com/drive/v3/files/'+id+'?alt=media',{headers:{Authorization:'Bearer '+accessToken}}).then(function(r){return r.json();});
+    // Récupérer modifiedTime dès le départ
+    return fetch('https://www.googleapis.com/drive/v3/files/'+id+'?fields=modifiedTime&alt=media',{headers:{Authorization:'Bearer '+accessToken}})
+      .then(function(r){
+        lastSharedModTime=r.headers.get('x-goog-meta-modtime')||new Date().toISOString();
+        return r.json();
+      });
   }).then(function(data){
     if(!data)return;
     if(Array.isArray(data.projects)) sharedProjects=data.projects;
@@ -1596,6 +1629,9 @@ function loadSharedProjects(){
       if (!curValid.length)  { curValid  = [_aid]; renderChips('chips-val', curValid,  'val'); }
     }
     toast('✓ '+sharedProjects.length+' projets · '+sharedTeam.length+' membres chargés');
+    
+    // Démarrer la sync temps réel
+    if(!syncInterval) startRealtimeSync();
   }).catch(function(e){toast('Erreur chargement projets');});
 }
 
