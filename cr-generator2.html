@@ -335,7 +335,7 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
       <div class="help-group">
         <h3>Corps</h3>
         <div class="help-row"><span class="help-tag">D:</span><span class="help-desc">Décision prise</span></div>
-        <div class="help-row"><span class="help-tag">A:</span><span class="help-desc">Action — optionnel : @Prenom JJ-MM-AAAA</span></div>
+        <div class="help-row"><span class="help-tag">A:</span><span class="help-desc">Action — optionnel : @Prenom @Autre JJ-MM-AAAA</span></div>
       </div>
     </div>
   </div>
@@ -672,11 +672,19 @@ function parse(text) {
     } else {
       if      ((m=line.match(/^D\s*:\s*(.+)/i))) cr.decisions.push(m[1].trim());
       else if ((m=line.match(/^A\s*:\s*(.+)/i))) {
-        var raw=m[1].trim(), assignee='', due='', txt=raw;
-        var am=raw.match(/@(\S+)/), dm=raw.match(/\b(\d{2}-\d{2}-\d{4})\b/);
-        if (am) { assignee=am[1]; txt=txt.replace(am[0],'').trim(); }
-        if (dm) { due=dm[1];      txt=txt.replace(dm[0],'').trim(); }
-        cr.actions.push({text:txt, assignee:assignee, due:due});
+        var raw=m[1].trim(), assignees=[], due='', txt=raw;
+        // Capturer TOUS les @mentions
+        var mentionMatches=raw.match(/@\S+/g);
+        if (mentionMatches) {
+          mentionMatches.forEach(function(mention){
+            assignees.push(mention.substring(1)); // Remove @
+            txt=txt.replace(mention,'').trim();
+          });
+        }
+        var dm=raw.match(/\b(\d{2}-\d{2}-\d{4})\b/);
+        if (dm) { due=dm[1]; txt=txt.replace(dm[0],'').trim(); }
+        // Pour compatibilité, on garde assignee comme le premier
+        cr.actions.push({text:txt, assignee:assignees[0]||'', assignees:assignees, due:due});
       }
     }
   }
@@ -867,10 +875,17 @@ function resolveAlias(mention) {
 }
 function aliasAvatarHtml(mention) {
   var m = resolveAlias(mention);
-  var nom = m ? m.nom : mention;
-  var ini = m ? m.initiales : pInitials(mention);
-  var col = m ? pColor(m.nom) : pColor(mention);
-  return '<span class="tag-item" style="vertical-align:middle;"><span class="tag-item-avatar c'+col+'">'+esc(ini)+'</span>'+esc(nom)+'</span>';
+  if (m) {
+    // Membre résolu - utiliser sa vraie couleur et afficher le prénom uniquement
+    var prenom = m.nom.split(' ')[0];
+    return '<span class="tag-item" style="vertical-align:middle;background:'+m.color+'22;border:1px solid '+m.color+'44;color:'+m.color+';padding:2px 6px;border-radius:12px;font-size:11px;font-weight:500;"><span class="tag-item-avatar" style="background:'+m.color+';color:white;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;margin-right:4px;">'+esc(m.initiales)+'</span>'+esc(prenom)+'</span>';
+  } else {
+    // Non résolu - style par défaut
+    var ini = pInitials(mention);
+    var col = pColor(mention);
+    var prenom = mention.split(' ')[0];
+    return '<span class="tag-item" style="vertical-align:middle;"><span class="tag-item-avatar c'+col+'">'+esc(ini)+'</span>'+esc(prenom)+'</span>';
+  }
 }
 function renderParticipantChips(participants) {
   if (!participants) return '';
@@ -924,9 +939,16 @@ function renderPreview() {
   if (cr.actions.length) {
     h += '<div class="pr-section"><div class="pr-section-label">Actions</div>';
     cr.actions.forEach(function(a,i) {
-      var col=a.assignee?pColor(a.assignee):0, ini=a.assignee?pInitials(a.assignee):'';
       h += '<div class="pr-item"><span class="pr-item-icon" style="font-family:var(--mono);font-size:12px;min-width:18px;">'+(i+1)+'.</span><div class="pr-item-body">'+esc(a.text);
-      if (a.assignee) h+=' '+aliasAvatarHtml(a.assignee);
+      // Afficher tous les assignees
+      if (a.assignees && a.assignees.length) {
+        a.assignees.forEach(function(assignee){
+          h+=' '+aliasAvatarHtml(assignee);
+        });
+      } else if (a.assignee) {
+        // Fallback pour anciens CR avec un seul assignee
+        h+=' '+aliasAvatarHtml(a.assignee);
+      }
       if (a.due) h+=' <span style="color:var(--amber);font-size:12px;">📅 '+esc(a.due)+'</span>';
       h += '</div></div>';
     });
