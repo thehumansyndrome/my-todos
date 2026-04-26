@@ -930,11 +930,16 @@ function parseCR(body){
     } else {
       if((m=line.match(/^D\s*:\s*(.+)/i)))cr.decisions.push(m[1].trim());
       else if((m=line.match(/^A\s*:\s*(.+)/i))){
-        var raw=m[1].trim(),assignee='',due='',txt=raw;
-        var am=raw.match(/@(\S+)/),dm=raw.match(/\b(\d{2}-\d{2}-\d{4})\b/);
+        var raw=m[1].trim(),assignee='',due='',pri='',txt=raw;
+        var am=raw.match(/@(\S+)/);
+        var dm=raw.match(/\b(\d{2}-\d{2}-\d{4})\b/);
+        var pm=raw.match(/!(p[123])/i);
         if(am){assignee=am[1];txt=txt.replace(am[0],'').trim();}
+        if(pm){pri=pm[1].toLowerCase();txt=txt.replace(pm[0],'').trim();}
         if(dm){due=dm[1];txt=txt.replace(dm[0],'').trim();}
-        cr.actions.push({text:txt,assignee:assignee,due:due});
+        // Nettoyer les espaces multiples
+        txt=txt.replace(/\s+/g,' ').trim();
+        cr.actions.push({text:txt,assignee:assignee,due:due,pri:pri});
       }
     }
   }
@@ -968,6 +973,12 @@ function renderCR(body){
     cr.actions.forEach(function(a,i){
       h+='<div class="pr-item"><span class="pr-icon" style="font-family:var(--mono);font-size:12px;min-width:20px;">'+(i+1)+'.</span><div class="pr-body">'+esc(a.text);
       if(a.assignee)h+=' '+aliasAvatarHtml(a.assignee);
+      // Afficher la priorité
+      if(a.pri){
+        var priColors={p1:'#DC2626',p2:'#D97706',p3:'#16A34A'};
+        var priLabels={p1:'P1',p2:'P2',p3:'P3'};
+        h+=' <span style="display:inline-flex;align-items:center;justify-content:center;font-size:10px;padding:3px 7px;border-radius:12px;background:'+(priColors[a.pri]||'#888')+'15;color:'+(priColors[a.pri]||'#888')+';font-weight:600;vertical-align:middle;">'+(priLabels[a.pri]||a.pri.toUpperCase())+'</span>';
+      }
       if(a.due)h+=' <span style="color:var(--amber);font-size:12px;">\uD83D\uDCC5 '+esc(a.due)+'</span>';
       h+='</div></div>';
     });
@@ -1292,7 +1303,7 @@ function validateCRNote(){
       id:'cr'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
       text:action.text,
       projId:projId,
-      pri:'p2',
+      pri:action.pri||'p2',
       done:false,
       ts:Date.now(),
       assigneeIds:assigneeIds,
