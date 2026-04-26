@@ -299,6 +299,18 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
       </div>
       <textarea class="editor-area" id="raw-input" spellcheck="false" oninput="onEdit()"></textarea>
     </div>
+    
+    <!-- Section Actions à créer -->
+    <div class="pane" style="border-top:2px solid var(--border);">
+      <div class="pane-header">
+        <span>Actions à créer (optionnel)</span>
+        <button class="btn sm" onclick="addPreValidationAction()">+ Ajouter une action</button>
+      </div>
+      <div id="pre-actions-list" style="padding:12px;min-height:60px;max-height:200px;overflow-y:auto;">
+        <div style="color:var(--muted);font-size:13px;text-align:center;padding:20px;" id="pre-actions-empty">Aucune action pour l'instant</div>
+      </div>
+    </div>
+    
     <div class="pane">
       <div class="pane-header">
         <div style="display:flex;align-items:center;gap:8px;">
@@ -545,6 +557,7 @@ var curRedact      = [];
 var curValid       = [];
 var editingEntryId = null;
 var crParticipants = [];
+var preValidationActions = []; // Actions à créer lors de la validation
 
 // Filter state
 var filterStatus = 'all';
@@ -1017,6 +1030,79 @@ function submitCR() {
   toast('✓ Soumis en validation');
 }
 
+// ── Pre-validation Actions ────────────────────────────────────────────────────
+function addPreValidationAction(){
+  const text=prompt('Texte de l\'action :');
+  if(!text||!text.trim())return;
+  
+  const action={
+    id:'pre'+Date.now(),
+    text:text.trim(),
+    assignee:null,
+    dueDate:null
+  };
+  
+  preValidationActions.push(action);
+  renderPreValidationActions();
+}
+
+function removePreValidationAction(id){
+  preValidationActions=preValidationActions.filter(function(a){return a.id!==id;});
+  renderPreValidationActions();
+}
+
+function setPreActionAssignee(id,memberId){
+  const action=preValidationActions.find(function(a){return a.id===id;});
+  if(!action)return;
+  action.assignee=memberId;
+  renderPreValidationActions();
+}
+
+function setPreActionDate(id,date){
+  const action=preValidationActions.find(function(a){return a.id===id;});
+  if(!action)return;
+  action.dueDate=date;
+  renderPreValidationActions();
+}
+
+function renderPreValidationActions(){
+  const container=document.getElementById('pre-actions-list');
+  const empty=document.getElementById('pre-actions-empty');
+  
+  if(!preValidationActions.length){
+    if(empty)empty.style.display='';
+    container.querySelectorAll('.pre-action-item').forEach(function(el){el.remove();});
+    return;
+  }
+  
+  if(empty)empty.style.display='none';
+  container.innerHTML='';
+  
+  preValidationActions.forEach(function(action){
+    const assigneeName=action.assignee?
+      ((sharedTeam||[]).find(function(m){return m.id===action.assignee;})||{}).nom||'?':
+      'Non assignée';
+    
+    const item=document.createElement('div');
+    item.className='pre-action-item';
+    item.style.cssText='display:flex;align-items:center;gap:8px;padding:8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;font-size:13px;';
+    
+    item.innerHTML=`
+      <span style="flex:1;font-weight:500;">${esc(action.text)}</span>
+      <select onchange="setPreActionAssignee('${action.id}',this.value)" style="font-size:12px;padding:4px 6px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);">
+        <option value="">— Assigné à —</option>
+        ${(sharedTeam||[]).map(function(m){
+          return '<option value="'+m.id+'"'+(action.assignee===m.id?' selected':'')+'>'+esc(m.nom)+'</option>';
+        }).join('')}
+      </select>
+      <input type="date" value="${action.dueDate||''}" onchange="setPreActionDate('${action.id}',this.value)" style="font-size:12px;padding:4px 6px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);">
+      <button onclick="removePreValidationAction('${action.id}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:0 4px;">×</button>
+    `;
+    
+    container.appendChild(item);
+  });
+}
+
 function validateCR() {
   saveCR();
   var e = S.history.find(function(x){return x.id===editingEntryId;});
@@ -1025,6 +1111,11 @@ function validateCR() {
   e.publishedAt=new Date().toLocaleString('fr-FR');
   persist(); renderHistory(); renderEditorMeta();
   pushCRActionsToProjets(e);
+  
+  // Créer les actions pré-validation
+  if(preValidationActions.length>0){
+    createPreValidationActions(e);
+  }
 }
 
 function pushCRActionsToProjets(e) {
@@ -1088,6 +1179,49 @@ function pushCRActionsToProjets(e) {
     toast('✓ CR validé · ' + added + ' action' + (added>1?'s':'') + ' → projet001');
   } else {
     toast('✓ CR validé · actions déjà dans projet001');
+  }
+}
+
+function createPreValidationActions(e){
+  if(!todoFullData){
+    toast('⚠ Actions pré-validation non exportées (chargez l\'onglet Tâches)');
+    return;
+  }
+  
+  todoFullData.backlog=todoFullData.backlog||[];
+  const adminId=getAdminId();
+  const projId=e.projet||appProjId||null;
+  let added=0;
+  
+  preValidationActions.forEach(function(action){
+    const assigneeIds=action.assignee?[action.assignee]:[adminId].filter(Boolean);
+    
+    const task={
+      id:'cra'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
+      text:action.text,
+      projId:projId,
+      pri:'p2',
+      done:false,
+      ts:Date.now(),
+      assigneeIds:assigneeIds,
+      status:'valide',
+      source:'cr',
+      crTitle:e.title||'',
+      crDate:e.publishedAt||''
+    };
+    
+    if(action.dueDate)task.dueDate=action.dueDate;
+    
+    todoFullData.backlog.unshift(task);
+    added++;
+  });
+  
+  if(added>0){
+    writeTodoFile();
+    toast('✓ '+added+' action'+(added>1?'s':'')+' pré-validation créée'+(added>1?'s':''));
+    // Réinitialiser les actions pré-validation
+    preValidationActions=[];
+    renderPreValidationActions();
   }
 }
 
@@ -1325,6 +1459,8 @@ function editFromDrawer() {
   document.getElementById('raw-input').value=e.raw;
   curCRProjet=e.projet||''; curRedact=(e.redacteurs||[]).slice(); curValid=(e.valideurs||[]).slice();
   editingEntryId=e.id; saveMetaState();
+  preValidationActions = [];
+  renderPreValidationActions();
   loadParticipantsFromRaw(e.raw);
   renderEditorMeta(); renderPreview();
   closeDrawer(); showTab('editor'); toast('CR chargé dans l\'éditeur');
@@ -1420,6 +1556,8 @@ function resetTemplate() {
   var aid = typeof getAdminId === 'function' ? getAdminId() : null;
   curRedact = aid ? [aid] : [];
   curValid  = aid ? [aid] : [];
+  preValidationActions = [];
+  renderPreValidationActions();
   _loadFreshTemplate();
 }
 
