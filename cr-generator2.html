@@ -1038,6 +1038,11 @@ function pushCRActionsToProjets(e) {
       });
       if (member) assigneeIds = [member.id];
     }
+    var now = new Date();
+    var dateStr = now.toLocaleDateString('fr-FR');
+    var timeStr = now.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+    var crTitleForComment = e.title || 'CR sans titre';
+    
     var task = {
       id:          'cr' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
       text:        action.text,
@@ -1049,7 +1054,13 @@ function pushCRActionsToProjets(e) {
       status:      'valide',
       source:      'cr',
       crTitle:     e.title || '',
-      crDate:      e.publishedAt || ''
+      crDate:      e.publishedAt || '',
+      comments:    [{
+        id:     'auto' + Date.now(),
+        text:   'Tâche créée le ' + dateStr + ' à ' + timeStr + ' dans le CR ' + crTitleForComment,
+        author: 'system',
+        ts:     Date.now()
+      }]
     };
     if (action.due) task.dueDate = action.due;
     todoFullData.backlog.unshift(task);
