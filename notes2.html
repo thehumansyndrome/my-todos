@@ -1259,7 +1259,9 @@ function validateCRNote(){
 
   // Copy CR to CR Generator 2
   if(crGeneratorData){
+    console.log('CR Generator Data avant:', crGeneratorData);
     crGeneratorData.history=crGeneratorData.history||[];
+    console.log('Nombre de CR avant ajout:', crGeneratorData.history.length);
     // Check if CR already exists
     var existingCR=crGeneratorData.history.find(function(e){
       return e.raw===n.body&&e.projet===cr.projet;
@@ -1273,13 +1275,21 @@ function validateCRNote(){
         publishedAt:new Date().toLocaleString('fr-FR'),
         ts:Date.now()
       };
+      console.log('Ajout du CR:', crEntry);
       crGeneratorData.history.unshift(crEntry);
+      console.log('Nombre de CR après ajout:', crGeneratorData.history.length);
       if(crGeneratorData.history.length>100)crGeneratorData.history.pop();
       writeCRGeneratorFile();
       toast('✓ CR copié dans CR Generator 2');
+    } else {
+      console.log('CR déjà existant, pas de copie');
+      toast('CR déjà dans CR Generator 2');
     }
   } else if(accessToken){
+    console.log('crGeneratorData est null ou undefined');
     toast('⚠ cr-generator.json non chargé');
+  } else {
+    console.log('Pas de token d\'accès');
   }
 }
 
