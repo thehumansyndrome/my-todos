@@ -1794,6 +1794,19 @@ function handleAutocompleteInput(e){
   var text=input.value;
   var cursorPos=input.selectionStart;
   
+  // Trouver le début de la ligne actuelle
+  var lineStart=cursorPos;
+  while(lineStart>0&&text[lineStart-1]!=='\n')lineStart--;
+  
+  // Extraire la ligne jusqu'au curseur
+  var lineText=text.substring(lineStart,cursorPos);
+  
+  // Si la ligne commence par "A:" (action), désactiver l'autocomplete
+  if(/^\s*A\s*:/.test(lineText)){
+    hideAutocomplete();
+    return;
+  }
+  
   // Detect active trigger
   var triggerPos=-1;
   var trigger=null;
