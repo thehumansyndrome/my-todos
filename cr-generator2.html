@@ -772,7 +772,11 @@ function renderEditorMeta() {
     if (editingEntryId) {
       var e = S.history.find(function(x){return x.id===editingEntryId;});
       var st = e ? (e.status||'brouillon') : 'brouillon';
-      badgeEl.innerHTML = '<span class="status-badge '+STATUS_CLASS[st]+'" style="cursor:default">'+STATUS_LABELS[st]+'</span>';
+      if(st==='valide'){
+        badgeEl.innerHTML = '<span class="status-badge '+STATUS_CLASS[st]+'" style="cursor:pointer" onclick="revertToBrouillon()" title="Cliquer pour repasser en brouillon">'+STATUS_LABELS[st]+'</span>';
+      } else {
+        badgeEl.innerHTML = '<span class="status-badge '+STATUS_CLASS[st]+'" style="cursor:default">'+STATUS_LABELS[st]+'</span>';
+      }
     } else {
       badgeEl.innerHTML = '<span style="font-size:12px;color:var(--muted)">—</span>';
     }
@@ -1003,6 +1007,16 @@ function validateCR() {
   e.publishedAt=new Date().toLocaleString('fr-FR');
   persist(); renderHistory(); renderEditorMeta();
   pushCRActionsToProjets(e);
+}
+
+function revertToBrouillon() {
+  if (!confirm('Repasser ce CR en brouillon ?')) return;
+  var e = S.history.find(function(x){return x.id===editingEntryId;});
+  if (!e) return;
+  e.status='brouillon';
+  delete e.publishedAt;
+  persist(); renderHistory(); renderEditorMeta();
+  toast('✓ CR repassé en brouillon');
 }
 
 function pushCRActionsToProjets(e) {
