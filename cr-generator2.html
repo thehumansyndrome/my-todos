@@ -514,6 +514,7 @@ var TMPL = '---\ntitle: '+buildCRTitleWithTime('')+'\ndate: '+getTodayFR()+'\npr
 
 // ── State ──────────────────────────────────────────────────────────────────────
 var S = {history:[]};
+var importedHistory = []; // CRs importés depuis notes2-cr-export.json
 var sharedTeam = []; // loaded from shared.json (managed in todos)
 var driveFileId  = null;
 var sharedFileId = null;
@@ -1147,7 +1148,21 @@ function pushCRActionsToProjets(e) {
 // ── History ────────────────────────────────────────────────────────────────────
 function renderHistory() {
   var el = document.getElementById('history-container');
-  var entries = S.history.slice();
+  
+  // Merge local and imported histories
+  var localEntries = S.history.slice();
+  var importedEntries = importedHistory.slice().map(function(e){
+    return Object.assign({}, e, {_imported: true}); // Mark as imported (read-only)
+  });
+  var entries = localEntries.concat(importedEntries);
+  
+  // Sort by timestamp descending
+  entries.sort(function(a, b){
+    var tsA = a.ts || 0;
+    var tsB = b.ts || 0;
+    return tsB - tsA;
+  });
+  
   if (filterStatus!=='all') entries=entries.filter(function(e){return e.status===filterStatus;});
   if (filterProjet!=='all') entries=entries.filter(function(e){return e.projet===filterProjet;});
   var crSearch=(document.getElementById('cr-search')||{}).value||'';
@@ -1172,20 +1187,24 @@ function renderHistory() {
     var vals=(e.valideurs||[]).map(function(id){return sharedTeam.find(function(m){return m.id===id;});}).filter(Boolean);
     var isEditing=e.id===editingEntryId;
     var meta=(e.date?formatDate(e.date)+' · ':'')+e.dCount+' décision'+(e.dCount!==1?'s':'')+' · '+e.aCount+' action'+(e.aCount!==1?'s':'')+' · '+e.savedAt+(e.versions&&e.versions.length?' · v'+(e.versions.length+1):'');
-    h+='<div class="history-card" onclick="openDrawer('+e.id+')" style="'+(isEditing?'border-color:var(--accent)':'')+'">';
+    h+='<div class="history-card" onclick="'+(e._imported?'':'openDrawer('+e.id+')')+'" style="'+(isEditing?'border-color:var(--accent)':'')+(e._imported?';opacity:0.8;cursor:default':'')+'">';
     h+='<div class="history-card-top">';
-    h+='<div style="flex:1;min-width:0;"><div class="history-title">'+esc(e.title)+(isEditing?' <span style="font-size:11px;color:var(--accent)">● actif</span>':'')+'</div>';
+    h+='<div style="flex:1;min-width:0;"><div class="history-title">'+esc(e.title)+(isEditing?' <span style="font-size:11px;color:var(--accent)">● actif</span>':'')+(e._imported?' <span style="font-size:10px;background:var(--blue);color:white;padding:2px 6px;border-radius:4px;font-weight:500;">Notes2</span>':'')+'</div>';
     h+='<div class="history-meta">'+meta+'</div></div>';
     h+='<div style="display:flex;gap:6px;align-items:center;flex-shrink:0" onclick="event.stopPropagation()">';
-    h+='<span class="status-badge '+STATUS_CLASS[st]+'" onclick="cycleStatus('+e.id+')">'+STATUS_LABELS[st]+'</span>';
-    h+='<button class="btn sm" style="color:var(--red);padding:4px 8px;" onclick="deleteEntry('+e.id+')">✕</button>';
+    if (!e._imported) {
+      h+='<span class="status-badge '+STATUS_CLASS[st]+'" onclick="cycleStatus('+e.id+')">'+STATUS_LABELS[st]+'</span>';
+      h+='<button class="btn sm" style="color:var(--red);padding:4px 8px;" onclick="deleteEntry('+e.id+')">✕</button>';
+    } else {
+      h+='<span class="status-badge '+STATUS_CLASS[st]+'">'+STATUS_LABELS[st]+'</span>';
+    }
     h+='</div></div>';
     h+='<div class="history-tags">';
     if (proj) h+=chipHTML(proj.name, proj.color);
     reds.forEach(function(m){h+=avatarHTML(m);});
     if (vals.length) h+='<span style="font-size:10px;color:var(--muted);margin-left:2px">✓</span>'+vals.map(function(m){return avatarHTML(m);}).join('');
-    h+='<button class="btn sm" onclick="event.stopPropagation();dlEntry('+e.id+',\'md\')">↓ md</button>';
-    h+='<button class="btn sm" onclick="event.stopPropagation();dlEntry('+e.id+',\'txt\')">↓ txt</button>';
+    h+='<button class="btn sm" onclick="event.stopPropagation();dlEntry('+(e._imported?'\''+e.id+'\'':e.id)+',\'md\')">↓ md</button>';
+    h+='<button class="btn sm" onclick="event.stopPropagation();dlEntry('+(e._imported?'\''+e.id+'\'':e.id)+',\'txt\')">↓ txt</button>';
     h+='</div></div>';
   });
   h+='</div>';
@@ -1539,7 +1558,9 @@ function renderHtmlEmail(cr) {
 }
 
 function dlEntry(id, fmt) {
-  var e=S.history.find(function(x){return x.id===id;}); if (!e) return;
+  var e=S.history.find(function(x){return x.id===id;});
+  if (!e) e=importedHistory.find(function(x){return x.id===id;});
+  if (!e) return;
   var cr=parse(e.raw);
   var content=fmt==='md'?renderMd(cr):renderTxt(cr);
   var slug=(cr.title||'compte-rendu').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
@@ -1576,9 +1597,9 @@ function initDrive() {
   tokenClient=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:SCOPE,prompt:'',callback:function(resp){
     if(resp.error){setSyncDot('error');return;}
     accessToken=resp.access_token; sessionStorage.setItem(TOK,accessToken); sessionStorage.setItem(TOK+'_exp', Date.now()+3500000);
-    updateDriveUI(true); pushToDrive(); loadSharedProjects(); loadTaches();
+    updateDriveUI(true); pushToDrive(); loadSharedProjects(); loadTaches(); loadImportedCRs();
   }});
-  if (accessToken){updateDriveUI(true); loadSharedProjects(); loadTaches();}
+  if (accessToken){updateDriveUI(true); loadSharedProjects(); loadTaches(); loadImportedCRs();}
 }
 function handleDriveBtn(){if(!tokenClient){toast('Drive non initialisé');return;}if(accessToken){pushToDrive();toast('Send to Drive...');}else tokenClient.requestAccessToken();}
 function updateDriveUI(c){
@@ -1645,6 +1666,28 @@ function findDriveFile(){
   return fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id)',{headers:{Authorization:'Bearer '+accessToken}}).then(function(r){return r.json();}).then(function(d){return d.files&&d.files[0]?d.files[0].id:null;});
 }
 function autoSave(){if(accessToken)pushToDrive();else setSyncDot('local');}
+
+// ── Import from Notes2 ─────────────────────────────────────────────────────────
+function loadImportedCRs(){
+  if(!accessToken)return;
+  var q=encodeURIComponent("name='notes2-cr-export.json' and trashed=false");
+  fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id)',{headers:{Authorization:'Bearer '+accessToken}})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(!d.files||!d.files[0])return null;
+    return fetch('https://www.googleapis.com/drive/v3/files/'+d.files[0].id+'?alt=media',{headers:{Authorization:'Bearer '+accessToken}});
+  })
+  .then(function(r){return r?r.json():null;})
+  .then(function(data){
+    if(data&&Array.isArray(data.history)){
+      importedHistory=data.history;
+      console.log('Imported '+importedHistory.length+' CRs from Notes2');
+      renderHistory(); // Re-render with merged history
+    }
+  })
+  .catch(function(e){console.error('Failed to load notes2-cr-export.json:',e);});
+}
+
 
 // ── Shared Projects ────────────────────────────────────────────────────────────
 function findSharedFile(){
