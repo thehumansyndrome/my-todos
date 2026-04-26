@@ -2077,15 +2077,57 @@ function showAutocomplete(input,trigger,query){
     return '<div class="autocomplete-item'+(idx===0?' selected':'')+'" data-index="'+idx+'">'+avatar+'<span class="ac-label">'+esc(item.label)+'</span><span class="ac-tag">'+item.tag+'</span></div>';
   }).join('');
   
-  var rect=input.getBoundingClientRect();
-  dropdown.style.left=rect.left+'px';
-  dropdown.style.top=(rect.top+input.offsetHeight+4)+'px';
+  // Position the dropdown
+  if(input.tagName==='TEXTAREA'){
+    // For textarea, calculate cursor position
+    var cursorPos=getCursorCoordinates(input,input.selectionStart);
+    dropdown.style.left=(cursorPos.left)+'px';
+    dropdown.style.top=(cursorPos.top+cursorPos.height+4)+'px';
+  } else {
+    // For input, use simple positioning
+    var rect=input.getBoundingClientRect();
+    dropdown.style.left=rect.left+'px';
+    dropdown.style.top=(rect.top+input.offsetHeight+4)+'px';
+  }
   dropdown.classList.add('show');
   autocompleteState.visible=true;
   
   dropdown.querySelectorAll('.autocomplete-item').forEach(function(el,idx){
     el.onclick=function(){selectAutocompleteItem(idx);};
   });
+}
+
+// Calculate cursor position in textarea
+function getCursorCoordinates(element,position){
+  var rect=element.getBoundingClientRect();
+  var div=document.createElement('div');
+  var style=window.getComputedStyle(element);
+  
+  // Copy styles
+  ['fontFamily','fontSize','fontWeight','lineHeight','letterSpacing','wordSpacing','padding','border','whiteSpace','wordWrap','overflowWrap'].forEach(function(prop){
+    div.style[prop]=style[prop];
+  });
+  
+  div.style.position='absolute';
+  div.style.visibility='hidden';
+  div.style.whiteSpace='pre-wrap';
+  div.style.wordWrap='break-word';
+  div.style.width=element.clientWidth+'px';
+  div.textContent=element.value.substring(0,position);
+  
+  var span=document.createElement('span');
+  span.textContent=element.value.substring(position)||'.';
+  div.appendChild(span);
+  
+  document.body.appendChild(div);
+  var coordinates={
+    top:rect.top+span.offsetTop-element.scrollTop+window.scrollY,
+    left:rect.left+span.offsetLeft-element.scrollLeft+window.scrollX,
+    height:span.offsetHeight
+  };
+  document.body.removeChild(div);
+  
+  return coordinates;
 }
 
 function hideAutocomplete(){
