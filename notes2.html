@@ -425,7 +425,7 @@ var TMPLS=[
    get placeholder(){
      var allParticipants = (sharedTeam||[]).map(function(m){ return '@'+m.alias; }).join(', ');
      var nextDate = getNextWeekCR();
-     return '---\ntitle: '+buildCRDateTitleWithTime()+'\ndate: '+getTodayCR()+'\nprojet: \nduree: 30 min\nparticipants: '+allParticipants+'\nobjectif: \nnext-date: '+nextDate+'\nnext-agenda: \n---\n\nD: \nD: \n\nA:   '+getTodayCR()+'\nA:   '+getTodayCR();
+     return '---\ntitle: '+buildCRDateTitleWithTime()+'\ndate: '+getTodayCR()+'\nprojet: \nduree: 30 min\nparticipants: '+allParticipants+'\nobjectif: \nnext-date: '+nextDate+'\nnext-agenda: \n---\n\nD: \nD: \n\nA: @ !p '+getTodayCR()+'\nA: @ !p '+getTodayCR();
    }},
   {id:'standup',name:'Standup',desc:"Hier / Aujourd'hui / Blocages",
    placeholder:"Standup\n\nhier: \n- \n\naujourd'hui: \n- \n\nblocages: \n- "},
