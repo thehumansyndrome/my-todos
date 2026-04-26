@@ -1802,7 +1802,9 @@ function handleAutocompleteInput(e){
   var lineText=text.substring(lineStart,cursorPos);
   
   // Si la ligne commence par "A:" (action), désactiver l'autocomplete
-  if(/^\s*A\s*:/.test(lineText)){
+  var isActionLine=/^\s*A\s*:/.test(lineText);
+  if(isActionLine){
+    console.log('[Notes2] Autocomplete désactivé sur ligne A:', lineText);
     hideAutocomplete();
     return;
   }
