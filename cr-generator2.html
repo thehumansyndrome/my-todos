@@ -1175,7 +1175,7 @@ function pushCRActionsToProjets(e) {
       id:          'cr' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
       text:        action.text,
       projId:      projId,
-      pri:         'p2',
+      pri:         action.pri || 'p2',
       done:        false,
       ts:          Date.now(),
       assigneeIds: assigneeIds,
