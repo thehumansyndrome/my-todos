@@ -233,6 +233,15 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
 .td-comment-text{font-size:13px;line-height:1.5;}
 .td-comment-meta{font-size:11px;color:var(--muted);margin-top:3px;}
 
+/* Autocomplete dropdown */
+.autocomplete-dropdown{display:none;position:fixed;background:white;border:1px solid #ddd;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.12);max-height:200px;overflow-y:auto;z-index:10000;min-width:200px;}
+.autocomplete-dropdown.show{display:block;}
+.autocomplete-item{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;font-size:13px;}
+.autocomplete-item:hover,.autocomplete-item.selected{background:#f5f5f5;}
+.autocomplete-item .ac-avatar{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:white;flex-shrink:0;}
+.autocomplete-item .ac-label{flex:1;font-weight:500;}
+.autocomplete-item .ac-tag{font-size:11px;color:#888;}
+
 
 </style>
 </head>
@@ -501,7 +510,7 @@ function buildCRTitleWithTime(projet){
   var minutes=String(d.getMinutes()).padStart(2,'0');
   return (projet?'['+projet+'] ':'')+"CR de la réunion du "+getCRTitleDate()+" à "+hours+":"+minutes;
 }
-var TMPL = '---\ntitle: '+buildCRTitleWithTime('')+'\ndate: '+getTodayFR()+'\nprojet: \nduree: \nparticipants: \nobjectif: \nnext-date: \nnext-agenda: \n---\n\nD: \nD: \n\nA:   '+getTodayFR()+'\nA:   '+getTodayFR()+'\n';
+var TMPL = '---\ntitle: '+buildCRTitleWithTime('')+'\ndate: '+getTodayFR()+'\nprojet: \nduree: 30min\nparticipants: \nobjectif: \nnext-date: \nnext-agenda: \n---\n\nD: \nD: \n\nA:   '+getTodayFR()+'\nA:   '+getTodayFR()+'\n';
 
 // ── State ──────────────────────────────────────────────────────────────────────
 var S = {history:[]};
@@ -876,9 +885,9 @@ function resolveAlias(mention) {
 function aliasAvatarHtml(mention) {
   var m = resolveAlias(mention);
   if (m) {
-    // Membre résolu - utiliser sa vraie couleur et afficher le prénom uniquement
+    // Membre résolu - format compact: initiales + prénom avec couleur
     var prenom = m.nom.split(' ')[0];
-    return '<span class="tag-item" style="vertical-align:middle;background:'+m.color+'22;border:1px solid '+m.color+'44;color:'+m.color+';padding:2px 6px;border-radius:12px;font-size:11px;font-weight:500;"><span class="tag-item-avatar" style="background:'+m.color+';color:white;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;margin-right:4px;">'+esc(m.initiales)+'</span>'+esc(prenom)+'</span>';
+    return '<span style="display:inline-flex;align-items:center;gap:4px;background:'+m.color+'22;border:1px solid '+m.color+'44;color:'+m.color+';padding:2px 6px;border-radius:12px;font-size:11px;font-weight:500;vertical-align:middle;"><span style="background:'+m.color+';color:white;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;">'+esc(m.initiales)+'</span><span>'+esc(prenom)+'</span></span>';
   } else {
     // Non résolu - style par défaut
     var ini = pInitials(mention);
@@ -1937,6 +1946,195 @@ function tdRenderHistory(t){
 function tdSave(){writeTodoFile();renderTaches();refreshTD();}
 
 document.getElementById("cr-search").addEventListener("input",renderHistory);
+
+// ── Autocomplete system for raw-input ──────────────────────────────────────────
+var autocompleteState={visible:false,input:null,trigger:null,query:'',selectedIndex:0,items:[]};
+
+function createAutocompleteDropdown(){
+  var dropdown=document.getElementById('autocomplete-dropdown');
+  if(!dropdown){
+    dropdown=document.createElement('div');
+    dropdown.id='autocomplete-dropdown';
+    dropdown.className='autocomplete-dropdown';
+    document.body.appendChild(dropdown);
+  }
+  return dropdown;
+}
+
+function showAutocomplete(input,trigger,query){
+  var dropdown=createAutocompleteDropdown();
+  autocompleteState.input=input;
+  autocompleteState.trigger=trigger;
+  autocompleteState.query=query.toLowerCase();
+  autocompleteState.selectedIndex=0;
+  
+  var items=[];
+  if(trigger==='@'){
+    items=(sharedTeam||[]).map(function(m){
+      return {type:'member',id:m.id,label:m.nom,tag:'@'+(m.alias||m.initiales).toLowerCase(),color:m.color||'#888',initiales:m.initiales};
+    }).filter(function(i){return i.label.toLowerCase().indexOf(autocompleteState.query)>=0||i.tag.indexOf(autocompleteState.query)>=0;});
+  } else if(trigger==='#'){
+    items=(sharedProjects||[]).map(function(p){
+      var slug=(p.name||'').toLowerCase().replace(/\s+/g,'-');
+      return {type:'project',id:p.id,label:p.name,tag:'#'+slug,color:p.color||'#888'};
+    }).filter(function(i){return i.label.toLowerCase().indexOf(autocompleteState.query)>=0||i.tag.indexOf(autocompleteState.query)>=0;});
+  } else if(trigger==='!'){
+    items=[
+      {type:'priority',id:'p1',label:'Priorité P1',tag:'!p1',color:'#DC2626'},
+      {type:'priority',id:'p2',label:'Priorité P2',tag:'!p2',color:'#D97706'},
+      {type:'priority',id:'p3',label:'Priorité P3',tag:'!p3',color:'#16A34A'}
+    ].filter(function(i){return i.tag.indexOf(autocompleteState.query)>=0;});
+  } else if(trigger==='%'){
+    var today=new Date();
+    var dayNames=['dim','lun','mar','mer','jeu','ven','sam'];
+    var monthNames=['jan','fév','mar','avr','mai','juin','juil','août','sep','oct','nov','déc'];
+    items=[];
+    for(var i=0;i<7;i++){
+      var d=new Date(today);
+      d.setDate(today.getDate()+i);
+      var dayName=dayNames[d.getDay()];
+      var dd=String(d.getDate()).padStart(2,'0');
+      var mm=String(d.getMonth()+1).padStart(2,'0');
+      var yyyy=d.getFullYear();
+      var dateStr=dd+'-'+mm+'-'+yyyy;
+      var label=(i===0?'Aujourd\'hui':i===1?'Demain':dayName.charAt(0).toUpperCase()+dayName.slice(1))+' '+d.getDate()+' '+monthNames[d.getMonth()];
+      items.push({type:'date',id:dateStr,label:label,tag:dateStr,color:'var(--primary)'});
+    }
+  }
+  
+  autocompleteState.items=items;
+  if(!items.length){hideAutocomplete();return;}
+  
+  dropdown.innerHTML=items.map(function(item,idx){
+    var avatar='';
+    if(item.type==='member'){
+      avatar='<span class="ac-avatar" style="background:'+item.color+'">'+esc(item.initiales)+'</span>';
+    } else if(item.type==='project'){
+      avatar='<span class="ac-avatar" style="background:'+item.color+';border-radius:4px;">📁</span>';
+    } else if(item.type==='priority'){
+      avatar='<span class="ac-avatar" style="background:'+item.color+';border-radius:4px;">⚡</span>';
+    } else if(item.type==='date'){
+      avatar='<span class="ac-avatar" style="background:'+item.color+';border-radius:4px;">📅</span>';
+    }
+    return '<div class="autocomplete-item'+(idx===0?' selected':'')+'" data-index="'+idx+'">'+avatar+'<span class="ac-label">'+esc(item.label)+'</span><span class="ac-tag">'+item.tag+'</span></div>';
+  }).join('');
+  
+  var rect=input.getBoundingClientRect();
+  dropdown.style.left=rect.left+'px';
+  dropdown.style.top=(rect.top+input.offsetHeight+4)+'px';
+  dropdown.classList.add('show');
+  autocompleteState.visible=true;
+  
+  dropdown.querySelectorAll('.autocomplete-item').forEach(function(el,idx){
+    el.onclick=function(){selectAutocompleteItem(idx);};
+  });
+}
+
+function hideAutocomplete(){
+  var dropdown=document.getElementById('autocomplete-dropdown');
+  if(dropdown)dropdown.classList.remove('show');
+  autocompleteState.visible=false;
+}
+
+function selectAutocompleteItem(index){
+  if(!autocompleteState.visible||!autocompleteState.items.length)return;
+  var item=autocompleteState.items[index];
+  if(!item)return;
+  
+  var input=autocompleteState.input;
+  var text=input.value;
+  var cursorPos=input.selectionStart;
+  
+  var start=cursorPos-1;
+  while(start>0&&text[start]!==autocompleteState.trigger)start--;
+  
+  var before=text.substring(0,start);
+  var after=text.substring(cursorPos);
+  input.value=before+item.tag+' '+after;
+  
+  var newPos=before.length+item.tag.length+1;
+  input.selectionStart=input.selectionEnd=newPos;
+  
+  hideAutocomplete();
+  input.focus();
+  onEdit(); // Trigger preview update
+}
+
+function moveAutocompleteSelection(direction){
+  if(!autocompleteState.visible)return;
+  var items=autocompleteState.items;
+  if(!items.length)return;
+  
+  autocompleteState.selectedIndex+=direction;
+  if(autocompleteState.selectedIndex<0)autocompleteState.selectedIndex=items.length-1;
+  if(autocompleteState.selectedIndex>=items.length)autocompleteState.selectedIndex=0;
+  
+  var dropdown=document.getElementById('autocomplete-dropdown');
+  if(!dropdown)return;
+  dropdown.querySelectorAll('.autocomplete-item').forEach(function(el,idx){
+    if(idx===autocompleteState.selectedIndex)el.classList.add('selected');
+    else el.classList.remove('selected');
+  });
+}
+
+function handleAutocompleteInput(e){
+  var input=e.target;
+  var text=input.value;
+  var cursorPos=input.selectionStart;
+  
+  var triggerPos=-1;
+  var trigger=null;
+  
+  for(var i=cursorPos-1;i>=0;i--){
+    var char=text[i];
+    if(char===' '||char==='\n')break;
+    if(char==='@'||char==='#'||char==='!'||char==='%'){
+      trigger=char;
+      triggerPos=i;
+      break;
+    }
+  }
+  
+  if(trigger&&triggerPos>=0){
+    var query=text.substring(triggerPos+1,cursorPos);
+    showAutocomplete(input,trigger,query);
+  } else {
+    hideAutocomplete();
+  }
+}
+
+function handleAutocompleteKeydown(e){
+  if(autocompleteState.visible){
+    if(e.key==='ArrowDown'){
+      e.preventDefault();
+      moveAutocompleteSelection(1);
+    } else if(e.key==='ArrowUp'){
+      e.preventDefault();
+      moveAutocompleteSelection(-1);
+    } else if(e.key==='Enter'||e.key==='Tab'){
+      if(autocompleteState.visible){
+        e.preventDefault();
+        selectAutocompleteItem(autocompleteState.selectedIndex);
+      }
+    } else if(e.key==='Escape'){
+      hideAutocomplete();
+    }
+  }
+}
+
+// Attach autocomplete to raw-input
+var rawInput=document.getElementById('raw-input');
+if(rawInput){
+  rawInput.addEventListener('input',handleAutocompleteInput);
+  rawInput.addEventListener('keydown',handleAutocompleteKeydown);
+}
+
+// Hide autocomplete on click outside
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.autocomplete-dropdown')&&!e.target.closest('textarea')){
+    hideAutocomplete();
+  }
+});
 </script>
 
 <!-- Task Detail Drawer -->
