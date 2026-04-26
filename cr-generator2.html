@@ -705,7 +705,7 @@ function parse(text) {
     } else {
       if      ((m=line.match(/^D\s*:\s*(.+)/i))) cr.decisions.push(m[1].trim());
       else if ((m=line.match(/^A\s*:\s*(.+)/i))) {
-        var raw=m[1].trim(), assignees=[], due='', txt=raw;
+        var raw=m[1].trim(), assignees=[], due='', pri='', txt=raw;
         // Capturer TOUS les @mentions
         var mentionMatches=raw.match(/@\S+/g);
         if (mentionMatches) {
@@ -714,10 +714,16 @@ function parse(text) {
             txt=txt.replace(mention,'').trim();
           });
         }
+        // Extraire la priorité !p1/!p2/!p3
+        var pm=txt.match(/!(p[123])/i);
+        if (pm) { pri=pm[1].toLowerCase(); txt=txt.replace(pm[0],'').trim(); }
+        // Extraire la date
         var dm=raw.match(/\b(\d{2}-\d{2}-\d{4})\b/);
         if (dm) { due=dm[1]; txt=txt.replace(dm[0],'').trim(); }
+        // Nettoyer les espaces multiples
+        txt=txt.replace(/\s+/g,' ').trim();
         // Pour compatibilité, on garde assignee comme le premier
-        cr.actions.push({text:txt, assignee:assignees[0]||'', assignees:assignees, due:due});
+        cr.actions.push({text:txt, assignee:assignees[0]||'', assignees:assignees, due:due, pri:pri});
       }
     }
   }
@@ -977,6 +983,12 @@ function renderPreview() {
       } else if (a.assignee) {
         // Fallback pour anciens CR avec un seul assignee
         h+=' '+aliasAvatarHtml(a.assignee);
+      }
+      // Afficher la priorité
+      if (a.pri) {
+        var priColors={p1:'#DC2626',p2:'#D97706',p3:'#16A34A'};
+        var priLabels={p1:'P1',p2:'P2',p3:'P3'};
+        h+=' <span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:2px 6px;border-radius:8px;background:'+(priColors[a.pri]||'#888')+'22;border:1px solid '+(priColors[a.pri]||'#888')+'44;color:'+(priColors[a.pri]||'#888')+';font-weight:500;vertical-align:middle;">⚡ '+(priLabels[a.pri]||a.pri.toUpperCase())+'</span>';
       }
       if (a.due) h+=' <span style="color:var(--amber);font-size:12px;">📅 '+esc(a.due)+'</span>';
       h += '</div></div>';
@@ -1336,6 +1348,12 @@ function openImportedDrawer(id) {
         });
       } else if (a.assignee) {
         ch+=' '+aliasAvatarHtml(a.assignee);
+      }
+      // Afficher la priorité
+      if (a.pri) {
+        var priColors={p1:'#DC2626',p2:'#D97706',p3:'#16A34A'};
+        var priLabels={p1:'P1',p2:'P2',p3:'P3'};
+        ch+=' <span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:2px 6px;border-radius:8px;background:'+(priColors[a.pri]||'#888')+'22;border:1px solid '+(priColors[a.pri]||'#888')+'44;color:'+(priColors[a.pri]||'#888')+';font-weight:500;vertical-align:middle;">⚡ '+(priLabels[a.pri]||a.pri.toUpperCase())+'</span>';
       }
       if (a.due) ch+=' <span style="color:var(--amber);font-size:12px;">📅 '+esc(a.due)+'</span>';
       ch+='</span></div>';
