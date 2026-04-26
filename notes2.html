@@ -1119,6 +1119,8 @@ var sharedProjects = [];
 var sharedTeam = [];
 var todoFileId = null;
 var todoFullData = null;
+var crGeneratorData = null;
+var crGeneratorFileId = null;
 
 function loadSharedData(){
   if(!accessToken)return;
@@ -1152,6 +1154,21 @@ function loadSharedData(){
   .then(function(data){
     if(data)todoFullData=data;
   }).catch(function(){});
+
+  // Load cr-generator.json for CR history
+  var q3=encodeURIComponent("name='cr-generator.json' and trashed=false");
+  fetch('https://www.googleapis.com/drive/v3/files?q='+q3+'&fields=files(id)&orderBy=modifiedTime+desc',
+    {headers:{Authorization:'Bearer '+accessToken}})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    crGeneratorFileId=d.files&&d.files[0]?d.files[0].id:null;
+    if(!crGeneratorFileId)return null;
+    return fetch('https://www.googleapis.com/drive/v3/files/'+crGeneratorFileId+'?alt=media',
+      {headers:{Authorization:'Bearer '+accessToken}});
+  }).then(function(r){return r?r.json():null;})
+  .then(function(data){
+    if(data)crGeneratorData=data;
+  }).catch(function(){});
 }
 
 function writeTodoFile(){
@@ -1161,6 +1178,15 @@ function writeTodoFile(){
      body:JSON.stringify(todoFullData)})
   .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);})
   .catch(function(e){toast('❌ projet001 : '+e.message);});
+}
+
+function writeCRGeneratorFile(){
+  if(!accessToken||!crGeneratorData||!crGeneratorFileId)return;
+  fetch('https://www.googleapis.com/upload/drive/v3/files/'+crGeneratorFileId+'?uploadType=media',
+    {method:'PATCH',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
+     body:JSON.stringify(crGeneratorData)})
+  .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);})
+  .catch(function(e){toast('❌ cr-generator : '+e.message);});
 }
 
 function validateCRNote(){
@@ -1229,6 +1255,31 @@ function validateCRNote(){
     toast('✓ '+added+' action'+(added>1?'s':'')+' → projet001'+(cr.projet?' ['+cr.projet+']':''));
   } else {
     toast('Actions déjà dans projet001');
+  }
+
+  // Copy CR to CR Generator 2
+  if(crGeneratorData){
+    crGeneratorData.history=crGeneratorData.history||[];
+    // Check if CR already exists
+    var existingCR=crGeneratorData.history.find(function(e){
+      return e.raw===n.body&&e.projet===cr.projet;
+    });
+    if(!existingCR){
+      var crEntry={
+        id:'n2_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
+        raw:n.body,
+        projet:projId||'',
+        status:'valide',
+        publishedAt:new Date().toLocaleString('fr-FR'),
+        ts:Date.now()
+      };
+      crGeneratorData.history.unshift(crEntry);
+      if(crGeneratorData.history.length>100)crGeneratorData.history.pop();
+      writeCRGeneratorFile();
+      toast('✓ CR copié dans CR Generator 2');
+    }
+  } else if(accessToken){
+    toast('⚠ cr-generator.json non chargé');
   }
 }
 
