@@ -520,6 +520,20 @@ function buildCRTitleWithTime(projet){
   var minutes=String(d.getMinutes()).padStart(2,'0');
   return (projet?'['+projet+'] ':'')+"CR de la réunion du "+getCRTitleDate()+" à "+hours+":"+minutes;
 }
+
+function getNextWeekDate() {
+  var d = new Date();
+  d.setDate(d.getDate() + 7);
+  return String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+d.getFullYear();
+}
+
+function buildFreshTemplate() {
+  // Pré-remplir avec tous les participants
+  var allParticipants = sharedTeam.map(function(m){ return '@'+m.alias; }).join(', ');
+  var nextDate = getNextWeekDate();
+  return '---\ntitle: '+buildCRTitleWithTime('')+'\ndate: '+getTodayFR()+'\nprojet: \nduree: 30min\nparticipants: '+allParticipants+'\nobjectif: \nnext-date: '+nextDate+'\nnext-agenda: \n---\n\nD: \nD: \n\nA:   '+getTodayFR()+'\nA:   '+getTodayFR()+'\n';
+}
+
 var TMPL = '---\ntitle: '+buildCRTitleWithTime('')+'\ndate: '+getTodayFR()+'\nprojet: \nduree: 30min\nparticipants: \nobjectif: \nnext-date: \nnext-agenda: \n---\n\nD: \nD: \n\nA:   '+getTodayFR()+'\nA:   '+getTodayFR()+'\n';
 
 // ── State ──────────────────────────────────────────────────────────────────────
@@ -931,15 +945,42 @@ function renderParticipantChips(participants) {
   var names = participants.split(',').map(function(n){return n.trim();}).filter(Boolean);
   if (!names.length) return '';
   var h = '<div style="display:flex;flex-wrap:wrap;gap:5px;margin:4px 0;">';
-  names.forEach(function(nom) {
+  names.forEach(function(nom, idx) {
     var resolved = nom.startsWith('@') ? resolveAlias(nom) : null;
     var displayNom = resolved ? resolved.nom : nom;
     var ini = resolved ? resolved.initiales : pInitials(nom);
     var col = pColor(displayNom);
-    h += '<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 10px 3px 5px;border-radius:20px;border:1px solid var(--border);background:var(--bg);">'
-      + '<span class="pr-avatar-mini c'+col+'">'+esc(ini)+'</span>'+esc(displayNom)+'</span>';
+    h += '<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 3px 3px 5px;border-radius:20px;border:1px solid var(--border);background:var(--bg);">'
+      + '<span class="pr-avatar-mini c'+col+'">'+esc(ini)+'</span>'+esc(displayNom)
+      + '<span onclick="removeParticipant('+idx+')" style="cursor:pointer;opacity:0.5;font-size:14px;line-height:1;padding:0 4px;" onmouseover="this.style.opacity=1;this.style.color=\'var(--red)\'" onmouseout="this.style.opacity=0.5;this.style.color=\'\'">×</span>'
+      + '</span>';
   });
   return h+'</div>';
+}
+
+function removeParticipant(index) {
+  var raw = document.getElementById('raw-input').value;
+  var lines = raw.split('\n');
+  var inFront = false;
+  
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i].trim();
+    if (line === '---') {
+      if (!inFront) inFront = true;
+      else break;
+    }
+    if (inFront && line.match(/^participants\s*:\s*/i)) {
+      var match = line.match(/^(participants\s*:\s*)(.*)/i);
+      if (match) {
+        var participants = match[2].split(',').map(function(n){return n.trim();}).filter(Boolean);
+        participants.splice(index, 1);
+        lines[i] = match[1] + participants.join(', ');
+        document.getElementById('raw-input').value = lines.join('\n');
+        onEdit();
+        return;
+      }
+    }
+  }
 }
 
 function renderPreview() {
@@ -1595,14 +1636,19 @@ function _getProjetName() {
   return p ? p.name : '';
 }
 function _loadFreshTemplate() {
-  var aid = typeof getAdminId === 'function' ? getAdminId() : null;
-  var adminMember = aid ? (sharedTeam||[]).find(function(m){return m.id===aid;}) : null;
-  crParticipants = adminMember ? [adminMember.nom] : [];
+  // Pré-remplir crParticipants avec tous les membres
+  crParticipants = (sharedTeam||[]).map(function(m){ return m.nom; });
+  
   var projetName = _getProjetName();
+  var allParticipants = (sharedTeam||[]).map(function(m){ return m.nom; }).join(', ');
+  var nextDate = getNextWeekDate();
+  
   var tmpl = TMPL
     .replace(/^title:.*$/m,       'title: '+buildCRTitleWithTime(projetName))
     .replace(/^projet:.*$/m,      'projet: '+projetName)
-    .replace(/^participants:.*$/m,'participants: '+(adminMember?adminMember.nom:''));
+    .replace(/^participants:.*$/m,'participants: '+allParticipants)
+    .replace(/^next-date:.*$/m,   'next-date: '+nextDate);
+  
   document.getElementById('raw-input').value = tmpl;
   renderTagWrap(); saveMetaState(); renderEditorMeta(); renderPreview();
   localStorage.removeItem(SK+'_draft');
