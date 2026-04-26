@@ -394,6 +394,13 @@ function buildCRDateTitle(){
   var dateStr=getCRTitleDate();
   return "CR de la réunion du "+dateStr;
 }
+function buildCRDateTitleWithTime(){
+  var d=new Date();
+  var dateStr=getCRTitleDate();
+  var hours=String(d.getHours()).padStart(2,'0');
+  var minutes=String(d.getMinutes()).padStart(2,'0');
+  return "CR de la réunion du "+dateStr+" à "+hours+":"+minutes;
+}
 function buildCRTitle(projet){
   // Legacy: called with projet only → generates full auto title
   return (projet?'['+projet+'] ':'')+buildCRDateTitle();
@@ -409,7 +416,7 @@ var TMPLS=[
   {id:'none',name:'Note libre',desc:'Texte brut, aucun rendu',
    placeholder:'Titre\n\nÉcris ici…'},
   {id:'cr',name:'Compte Rendu',desc:'Réunion → décisions, actions (format CR Generator)',
-   get placeholder(){return '---\ntitle: '+buildCRDateTitle()+'\ndate: '+getTodayCR()+'\nprojet: \nduree: \nparticipants: \nobjectif: \nnext-date: \nnext-agenda: \n---\n\nD: \nD: \n\nA:   '+getTodayCR()+'\nA:   '+getTodayCR();}},
+   get placeholder(){return '---\ntitle: '+buildCRDateTitleWithTime()+'\ndate: '+getTodayCR()+'\nprojet: \nduree: \nparticipants: \nobjectif: \nnext-date: \nnext-agenda: \n---\n\nD: \nD: \n\nA:   '+getTodayCR()+'\nA:   '+getTodayCR();}},
   {id:'standup',name:'Standup',desc:"Hier / Aujourd'hui / Blocages",
    placeholder:"Standup\n\nhier: \n- \n\naujourd'hui: \n- \n\nblocages: \n- "},
   {id:'reflexion',name:'Note de réflexion',desc:'Problème → options → décision',
