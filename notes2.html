@@ -382,6 +382,7 @@ var curId=null, searchQ='', activeTag=null, favFilter=false, curView='raw', curT
 var openTabs=[], dragIdx=null, saveTimer=null;
 var driveFileId=null, tokenClient=null, pollTimer=null;
 var accessToken=sessionStorage.getItem(TOK)||null;
+var isEditing=false; // Track if user is actively editing
 
 // ── Templates ─────────────────────────────────────────────────────────────────
 function getTodayCR(){var d=new Date();return String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+d.getFullYear();}
@@ -496,6 +497,7 @@ function newNote(tmplId){
 }
 
 function openNote(id){
+  isEditing=false; // Reset editing flag when switching notes
   curId=id;
   var n=S.notes.find(function(x){return x.id===id;});
   if(!n)return;
@@ -657,6 +659,7 @@ function onPaste(e){
 function onNoteInput(){
   var n=S.notes.find(function(x){return x.id===curId;});
   if(!n)return;
+  isEditing=true; // User is actively editing
   n.body=document.getElementById('note-ta').value;
   n.updated=Date.now();
   if(curView!=='raw')updatePreview();
@@ -1066,7 +1069,12 @@ function mobileBack(){
 
 // ── Persist ───────────────────────────────────────────────────────────────────
 function debounceSave(){setSyncDot('pending');clearTimeout(saveTimer);saveTimer=setTimeout(autoSave,1500);}
-function autoSave(){localStorage.setItem(SK,JSON.stringify(S));if(accessToken)pushToDrive();else setSyncDot('local');}
+function autoSave(){
+  localStorage.setItem(SK,JSON.stringify(S));
+  if(accessToken)pushToDrive();
+  else setSyncDot('local');
+  isEditing=false; // Editing complete, sync is now safe
+}
 function setSyncDot(s){var m={local:'⚫ Local',pending:'🟡 Pending',sync:'🟢 Sync ✓',error:'🔴 Erreur'};document.getElementById('sync-dot').textContent=m[s]||'⚫ Local';}
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
@@ -1330,6 +1338,10 @@ async function findDriveFile(){
 }
 async function pullFromDrive(){
   if(!accessToken)return;
+  if(isEditing){
+    console.log('[Notes2] Sync skipped: user is editing');
+    return; // Don't sync while user is actively typing
+  }
   try{
     setSyncDot('pending');
     driveFileId=driveFileId||await findDriveFile();
