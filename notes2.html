@@ -386,6 +386,11 @@ var isEditing=false; // Track if user is actively editing
 
 // ── Templates ─────────────────────────────────────────────────────────────────
 function getTodayCR(){var d=new Date();return String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+d.getFullYear();}
+function getNextWeekCR(){
+  var d=new Date();
+  d.setDate(d.getDate()+7);
+  return String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+d.getFullYear();
+}
 function getCRTitleDate(){
   var d=new Date();
   var months=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
@@ -417,7 +422,11 @@ var TMPLS=[
   {id:'none',name:'Note libre',desc:'Texte brut, aucun rendu',
    placeholder:'Titre\n\nÉcris ici…'},
   {id:'cr',name:'Compte Rendu',desc:'Réunion → décisions, actions (format CR Generator)',
-   get placeholder(){return '---\ntitle: '+buildCRDateTitleWithTime()+'\ndate: '+getTodayCR()+'\nprojet: \nduree: \nparticipants: \nobjectif: \nnext-date: \nnext-agenda: \n---\n\nD: \nD: \n\nA:   '+getTodayCR()+'\nA:   '+getTodayCR();}},
+   get placeholder(){
+     var allParticipants = (sharedTeam||[]).map(function(m){ return '@'+m.alias; }).join(', ');
+     var nextDate = getNextWeekCR();
+     return '---\ntitle: '+buildCRDateTitleWithTime()+'\ndate: '+getTodayCR()+'\nprojet: \nduree: 30 min\nparticipants: '+allParticipants+'\nobjectif: \nnext-date: '+nextDate+'\nnext-agenda: \n---\n\nD: \nD: \n\nA:   '+getTodayCR()+'\nA:   '+getTodayCR();
+   }},
   {id:'standup',name:'Standup',desc:"Hier / Aujourd'hui / Blocages",
    placeholder:"Standup\n\nhier: \n- \n\naujourd'hui: \n- \n\nblocages: \n- "},
   {id:'reflexion',name:'Note de réflexion',desc:'Problème → options → décision',
@@ -1111,15 +1120,43 @@ function renderParticipantChips(participants){
   var names=participants.split(',').map(function(n){return n.trim();}).filter(Boolean);
   if(!names.length)return'';
   var h='<div style="display:flex;flex-wrap:wrap;gap:5px;margin:4px 0;">';
-  names.forEach(function(nom){
+  names.forEach(function(nom,idx){
     var resolved=nom.startsWith('@')?resolveAlias(nom):null;
     var displayNom=resolved?resolved.nom:nom;
     var ini=resolved?resolved.initiales:pInitials(nom);
     var col=pColor(displayNom);
-    h+='<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 10px 3px 5px;border-radius:20px;border:1px solid var(--border);background:var(--bg);">'
-      +'<span class="pr-avatar-mini c'+col+'">'+esc(ini)+'</span>'+esc(displayNom)+'</span>';
+    h+='<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 3px 3px 5px;border-radius:20px;border:1px solid var(--border);background:var(--bg);">'
+      +'<span class="pr-avatar-mini c'+col+'">'+esc(ini)+'</span>'+esc(displayNom)
+      +'<span onclick="removeParticipant('+idx+')" style="cursor:pointer;opacity:0.5;font-size:14px;line-height:1;padding:0 4px;" onmouseover="this.style.opacity=1;this.style.color=\'var(--red)\'" onmouseout="this.style.opacity=0.5;this.style.color=\'\'">×</span>'
+      +'</span>';
   });
   return h+'</div>';
+}
+
+function removeParticipant(index){
+  var n=S.notes.find(function(x){return x.id===curId;});
+  if(!n)return;
+  var lines=(n.body||'').split('\n');
+  var inFront=false;
+  
+  for(var i=0;i<lines.length;i++){
+    var line=lines[i].trim();
+    if(line==='---'){
+      if(!inFront)inFront=true;
+      else break;
+    }
+    if(inFront&&line.match(/^participants\s*:\s*/i)){
+      var match=line.match(/^(participants\s*:\s*)(.*)/i);
+      if(match){
+        var participants=match[2].split(',').map(function(p){return p.trim();}).filter(Boolean);
+        participants.splice(index,1);
+        lines[i]=match[1]+participants.join(', ');
+        document.getElementById('note-ta').value=lines.join('\n');
+        onNoteInput();
+        return;
+      }
+    }
+  }
 }
 
 // ── Shared state (projet001 + shared.json) ────────────────────────────────────
