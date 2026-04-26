@@ -1155,20 +1155,35 @@ function loadSharedData(){
     if(data)todoFullData=data;
   }).catch(function(){});
 
-  // Load cr-generator.json for CR history
-  var q3=encodeURIComponent("name='cr-generator.json' and trashed=false");
+  // Load notes2-cr-export.json for CR exports to CR Generator 2
+  var q3=encodeURIComponent("name='notes2-cr-export.json' and trashed=false");
   fetch('https://www.googleapis.com/drive/v3/files?q='+q3+'&fields=files(id)&orderBy=modifiedTime+desc',
     {headers:{Authorization:'Bearer '+accessToken}})
   .then(function(r){return r.json();})
   .then(function(d){
     crGeneratorFileId=d.files&&d.files[0]?d.files[0].id:null;
-    if(!crGeneratorFileId)return null;
+    if(!crGeneratorFileId){
+      // Create the file if it doesn't exist
+      return fetch('https://www.googleapis.com/drive/v3/files',{
+        method:'POST',
+        headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
+        body:JSON.stringify({name:'notes2-cr-export.json',mimeType:'application/json'})
+      }).then(function(r){return r.json();}).then(function(file){
+        crGeneratorFileId=file.id;
+        // Initialize with empty history
+        crGeneratorData={history:[]};
+        return null;
+      });
+    }
     return fetch('https://www.googleapis.com/drive/v3/files/'+crGeneratorFileId+'?alt=media',
       {headers:{Authorization:'Bearer '+accessToken}});
   }).then(function(r){return r?r.json():null;})
   .then(function(data){
     if(data)crGeneratorData=data;
-  }).catch(function(){});
+    if(!crGeneratorData)crGeneratorData={history:[]};
+  }).catch(function(e){
+    console.error('Erreur chargement notes2-cr-export.json:',e);
+  });
 }
 
 function writeTodoFile(){
@@ -1186,7 +1201,7 @@ function writeCRGeneratorFile(){
     {method:'PATCH',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
      body:JSON.stringify(crGeneratorData)})
   .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);})
-  .catch(function(e){toast('❌ cr-generator : '+e.message);});
+  .catch(function(e){toast('❌ notes2-cr-export : '+e.message);});
 }
 
 function validateCRNote(){
@@ -1287,7 +1302,7 @@ function validateCRNote(){
     }
   } else if(accessToken){
     console.log('crGeneratorData est null ou undefined');
-    toast('⚠ cr-generator.json non chargé');
+    toast('⚠ notes2-cr-export.json non chargé');
   } else {
     console.log('Pas de token d\'accès');
   }
