@@ -1531,6 +1531,29 @@ function showAutocomplete(input,trigger,query,cursorPos){
       {type:'priority',id:'p2',label:'Priorité P2',tag:'!p2',color:'#D97706'},
       {type:'priority',id:'p3',label:'Priorité P3',tag:'!p3',color:'#16A34A'}
     ].filter(function(i){return i.tag.indexOf(autocompleteState.query)>=0;});
+  } else if(trigger==='%'){
+    // Date picker: show today + next 6 days
+    var today=new Date();
+    var dayNames=['dim','lun','mar','mer','jeu','ven','sam'];
+    var monthNames=['jan','fév','mar','avr','mai','juin','juil','août','sep','oct','nov','déc'];
+    items=[];
+    for(var i=0;i<7;i++){
+      var d=new Date(today);
+      d.setDate(today.getDate()+i);
+      var dayName=dayNames[d.getDay()];
+      var dd=String(d.getDate()).padStart(2,'0');
+      var mm=String(d.getMonth()+1).padStart(2,'0');
+      var yyyy=d.getFullYear();
+      var dateStr=dd+'-'+mm+'-'+yyyy;
+      var label=(i===0?'Aujourd\'hui':i===1?'Demain':dayName.charAt(0).toUpperCase()+dayName.slice(1))+' '+d.getDate()+' '+monthNames[d.getMonth()];
+      items.push({
+        type:'date',
+        id:dateStr,
+        label:label,
+        tag:dateStr,
+        color:'var(--primary)'
+      });
+    }
   }
   
   autocompleteState.items=items;
@@ -1544,6 +1567,8 @@ function showAutocomplete(input,trigger,query,cursorPos){
       avatar='<span class="ac-avatar" style="background:'+item.color+';border-radius:4px;">📁</span>';
     } else if(item.type==='priority'){
       avatar='<span class="ac-avatar" style="background:'+item.color+';border-radius:4px;">⚡</span>';
+    } else if(item.type==='date'){
+      avatar='<span class="ac-avatar" style="background:'+item.color+';border-radius:4px;">📅</span>';
     }
     return '<div class="autocomplete-item'+(idx===0?' selected':'')+'" data-index="'+idx+'">'+
       avatar+
@@ -1630,7 +1655,7 @@ function handleAutocompleteInput(e){
   for(var i=cursorPos-1;i>=0;i--){
     var char=text[i];
     if(char===' '||char==='\n')break;
-    if(char==='@'||char==='#'||char==='!'){
+    if(char==='@'||char==='#'||char==='!'||char==='%'){
       trigger=char;
       triggerPos=i;
       break;
