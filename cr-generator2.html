@@ -675,7 +675,20 @@ function parse(text) {
       else if ((m=line.match(/^dur[eé]e\s*:\s*(.+)/i)))     cr.duree       = m[1].trim();
       else if ((m=line.match(/^participants\s*:\s*(.+)/i))) cr.participants = m[1].trim();
       else if ((m=line.match(/^objectif\s*:\s*(.+)/i)))     cr.objectif    = m[1].trim();
-      else if ((m=line.match(/^projet\s*:\s*(.*)/i)))       cr.projet      = m[1].trim();
+      else if ((m=line.match(/^projet\s*:\s*(.*)/i))) {
+        var projetVal = m[1].trim();
+        // Si le projet commence par #, résoudre le hashtag
+        if(projetVal.startsWith('#')){
+          var slug = projetVal.substring(1).toLowerCase();
+          var resolved = (sharedProjects||[]).find(function(p){
+            return (p.name||'').toLowerCase().replace(/\s+/g,'-') === slug ||
+                   (p.name||'').toLowerCase().indexOf(slug) >= 0;
+          });
+          cr.projet = resolved ? resolved.name : projetVal;
+        } else {
+          cr.projet = projetVal;
+        }
+      }
       else if ((m=line.match(/^next-date\s*:\s*(.+)/i)))    cr.nextDate    = m[1].trim();
       else if ((m=line.match(/^next-agenda\s*:\s*(.+)/i)))  cr.nextAgenda  = m[1].trim();
     } else {
