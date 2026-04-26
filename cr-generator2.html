@@ -1253,6 +1253,11 @@ function renderHistory() {
       aCount=parsed.actions.length;
       title=parsed.title||e.title||'Sans titre';
       date=parsed.date||e.date;
+      
+      // Ajouter le préfixe [projet] si le titre ne l'a pas déjà
+      if(e.projet && !title.startsWith('[')){
+        title = '['+e.projet+'] '+title;
+      }
     }
     
     // For imported CRs, projet is a name not an ID
