@@ -754,6 +754,12 @@ function renderTagWrap() {
 function focusTagInput() { document.getElementById('tag-input').focus(); }
 function handleTagKey(ev) {
   var input = ev.target;
+  // Si l'autocomplete est visible, laisser handleAutocompleteKeydown gérer
+  var dropdown = document.getElementById('autocomplete-dropdown');
+  if (dropdown && dropdown.style.display !== 'none') {
+    return; // L'autocomplete gère Entrée/Tab/Flèches
+  }
+  
   if ((ev.key==='Enter'||ev.key===',') && input.value.trim()) {
     ev.preventDefault();
     var nom = input.value.replace(',','').trim();
@@ -2051,6 +2057,29 @@ function selectAutocompleteItem(index){
   if(!item)return;
   
   var input=autocompleteState.input;
+  
+  // Cas spécial : si c'est le champ tag-input (PARTICIPANTS)
+  if(input.id==='tag-input'){
+    var nom=item.tag;
+    // Résoudre l'alias si c'est un @mention
+    if(nom.startsWith('@')){
+      var resolved=resolveAlias(nom);
+      if(resolved)nom=resolved.nom;
+    }
+    // Ajouter à crParticipants
+    if(nom&&crParticipants.indexOf(nom)===-1){
+      crParticipants.push(nom);
+    }
+    // Vider le champ et mettre à jour
+    input.value='';
+    renderTagWrap();
+    onEdit();
+    hideAutocomplete();
+    input.focus();
+    return;
+  }
+  
+  // Cas normal : textarea (raw-input)
   var text=input.value;
   var cursorPos=input.selectionStart;
   
@@ -2138,9 +2167,16 @@ if(rawInput){
   rawInput.addEventListener('keydown',handleAutocompleteKeydown);
 }
 
+// Attach autocomplete to tag-input (PARTICIPANTS)
+var tagInput=document.getElementById('tag-input');
+if(tagInput){
+  tagInput.addEventListener('input',handleAutocompleteInput);
+  tagInput.addEventListener('keydown',handleAutocompleteKeydown);
+}
+
 // Hide autocomplete on click outside
 document.addEventListener('click',function(e){
-  if(!e.target.closest('.autocomplete-dropdown')&&!e.target.closest('textarea')){
+  if(!e.target.closest('.autocomplete-dropdown')&&!e.target.closest('textarea')&&!e.target.closest('.tag-bare-input')){
     hideAutocomplete();
   }
 });
