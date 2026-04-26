@@ -2398,7 +2398,7 @@ function renderAll(){renderTodos();renderNotes();renderReminders();renderHabits(
 document.getElementById('imp-modal').addEventListener('click',function(e){if(e.target===this)closeImp();});
 
 /* ══ GOOGLE DRIVE ══ */
-let drTok=null,drFid=null,drCfg={clientId:'',filename:'projet001.json'};
+let drTok=null,drFid=null,drCfg={clientId:'962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com',filename:'projet001.json'};
 
 function saveDriveConf(){drCfg.clientId=document.getElementById('drive-cid').value.trim();drCfg.filename=document.getElementById('drive-fn').value.trim()||'projet001.json';localStorage.setItem(DK,JSON.stringify(drCfg));}
 function loadDriveConf(){try{const s=localStorage.getItem(DK);if(s){const c=JSON.parse(s);drCfg=c;document.getElementById('drive-cid').value=c.clientId||'';document.getElementById('drive-fn').value=c.filename||'projet001.json';}}catch(e){}updateDriveUI();}
