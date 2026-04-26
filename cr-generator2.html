@@ -1396,7 +1396,7 @@ function _loadFreshTemplate() {
   crParticipants = adminMember ? [adminMember.nom] : [];
   var projetName = _getProjetName();
   var tmpl = TMPL
-    .replace(/^title:.*$/m,       'title: '+buildCRTitle(projetName))
+    .replace(/^title:.*$/m,       'title: '+buildCRTitleWithTime(projetName))
     .replace(/^projet:.*$/m,      'projet: '+projetName)
     .replace(/^participants:.*$/m,'participants: '+(adminMember?adminMember.nom:''));
   document.getElementById('raw-input').value = tmpl;
