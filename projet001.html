@@ -1335,7 +1335,7 @@ div:hover>.item-img-del{display:block;}
   <!-- ══ TODOS ══ -->
   <div id="tab-todos" class="section active">
     <div class="add-row">
-      <input class="main-in" type="text" id="todo-in" placeholder="Nouvelle tâche…" onkeydown="if(event.key==='Enter')addTodo()">
+      <input class="main-in" type="text" id="todo-in" placeholder="Nouvelle tâche…">
       <select id="todo-cat"></select>
       <select id="todo-pri">
         <option value="p1">P1</option>
@@ -1650,7 +1650,7 @@ div:hover>.item-img-del{display:block;}
   <!-- ══ BACKLOG ══ -->
   <div id="tab-backlog" class="section" style="display:none;">
     <div class="add-row">
-      <input class="main-in" type="text" id="bl-in" placeholder="Nouvelle tâche backlog…" onkeydown="if(event.key==='Enter')addBacklogItem()">
+      <input class="main-in" type="text" id="bl-in" placeholder="Nouvelle tâche backlog…">
       <select id="bl-proj" style="font-family:var(--mono);font-size:11px;padding:4px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text2);cursor:pointer;">
         <option value="">— Projet —</option>
       </select>
@@ -6302,21 +6302,32 @@ function handleAutocompleteInput(e){
 }
 
 function handleAutocompleteKeydown(e){
-  if(!autocompleteState.visible)return;
-  
-  if(e.key==='ArrowDown'){
-    e.preventDefault();
-    moveAutocompleteSelection(1);
-  } else if(e.key==='ArrowUp'){
-    e.preventDefault();
-    moveAutocompleteSelection(-1);
-  } else if(e.key==='Enter'||e.key==='Tab'){
-    if(autocompleteState.visible){
+  if(autocompleteState.visible){
+    // Autocomplete is open
+    if(e.key==='ArrowDown'){
+      e.preventDefault();
+      moveAutocompleteSelection(1);
+    } else if(e.key==='ArrowUp'){
+      e.preventDefault();
+      moveAutocompleteSelection(-1);
+    } else if(e.key==='Enter'||e.key==='Tab'){
       e.preventDefault();
       selectAutocompleteItem(autocompleteState.selectedIndex);
+    } else if(e.key==='Escape'){
+      hideAutocomplete();
     }
-  } else if(e.key==='Escape'){
-    hideAutocomplete();
+  } else {
+    // Autocomplete is NOT open - handle Enter for each input
+    if(e.key==='Enter'){
+      e.preventDefault();
+      const inputId=e.target.id;
+      if(inputId==='bl-in'){
+        addBacklogItem();
+      } else if(inputId==='todo-in'){
+        addTodo();
+      }
+      // Note: ud-title is a textarea, not a submit input, so we don't handle Enter there
+    }
   }
 }
 
