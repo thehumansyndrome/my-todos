@@ -885,15 +885,13 @@ function resolveAlias(mention) {
 function aliasAvatarHtml(mention) {
   var m = resolveAlias(mention);
   if (m) {
-    // Membre résolu - format compact: initiales + prénom avec couleur
-    var prenom = m.nom.split(' ')[0];
-    return '<span style="display:inline-flex;align-items:center;gap:4px;background:'+m.color+'22;border:1px solid '+m.color+'44;color:'+m.color+';padding:2px 6px;border-radius:12px;font-size:11px;font-weight:500;vertical-align:middle;"><span style="background:'+m.color+';color:white;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;">'+esc(m.initiales)+'</span><span>'+esc(prenom)+'</span></span>';
+    // Membre résolu - format compact: initiales + nom complet avec couleur
+    return '<span style="display:inline-flex;align-items:center;gap:4px;background:'+m.color+'22;border:1px solid '+m.color+'44;color:'+m.color+';padding:2px 6px;border-radius:12px;font-size:11px;font-weight:500;vertical-align:middle;"><span style="background:'+m.color+';color:white;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;">'+esc(m.initiales)+'</span><span>'+esc(m.nom)+'</span></span>';
   } else {
-    // Non résolu - style par défaut
+    // Non résolu - style par défaut avec nom complet
     var ini = pInitials(mention);
     var col = pColor(mention);
-    var prenom = mention.split(' ')[0];
-    return '<span class="tag-item" style="vertical-align:middle;"><span class="tag-item-avatar c'+col+'">'+esc(ini)+'</span>'+esc(prenom)+'</span>';
+    return '<span class="tag-item" style="vertical-align:middle;"><span class="tag-item-avatar c'+col+'">'+esc(ini)+'</span>'+esc(mention)+'</span>';
   }
 }
 function renderParticipantChips(participants) {
@@ -904,13 +902,11 @@ function renderParticipantChips(participants) {
   names.forEach(function(nom) {
     var resolved = nom.startsWith('@') ? resolveAlias(nom) : null;
     if (resolved) {
-      // Participant résolu via alias - afficher prénom uniquement
-      var prenom = resolved.nom.split(' ')[0];
-      h += '<span class="p-chip" style="background:'+resolved.color+'22;border-color:'+resolved.color+'44;color:'+resolved.color+';"><span class="p-avatar" style="background:'+resolved.color+';">'+esc(resolved.initiales)+'</span>'+esc(prenom)+'</span>';
+      // Participant résolu via alias - afficher nom complet
+      h += '<span class="p-chip" style="background:'+resolved.color+'22;border-color:'+resolved.color+'44;color:'+resolved.color+';"><span class="p-avatar" style="background:'+resolved.color+';">'+esc(resolved.initiales)+'</span>'+esc(resolved.nom)+'</span>';
     } else {
-      // Participant non résolu - style par défaut avec prénom uniquement
-      var prenom = nom.split(' ')[0];
-      h += '<span class="p-chip"><span class="p-avatar c'+pColor(nom)+'">'+esc(pInitials(nom))+'</span>'+esc(prenom)+'</span>';
+      // Participant non résolu - style par défaut avec nom complet
+      h += '<span class="p-chip"><span class="p-avatar c'+pColor(nom)+'">'+esc(pInitials(nom))+'</span>'+esc(nom)+'</span>';
     }
   });
   return h+'</div>';
