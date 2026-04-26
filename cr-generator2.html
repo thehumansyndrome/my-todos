@@ -880,9 +880,13 @@ function renderParticipantChips(participants) {
   names.forEach(function(nom) {
     var resolved = nom.startsWith('@') ? resolveAlias(nom) : null;
     if (resolved) {
-      h += '<span class="p-chip" style="background:'+resolved.color+'22;border-color:'+resolved.color+'44;color:'+resolved.color+';"><span class="p-avatar" style="background:'+resolved.color+';">'+esc(resolved.initiales)+'</span>'+esc(resolved.nom)+'</span>';
+      // Participant résolu via alias - afficher prénom uniquement
+      var prenom = resolved.nom.split(' ')[0];
+      h += '<span class="p-chip" style="background:'+resolved.color+'22;border-color:'+resolved.color+'44;color:'+resolved.color+';"><span class="p-avatar" style="background:'+resolved.color+';">'+esc(resolved.initiales)+'</span>'+esc(prenom)+'</span>';
     } else {
-      h += '<span class="p-chip"><span class="p-avatar c'+pColor(nom)+'">'+esc(pInitials(nom))+'</span>'+esc(nom)+'</span>';
+      // Participant non résolu - style par défaut avec prénom uniquement
+      var prenom = nom.split(' ')[0];
+      h += '<span class="p-chip"><span class="p-avatar c'+pColor(nom)+'">'+esc(pInitials(nom))+'</span>'+esc(prenom)+'</span>';
     }
   });
   return h+'</div>';
