@@ -1514,13 +1514,41 @@ function restoreVersion(entryId, vIdx) {
 }
 
 function editFromDrawer() {
-  var e=S.history.find(function(x){return x.id===drawerEntryId;}); if (!e) return;
+  // Chercher dans S.history ou importedHistory selon le cas
+  var e = drawerIsImported 
+    ? importedHistory.find(function(x){return x.id===drawerEntryId;})
+    : S.history.find(function(x){return x.id===drawerEntryId;});
+  
+  if (!e) return;
+  
   document.getElementById('raw-input').value=e.raw;
-  curCRProjet=e.projet||''; curRedact=(e.redacteurs||[]).slice(); curValid=(e.valideurs||[]).slice();
-  editingEntryId=e.id; saveMetaState();
+  
+  if (drawerIsImported) {
+    // CR importé : pas d'editingEntryId, on crée un nouveau CR local
+    editingEntryId = null;
+    curCRProjet = e.projet || '';
+    curRedact = [];
+    curValid = [];
+  } else {
+    // CR local : mode édition normale
+    curCRProjet = e.projet || '';
+    curRedact = (e.redacteurs||[]).slice();
+    curValid = (e.valideurs||[]).slice();
+    editingEntryId = e.id;
+  }
+  
+  saveMetaState();
   loadParticipantsFromRaw(e.raw);
-  renderEditorMeta(); renderPreview();
-  closeDrawer(); showTab('editor'); toast('CR chargé dans l\'éditeur');
+  renderEditorMeta();
+  renderPreview();
+  closeDrawer();
+  showTab('editor');
+  
+  if (drawerIsImported) {
+    toast('CR importé chargé dans l\'éditeur · Enregistrer créera un nouveau CR local');
+  } else {
+    toast('CR chargé dans l\'éditeur');
+  }
 }
 
 function dlFromDrawer(fmt) {
