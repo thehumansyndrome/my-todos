@@ -409,7 +409,7 @@ var TMPLS=[
   {id:'none',name:'Note libre',desc:'Texte brut, aucun rendu',
    placeholder:'Titre\n\nÉcris ici…'},
   {id:'cr',name:'Compte Rendu',desc:'Réunion → décisions, actions (format CR Generator)',
-   get placeholder(){return '---\ntitle: \ndate: '+getTodayCR()+'\nprojet: \nduree: \nparticipants: \nobjectif: \nnext-date: \nnext-agenda: \n---\n\nD: \nD: \n\nA:   '+getTodayCR()+'\nA:   '+getTodayCR();}},
+   get placeholder(){return '---\ntitle: '+buildCRDateTitle()+'\ndate: '+getTodayCR()+'\nprojet: \nduree: \nparticipants: \nobjectif: \nnext-date: \nnext-agenda: \n---\n\nD: \nD: \n\nA:   '+getTodayCR()+'\nA:   '+getTodayCR();}},
   {id:'standup',name:'Standup',desc:"Hier / Aujourd'hui / Blocages",
    placeholder:"Standup\n\nhier: \n- \n\naujourd'hui: \n- \n\nblocages: \n- "},
   {id:'reflexion',name:'Note de réflexion',desc:'Problème → options → décision',
