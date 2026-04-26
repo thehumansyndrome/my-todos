@@ -495,7 +495,13 @@ function getCRTitleDate(){
 function buildCRTitle(projet){
   return (projet?'['+projet+'] ':'')+"CR de la réunion du "+getCRTitleDate();
 }
-var TMPL = '---\ntitle: '+buildCRTitle('')+'\ndate: '+getTodayFR()+'\nprojet: \nduree: \nparticipants: \nobjectif: \nnext-date: \nnext-agenda: \n---\n\nD: \nD: \n\nA:   '+getTodayFR()+'\nA:   '+getTodayFR()+'\n';
+function buildCRTitleWithTime(projet){
+  var d=new Date();
+  var hours=String(d.getHours()).padStart(2,'0');
+  var minutes=String(d.getMinutes()).padStart(2,'0');
+  return (projet?'['+projet+'] ':'')+"CR de la réunion du "+getCRTitleDate()+" à "+hours+":"+minutes;
+}
+var TMPL = '---\ntitle: '+buildCRTitleWithTime('')+'\ndate: '+getTodayFR()+'\nprojet: \nduree: \nparticipants: \nobjectif: \nnext-date: \nnext-agenda: \n---\n\nD: \nD: \n\nA:   '+getTodayFR()+'\nA:   '+getTodayFR()+'\n';
 
 // ── State ──────────────────────────────────────────────────────────────────────
 var S = {history:[]};
