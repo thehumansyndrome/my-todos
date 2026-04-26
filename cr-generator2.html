@@ -1339,9 +1339,17 @@ function openDrawer(id) {
 }
 
 function openImportedDrawer(id) {
+  console.log('[CR Gen2] openImportedDrawer appelé avec id:', id);
+  console.log('[CR Gen2] importedHistory contient', importedHistory.length, 'CR');
+  
   // Charger le CR importé dans l'éditeur pour modification
   var e=importedHistory.find(function(x){return x.id===id;});
-  if (!e) return;
+  if (!e) {
+    console.error('[CR Gen2] CR importé non trouvé:', id);
+    return;
+  }
+  
+  console.log('[CR Gen2] CR trouvé, chargement dans éditeur:', e);
   
   // Charger dans l'éditeur
   editingEntryId = null; // Pas d'édition d'un CR local
@@ -1364,8 +1372,14 @@ function openImportedDrawer(id) {
   renderPreview();
   saveMetaState();
   
+  // Basculer vers l'onglet Éditeur
+  var editorTab = document.querySelector('[onclick*="switchTab"][onclick*="editeur"]');
+  if (editorTab) editorTab.click();
+  
   // Scroll vers le haut
   window.scrollTo(0, 0);
+  
+  console.log('[CR Gen2] CR chargé avec succès');
 }
 
 
