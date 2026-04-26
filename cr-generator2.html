@@ -564,6 +564,7 @@ var filterProjet = 'all';
 
 // Drawer state
 var drawerEntryId = null;
+var drawerIsImported = false;
 
 // Form state — équipe gérée centralement dans todos
 var ddTarget        = null;
@@ -1333,58 +1334,26 @@ function renderProjetFilters() {
 // ── Drawer ─────────────────────────────────────────────────────────────────────
 function openDrawer(id) {
   drawerEntryId=id;
+  // Vérifier si c'est un CR importé
+  var isImported = importedHistory.some(function(x){return x.id===id;});
+  drawerIsImported = isImported;
   refreshDrawer();
   document.getElementById('drawer-overlay').classList.add('open');
   document.getElementById('drawer').classList.add('open');
 }
 
 function openImportedDrawer(id) {
-  console.log('[CR Gen2] openImportedDrawer appelé avec id:', id);
-  console.log('[CR Gen2] importedHistory contient', importedHistory.length, 'CR');
-  
-  // Charger le CR importé dans l'éditeur pour modification
-  var e=importedHistory.find(function(x){return x.id===id;});
-  if (!e) {
-    console.error('[CR Gen2] CR importé non trouvé:', id);
-    return;
-  }
-  
-  console.log('[CR Gen2] CR trouvé, chargement dans éditeur:', e);
-  
-  // Charger dans l'éditeur
-  editingEntryId = null; // Pas d'édition d'un CR local
-  document.getElementById('raw-input').value = e.raw;
-  
-  // Parse pour pré-remplir les participants
-  var cr = parse(e.raw);
-  if (cr.participants) {
-    crParticipants = cr.participants.split(',').map(function(n){
-      var nom = n.trim();
-      if (nom.startsWith('@')) {
-        var resolved = resolveAlias(nom);
-        return resolved ? resolved.nom : nom;
-      }
-      return nom;
-    }).filter(Boolean);
-    renderTagWrap();
-  }
-  
-  renderPreview();
-  saveMetaState();
-  
-  // Basculer vers l'onglet Éditeur
-  var editorTab = document.querySelector('[onclick*="switchTab"][onclick*="editeur"]');
-  if (editorTab) editorTab.click();
-  
-  // Scroll vers le haut
-  window.scrollTo(0, 0);
-  
-  console.log('[CR Gen2] CR chargé avec succès');
+  // Rediriger vers openDrawer pour utiliser le drawer standard
+  openDrawer(id);
 }
 
 
 function refreshDrawer() {
-  var e=S.history.find(function(x){return x.id===drawerEntryId;});
+  // Chercher dans S.history ou importedHistory selon le cas
+  var e = drawerIsImported 
+    ? importedHistory.find(function(x){return x.id===drawerEntryId;})
+    : S.history.find(function(x){return x.id===drawerEntryId;});
+  
   if (!e) return;
   var proj=sharedProjects.find(function(p){return p.id===e.projet;});
   var reds=(e.redacteurs||[]).map(function(id){return sharedTeam.find(function(m){return m.id===id;});}).filter(Boolean);
@@ -1395,16 +1364,31 @@ function refreshDrawer() {
 
   // badges
   var badgesEl=document.getElementById('drawer-badges');
-  badgesEl.innerHTML='<span class="status-badge '+STATUS_CLASS[e.status||'brouillon']+'" onclick="cycleStatus('+e.id+')">'+STATUS_LABELS[e.status||'brouillon']+'</span>';
+  if (drawerIsImported) {
+    // CR importé : pas de cycle status, ajouter badge Notes2
+    badgesEl.innerHTML='<span class="status-badge '+STATUS_CLASS[e.status||'valide']+'">'+STATUS_LABELS[e.status||'valide']+'</span>';
+    badgesEl.innerHTML+=' <span style="font-size:10px;background:var(--blue);color:white;padding:2px 6px;border-radius:4px;font-weight:500;">Notes2</span>';
+  } else {
+    // CR local : status cliquable
+    badgesEl.innerHTML='<span class="status-badge '+STATUS_CLASS[e.status||'brouillon']+'" onclick="cycleStatus('+e.id+')">'+STATUS_LABELS[e.status||'brouillon']+'</span>';
+  }
   if (proj) badgesEl.innerHTML+=chipHTML(proj.name, proj.color);
 
   // boutons drawer
   var valBtn=document.getElementById('drawer-validate-btn');
-  if (valBtn) valBtn.style.display=(e.status==='valide'||e.status==='archive')?'none':'';
   var archBtn=document.getElementById('drawer-archive-btn');
-  if (archBtn) {
-    if (e.status==='archive'){archBtn.textContent='↩ Désarchiver';archBtn.style.color=archBtn.style.borderColor='var(--muted)';}
-    else{archBtn.textContent='⬜ Archiver';archBtn.style.color=archBtn.style.borderColor='var(--blue)';}
+  if (drawerIsImported) {
+    // CR importé : masquer les boutons de validation/archivage
+    if (valBtn) valBtn.style.display='none';
+    if (archBtn) archBtn.style.display='none';
+  } else {
+    // CR local : afficher les boutons normalement
+    if (valBtn) valBtn.style.display=(e.status==='valide'||e.status==='archive')?'none':'';
+    if (archBtn) {
+      archBtn.style.display='';
+      if (e.status==='archive'){archBtn.textContent='↩ Désarchiver';archBtn.style.color=archBtn.style.borderColor='var(--muted)';}
+      else{archBtn.textContent='⬜ Archiver';archBtn.style.color=archBtn.style.borderColor='var(--blue)';}
+    }
   }
 
   // contenu CR
@@ -1447,33 +1431,45 @@ function refreshDrawer() {
 
   // assignés
   var assEl=document.getElementById('drawer-assignes');
-  if (!reds.length&&!vals.length) {
-    assEl.innerHTML='<span style="font-size:13px;color:var(--muted)">Aucun assigné</span>';
+  if (drawerIsImported) {
+    assEl.innerHTML='<span style="font-size:13px;color:var(--muted)">CR importé depuis Notes2</span>';
   } else {
-    assEl.innerHTML=
-      (reds.length?'<div style="margin-bottom:6px"><span style="font-size:12px;color:var(--muted)">Rédacteur(s) : </span>'+reds.map(function(m){return avatarHTML(m,true);}).join(' ')+'</div>':'')+
-      (vals.length?'<div><span style="font-size:12px;color:var(--muted)">Valideur(s) : </span>'+vals.map(function(m){return avatarHTML(m,true);}).join(' ')+'</div>':'');
+    if (!reds.length&&!vals.length) {
+      assEl.innerHTML='<span style="font-size:13px;color:var(--muted)">Aucun assigné</span>';
+    } else {
+      assEl.innerHTML=
+        (reds.length?'<div style="margin-bottom:6px"><span style="font-size:12px;color:var(--muted)">Rédacteur(s) : </span>'+reds.map(function(m){return avatarHTML(m,true);}).join(' ')+'</div>':'')+
+        (vals.length?'<div><span style="font-size:12px;color:var(--muted)">Valideur(s) : </span>'+vals.map(function(m){return avatarHTML(m,true);}).join(' ')+'</div>':'');
+    }
   }
 
   // versions
   var versEl=document.getElementById('drawer-versions');
-  if (!e.versions||!e.versions.length) {
-    versEl.innerHTML='<span style="font-size:13px;color:var(--muted)">Aucune version précédente</span>';
+  if (drawerIsImported) {
+    versEl.innerHTML='<span style="font-size:13px;color:var(--muted)">Historique non disponible pour les CR importés</span>';
   } else {
-    versEl.innerHTML=e.versions.map(function(v,i){
-      var diffHTML=(v.changes||[]).map(function(c){
-        if (c.type==='add')    return '<div class="diff-line"><span class="diff-tag diff-add">+ '+esc(c.label)+'</span><span>'+esc(c.value)+'</span></div>';
-        if (c.type==='remove') return '<div class="diff-line"><span class="diff-tag diff-remove">− '+esc(c.label)+'</span><span>'+esc(c.value)+'</span></div>';
-        if (c.value)           return '<div class="diff-line"><span class="diff-tag diff-change">~ '+esc(c.label)+'</span><span>'+esc(c.value)+'</span></div>';
-        return '<div class="diff-line"><span class="diff-tag diff-change">~ '+esc(c.label)+'</span><span>'+esc(c.from)+' → '+esc(c.to)+'</span></div>';
+    if (!e.versions||!e.versions.length) {
+      versEl.innerHTML='<span style="font-size:13px;color:var(--muted)">Aucune version précédente</span>';
+    } else {
+      versEl.innerHTML=e.versions.map(function(v,i){
+        var diffHTML=(v.changes||[]).map(function(c){
+          if (c.type==='add')    return '<div class="diff-line"><span class="diff-tag diff-add">+ '+esc(c.label)+'</span><span>'+esc(c.value)+'</span></div>';
+          if (c.type==='remove') return '<div class="diff-line"><span class="diff-tag diff-remove">− '+esc(c.label)+'</span><span>'+esc(c.value)+'</span></div>';
+          if (c.value)           return '<div class="diff-line"><span class="diff-tag diff-change">~ '+esc(c.label)+'</span><span>'+esc(c.value)+'</span></div>';
+          return '<div class="diff-line"><span class="diff-tag diff-change">~ '+esc(c.label)+'</span><span>'+esc(c.from)+' → '+esc(c.to)+'</span></div>';
+        }).join('');
+        return '<div class="version-item"><div class="version-item-top"><span class="version-tag">v'+(e.versions.length-i)+'</span><span class="version-date">'+v.savedAt+'</span><button class="btn sm" onclick="restoreVersion('+e.id+','+i+')" style="margin-left:auto">Restaurer</button></div>'+(diffHTML?'<div class="version-changes">'+diffHTML+'</div>':'')+'</div>';
       }).join('');
-      return '<div class="version-item"><div class="version-item-top"><span class="version-tag">v'+(e.versions.length-i)+'</span><span class="version-date">'+v.savedAt+'</span><button class="btn sm" onclick="restoreVersion('+e.id+','+i+')" style="margin-left:auto">Restaurer</button></div>'+(diffHTML?'<div class="version-changes">'+diffHTML+'</div>':'')+'</div>';
-    }).join('');
+    }
   }
 
   // commentaires
-  renderDrawerComments(e);
-  populateCommentAuthorSelect();
+  if (drawerIsImported) {
+    document.getElementById('drawer-comments').innerHTML='<span style="font-size:13px;color:var(--muted)">Commentaires non disponibles pour les CR importés</span>';
+  } else {
+    renderDrawerComments(e);
+    populateCommentAuthorSelect();
+  }
 }
 
 function renderDrawerComments(e) {
