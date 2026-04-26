@@ -250,7 +250,7 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
   background:rgba(96,165,250,.12);
 }
 .todo-done-mark{
-  background:rgba(22,163,74,.10);border-radius:3px;display:inline;
+  background:rgba(22,163,74,.10);border-radius:3px;display:inline;color:#16A34A;
 }
 .todo-badge{
   display:inline-flex;align-items:center;gap:5px;
@@ -1102,47 +1102,16 @@ var sharedProjects = [];
 var sharedTeam = [];
 var todoFileId = null;
 var todoFullData = null;
-var sharedFileId = null;
-var lastSharedModTime = null;
-var syncInterval = null;
-
-function startRealtimeSync(){
-  if(syncInterval||!accessToken)return;
-  syncInterval=setInterval(function(){
-    if(!accessToken||!sharedFileId)return;
-    fetch('https://www.googleapis.com/drive/v3/files/'+sharedFileId+'?fields=modifiedTime',
-      {headers:{Authorization:'Bearer '+accessToken}})
-    .then(function(r){return r.json();})
-    .then(function(data){
-      var modTime=data.modifiedTime;
-      if(lastSharedModTime&&modTime!==lastSharedModTime){
-        console.log('🔄 Sync shared.json détectée');
-        loadSharedData();
-      }
-      lastSharedModTime=modTime;
-    }).catch(function(){});
-  },5000);
-  console.log('✓ Sync temps réel activée (notes2)');
-}
-
-function stopRealtimeSync(){
-  if(syncInterval){
-    clearInterval(syncInterval);
-    syncInterval=null;
-  }
-}
 
 function loadSharedData(){
   if(!accessToken)return;
   // Load shared.json for project list
   var q=encodeURIComponent("name='shared.json' and trashed=false");
-  fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id,modifiedTime)&orderBy=modifiedTime+desc',
+  fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id)&orderBy=modifiedTime+desc',
     {headers:{Authorization:'Bearer '+accessToken}})
   .then(function(r){return r.json();})
   .then(function(d){
     if(!d.files||!d.files[0])return;
-    sharedFileId=d.files[0].id;
-    lastSharedModTime=d.files[0].modifiedTime;
     return fetch('https://www.googleapis.com/drive/v3/files/'+d.files[0].id+'?alt=media',
       {headers:{Authorization:'Bearer '+accessToken}});
   }).then(function(r){return r?r.json():null;})
@@ -1150,7 +1119,6 @@ function loadSharedData(){
     if(!data)return;
     if(Array.isArray(data.projects))sharedProjects=data.projects;
     if(Array.isArray(data.team))sharedTeam=data.team;
-    if(!syncInterval)startRealtimeSync();
   }).catch(function(){});
 
   // Load projet001.json for backlog
