@@ -1209,7 +1209,7 @@ function renderHistory() {
     var vals=(e.valideurs||[]).map(function(id){return sharedTeam.find(function(m){return m.id===id;});}).filter(Boolean);
     var isEditing=e.id===editingEntryId;
     var meta=(date?formatDate(date)+' · ':'')+(dCount||0)+' décision'+((dCount||0)!==1?'s':'')+' · '+(aCount||0)+' action'+((aCount||0)!==1?'s':'')+(e.savedAt?' · '+e.savedAt:'')+(e.publishedAt?' · '+e.publishedAt:'')+(e.versions&&e.versions.length?' · v'+(e.versions.length+1):'');
-    h+='<div class="history-card" onclick="'+(e._imported?'':'openDrawer('+e.id+')')+'" style="'+(isEditing?'border-color:var(--accent)':'')+(e._imported?';opacity:0.8;cursor:default':'')+'">';
+    h+='<div class="history-card" onclick="'+(e._imported?'openImportedDrawer(\''+e.id+'\')':'openDrawer('+e.id+')')+'" style="'+(isEditing?'border-color:var(--accent)':'')+(e._imported?';opacity:0.9;cursor:pointer':'')+'">';
     h+='<div class="history-card-top">';
     h+='<div style="flex:1;min-width:0;"><div class="history-title">'+esc(title)+(isEditing?' <span style="font-size:11px;color:var(--accent)">● actif</span>':'')+(e._imported?' <span style="font-size:10px;background:var(--blue);color:white;padding:2px 6px;border-radius:4px;font-weight:500;">Notes2</span>':'')+'</div>';
     h+='<div class="history-meta">'+meta+'</div></div>';
@@ -1279,6 +1279,83 @@ function openDrawer(id) {
   document.getElementById('drawer-overlay').classList.add('open');
   document.getElementById('drawer').classList.add('open');
 }
+
+function openImportedDrawer(id) {
+  // Open drawer for imported CR (read-only)
+  var e=importedHistory.find(function(x){return x.id===id;});
+  if (!e) return;
+  
+  drawerEntryId=id;
+  
+  // Parse the CR
+  var cr=parse(e.raw);
+  var proj=sharedProjects.find(function(p){return p.name===e.projet;});
+  
+  document.getElementById('drawer-breadcrumb').textContent=proj?proj.name:'';
+  document.getElementById('drawer-title').textContent=cr.title||'Sans titre';
+
+  // badges - read-only, no onclick
+  var badgesEl=document.getElementById('drawer-badges');
+  badgesEl.innerHTML='<span class="status-badge '+STATUS_CLASS[e.status||'valide']+'">'+STATUS_LABELS[e.status||'valide']+'</span>';
+  badgesEl.innerHTML+=' <span style="font-size:10px;background:var(--blue);color:white;padding:2px 6px;border-radius:4px;font-weight:500;">Notes2 · Lecture seule</span>';
+  if (proj) badgesEl.innerHTML+=chipHTML(proj.name, proj.color);
+
+  // Hide action buttons for imported CRs
+  var valBtn=document.getElementById('drawer-validate-btn');
+  if (valBtn) valBtn.style.display='none';
+  var archBtn=document.getElementById('drawer-archive-btn');
+  if (archBtn) archBtn.style.display='none';
+
+  // CR content
+  var contentEl=document.getElementById('drawer-content');
+  var ch='';
+  var metas=[];
+  if (cr.date)     metas.push(['Date',formatDate(cr.date)]);
+  if (cr.duree)    metas.push(['Durée',cr.duree]);
+  if (cr.objectif) metas.push(['Objectif',cr.objectif]);
+  metas.forEach(function(m){ch+='<p class="drawer-cr-meta"><b>'+esc(m[0])+' :</b> '+esc(m[1])+'</p>';});
+  if (cr.participants) {
+    ch+='<p class="drawer-cr-meta" style="margin-top:6px;"><b>Participants :</b> '+renderParticipantChips(cr.participants)+'</p>';
+  }
+  if (cr.decisions.length) {
+    ch+='<div class="drawer-cr-section"><div class="drawer-cr-section-label">Décisions</div>';
+    cr.decisions.forEach(function(d,i){ch+='<div class="drawer-cr-item"><span class="drawer-cr-item-num">'+(i+1)+'.</span><span>'+esc(d)+'</span></div>';});
+    ch+='</div>';
+  }
+  if (cr.actions.length) {
+    ch+='<div class="drawer-cr-section"><div class="drawer-cr-section-label">Actions</div>';
+    cr.actions.forEach(function(a,i){
+      ch+='<div class="drawer-cr-item"><span class="drawer-cr-item-num">'+(i+1)+'.</span><span>'+esc(a.text);
+      if (a.assignees && a.assignees.length) {
+        a.assignees.forEach(function(mention){
+          ch+=' '+aliasAvatarHtml(mention);
+        });
+      } else if (a.assignee) {
+        ch+=' '+aliasAvatarHtml(a.assignee);
+      }
+      if (a.due) ch+=' <span style="color:var(--amber);font-size:12px;">📅 '+esc(a.due)+'</span>';
+      ch+='</span></div>';
+    });
+    ch+='</div>';
+  }
+  if (cr.nextDate||cr.nextAgenda) {
+    ch+='<div style="margin-top:10px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;">';
+    if (cr.nextDate) ch+='📅 <span style="color:var(--blue);font-weight:500;">Prochaine : '+esc(formatDate(cr.nextDate))+'</span>';
+    if (cr.nextAgenda) ch+=(cr.nextDate?' — ':'')+esc(cr.nextAgenda);
+    ch+='</div>';
+  }
+  contentEl.innerHTML=ch||'<span style="font-size:13px;color:var(--muted)">Contenu vide</span>';
+
+  // No assignees/versions/comments for imported CRs
+  document.getElementById('drawer-assignes').innerHTML='<span style="font-size:13px;color:var(--muted)">Lecture seule depuis Notes2</span>';
+  document.getElementById('drawer-versions').innerHTML='<span style="font-size:13px;color:var(--muted)">Historique non disponible</span>';
+  document.getElementById('drawer-comments').innerHTML='<span style="font-size:13px;color:var(--muted)">Commentaires non disponibles</span>';
+  
+  // Open drawer
+  document.getElementById('drawer-overlay').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+}
+
 
 function refreshDrawer() {
   var e=S.history.find(function(x){return x.id===drawerEntryId;});
