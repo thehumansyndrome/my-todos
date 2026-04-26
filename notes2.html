@@ -1339,11 +1339,24 @@ function validateCRNote(){
     });
     if(!existingCR){
       // Parser la date du CR pour avoir le bon timestamp
-      var crDate = cr.date; // Format: DD-MM-YYYY
       var crTimestamp = Date.now(); // Fallback
+      
+      // Extraire la date et l'heure du titre ou des champs YAML
+      var crDate = cr.date; // Format: DD-MM-YYYY
+      var crTitle = cr.title || ''; // Format: "CR de la réunion du 26 avril 2026 à 23:16"
+      
       if (crDate && crDate.match(/^\d{2}-\d{2}-\d{4}$/)) {
         var parts = crDate.split('-');
-        var d = new Date(parts[2], parts[1]-1, parts[0]); // YYYY, MM-1, DD
+        var year = parseInt(parts[2]);
+        var month = parseInt(parts[1]) - 1;
+        var day = parseInt(parts[0]);
+        
+        // Extraire l'heure du titre si disponible
+        var timeMatch = crTitle.match(/à (\d{1,2}):(\d{2})/);
+        var hours = timeMatch ? parseInt(timeMatch[1]) : 0;
+        var minutes = timeMatch ? parseInt(timeMatch[2]) : 0;
+        
+        var d = new Date(year, month, day, hours, minutes);
         crTimestamp = d.getTime();
       }
       
