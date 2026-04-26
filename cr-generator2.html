@@ -183,6 +183,16 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
 .tag-item-del{cursor:pointer;opacity:.5;font-size:11px;line-height:1;}
 .tag-item-del:hover{opacity:1;color:var(--red);}
 .tag-bare-input{border:none;outline:none;background:transparent;font-family:inherit;font-size:13px;color:var(--text);min-width:80px;flex:1;}
+/* ── Avatar mini (for participants and actions) ── */
+.pr-avatar-mini{width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;}
+.pr-avatar-mini.c0{background:#E53E3E;}
+.pr-avatar-mini.c1{background:#DD6B20;}
+.pr-avatar-mini.c2{background:#38A169;}
+.pr-avatar-mini.c3{background:#3182CE;}
+.pr-avatar-mini.c4{background:#6B46C1;}
+.pr-avatar-mini.c5{background:#D53F8C;}
+.pr-avatar-mini.c6{background:#2C7A7B;}
+.pr-avatar-mini.c7{background:#718096;}
 /* ── Participant chips (preview) ── */
 .participant-chips{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px;}
 .p-chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 10px 3px 5px;border-radius:20px;border:1px solid var(--border);background:var(--bg);}
@@ -904,30 +914,24 @@ function resolveAlias(mention) {
 }
 function aliasAvatarHtml(mention) {
   var m = resolveAlias(mention);
-  if (m) {
-    // Membre résolu - format compact: initiales + nom complet avec couleur
-    return '<span style="display:inline-flex;align-items:center;gap:4px;background:'+m.color+'22;border:1px solid '+m.color+'44;color:'+m.color+';padding:2px 6px;border-radius:12px;font-size:11px;font-weight:500;vertical-align:middle;"><span style="background:'+m.color+';color:white;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;">'+esc(m.initiales)+'</span><span>'+esc(m.nom)+'</span></span>';
-  } else {
-    // Non résolu - style par défaut avec nom complet
-    var ini = pInitials(mention);
-    var col = pColor(mention);
-    return '<span class="tag-item" style="vertical-align:middle;"><span class="tag-item-avatar c'+col+'">'+esc(ini)+'</span>'+esc(mention)+'</span>';
-  }
+  var nom = m ? m.nom : mention;
+  var ini = m ? m.initiales : pInitials(mention);
+  var col = pColor(nom);
+  return '<span style="display:inline-flex;align-items:center;gap:4px;vertical-align:middle;font-size:12px;padding:2px 7px 2px 4px;border-radius:12px;border:1px solid var(--border);background:var(--bg);">'
+    + '<span class="pr-avatar-mini c'+col+'">'+esc(ini)+'</span>'+esc(nom)+'</span>';
 }
 function renderParticipantChips(participants) {
   if (!participants) return '';
   var names = participants.split(',').map(function(n){return n.trim();}).filter(Boolean);
   if (!names.length) return '';
-  var h = '<div class="participant-chips">';
+  var h = '<div style="display:flex;flex-wrap:wrap;gap:5px;margin:4px 0;">';
   names.forEach(function(nom) {
     var resolved = nom.startsWith('@') ? resolveAlias(nom) : null;
-    if (resolved) {
-      // Participant résolu via alias - afficher nom complet
-      h += '<span class="p-chip" style="background:'+resolved.color+'22;border-color:'+resolved.color+'44;color:'+resolved.color+';"><span class="p-avatar" style="background:'+resolved.color+';">'+esc(resolved.initiales)+'</span>'+esc(resolved.nom)+'</span>';
-    } else {
-      // Participant non résolu - style par défaut avec nom complet
-      h += '<span class="p-chip"><span class="p-avatar c'+pColor(nom)+'">'+esc(pInitials(nom))+'</span>'+esc(nom)+'</span>';
-    }
+    var displayNom = resolved ? resolved.nom : nom;
+    var ini = resolved ? resolved.initiales : pInitials(nom);
+    var col = pColor(displayNom);
+    h += '<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 10px 3px 5px;border-radius:20px;border:1px solid var(--border);background:var(--bg);">'
+      + '<span class="pr-avatar-mini c'+col+'">'+esc(ini)+'</span>'+esc(displayNom)+'</span>';
   });
   return h+'</div>';
 }
