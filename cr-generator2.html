@@ -534,7 +534,7 @@ function buildFreshTemplate() {
   return '---\ntitle: '+buildCRTitleWithTime('')+'\ndate: '+getTodayFR()+'\nprojet: \nduree: 30min\nparticipants: '+allParticipants+'\nobjectif: \nnext-date: '+nextDate+'\nnext-agenda: \n---\n\nD: \nD: \n\nA:   '+getTodayFR()+'\nA:   '+getTodayFR()+'\n';
 }
 
-var TMPL = '---\ntitle: '+buildCRTitleWithTime('')+'\ndate: '+getTodayFR()+'\nprojet: \nduree: 30min\nparticipants: \nobjectif: \nnext-date: \nnext-agenda: \n---\n\nD: \nD: \n\nA:   '+getTodayFR()+'\nA:   '+getTodayFR()+'\n';
+var TMPL = '---\ntitle: '+buildCRTitleWithTime('')+'\ndate: '+getTodayFR()+'\nprojet: \nduree: 30min\nparticipants: \nobjectif: \nnext-date: \nnext-agenda: \n---\n\nD: \nD: \n\nA: @ !p '+getTodayFR()+'\nA: @ !p '+getTodayFR()+'\n';
 
 // ── State ──────────────────────────────────────────────────────────────────────
 var S = {history:[]};
