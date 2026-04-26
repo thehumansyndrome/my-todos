@@ -1338,13 +1338,22 @@ function validateCRNote(){
       return e.raw===n.body&&e.projet===cr.projet;
     });
     if(!existingCR){
+      // Parser la date du CR pour avoir le bon timestamp
+      var crDate = cr.date; // Format: DD-MM-YYYY
+      var crTimestamp = Date.now(); // Fallback
+      if (crDate && crDate.match(/^\d{2}-\d{2}-\d{4}$/)) {
+        var parts = crDate.split('-');
+        var d = new Date(parts[2], parts[1]-1, parts[0]); // YYYY, MM-1, DD
+        crTimestamp = d.getTime();
+      }
+      
       var crEntry={
         id:'n2_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
         raw:n.body,
         projet:cr.projet||'', // Utiliser le nom du projet, pas l'ID
         status:'valide',
         publishedAt:new Date().toLocaleString('fr-FR'),
-        ts:Date.now()
+        ts:crTimestamp
       };
       console.log('Ajout du CR:', crEntry);
       crGeneratorData.history.unshift(crEntry);
