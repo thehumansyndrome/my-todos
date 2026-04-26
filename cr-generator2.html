@@ -1182,14 +1182,36 @@ function renderHistory() {
   var h='<div class="history-list">';
   entries.forEach(function(e) {
     var st=e.status||'brouillon';
-    var proj=sharedProjects.find(function(p){return p.id===e.projet;});
+    
+    // For imported CRs, parse raw to extract metadata
+    var dCount=e.dCount;
+    var aCount=e.aCount;
+    var title=e.title;
+    var date=e.date;
+    
+    if(e._imported&&e.raw){
+      var parsed=parse(e.raw);
+      dCount=parsed.decisions.length;
+      aCount=parsed.actions.length;
+      title=parsed.title||e.title||'Sans titre';
+      date=parsed.date||e.date;
+    }
+    
+    // For imported CRs, projet is a name not an ID
+    var proj;
+    if(e._imported){
+      proj=sharedProjects.find(function(p){return p.name===e.projet;});
+    } else {
+      proj=sharedProjects.find(function(p){return p.id===e.projet;});
+    }
+    
     var reds=(e.redacteurs||[]).map(function(id){return sharedTeam.find(function(m){return m.id===id;});}).filter(Boolean);
     var vals=(e.valideurs||[]).map(function(id){return sharedTeam.find(function(m){return m.id===id;});}).filter(Boolean);
     var isEditing=e.id===editingEntryId;
-    var meta=(e.date?formatDate(e.date)+' · ':'')+e.dCount+' décision'+(e.dCount!==1?'s':'')+' · '+e.aCount+' action'+(e.aCount!==1?'s':'')+' · '+e.savedAt+(e.versions&&e.versions.length?' · v'+(e.versions.length+1):'');
+    var meta=(date?formatDate(date)+' · ':'')+(dCount||0)+' décision'+((dCount||0)!==1?'s':'')+' · '+(aCount||0)+' action'+((aCount||0)!==1?'s':'')+(e.savedAt?' · '+e.savedAt:'')+(e.publishedAt?' · '+e.publishedAt:'')+(e.versions&&e.versions.length?' · v'+(e.versions.length+1):'');
     h+='<div class="history-card" onclick="'+(e._imported?'':'openDrawer('+e.id+')')+'" style="'+(isEditing?'border-color:var(--accent)':'')+(e._imported?';opacity:0.8;cursor:default':'')+'">';
     h+='<div class="history-card-top">';
-    h+='<div style="flex:1;min-width:0;"><div class="history-title">'+esc(e.title)+(isEditing?' <span style="font-size:11px;color:var(--accent)">● actif</span>':'')+(e._imported?' <span style="font-size:10px;background:var(--blue);color:white;padding:2px 6px;border-radius:4px;font-weight:500;">Notes2</span>':'')+'</div>';
+    h+='<div style="flex:1;min-width:0;"><div class="history-title">'+esc(title)+(isEditing?' <span style="font-size:11px;color:var(--accent)">● actif</span>':'')+(e._imported?' <span style="font-size:10px;background:var(--blue);color:white;padding:2px 6px;border-radius:4px;font-weight:500;">Notes2</span>':'')+'</div>';
     h+='<div class="history-meta">'+meta+'</div></div>';
     h+='<div style="display:flex;gap:6px;align-items:center;flex-shrink:0" onclick="event.stopPropagation()">';
     if (!e._imported) {
