@@ -1276,6 +1276,7 @@ function renderHistory() {
       h+='<button class="btn sm" style="color:var(--red);padding:4px 8px;" onclick="deleteEntry('+e.id+')">✕</button>';
     } else {
       h+='<span class="status-badge '+STATUS_CLASS[st]+'">'+STATUS_LABELS[st]+'</span>';
+      h+='<button class="btn sm" style="color:var(--red);padding:4px 8px;" onclick="deleteImportedEntry(\''+e.id+'\')">✕</button>';
     }
     h+='</div></div>';
     h+='<div class="history-tags">';
@@ -1338,85 +1339,33 @@ function openDrawer(id) {
 }
 
 function openImportedDrawer(id) {
-  // Open drawer for imported CR (read-only)
+  // Charger le CR importé dans l'éditeur pour modification
   var e=importedHistory.find(function(x){return x.id===id;});
   if (!e) return;
   
-  drawerEntryId=id;
+  // Charger dans l'éditeur
+  editingEntryId = null; // Pas d'édition d'un CR local
+  document.getElementById('raw-input').value = e.raw;
   
-  // Parse the CR
-  var cr=parse(e.raw);
-  var proj=sharedProjects.find(function(p){return p.name===e.projet;});
-  
-  document.getElementById('drawer-breadcrumb').textContent=proj?proj.name:'';
-  document.getElementById('drawer-title').textContent=cr.title||'Sans titre';
-
-  // badges - read-only, no onclick
-  var badgesEl=document.getElementById('drawer-badges');
-  badgesEl.innerHTML='<span class="status-badge '+STATUS_CLASS[e.status||'valide']+'">'+STATUS_LABELS[e.status||'valide']+'</span>';
-  badgesEl.innerHTML+=' <span style="font-size:10px;background:var(--blue);color:white;padding:2px 6px;border-radius:4px;font-weight:500;">Notes2 · Lecture seule</span>';
-  if (proj) badgesEl.innerHTML+=chipHTML(proj.name, proj.color);
-
-  // Hide action buttons for imported CRs
-  var valBtn=document.getElementById('drawer-validate-btn');
-  if (valBtn) valBtn.style.display='none';
-  var archBtn=document.getElementById('drawer-archive-btn');
-  if (archBtn) archBtn.style.display='none';
-
-  // CR content
-  var contentEl=document.getElementById('drawer-content');
-  var ch='';
-  var metas=[];
-  if (cr.date)     metas.push(['Date',formatDate(cr.date)]);
-  if (cr.duree)    metas.push(['Durée',cr.duree]);
-  if (cr.objectif) metas.push(['Objectif',cr.objectif]);
-  metas.forEach(function(m){ch+='<p class="drawer-cr-meta"><b>'+esc(m[0])+' :</b> '+esc(m[1])+'</p>';});
+  // Parse pour pré-remplir les participants
+  var cr = parse(e.raw);
   if (cr.participants) {
-    ch+='<p class="drawer-cr-meta" style="margin-top:6px;"><b>Participants :</b> '+renderParticipantChips(cr.participants)+'</p>';
-  }
-  if (cr.decisions.length) {
-    ch+='<div class="drawer-cr-section"><div class="drawer-cr-section-label">Décisions</div>';
-    cr.decisions.forEach(function(d,i){ch+='<div class="drawer-cr-item"><span class="drawer-cr-item-num">'+(i+1)+'.</span><span>'+esc(d)+'</span></div>';});
-    ch+='</div>';
-  }
-  if (cr.actions.length) {
-    ch+='<div class="drawer-cr-section"><div class="drawer-cr-section-label">Actions</div>';
-    cr.actions.forEach(function(a,i){
-      ch+='<div class="drawer-cr-item"><span class="drawer-cr-item-num">'+(i+1)+'.</span><span>'+esc(a.text);
-      if (a.assignees && a.assignees.length) {
-        a.assignees.forEach(function(mention){
-          ch+=' '+aliasAvatarHtml(mention);
-        });
-      } else if (a.assignee) {
-        ch+=' '+aliasAvatarHtml(a.assignee);
+    crParticipants = cr.participants.split(',').map(function(n){
+      var nom = n.trim();
+      if (nom.startsWith('@')) {
+        var resolved = resolveAlias(nom);
+        return resolved ? resolved.nom : nom;
       }
-      // Afficher la priorité
-      if (a.pri) {
-        var priColors={p1:'#DC2626',p2:'#D97706',p3:'#16A34A'};
-        var priLabels={p1:'P1',p2:'P2',p3:'P3'};
-        ch+=' <span style="display:inline-flex;align-items:center;justify-content:center;font-size:10px;padding:3px 7px;border-radius:12px;background:'+(priColors[a.pri]||'#888')+'15;color:'+(priColors[a.pri]||'#888')+';font-weight:600;vertical-align:middle;">'+(priLabels[a.pri]||a.pri.toUpperCase())+'</span>';
-      }
-      if (a.due) ch+=' <span style="color:var(--amber);font-size:12px;">📅 '+esc(a.due)+'</span>';
-      ch+='</span></div>';
-    });
-    ch+='</div>';
+      return nom;
+    }).filter(Boolean);
+    renderTagWrap();
   }
-  if (cr.nextDate||cr.nextAgenda) {
-    ch+='<div style="margin-top:10px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;">';
-    if (cr.nextDate) ch+='📅 <span style="color:var(--blue);font-weight:500;">Prochaine : '+esc(formatDate(cr.nextDate))+'</span>';
-    if (cr.nextAgenda) ch+=(cr.nextDate?' — ':'')+esc(cr.nextAgenda);
-    ch+='</div>';
-  }
-  contentEl.innerHTML=ch||'<span style="font-size:13px;color:var(--muted)">Contenu vide</span>';
-
-  // No assignees/versions/comments for imported CRs
-  document.getElementById('drawer-assignes').innerHTML='<span style="font-size:13px;color:var(--muted)">Lecture seule depuis Notes2</span>';
-  document.getElementById('drawer-versions').innerHTML='<span style="font-size:13px;color:var(--muted)">Historique non disponible</span>';
-  document.getElementById('drawer-comments').innerHTML='<span style="font-size:13px;color:var(--muted)">Commentaires non disponibles</span>';
   
-  // Open drawer
-  document.getElementById('drawer-overlay').classList.add('open');
-  document.getElementById('drawer').classList.add('open');
+  renderPreview();
+  saveMetaState();
+  
+  // Scroll vers le haut
+  window.scrollTo(0, 0);
 }
 
 
@@ -1610,6 +1559,46 @@ function deleteEntry(id) {
     if (!undoStack.length) return;
     var e=undoStack.pop().entry;
     S.history.unshift(e); persist(); renderHistory(); toast('Suppression annulée');
+  });
+}
+
+function deleteImportedEntry(id) {
+  var entry=importedHistory.find(function(e){return e.id===id;}); if (!entry) return;
+  if (!confirm('Supprimer ce CR importé de Notes2 ? Cette action est irréversible.')) return;
+  
+  // Supprimer de l'historique importé local
+  importedHistory=importedHistory.filter(function(e){return e.id!==id;});
+  
+  // Supprimer du fichier notes2-cr-export.json sur Drive
+  if (!accessToken) {
+    toast('❌ Connectez Drive pour synchroniser la suppression');
+    renderHistory();
+    return;
+  }
+  
+  var q=encodeURIComponent("name='notes2-cr-export.json' and trashed=false");
+  fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id)',{headers:{Authorization:'Bearer '+accessToken}})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    if(!d.files||!d.files[0]){
+      toast('✓ CR supprimé localement');
+      renderHistory();
+      return;
+    }
+    var fileId=d.files[0].id;
+    var updatedData={history:importedHistory};
+    return fetch('https://www.googleapis.com/upload/drive/v3/files/'+fileId+'?uploadType=media',
+      {method:'PATCH',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
+       body:JSON.stringify(updatedData)});
+  })
+  .then(function(r){
+    if(r&&!r.ok)throw new Error('HTTP '+r.status);
+    toast('✓ CR supprimé');
+    renderHistory();
+  })
+  .catch(function(e){
+    toast('❌ Erreur suppression : '+e.message);
+    renderHistory();
   });
 }
 
