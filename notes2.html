@@ -250,7 +250,7 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
   background:rgba(96,165,250,.12);
 }
 .todo-done-mark{
-  opacity:0.6;
+  background:rgba(22,163,74,.10);border-radius:3px;display:inline;
 }
 .todo-badge{
   display:inline-flex;align-items:center;gap:5px;
@@ -1180,6 +1180,11 @@ function validateCRNote(){
       });
       if(member)assigneeIds=[member.id];
     }
+    var now=new Date();
+    var dateStr=now.toLocaleDateString('fr-FR');
+    var timeStr=now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    var crTitleForComment=cr.title||'CR sans titre';
+    
     var task={
       id:'cr'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
       text:action.text,
@@ -1189,7 +1194,13 @@ function validateCRNote(){
       ts:Date.now(),
       assigneeIds:assigneeIds,
       source:'cr',
-      crTitle:buildCRDisplayTitle(cr.projet, cr.title)
+      crTitle:buildCRDisplayTitle(cr.projet, cr.title),
+      comments:[{
+        id:'auto'+Date.now(),
+        text:'Tâche créée le '+dateStr+' à '+timeStr+' dans le CR '+crTitleForComment,
+        author:'system',
+        ts:Date.now()
+      }]
     };
     if(action.due)task.dueDate=action.due;
     todoFullData.backlog.unshift(task);
