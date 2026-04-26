@@ -2113,7 +2113,7 @@ function renderGlobal() {
       S.projects.filter(p => !(suiviData.sharedProjects||[]).find(sp=>sp.id===p.id))
     );
     h += '<div class="global-add-bar">';
-    h += '<input type="text" id="global-add-text" placeholder="Nouvelle tâche @jv #projet !p1 26-04-2026" onkeydown="if(event.key===&#39;Enter&#39;)addGlobalTask()">';
+    h += '<input type="text" id="global-add-text" placeholder="Nouvelle tâche @jv #projet !p1 26-04-2026">';
     h += '<button class="btn sm primary" onclick="addGlobalTask()">+ Ajouter</button>';
     h += '</div>';
   }
@@ -2398,21 +2398,26 @@ function handleAutocompleteInput(e){
 }
 
 function handleAutocompleteKeydown(e){
-  if(!autocompleteState.visible)return;
-  
-  if(e.key==='ArrowDown'){
-    e.preventDefault();
-    moveAutocompleteSelection(1);
-  } else if(e.key==='ArrowUp'){
-    e.preventDefault();
-    moveAutocompleteSelection(-1);
-  } else if(e.key==='Enter'||e.key==='Tab'){
-    if(autocompleteState.visible){
+  if(autocompleteState.visible){
+    // Autocomplete is open
+    if(e.key==='ArrowDown'){
+      e.preventDefault();
+      moveAutocompleteSelection(1);
+    } else if(e.key==='ArrowUp'){
+      e.preventDefault();
+      moveAutocompleteSelection(-1);
+    } else if(e.key==='Enter'||e.key==='Tab'){
       e.preventDefault();
       selectAutocompleteItem(autocompleteState.selectedIndex);
+    } else if(e.key==='Escape'){
+      hideAutocomplete();
     }
-  } else if(e.key==='Escape'){
-    hideAutocomplete();
+  } else {
+    // Autocomplete is NOT open
+    if(e.key==='Enter'){
+      e.preventDefault();
+      addGlobalTask();
+    }
   }
 }
 
