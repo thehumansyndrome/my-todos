@@ -367,6 +367,7 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
     <button class="btn sm" id="drive-action-btn" onclick="handleDriveBtn()">Connecter</button>
     <button class="btn sm" id="pull-btn" onclick="pullFromDrive()" style="display:none">Load from Drive</button>
     <button class="btn sm" onclick="loadSharedProjects()" id="shared-btn" style="display:none">↻ Projets</button>
+    <button class="btn sm" onclick="archiveAllValidated()" style="color:var(--blue);border-color:var(--blue);margin-left:auto">⬜ Archiver tous les validés</button>
   </div>
   <div class="search-bar">
     <input class="search-input" id="cr-search" placeholder="🔍 Rechercher un CR…" type="search">
@@ -1577,6 +1578,30 @@ function archiveFromDrawer() {
     if (!confirm('Archiver ce CR ?')) return;
     e.status='archive'; persist(); renderHistory(); refreshDrawer(); toast('CR archivé');
   }
+}
+
+function archiveAllValidated() {
+  var validatedCRs = S.history.filter(function(e) {
+    return e.status === 'valide';
+  });
+  
+  if (validatedCRs.length === 0) {
+    toast('Aucun CR validé à archiver');
+    return;
+  }
+  
+  var count = validatedCRs.length;
+  var msg = 'Archiver ' + count + ' CR validé' + (count > 1 ? 's' : '') + ' ?';
+  
+  if (!confirm(msg)) return;
+  
+  validatedCRs.forEach(function(e) {
+    e.status = 'archive';
+  });
+  
+  persist();
+  renderHistory();
+  toast('✓ ' + count + ' CR archivé' + (count > 1 ? 's' : ''));
 }
 
 function deleteFromDrawer() {
