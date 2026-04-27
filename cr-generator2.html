@@ -375,6 +375,7 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
   <div class="filter-row">
     <span style="font-size:12px;color:var(--muted);font-weight:500">Statut :</span>
     <div class="pill active" data-filter-status="all" onclick="setFilterStatus('all',this)">Tous</div>
+    <div class="pill" data-filter-status="actifs" onclick="setFilterStatus('actifs',this)">Actifs</div>
     <div class="pill" data-filter-status="brouillon" onclick="setFilterStatus('brouillon',this)">Brouillon</div>
     <div class="pill" data-filter-status="validation" onclick="setFilterStatus('validation',this)">En validation</div>
     <div class="pill" data-filter-status="valide" onclick="setFilterStatus('valide',this)">Validé</div>
@@ -1222,7 +1223,19 @@ function renderHistory() {
     return tsB - tsA;
   });
   
-  if (filterStatus!=='all') entries=entries.filter(function(e){return e.status===filterStatus;});
+  // Filtre par statut
+  if (filterStatus === 'actifs') {
+    // "Actifs" = tous sauf archivés
+    entries = entries.filter(function(e) {
+      return e.status !== 'archive';
+    });
+  } else if (filterStatus !== 'all') {
+    // Filtre spécifique (brouillon, validation, valide, renvoye, archive)
+    entries = entries.filter(function(e) {
+      return e.status === filterStatus;
+    });
+  }
+  
   if (filterProjet!=='all') entries=entries.filter(function(e){return e.projet===filterProjet;});
   var crSearch=(document.getElementById('cr-search')||{}).value||'';
   if (crSearch.trim()) {
