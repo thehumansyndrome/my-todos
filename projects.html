@@ -359,7 +359,7 @@ input,select,textarea{background:var(--bg);color:var(--text);}
 <!-- ══ SUIVI ══ -->
 <div id="tab-suivi" class="section">
   <div class="suivi-header">
-    <select class="suivi-sel" id="suivi-proj-sel" onchange="localStorage.setItem('td_suivi_proj',this.value);loadSuiviData()">
+    <select class="suivi-sel" id="suivi-proj-sel" onchange="localStorage.setItem('td_suivi_projects',this.value);loadSuiviData()">
       <option value="">— Sélectionner un projet —</option>
     </select>
     <button class="btn sm" onclick="loadSuiviData()">↻ Actualiser</button>
@@ -725,7 +725,7 @@ function renderProjects() {
 function openProjectSuivi(id) {
   switchTab('suivi');
   document.getElementById('suivi-proj-sel').value = id;
-  localStorage.setItem('td_suivi_proj', id);
+  localStorage.setItem('td_suivi_projects', id);
   loadSuiviData();
 }
 
@@ -830,7 +830,7 @@ let suiviData = {us:[], mo:[], cr:[]};
 
 function populateSuiviSel() {
   const sel = document.getElementById('suivi-proj-sel'); if (!sel) return;
-  const prev = sel.value || localStorage.getItem('td_suivi_proj') || '';
+  const prev = sel.value || localStorage.getItem('td_suivi_projects') || '';
   sel.innerHTML = '<option value="">— Sélectionner un projet —</option>' +
     S.projects.filter(p=>p.status!=='archive').map(p =>
       `<option value="${p.id}"${p.id===prev?' selected':''}>${esc(p.name)}</option>`
