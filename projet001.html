@@ -101,29 +101,6 @@
   --amber:    #FCD34D;   --amber-bg:  #1A1100;
   --purple:   #A78BFA;   --purple-bg: #130E25;
 }
-[data-theme="gpt"] {
-  --bg:       #212121;
-  --bg2:      #2A2A2A;
-  --bg3:      #333333;
-  --surface:  #2F2F2F;
-  --card:     #2F2F2F;
-  --border:   #3A3A3A;
-  --line:     #3A3A3A;
-  --line2:    #484848;
-  --text:     #ECECEC;
-  --text2:    #A0A0A0;
-  --muted:    #8E8E8E;
-  --text3:    #565656;
-  --accent:   #F97316;
-  --accent2:  #1A1100;
-  --blue:     #6BA3F5;   --blue-bg:   #0F1F3A;
-  --green:    #4ADE80;   --green-bg:  #0A2018;
-  --red:      #F87171;   --red-bg:    #2A0F0F;
-  --amber:    #FBBF24;   --amber-bg:  #1F1505;
-  --purple:   #A78BFA;   --purple-bg: #1A1030;
-}
-[data-theme="gpt"] input,[data-theme="gpt"] textarea,[data-theme="gpt"] select{color-scheme:dark;}
-[data-theme="gpt"] .search-mark{background:#5a4a00;color:#f5d76e;}
 [data-theme="navy"] input,[data-theme="navy"] textarea,[data-theme="navy"] select{color-scheme:dark;}
 [data-theme="dark"] input,[data-theme="dark"] textarea,[data-theme="dark"] select{color-scheme:dark;}
 
@@ -1189,9 +1166,6 @@ div:hover>.item-img-del{display:block;}
 [data-theme="navy"] .nc-0,[data-theme="navy"] .nc-1,[data-theme="navy"] .nc-2,
 [data-theme="navy"] .nc-3,[data-theme="navy"] .nc-4,[data-theme="navy"] .nc-5,
 [data-theme="navy"] .nc-6,[data-theme="navy"] .nc-7{background:var(--bg3);}
-[data-theme="gpt"] .nc-0,[data-theme="gpt"] .nc-1,[data-theme="gpt"] .nc-2,
-[data-theme="gpt"] .nc-3,[data-theme="gpt"] .nc-4,[data-theme="gpt"] .nc-5,
-[data-theme="gpt"] .nc-6,[data-theme="gpt"] .nc-7{background:var(--surface);}
 
 .note-edit-overlay{
   display:none;flex-direction:column;gap:6px;
@@ -2246,8 +2220,8 @@ function switchTab(t){
 }
 
 /* ══ THEME ══ */
-const THEMES=['light','sand','gpt','dark'];
-const THEME_ICONS={'light':'☀︎','sand':'○','gpt':'◎','dark':'☾'};
+const THEMES=['light','sand','navy','dark'];
+const THEME_ICONS={'light':'☀︎','sand':'○','navy':'◑','dark':'☾'};
 function applyTheme(t){
   document.documentElement.setAttribute('data-theme', t==='light' ? '' : t);
   document.getElementById('theme-btn').textContent=THEME_ICONS[t]||'☀︎';
