@@ -1825,7 +1825,7 @@ div:hover>.item-img-del{display:block;}
 /* ══ CONSTANTS ══ */
 const P='projet001';
 const IS_TOUCH = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
-const SK='td_v4_'+P, AK='td_act_'+P, TK='td_theme_'+P, DK='td_drive_'+P;
+const SK='td_v4_'+P, AK='td_act_'+P, TK='td_theme_'+P, DK='td_drive_'+P, TAB_KEY='td_tab_'+P;
 const TABS=['todos','backlog','courses','notes','reminders','habits','challenges','reviews','archive','log','templates'];
 
 /* ══ DEFAULT CATEGORIES ══ */
@@ -2188,7 +2188,7 @@ document.addEventListener('keydown', e=>{
   if(e.key==='n' && !inInput && !mod){
     const udOpen = document.getElementById('ud-drawer')?.classList.contains('open');
     if(udOpen) return;
-    const activeTab = localStorage.getItem('td_active_tab')||'todos';
+    const activeTab = localStorage.getItem(TAB_KEY)||'todos';
     if(activeTab==='todos'){
       e.preventDefault();
       const inp = document.getElementById('new-todo-in') || document.getElementById('qa-in') || document.querySelector('.main-in[placeholder*="tâche"], .main-in[placeholder*="Tâche"]');
@@ -2204,7 +2204,7 @@ document.addEventListener('keydown', e=>{
 
 /* ══ TABS ══ */
 function switchTab(t){
-  localStorage.setItem('td_active_tab', t);
+  localStorage.setItem(TAB_KEY, t);
   document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',TABS[i]===t));
   document.querySelectorAll('.section').forEach(s=>{ s.classList.remove('active'); s.style.display='none'; });
   const el=document.getElementById('tab-'+t);
@@ -5920,7 +5920,7 @@ applyFontSize(currentFsIdx);
 collapseAllParents();
 renderAll();
 updateUndoBtn();
-(function(){var _t=localStorage.getItem('td_active_tab');if(_t&&_t!=='todos')switchTab(_t);})();
+(function(){var _t=localStorage.getItem(TAB_KEY);if(_t&&_t!=='todos')switchTab(_t);})();
 
 // Auto-connect on load — NO popup (popup requires user gesture).
 // Strategy: if a token was already obtained this session (stored in sessionStorage),
