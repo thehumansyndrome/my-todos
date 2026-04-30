@@ -1462,6 +1462,10 @@ div:hover>.item-img-del{display:block;}
       <label class="cam-btn" title="Prendre une photo">📷<input type="file" accept="image/*" capture="environment" style="display:none" onchange="handleAddRowPhoto(this,'tab-reminders')"></label>
     </div>
     <div id="pending-imgs-tab-reminders" style="display:none;flex-wrap:wrap;gap:6px;margin:4px 0 2px 0;"></div>
+    <div style="margin:8px 0;display:flex;gap:8px;align-items:center;">
+      <button class="btn sm" onclick="prepareCalendarSync()" style="background:var(--blue);color:#fff;border:none;">🗓️ Sync Calendar</button>
+      <span id="cal-sync-status" style="font-size:12px;color:var(--muted);"></span>
+    </div>
     <div class="filters" id="rem-filters"></div>
     <div class="list" id="rem-list"></div>
   </div>
@@ -1862,7 +1866,11 @@ function ensureState(){
   if(!S.notes) S.notes=[];
   S.notes.forEach(n=>{ if(!n.images) n.images=[]; if(n.large===undefined) n.large=true; });
   if(!S.reminders) S.reminders=[];
-  S.reminders.forEach(r=>{ if(!r.images) r.images=[]; });
+  S.reminders.forEach(r=>{ 
+    if(!r.images) r.images=[]; 
+    if(r.calendarSync===undefined) r.calendarSync=null;
+    if(r.eventId===undefined) r.eventId=null;
+  });
   if(!S.habits) S.habits=[];
   // Kaizen migration — add missing fields to existing habits
   S.habits.forEach(h=>{
@@ -4700,6 +4708,7 @@ function renderReminders(){
             <span class="tag ${bc[r._s]}">${rSL[r._s]}</span>
             ${r.date?`<span class="meta-date">${r.date.split('-').reverse().join('/')}</span>`:''}
             ${r.recur!=='none'?`<span class="tag" style="background:var(--bg2);color:var(--text3)">${rRL[r.recur]}</span>`:''}
+            ${getCalendarSyncBadge(r)}
           </div>
           <div class="mobile-actions">
             <label class="img-btn${r.images&&r.images.length?' has-img':''}" title="Caméra" style="cursor:pointer;background:none;border:none;font-size:14px;padding:3px 4px;opacity:.5;line-height:1;display:flex;align-items:center;">📷<input type="file" accept="image/*" capture="environment" style="display:none" onchange="genericItemImgPickFile(this,'${r.id}','reminders',renderReminders)"></label>
@@ -7007,6 +7016,52 @@ function ensureAdminOnItems(){
     else if(!b.assigneeIds.includes(adminId)){b.assigneeIds.unshift(adminId);changed=true;}
   });
   if(changed)autoSave();
+}
+
+/* ══ CALENDAR SYNC ══ */
+function prepareCalendarSync(){
+  // Filtrer les reminders non-done qui ne sont pas déjà synchronisés
+  const pending = S.reminders.filter(r => 
+    !r.done && 
+    r.date && 
+    r.calendarSync !== 'done' && 
+    r.calendarSync !== 'pending'
+  );
+  
+  if(!pending.length){
+    toast('Aucun reminder à synchroniser');
+    return;
+  }
+  
+  // Marquer comme pending
+  pending.forEach(r => {
+    r.calendarSync = 'pending';
+    if(!r.calendarTime) r.calendarTime = '09:00'; // Heure par défaut
+    if(!r.calendarDuration) r.calendarDuration = 60; // 1h par défaut
+  });
+  
+  autoSave();
+  renderReminders();
+  
+  // Message d'information
+  const count = pending.length;
+  document.getElementById('cal-sync-status').innerHTML = 
+    `✓ ${count} reminder${count>1?'s':''} marqué${count>1?'s':''} pour sync<br>` +
+    `<span style="font-size:11px;">Lance Claude avec le prompt CALENDAR-SYNC-PROMPT.md</span>`;
+  
+  toast(`✓ ${count} reminder${count>1?'s':''} prêt${count>1?'s':''} pour Calendar sync`);
+}
+
+function getCalendarSyncBadge(r){
+  if(!r.calendarSync) return '';
+  
+  const badges = {
+    'pending': '<span class="tag" style="background:#FEF3C7;color:#92400E;font-size:10px;padding:2px 6px;">⏳ Sync pending</span>',
+    'done': '<span class="tag" style="background:#D1FAE5;color:#065F46;font-size:10px;padding:2px 6px;">✓ In Calendar</span>',
+    'error': '<span class="tag" style="background:#FEE2E2;color:#991B1B;font-size:10px;padding:2px 6px;">⚠ Sync error</span>'
+  };
+  
+  return badges[r.calendarSync] || '';
 }
 
 </script>
