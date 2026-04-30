@@ -709,7 +709,7 @@ var TOK = 'td_tok_us-generator';
 var CLIENT_ID = '962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com';
 var SCOPE = 'https://www.googleapis.com/auth/drive';
 var THEMES = ['light','sand','navy','dark'];
-var ICONS  = {light:'&#9788;&#65038;',sand:'&#9675;',navy:'&#9681;',dark:'&#9790;'};
+var ICONS  = {light:'☀︎',sand:'○',navy:'◑',dark:'☾'};
 var SLABEL = {brouillon:'Brouillon', validation:'En validation', valide:'Validé ✓', renvoye:'Renvoyé ✗', archive:'Archivé'};
 var STATUS_CLASS = {brouillon:'status-brouillon', validation:'status-validation', valide:'status-valide', renvoye:'status-renvoye', archive:'status-archive'};
 var STATUS_CYCLE = ['brouillon','validation','renvoye','valide'];
@@ -845,7 +845,7 @@ function load() {
 /* ── Theme ── */
 function applyTheme(t) {
   document.documentElement.setAttribute('data-theme', t==='light'?'':t);
-  document.getElementById('theme-btn').innerHTML = ICONS[t]||ICONS.light;
+  document.getElementById('theme-btn').textContent = ICONS[t]||ICONS.light;
   localStorage.setItem(TK, t);
 }
 function toggleTheme() {
