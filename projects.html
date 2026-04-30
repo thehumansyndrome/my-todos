@@ -44,14 +44,16 @@
 body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;}
 
 /* ── HEADER ── */
-.header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border);padding:0 16px;height:44px;display:flex;align-items:center;gap:12px;}
+.header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border);padding:0 16px;height:44px;display:flex;align-items:center;justify-content:space-between;}
+.header-left{display:flex;align-items:center;gap:12px;}
+.header-right{display:flex;align-items:center;gap:8px;}
 .app-name{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:-.01em;}
 .sync-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0;}
 .sync-dot.ok{background:var(--green);}
 .sync-dot.pending{background:var(--amber);}
 .sync-dot.error{background:var(--red);}
 .sync-label{font-family:var(--mono);font-size:11px;color:var(--muted);}
-.hbtn{margin-left:auto;background:none;border:none;cursor:pointer;font-size:14px;color:var(--muted);padding:4px 6px;border-radius:var(--r);transition:background .15s;}
+.hbtn{background:none;border:none;cursor:pointer;font-size:14px;color:var(--muted);padding:4px 6px;border-radius:var(--r);transition:background .15s;}
 .hbtn:hover{background:var(--border);}
 
 /* ── TABS ── */
@@ -272,11 +274,15 @@ input,select,textarea{background:var(--bg);color:var(--text);}
 <body>
 
 <div class="header">
-  <span class="app-name">Projects</span>
-  <div class="sync-dot" id="sync-dot"></div>
-  <span class="sync-label" id="sync-label">Local</span>
-  <button class="hbtn" id="theme-btn" onclick="toggleTheme()" title="Thème">☀︎</button>
-  <button class="hbtn" id="hbtn-cloud" onclick="accessToken ? switchTab('log') : driveAuth()" title="Connecter Google Drive">☁</button>
+  <div class="header-left">
+    <span class="app-name">Projects</span>
+    <div class="sync-dot" id="sync-dot"></div>
+    <span class="sync-label" id="sync-label">Local</span>
+  </div>
+  <div class="header-right">
+    <button class="hbtn" id="hbtn-cloud" onclick="accessToken ? switchTab('log') : driveAuth()" title="Connecter Google Drive">☁</button>
+    <button class="hbtn" id="theme-btn" onclick="toggleTheme()" title="Thème">☀︎</button>
+  </div>
 </div>
 
 <div class="tabs" id="tabs">
