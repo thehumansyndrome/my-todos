@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>projet002 · OPS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root {
+  --bg: #F7F6F3;
+  --card: #FFFFFF;
+  --text: #1A1A1A;
+  --text-dim: #666666;
+  --border: #E0E0E0;
+  --accent: #6D28D9;
+  --green: #34A853;
+  --red: #EA4335;
+  --yellow: #FBBC04;
+  --blue: #4285F4;
+  --p1-bg: #FEF1F1; --p1-text: #DC2626;
+  --p2-bg: #FEF9E6; --p2-text: #EA580C;
+  --p3-bg: #EEF2FF; --p3-text: #4F46E5;
+  --card-fade: #FFFFFF;
+}
+[data-theme="sand"] {
+  --bg: #F8F7FF; --card: #FFFFFF; --text: #1A1A1A; --text-dim: #666666;
+  --border: #E0DBFF; --card-fade: #FFFFFF;
+}
+[data-theme="navy"] {
+  --bg: #161925; --card: #1E2133; --text: #E8E8E8; --text-dim: #9CA3AF;
+  --border: #2A2F47; --accent: #A78BFA; --green: #4ADE80; --red: #F87171;
+  --yellow: #FDE047; --blue: #60A5FA;
+  --p1-bg: #3a0f0f; --p1-text: #f87171;
+  --p2-bg: #2e1f06; --p2-text: #fbbf24;
+  --p3-bg: #0f1535; --p3-text: #818cf8;
+  --card-fade: #1E2133;
+}
+[data-theme="dark"] {
+  --bg: #111113; --card: #1A1A1C; --text: #E8E8E8; --text-dim: #9CA3AF;
+  --border: #2A2A2C; --accent: #A78BFA; --green: #4ADE80; --red: #F87171;
+  --yellow: #FDE047; --blue: #60A5FA;
+  --p1-bg: #3a0f0f; --p1-text: #f87171;
+  --p2-bg: #2e1f06; --p2-text: #fbbf24;
+  --p3-bg: #0f1535; --p3-text: #818cf8;
+  --card-fade: #1A1A1C;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:100%; min-height:100%; overflow-x:hidden; }
+body {
+  font-family:'Geist',system-ui,sans-serif;
+  background:var(--bg); color:var(--text);
+  font-size:15px; line-height:1.6;
+}
+input, textarea, select, button {
+  font-family:'Geist',system-ui,sans-serif;
+  background:var(--bg); color:var(--text); color-scheme:light;
+}
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select { color-scheme:dark; }
+input[type="search"] { -webkit-appearance:none; appearance:none; }
+.header {
+  position:sticky; top:0; z-index:100;
+  background:var(--card); border-bottom:1px solid var(--border);
+  padding:12px 16px; display:flex; align-items:center; justify-content:space-between;
+}
+.header h1 {
+  font-size:18px; font-weight:500; letter-spacing:-0.01em;
+}
+.header-right { display:flex; gap:8px; align-items:center; }
+.ibtn {
+  background:none; border:none; cursor:pointer; color:var(--text-dim);
+  font-size:18px; width:32px; height:32px; border-radius:6px;
+  display:flex; align-items:center; justify-content:center;
+  transition:background 0.15s, color 0.15s;
+}
+.ibtn:hover { background:var(--border); color:var(--text); }
+.status { font-size:13px; color:var(--text-dim); font-family:'Geist Mono',monospace; }
+.tabs {
+  position:sticky; top:52px; z-index:99;
+  background:var(--card); border-bottom:1px solid var(--border);
+  display:flex; overflow-x:auto; padding:0 16px;
+}
+.tab {
+  padding:12px 16px; border:none; background:none; cursor:pointer;
+  color:var(--text-dim); font-size:14px; font-weight:400;
+  border-bottom:2px solid transparent; white-space:nowrap;
+  transition:color 0.15s, border-color 0.15s;
+}
+.tab.active { color:var(--text); border-bottom-color:var(--accent); font-weight:500; }
+.tab:hover { color:var(--text); }
+.page {
+  max-width:800px; margin:0 auto; padding:24px 16px 80px;
+}
+.section { display:none; }
+.section.active { display:block; }
+.stats {
+  background:var(--card); border:1px solid var(--border); border-radius:8px;
+  padding:12px 16px; margin-bottom:16px; font-size:13px; color:var(--text-dim);
+  display:flex; gap:16px; flex-wrap:wrap;
+}
+.stats span { white-space:nowrap; }
+.add-row {
+  background:var(--card); border:1px solid var(--border); border-radius:8px;
+  padding:12px; margin-bottom:16px; display:flex; gap:8px; flex-wrap:wrap;
+}
+.add-row input, .add-row select {
+  flex:1; min-width:200px; padding:8px 12px; border:1px solid var(--border);
+  border-radius:6px; font-size:14px;
+}
+.add-row button {
+  padding:8px 16px; border:none; border-radius:6px; cursor:pointer;
+  background:var(--accent); color:#fff; font-size:14px; font-weight:500;
+  transition:opacity 0.15s;
+}
+.add-row button:hover { opacity:0.9; }
+.item {
+  background:var(--card); border:1px solid var(--border); border-radius:8px;
+  padding:12px; margin-bottom:8px; position:relative;
+}
+.item-header {
+  display:flex; align-items:center; gap:8px; margin-bottom:4px;
+}
+.item-text {
+  flex:1; font-size:14px; line-height:1.5; word-wrap:break-word;
+}
+.item-text.done { text-decoration:line-through; opacity:0.6; }
+.badge {
+  font-size:11px; padding:3px 8px; border-radius:4px; font-weight:500;
+  white-space:nowrap;
+}
+.p1 { background:var(--p1-bg); color:var(--p1-text); }
+.p2 { background:var(--p2-bg); color:var(--p2-text); }
+.p3 { background:var(--p3-bg); color:var(--p3-text); }
+.item-meta {
+  font-size:12px; color:var(--text-dim); margin-top:4px;
+}
+.item-actions {
+  display:flex; gap:4px; margin-top:8px;
+}
+.lbtn {
+  background:transparent; border:1px solid var(--border); border-radius:6px;
+  padding:6px 12px; font-size:13px; cursor:pointer; color:var(--text);
+  transition:background 0.15s, color 0.15s, border-color 0.15s;
+}
+.lbtn:hover { background:var(--border); }
+.lbtn.success { color:var(--green); border-color:var(--green); }
+.lbtn.danger { color:var(--red); border-color:var(--red); }
+[data-theme="dark"] .lbtn.success { background:transparent; color:#34a853; border-color:#34a853; }
+[data-theme="dark"] .lbtn.danger { background:transparent; color:#e57373; border-color:#e57373; }
+.toast {
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+  background:var(--card); border:1px solid var(--border); border-radius:8px;
+  padding:12px 16px; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.1);
+  z-index:200; display:flex; gap:12px; align-items:center; max-width:90%;
+}
+.toast button {
+  background:none; border:none; color:var(--accent); cursor:pointer;
+  font-weight:500; font-size:14px;
+}
+.overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:300;
+  display:flex; align-items:center; justify-content:center; padding:16px;
+}
+.modal {
+  background:var(--card); border-radius:12px; max-width:500px; width:100%;
+  max-height:80vh; overflow-y:auto; padding:24px;
+}
+.modal h3 { margin-bottom:16px; font-size:18px; }
+.modal input, .modal textarea, .modal select {
+  width:100%; padding:10px 12px; border:1px solid var(--border);
+  border-radius:6px; font-size:14px; margin-bottom:12px;
+}
+.modal textarea { min-height:80px; resize:vertical; }
+.modal-actions {
+  display:flex; gap:8px; justify-content:flex-end; margin-top:16px;
+}
+.modal-actions button {
+  padding:10px 20px; border:none; border-radius:6px; cursor:pointer;
+  font-size:14px; font-weight:500;
+}
+.modal-actions .primary {
+  background:var(--accent); color:#fff;
+}
+.modal-actions .secondary {
+  background:transparent; color:var(--text); border:1px solid var(--border);
+}
+.search-mark { background:#ffe066; color:#1a1a1a; border-radius:2px; padding:0 1px; }
+[data-theme="dark"] .search-mark { background:#5a4a00; color:#f5d76e; }
+.filters {
+  display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;
+}
+.filter-pill {
+  padding:6px 12px; border:1px solid var(--border); border-radius:20px;
+  background:transparent; color:var(--text-dim); font-size:13px;
+  cursor:pointer; transition:background 0.15s, color 0.15s, border-color 0.15s;
+}
+.filter-pill.active {
+  background:var(--accent); color:#fff; border-color:var(--accent);
+}
+.calendar-sync {
+  background:var(--card); border:1px solid var(--border); border-radius:8px;
+  padding:16px; margin-bottom:16px;
+}
+.calendar-sync h4 {
+  font-size:14px; font-weight:500; margin-bottom:12px;
+  display:flex; align-items:center; gap:8px;
+}
+.calendar-status {
+  font-size:12px; color:var(--text-dim); margin-bottom:8px;
+}
+.calendar-actions {
+  display:flex; gap:8px; flex-wrap:wrap;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>projet002 · OPS</h1>
+  <div class="header-right">
+    <span class="status" id="status">⚫ Local</span>
+    <button class="ibtn" id="theme-btn" onclick="toggleTheme()" title="Thème">☀︎</button>
+    <button class="ibtn" onclick="showMenu()" title="Menu">⋮</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('todos')">Todos</button>
+  <button class="tab" onclick="switchTab('reminders')">Reminders</button>
+  <button class="tab" onclick="switchTab('notes')">Notes</button>
+  <button class="tab" onclick="switchTab('log')">Log</button>
+</div>
+
+<div class="page">
+  <!-- TODOS -->
+  <div id="tab-todos" class="section active">
+    <div id="todos-stats" class="stats"></div>
+    <div class="add-row">
+      <input type="text" id="todo-in" placeholder="Nouvelle tâche..." onkeydown="if(event.key==='Enter')addTodo()">
+      <select id="todo-prio">
+        <option value="1">P1</option>
+        <option value="2" selected>P2</option>
+        <option value="3">P3</option>
+      </select>
+      <button onclick="addTodo()">Ajouter</button>
+    </div>
+    <div class="filters" id="todo-filters"></div>
+    <div id="todos-list"></div>
+  </div>
+
+  <!-- REMINDERS -->
+  <div id="tab-reminders" class="section">
+    <div class="calendar-sync">
+      <h4>📅 Synchronisation Calendar</h4>
+      <div class="calendar-status" id="cal-status">Non connecté</div>
+      <div class="calendar-actions">
+        <button class="lbtn" onclick="connectCalendar()">🔗 Connecter Calendar</button>
+        <button class="lbtn success" id="sync-to-cal" onclick="syncToCalendar()" disabled>↗ Exporter vers Calendar</button>
+        <button class="lbtn success" id="sync-from-cal" onclick="syncFromCalendar()" disabled>↙ Importer de Calendar</button>
+      </div>
+    </div>
+    <div id="reminders-stats" class="stats"></div>
+    <div class="add-row">
+      <input type="text" id="reminder-in" placeholder="Nouveau reminder..." onkeydown="if(event.key==='Enter')addReminder()">
+      <input type="datetime-local" id="reminder-date">
+      <button onclick="addReminder()">Ajouter</button>
+    </div>
+    <div id="reminders-list"></div>
+  </div>
+
+  <!-- NOTES -->
+  <div id="tab-notes" class="section">
+    <div id="notes-stats" class="stats"></div>
+    <div class="add-row">
+      <input type="text" id="note-in" placeholder="Nouvelle note..." onkeydown="if(event.key==='Enter')addNote()">
+      <button onclick="addNote()">Ajouter</button>
+    </div>
+    <div id="notes-list"></div>
+  </div>
+
+  <!-- LOG -->
+  <div id="tab-log" class="section">
+    <h3>Paramètres</h3>
+    <div style="margin-top:16px;">
+      <button class="lbtn" onclick="exportData()">📤 Exporter JSON</button>
+      <button class="lbtn" onclick="importData()">📥 Importer JSON</button>
+      <button class="lbtn danger" onclick="clearAll()">🗑 Effacer tout</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const APP = 'projet002';
+const DK = `td_v4_${APP}`;
+const TK = `td_theme_${APP}`;
+const AK = `td_act_${APP}`;
+const UK = `td_undo_${APP}`;
+const PK = `td_poll_${APP}`;
+const FTOK = `td_tok_${APP}`;
+const CALTOK = `td_caltok_${APP}`;
+const CALDID = `td_caldid_${APP}`;
+const THEMES = ['light', 'sand', 'navy', 'dark'];
+const THEME_ICONS = { light:'☀︎', sand:'○', navy:'◑', dark:'☾' };
+
+let S = {
+  todos: [],
+  reminders: [],
+  notes: [],
+  calendarConnected: false,
+  lastCalendarSync: null
+};
+
+let fileId = localStorage.getItem('td_fid_' + APP) || null;
+let activeTab = 'todos';
+let todoFilter = 'all';
+let autoSaveTimer = null;
+let pollInterval = null;
+
+// === INIT ===
+function init() {
+  loadLocal();
+  ensureState();
+  const theme = localStorage.getItem(TK) || 'light';
+  applyTheme(theme);
+  renderAll();
+  loadToken();
+  loadCalendarToken();
+  startPolling();
+}
+
+function ensureState() {
+  if (!S.todos) S.todos = [];
+  if (!S.reminders) S.reminders = [];
+  if (!S.notes) S.notes = [];
+  if (typeof S.calendarConnected !== 'boolean') S.calendarConnected = false;
+}
+
+function loadLocal() {
+  const raw = localStorage.getItem(DK);
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      S = { ...S, ...parsed };
+    } catch (e) {
+      console.error('Parse error:', e);
+    }
+  }
+}
+
+function saveLocal() {
+  localStorage.setItem(DK, JSON.stringify(S));
+}
+
+function save() {
+  saveLocal();
+  pushToDrive();
+}
+
+function autoSave() {
+  saveLocal();
+  setStatus('🟡 Pending');
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(() => pushToDrive(), 2000);
+}
+
+// === THEME ===
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t === 'light' ? '' : t);
+  document.getElementById('theme-btn').textContent = THEME_ICONS[t] || '☀︎';
+  localStorage.setItem(TK, t);
+}
+
+function toggleTheme() {
+  const cur = localStorage.getItem(TK) || 'light';
+  const idx = THEMES.indexOf(cur);
+  applyTheme(THEMES[(idx + 1) % THEMES.length]);
+}
+
+// === TABS ===
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelector(`.tab:nth-child(${['todos','reminders','notes','log'].indexOf(tab)+1})`).classList.add('active');
+  document.getElementById(`tab-${tab}`).classList.add('active');
+}
+
+// === STATUS ===
+function setStatus(msg) {
+  document.getElementById('status').textContent = msg;
+}
+
+// === TODOS ===
+function addTodo() {
+  const input = document.getElementById('todo-in');
+  const text = input.value.trim();
+  if (!text) return;
+  const prio = parseInt(document.getElementById('todo-prio').value);
+  const todo = {
+    id: Date.now() + Math.random(),
+    text,
+    prio,
+    done: false,
+    created: new Date().toISOString()
+  };
+  S.todos.unshift(todo);
+  input.value = '';
+  autoSave();
+  renderTodos();
+}
+
+function toggleTodo(id) {
+  const todo = S.todos.find(t => t.id === id);
+  if (todo) {
+    todo.done = !todo.done;
+    autoSave();
+    renderTodos();
+  }
+}
+
+function deleteTodo(id) {
+  const idx = S.todos.findIndex(t => t.id === id);
+  if (idx === -1) return;
+  const deleted = S.todos.splice(idx, 1)[0];
+  autoSave();
+  renderTodos();
+  showUndo(() => {
+    S.todos.splice(idx, 0, deleted);
+    autoSave();
+    renderTodos();
+  });
+}
+
+function renderTodos() {
+  const list = document.getElementById('todos-list');
+  const stats = document.getElementById('todos-stats');
+  const filters = document.getElementById('todo-filters');
+  
+  let filtered = S.todos;
+  if (todoFilter === 'active') filtered = S.todos.filter(t => !t.done);
+  if (todoFilter === 'done') filtered = S.todos.filter(t => t.done);
+  
+  const total = S.todos.length;
+  const done = S.todos.filter(t => t.done).length;
+  const active = total - done;
+  
+  if (total > 0) {
+    stats.innerHTML = `<span>${total} total</span><span>${active} actif</span><span>${done} terminé</span>`;
+    stats.style.display = '';
+  } else {
+    stats.innerHTML = '';
+    stats.style.display = 'none';
+  }
+  
+  filters.innerHTML = ['all', 'active', 'done'].map(f => 
+    `<button class="filter-pill ${todoFilter === f ? 'active' : ''}" onclick="setTodoFilter('${f}')">
+      ${f === 'all' ? 'Tous' : f === 'active' ? 'Actifs' : 'Terminés'}
+    </button>`
+  ).join('');
+  
+  list.innerHTML = filtered.map(t => `
+    <div class="item">
+      <div class="item-header">
+        <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodo(${t.id})">
+        <span class="item-text ${t.done ? 'done' : ''}">${t.text}</span>
+        <span class="badge p${t.prio}">P${t.prio}</span>
+      </div>
+      <div class="item-actions">
+        <button class="lbtn danger" onclick="deleteTodo(${t.id})">Supprimer</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function setTodoFilter(f) {
+  todoFilter = f;
+  renderTodos();
+}
+
+// === REMINDERS ===
+function addReminder() {
+  const input = document.getElementById('reminder-in');
+  const dateInput = document.getElementById('reminder-date');
+  const text = input.value.trim();
+  if (!text) return;
+  const reminder = {
+    id: Date.now() + Math.random(),
+    text,
+    date: dateInput.value ? new Date(dateInput.value).toISOString() : null,
+    created: new Date().toISOString(),
+    calendarEventId: null
+  };
+  S.reminders.unshift(reminder);
+  input.value = '';
+  dateInput.value = '';
+  autoSave();
+  renderReminders();
+}
+
+function deleteReminder(id) {
+  const idx = S.reminders.findIndex(r => r.id === id);
+  if (idx === -1) return;
+  const deleted = S.reminders.splice(idx, 1)[0];
+  autoSave();
+  renderReminders();
+  showUndo(() => {
+    S.reminders.splice(idx, 0, deleted);
+    autoSave();
+    renderReminders();
+  });
+}
+
+function renderReminders() {
+  const list = document.getElementById('reminders-list');
+  const stats = document.getElementById('reminders-stats');
+  
+  const total = S.reminders.length;
+  const upcoming = S.reminders.filter(r => r.date && new Date(r.date) > new Date()).length;
+  
+  if (total > 0) {
+    stats.innerHTML = `<span>${total} total</span><span>${upcoming} à venir</span>`;
+    stats.style.display = '';
+  } else {
+    stats.innerHTML = '';
+    stats.style.display = 'none';
+  }
+  
+  list.innerHTML = S.reminders.map(r => {
+    const dateStr = r.date ? new Date(r.date).toLocaleString('fr-FR', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    }) : '';
+    const synced = r.calendarEventId ? '📅' : '';
+    
+    return `
+      <div class="item">
+        <div class="item-header">
+          <span class="item-text">${r.text} ${synced}</span>
+        </div>
+        ${dateStr ? `<div class="item-meta">📆 ${dateStr}</div>` : ''}
+        <div class="item-actions">
+          <button class="lbtn danger" onclick="deleteReminder(${r.id})">Supprimer</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  updateCalendarStatus();
+}
+
+// === CALENDAR SYNC ===
+function updateCalendarStatus() {
+  const status = document.getElementById('cal-status');
+  const syncTo = document.getElementById('sync-to-cal');
+  const syncFrom = document.getElementById('sync-from-cal');
+  
+  if (S.calendarConnected) {
+    const lastSync = S.lastCalendarSync ? new Date(S.lastCalendarSync).toLocaleString('fr-FR') : 'jamais';
+    status.textContent = `✓ Connecté · Dernière sync: ${lastSync}`;
+    syncTo.disabled = false;
+    syncFrom.disabled = false;
+  } else {
+    status.textContent = 'Non connecté';
+    syncTo.disabled = true;
+    syncFrom.disabled = true;
+  }
+}
+
+function loadCalendarToken() {
+  const tok = sessionStorage.getItem(CALTOK);
+  if (tok) {
+    S.calendarConnected = true;
+    updateCalendarStatus();
+  }
+}
+
+async function connectCalendar() {
+  const CLIENT_ID = '829835809425-2iggf29s2d4e73pjhhvb8o6r9g55s32i.apps.googleusercontent.com';
+  const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
+  
+  return new Promise((resolve, reject) => {
+    google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPES,
+      callback: (resp) => {
+        if (resp.error) {
+          reject(resp.error);
+          return;
+        }
+        sessionStorage.setItem(CALTOK, resp.access_token);
+        S.calendarConnected = true;
+        updateCalendarStatus();
+        resolve(resp.access_token);
+      }
+    }).requestAccessToken();
+  });
+}
+
+async function syncToCalendar() {
+  if (!S.calendarConnected) {
+    await connectCalendar();
+  }
+  
+  const token = sessionStorage.getItem(CALTOK);
+  if (!token) return;
+  
+  setStatus('🟡 Export Calendar...');
+  
+  let calendarId = localStorage.getItem(CALDID);
+  if (!calendarId) {
+    // Créer un calendrier dédié "projet001 Reminders"
+    try {
+      const resp = await fetch('https://www.googleapis.com/calendar/v3/calendars', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          summary: 'projet002 Reminders',
+          description: 'Reminders synchronisés depuis projet002',
+          timeZone: 'Europe/Paris'
+        })
+      });
+      const data = await resp.json();
+      calendarId = data.id;
+      localStorage.setItem(CALDID, calendarId);
+    } catch (e) {
+      console.error('Erreur création calendrier:', e);
+      setStatus('🔴 Erreur');
+      return;
+    }
+  }
+  
+  // Exporter chaque reminder vers Calendar
+  for (const r of S.reminders) {
+    if (!r.date) continue; // Skip reminders sans date
+    if (r.calendarEventId) continue; // Déjà exporté
+    
+    const event = {
+      summary: r.text,
+      start: {
+        dateTime: r.date,
+        timeZone: 'Europe/Paris'
+      },
+      end: {
+        dateTime: new Date(new Date(r.date).getTime() + 60 * 60 * 1000).toISOString(), // +1h
+        timeZone: 'Europe/Paris'
+      },
+      description: `Créé depuis projet002 · ID: ${r.id}`
+    };
+    
+    try {
+      const resp = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(event)
+      });
+      const data = await resp.json();
+      r.calendarEventId = data.id;
+    } catch (e) {
+      console.error('Erreur export reminder:', e);
+    }
+  }
+  
+  S.lastCalendarSync = new Date().toISOString();
+  autoSave();
+  renderReminders();
+  setStatus('🟢 Sync ✓');
+}
+
+async function syncFromCalendar() {
+  if (!S.calendarConnected) {
+    await connectCalendar();
+  }
+  
+  const token = sessionStorage.getItem(CALTOK);
+  if (!token) return;
+  
+  const calendarId = localStorage.getItem(CALDID);
+  if (!calendarId) {
+    alert('Aucun calendrier projet002 trouvé. Exportez d\'abord des reminders.');
+    return;
+  }
+  
+  setStatus('🟡 Import Calendar...');
+  
+  try {
+    const resp = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?` +
+      `timeMin=${new Date().toISOString()}&` +
+      `singleEvents=true&` +
+      `orderBy=startTime`,
+      {
+        headers: { 'Authorization': `Bearer ${token}` }
+      }
+    );
+    const data = await resp.json();
+    
+    // Importer les événements qui ne sont pas déjà dans les reminders
+    const existingIds = new Set(S.reminders.map(r => r.calendarEventId));
+    
+    for (const event of data.items || []) {
+      if (existingIds.has(event.id)) continue;
+      
+      // Vérifier si l'événement vient de projet002 (via description)
+      const isFromProjet = event.description && event.description.includes('projet002');
+      
+      const reminder = {
+        id: Date.now() + Math.random(),
+        text: event.summary,
+        date: event.start.dateTime || event.start.date,
+        created: event.created,
+        calendarEventId: event.id,
+        source: isFromProjet ? 'projet002' : 'calendar'
+      };
+      S.reminders.push(reminder);
+    }
+    
+    S.lastCalendarSync = new Date().toISOString();
+    autoSave();
+    renderReminders();
+    setStatus('🟢 Sync ✓');
+  } catch (e) {
+    console.error('Erreur import Calendar:', e);
+    setStatus('🔴 Erreur');
+  }
+}
+
+// === NOTES ===
+function addNote() {
+  const input = document.getElementById('note-in');
+  const text = input.value.trim();
+  if (!text) return;
+  const note = {
+    id: Date.now() + Math.random(),
+    text,
+    created: new Date().toISOString()
+  };
+  S.notes.unshift(note);
+  input.value = '';
+  autoSave();
+  renderNotes();
+}
+
+function deleteNote(id) {
+  const idx = S.notes.findIndex(n => n.id === id);
+  if (idx === -1) return;
+  const deleted = S.notes.splice(idx, 1)[0];
+  autoSave();
+  renderNotes();
+  showUndo(() => {
+    S.notes.splice(idx, 0, deleted);
+    autoSave();
+    renderNotes();
+  });
+}
+
+function renderNotes() {
+  const list = document.getElementById('notes-list');
+  const stats = document.getElementById('notes-stats');
+  
+  const total = S.notes.length;
+  
+  if (total > 0) {
+    stats.innerHTML = `<span>${total} note${total > 1 ? 's' : ''}</span>`;
+    stats.style.display = '';
+  } else {
+    stats.innerHTML = '';
+    stats.style.display = 'none';
+  }
+  
+  list.innerHTML = S.notes.map(n => `
+    <div class="item">
+      <div class="item-text">${n.text}</div>
+      <div class="item-actions">
+        <button class="lbtn danger" onclick="deleteNote(${n.id})">Supprimer</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// === RENDER ALL ===
+function renderAll() {
+  renderTodos();
+  renderReminders();
+  renderNotes();
+}
+
+// === UNDO ===
+function showUndo(action) {
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.innerHTML = `<span>Supprimé</span><button onclick="undoDelete(this)">Annuler</button>`;
+  document.body.appendChild(toast);
+  toast._action = action;
+  setTimeout(() => toast.remove(), 5000);
+}
+
+function undoDelete(btn) {
+  const toast = btn.closest('.toast');
+  if (toast && toast._action) {
+    toast._action();
+    toast.remove();
+  }
+}
+
+// === MENU ===
+function showMenu() {
+  alert('Menu: Exporter / Importer / Effacer disponible dans l\'onglet Log');
+}
+
+// === EXPORT / IMPORT ===
+function exportData() {
+  const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${APP}-${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const imported = JSON.parse(ev.target.result);
+        S = { ...S, ...imported };
+        ensureState();
+        save();
+        renderAll();
+        alert('Import réussi');
+      } catch (err) {
+        alert('Erreur import: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function clearAll() {
+  if (!confirm('Effacer toutes les données ?')) return;
+  S = { todos: [], reminders: [], notes: [], calendarConnected: false, lastCalendarSync: null };
+  save();
+  renderAll();
+}
+
+// === DRIVE SYNC ===
+const CLIENT_ID = '829835809425-2iggf29s2d4e73pjhhvb8o6r9g55s32i.apps.googleusercontent.com';
+const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+
+function loadToken() {
+  const tok = sessionStorage.getItem(FTOK);
+  if (tok) {
+    pullFromDrive();
+  }
+}
+
+function requestAccessToken() {
+  google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: (resp) => {
+      if (resp.error) return;
+      sessionStorage.setItem(FTOK, resp.access_token);
+      pullFromDrive();
+    }
+  }).requestAccessToken();
+}
+
+async function pushToDrive() {
+  let tok = sessionStorage.getItem(FTOK);
+  if (!tok) {
+    requestAccessToken();
+    return;
+  }
+  
+  const metadata = { name: `${APP}.json`, mimeType: 'application/json' };
+  const body = JSON.stringify(S);
+  const form = new FormData();
+  form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+  form.append('file', new Blob([body], { type: 'application/json' }));
+  
+  const url = fileId
+    ? `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`
+    : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+  const method = fileId ? 'PATCH' : 'POST';
+  
+  try {
+    const resp = await fetch(url, {
+      method,
+      headers: { 'Authorization': `Bearer ${tok}` },
+      body: form
+    });
+    const data = await resp.json();
+    if (!fileId && data.id) {
+      fileId = data.id;
+      localStorage.setItem('td_fid_' + APP, fileId);
+    }
+    setStatus('🟢 Sync ✓');
+    localStorage.setItem(AK, Date.now());
+  } catch (e) {
+    console.error('Push error:', e);
+    setStatus('🔴 Erreur');
+  }
+}
+
+async function pullFromDrive() {
+  let tok = sessionStorage.getItem(FTOK);
+  if (!tok) return;
+  
+  if (!fileId) {
+    const resp = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=name='${APP}.json'&spaces=drive&fields=files(id)`,
+      { headers: { 'Authorization': `Bearer ${tok}` } }
+    );
+    const data = await resp.json();
+    if (data.files && data.files.length > 0) {
+      fileId = data.files[0].id;
+      localStorage.setItem('td_fid_' + APP, fileId);
+    } else {
+      return;
+    }
+  }
+  
+  try {
+    const resp = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+      { headers: { 'Authorization': `Bearer ${tok}` } }
+    );
+    const remote = await resp.json();
+    S = { ...S, ...remote };
+    ensureState();
+    saveLocal();
+    renderAll();
+    setStatus('🟢 Sync ✓');
+    localStorage.setItem(AK, Date.now());
+  } catch (e) {
+    console.error('Pull error:', e);
+  }
+}
+
+function startPolling() {
+  if (pollInterval) clearInterval(pollInterval);
+  pollInterval = setInterval(() => {
+    if (sessionStorage.getItem(FTOK)) {
+      pullFromDrive();
+    }
+  }, 30000); // 30s
+}
+
+// === LAUNCH ===
+window.onload = init;
+</script>
+
+</body>
+</html>
