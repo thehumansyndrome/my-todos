@@ -1867,7 +1867,7 @@ let wOff=0, tF='all', hzF='all', dF='all', rF='all', hF='all', chF='all', notesQ
 // Calendar sync constants
 const CALTOK = 'td_caltok_projet001';
 const CALDID = 'td_caldid_projet001';
-const CALENDAR_SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/calendar';
+const CALENDAR_SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/tasks';
 let calendarConnected = false;
 
 function ensureState(){
@@ -7167,7 +7167,10 @@ function ensureAdminOnItems(){
 /* ══ CALENDAR SYNC ══ */
 function getCalendarSyncBadge(r){
   if(!r.calendarEventId) return '';
-  return '<span class="tag" style="background:#D1FAE5;color:#065F46;font-size:10px;padding:2px 6px;">📅 Calendar</span>';
+  const isTask = r.syncType === 'task';
+  const icon = isTask ? '✓' : '📅';
+  const label = isTask ? 'Task' : 'Cal';
+  return `<span class="tag" style="background:#D1FAE5;color:#065F46;font-size:10px;padding:2px 6px;">${icon} ${label}</span>`;
 }
 
 // === CALENDAR SYNC ===
@@ -7237,83 +7240,131 @@ async function syncToCalendar() {
     return;
   }
   
-  toast('🔄 Export Calendar...');
-  console.log('🔄 Début export Calendar...');
+  toast('🔄 Export Calendar & Tasks...');
+  console.log('🔄 Début export Calendar & Tasks...');
   
-  // Utiliser le calendrier principal
-  let calendarId = 'primary';
-  console.log('📅 Utilisation calendrier:', calendarId);
+  const calendarId = 'primary';
   
   // Compter les reminders à exporter
   const toExport = S.reminders.filter(r => r.date && !r.calendarEventId && !r.done);
   console.log(`📤 ${toExport.length} reminders à exporter`);
   
   if (toExport.length === 0) {
-    toast('Aucun reminder à exporter (tous déjà synchronisés ou sans date)');
+    toast('Aucun reminder à exporter');
     return;
   }
   
-  let exported = 0;
+  let exportedEvents = 0;
+  let exportedTasks = 0;
   
-  // Exporter chaque reminder vers Calendar
-  for (const r of S.reminders) {
-    if (!r.date) {
-      console.log(`⏭️ Skip reminder "${r.text}" (pas de date)`);
-      continue;
-    }
-    if (r.calendarEventId) {
-      console.log(`⏭️ Skip reminder "${r.text}" (déjà exporté)`);
-      continue;
-    }
-    if (r.done) {
-      console.log(`⏭️ Skip reminder "${r.text}" (déjà fait)`);
-      continue;
-    }
-    
-    // Construire la date/heure de début
-    const startDateTime = new Date(r.date + 'T' + (r.time || '09:00') + ':00');
-    // Calculer la fin en ajoutant la durée en minutes
-    const durationMs = (r.duration || 60) * 60 * 1000;
-    const endDateTime = new Date(startDateTime.getTime() + durationMs);
-    
-    const event = {
-      summary: `[projet001] ${r.text}`,
-      start: {
-        dateTime: startDateTime.toISOString(),
-        timeZone: 'Europe/Paris'
-      },
-      end: {
-        dateTime: endDateTime.toISOString(),
-        timeZone: 'Europe/Paris'
-      },
-      description: `Créé depuis projet001 · ID: ${r.id}`,
-      colorId: '9'
-    };
-    
-    console.log(`📤 Export reminder "${r.text}" à ${r.date} ${r.time} (${r.duration}min)...`);
-    
+  // Trouver ou créer la liste de tâches "projet001"
+  let taskListId = localStorage.getItem('td_tasklistid_projet001');
+  if (!taskListId) {
     try {
-      const resp = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events`, {
+      const resp = await fetch('https://tasks.googleapis.com/tasks/v1/users/@me/lists', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(event)
+        body: JSON.stringify({ title: 'projet001 Reminders' })
       });
+      if (resp.ok) {
+        const data = await resp.json();
+        taskListId = data.id;
+        localStorage.setItem('td_tasklistid_projet001', taskListId);
+        console.log('✅ Liste de tâches créée:', taskListId);
+      }
+    } catch (e) {
+      console.error('Erreur création task list:', e);
+    }
+  }
+  
+  // Exporter chaque reminder
+  for (const r of S.reminders) {
+    if (!r.date || r.calendarEventId || r.done) continue;
+    
+    // Décider: Event (avec heure) ou Task (sans heure)
+    const hasTime = r.time && r.time !== '09:00'; // 09:00 = valeur par défaut = pas d'heure réelle
+    
+    if (hasTime) {
+      // OPTION A: Calendar Event (avec heure précise)
+      const startDateTime = new Date(r.date + 'T' + r.time + ':00');
+      const durationMs = (r.duration || 60) * 60 * 1000;
+      const endDateTime = new Date(startDateTime.getTime() + durationMs);
       
-      if (!resp.ok) {
-        const err = await resp.json();
-        console.error(`❌ Erreur export "${r.text}":`, err);
+      const event = {
+        summary: `[projet001] ${r.text}`,
+        start: {
+          dateTime: startDateTime.toISOString(),
+          timeZone: 'Europe/Paris'
+        },
+        end: {
+          dateTime: endDateTime.toISOString(),
+          timeZone: 'Europe/Paris'
+        },
+        description: `Créé depuis projet001 · ID: ${r.id}`,
+        colorId: '9'
+      };
+      
+      console.log(`📅 Export EVENT "${r.text}" à ${r.date} ${r.time}`);
+      
+      try {
+        const resp = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(event)
+        });
+        
+        if (resp.ok) {
+          const data = await resp.json();
+          r.calendarEventId = data.id;
+          r.syncType = 'event';
+          exportedEvents++;
+          console.log(`✅ Event créé → ${data.id}`);
+        }
+      } catch (e) {
+        console.error(`❌ Erreur export event "${r.text}":`, e);
+      }
+      
+    } else {
+      // OPTION B: Google Task (sans heure, juste une deadline)
+      if (!taskListId) {
+        console.log(`⏭️ Skip task "${r.text}" (pas de task list)`);
         continue;
       }
       
-      const data = await resp.json();
-      r.calendarEventId = data.id;
-      exported++;
-      console.log(`✅ Reminder "${r.text}" exporté → ${data.id}`);
-    } catch (e) {
-      console.error(`❌ Erreur export reminder "${r.text}":`, e);
+      const task = {
+        title: r.text,
+        due: new Date(r.date + 'T00:00:00').toISOString(),
+        notes: `Créé depuis projet001 · ID: ${r.id}`
+      };
+      
+      console.log(`✓ Export TASK "${r.text}" deadline ${r.date}`);
+      
+      try {
+        const resp = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${taskListId}/tasks`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(task)
+        });
+        
+        if (resp.ok) {
+          const data = await resp.json();
+          r.calendarEventId = data.id; // Réutilise le même champ
+          r.syncType = 'task';
+          exportedTasks++;
+          console.log(`✅ Task créée → ${data.id}`);
+        }
+      } catch (e) {
+        console.error(`❌ Erreur export task "${r.text}":`, e);
+      }
     }
   }
   
@@ -7322,8 +7373,9 @@ async function syncToCalendar() {
   renderReminders();
   updateCalendarUI();
   
-  console.log(`✅ Export terminé: ${exported}/${toExport.length} reminders exportés`);
-  toast(`✓ ${exported} reminder(s) exporté(s) vers Calendar`);
+  const total = exportedEvents + exportedTasks;
+  console.log(`✅ Export terminé: ${exportedEvents} events, ${exportedTasks} tasks`);
+  toast(`✓ ${exportedEvents} event(s) + ${exportedTasks} task(s) exporté(s)`);
 }
 
 async function syncFromCalendar() {
