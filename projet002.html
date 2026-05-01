@@ -580,7 +580,7 @@ function loadCalendarToken() {
 
 async function connectCalendar() {
   const CLIENT_ID = '829835809425-2iggf29s2d4e73pjhhvb8o6r9g55s32i.apps.googleusercontent.com';
-  const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
+  const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/calendar.events';
   
   return new Promise((resolve, reject) => {
     google.accounts.oauth2.initTokenClient({
@@ -588,10 +588,16 @@ async function connectCalendar() {
       scope: SCOPES,
       callback: (resp) => {
         if (resp.error) {
+          console.error('OAuth error:', resp.error);
+          alert('Erreur de connexion. Vérifiez que le Client ID autorise Calendar API.');
           reject(resp.error);
           return;
         }
         sessionStorage.setItem(CALTOK, resp.access_token);
+        // Réutiliser le token pour Drive aussi si besoin
+        if (!sessionStorage.getItem(FTOK)) {
+          sessionStorage.setItem(FTOK, resp.access_token);
+        }
         S.calendarConnected = true;
         updateCalendarStatus();
         resolve(resp.access_token);
@@ -862,7 +868,7 @@ function clearAll() {
 
 // === DRIVE SYNC ===
 const CLIENT_ID = '829835809425-2iggf29s2d4e73pjhhvb8o6r9g55s32i.apps.googleusercontent.com';
-const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/calendar.events';
 
 function loadToken() {
   const tok = sessionStorage.getItem(FTOK);
