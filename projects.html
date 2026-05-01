@@ -27,7 +27,7 @@
 }
 [data-theme="sand"] {
   --bg:#F8F7FF; --surface:#FFFFFF; --border:#E4E2F5;
-  --text:#1A1830; --text2:#3D3B55; --muted:#8A88A8; --accent:#4F46E5;
+  --text:#1A1830; --text2:#3D3B55; --muted:#8A88A8; --accent:#5B4FE8;
 }
 [data-theme="dark"] {
   --bg:#111113; --surface:#1C1C1F; --border:#2A2A2E;
@@ -44,16 +44,14 @@
 body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;}
 
 /* ── HEADER ── */
-.header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border);padding:0 16px;height:44px;display:flex;align-items:center;justify-content:space-between;}
-.header-left{display:flex;align-items:center;gap:12px;}
-.header-right{display:flex;align-items:center;gap:8px;}
+.header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border);padding:0 16px;height:44px;display:flex;align-items:center;gap:12px;}
 .app-name{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:-.01em;}
 .sync-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0;}
 .sync-dot.ok{background:var(--green);}
 .sync-dot.pending{background:var(--amber);}
 .sync-dot.error{background:var(--red);}
 .sync-label{font-family:var(--mono);font-size:11px;color:var(--muted);}
-.hbtn{background:none;border:none;cursor:pointer;font-size:14px;color:var(--muted);padding:4px 6px;border-radius:var(--r);transition:background .15s;}
+.hbtn{margin-left:auto;background:none;border:none;cursor:pointer;font-size:14px;color:var(--muted);padding:4px 6px;border-radius:var(--r);transition:background .15s;}
 .hbtn:hover{background:var(--border);}
 
 /* ── TABS ── */
@@ -274,15 +272,11 @@ input,select,textarea{background:var(--bg);color:var(--text);}
 <body>
 
 <div class="header">
-  <div class="header-left">
-    <span class="app-name">Projects</span>
-    <div class="sync-dot" id="sync-dot"></div>
-    <span class="sync-label" id="sync-label">Local</span>
-  </div>
-  <div class="header-right">
-    <button class="hbtn" id="hbtn-cloud" onclick="accessToken ? switchTab('log') : driveAuth()" title="Connecter Google Drive">☁</button>
-    <button class="hbtn" id="theme-btn" onclick="toggleTheme()" title="Thème">☀︎</button>
-  </div>
+  <span class="app-name">Projects</span>
+  <div class="sync-dot" id="sync-dot"></div>
+  <span class="sync-label" id="sync-label">Local</span>
+  <button class="hbtn" id="theme-btn" onclick="toggleTheme()" title="Thème">☀︎</button>
+  <button class="hbtn" id="hbtn-cloud" onclick="accessToken ? switchTab('log') : driveAuth()" title="Connecter Google Drive">☁</button>
 </div>
 
 <div class="tabs" id="tabs">
@@ -359,7 +353,7 @@ input,select,textarea{background:var(--bg);color:var(--text);}
 <!-- ══ SUIVI ══ -->
 <div id="tab-suivi" class="section">
   <div class="suivi-header">
-    <select class="suivi-sel" id="suivi-proj-sel" onchange="localStorage.setItem('td_suivi_projects',this.value);loadSuiviData()">
+    <select class="suivi-sel" id="suivi-proj-sel" onchange="localStorage.setItem('td_suivi_proj',this.value);loadSuiviData()">
       <option value="">— Sélectionner un projet —</option>
     </select>
     <button class="btn sm" onclick="loadSuiviData()">↻ Actualiser</button>
@@ -374,6 +368,15 @@ input,select,textarea{background:var(--bg);color:var(--text);}
     <button class="btn sm" onclick="loadGlobalData()">↻ Actualiser</button>
     <button class="btn sm" id="global-done-btn" onclick="toggleGlobalDone()" style="margin-left:4px;">Masquer terminées</button>
     <span id="global-status" style="font-size:12px;color:var(--muted);flex:1;text-align:right;"></span>
+  </div>
+  <div style="margin:12px 0;">
+    <input 
+      type="text" 
+      id="global-search" 
+      placeholder="🔍 Rechercher par titre, description, redacteur..." 
+      style="width:100%;padding:10px 12px;font-size:14px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg);color:var(--text);font-family:var(--sans);"
+      oninput="filterGlobalView()"
+    >
   </div>
   <div id="global-content"><div class="empty"><div class="empty-icon">🌐</div>Cliquez sur Actualiser pour charger la vue globale</div></div>
 </div>
@@ -725,7 +728,7 @@ function renderProjects() {
 function openProjectSuivi(id) {
   switchTab('suivi');
   document.getElementById('suivi-proj-sel').value = id;
-  localStorage.setItem('td_suivi_projects', id);
+  localStorage.setItem('td_suivi_proj', id);
   loadSuiviData();
 }
 
@@ -830,7 +833,7 @@ let suiviData = {us:[], mo:[], cr:[]};
 
 function populateSuiviSel() {
   const sel = document.getElementById('suivi-proj-sel'); if (!sel) return;
-  const prev = sel.value || localStorage.getItem('td_suivi_projects') || '';
+  const prev = sel.value || localStorage.getItem('td_suivi_proj') || '';
   sel.innerHTML = '<option value="">— Sélectionner un projet —</option>' +
     S.projects.filter(p=>p.status!=='archive').map(p =>
       `<option value="${p.id}"${p.id===prev?' selected':''}>${esc(p.name)}</option>`
@@ -976,6 +979,20 @@ function renderSuivi() {
       </div>
       <div class="progress-wrap"><div class="progress-fill${pct===100?' done':''}" style="width:${pct}%"></div></div>
     </div>`;
+  }
+
+
+  function matchesSearch(item, query) {
+    if (!query) return true;
+    const searchable = [
+      item.text || '',
+      item.titre || '',
+      item.title || '',
+      item.description || '',
+      item.redacteur || '',
+      item.valideur || ''
+    ].join(' ').toLowerCase();
+    return searchable.indexOf(query) >= 0;
   }
 
   // KPIs
@@ -2082,6 +2099,14 @@ function addGlobalTask() {
   renderGlobal();
 }
 
+let _globalFilterQuery = '';
+
+function filterGlobalView() {
+  const input = document.getElementById('global-search');
+  _globalFilterQuery = (input ? input.value.trim().toLowerCase() : '');
+  renderGlobal();
+}
+
 function renderGlobal() {
   const el = document.getElementById('global-content'); if (!el) return;
   const allUS = suiviData.us||[], allMO = suiviData.mo||[], allCR = suiviData.cr||[], allBL = suiviData.backlog||[];
@@ -2127,7 +2152,7 @@ function renderGlobal() {
   // ── Tâches (actives + terminées) ──
   if (allBL.length) {
     const byProj = {};
-    allBL.filter(b => !(_globalHideDone && b.done)).forEach(b => {
+    allBL.filter(b => !(_globalHideDone && b.done) && matchesSearch(b, _globalFilterQuery)).forEach(b => {
       const p = getProj(b.projId);
       const key = p ? p.name : 'Sans projet'; const col = p ? p.color : 'var(--muted)';
       if (!byProj[key]) byProj[key] = {items:[], color:col};
@@ -2154,7 +2179,7 @@ function renderGlobal() {
   // ── User Stories ──
   if (allUS.length) {
     h += `<div class="suivi-section"><div class="suivi-section-title">User Stories (${allUS.length})</div>`;
-    allUS.forEach((e,i) => {
+    allUS.filter(e => matchesSearch(e, _globalFilterQuery)).forEach((e,i) => {
       _docIndex['usg'+i]=e;
       const st=e.status||'brouillon';
       const p=getProj(e.projet);
@@ -2173,7 +2198,7 @@ function renderGlobal() {
   // ── Modes Opératoires ──
   if (allMO.length) {
     h += `<div class="suivi-section"><div class="suivi-section-title">Modes Opératoires (${allMO.length})</div>`;
-    allMO.forEach((e,i) => {
+    allMO.filter(e => matchesSearch(e, _globalFilterQuery)).forEach((e,i) => {
       _docIndex['mog'+i]=e;
       const st=e.status||'brouillon';
       const p=getProj(e.projet);
@@ -2192,7 +2217,7 @@ function renderGlobal() {
   if (allCR.length) {
     const sorted = allCR.slice().sort((a,b)=>(b.savedAt||'').localeCompare(a.savedAt||''));
     h += `<div class="suivi-section"><div class="suivi-section-title">Comptes Rendus (${allCR.length})</div>`;
-    sorted.forEach((e,i) => {
+    sorted.filter(e => matchesSearch(e, _globalFilterQuery)).forEach((e,i) => {
       _docIndex['crg'+i]=e;
       const st=e.status||'brouillon';
       const p=getProj(e.projet);
