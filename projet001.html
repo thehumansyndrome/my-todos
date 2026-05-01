@@ -7285,9 +7285,13 @@ async function syncToCalendar() {
     if (!r.date || r.calendarEventId || r.done) continue;
     
     // Décider: Event (avec heure) ou Task (sans heure)
-    const hasTime = r.time && r.time !== '09:00'; // 09:00 = valeur par défaut = pas d'heure réelle
+    // Si l'utilisateur a changé l'heure manuellement (≠ 09:00) → Event
+    // Sinon (heure par défaut ou vide) → Task
+    const hasCustomTime = r.time && r.time !== '09:00';
     
-    if (hasTime) {
+    console.log(`🔍 Reminder "${r.text}" - time: ${r.time}, hasCustomTime: ${hasCustomTime}`);
+    
+    if (hasCustomTime) {
       // OPTION A: Calendar Event (avec heure précise)
       const startDateTime = new Date(r.date + 'T' + r.time + ':00');
       const durationMs = (r.duration || 60) * 60 * 1000;
@@ -7344,6 +7348,8 @@ async function syncToCalendar() {
       };
       
       console.log(`✓ Export TASK "${r.text}" deadline ${r.date}`);
+      console.log(`   TaskListId: ${taskListId}`);
+      console.log(`   Task data:`, task);
       
       try {
         const resp = await fetch(`https://tasks.googleapis.com/tasks/v1/lists/${taskListId}/tasks`, {
@@ -7355,12 +7361,18 @@ async function syncToCalendar() {
           body: JSON.stringify(task)
         });
         
+        console.log(`   Response status: ${resp.status} ${resp.statusText}`);
+        
         if (resp.ok) {
           const data = await resp.json();
           r.calendarEventId = data.id; // Réutilise le même champ
           r.syncType = 'task';
           exportedTasks++;
           console.log(`✅ Task créée → ${data.id}`);
+        } else {
+          const err = await resp.json();
+          console.error(`❌ Erreur API Tasks:`, err);
+          toast(`❌ Erreur Task API: ${err.error?.message || resp.statusText}`);
         }
       } catch (e) {
         console.error(`❌ Erreur export task "${r.text}":`, e);
