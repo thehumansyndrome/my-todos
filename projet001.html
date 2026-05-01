@@ -1452,6 +1452,14 @@ div:hover>.item-img-del{display:block;}
     <div class="add-row">
       <input class="main-in" type="text" id="rem-in" placeholder="Rappel…" onkeydown="if(event.key==='Enter')addReminder()">
       <input type="date" id="rem-date">
+      <input type="time" id="rem-time" value="09:00" style="font-family:var(--mono);font-size:12px;padding:6px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);">
+      <select id="rem-duration" style="font-family:var(--mono);font-size:12px;padding:6px 8px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);">
+        <option value="15">15min</option>
+        <option value="30">30min</option>
+        <option value="60" selected>1h</option>
+        <option value="90">1h30</option>
+        <option value="120">2h</option>
+      </select>
       <select id="rem-recur">
         <option value="none">Once</option>
         <option value="daily">Daily</option>
@@ -1883,6 +1891,8 @@ function ensureState(){
     if(!r.images) r.images=[]; 
     if(r.calendarSync===undefined) r.calendarSync=null;
     if(r.eventId===undefined) r.eventId=null;
+    if(!r.time) r.time='09:00';
+    if(!r.duration) r.duration=60;
   });
   if(!S.habits) S.habits=[];
   // Kaizen migration — add missing fields to existing habits
@@ -4650,9 +4660,24 @@ function addReminder(){
   const v=document.getElementById('rem-in').value.trim();if(!v)return;
   const rimgs=(pendingItemImgs['tab-reminders']||[]).map(s=>({type:'base64',src:s}));
   if(rimgs.length){ pendingItemImgs['tab-reminders']=[]; renderPendingTabImgs('tab-reminders'); }
-  const r={id:uid(),text:v,date:document.getElementById('rem-date').value||null,recur:document.getElementById('rem-recur').value,done:false,images:rimgs,ts:Date.now()};
+  const r={
+    id:uid(),
+    text:v,
+    date:document.getElementById('rem-date').value||null,
+    time:document.getElementById('rem-time').value||'09:00',
+    duration:parseInt(document.getElementById('rem-duration').value)||60,
+    recur:document.getElementById('rem-recur').value,
+    done:false,
+    images:rimgs,
+    ts:Date.now()
+  };
   if(rimgs.length) rimgs.forEach((img,i)=>{ if(img.type==='base64'){ uploadImgToDrive(img.src).then(obj=>{ r.images[i]=obj; autoSave(); }); } });
-  S.reminders.push(r);document.getElementById('rem-in').value='';document.getElementById('rem-date').value='';autoSave();renderReminders();logA('reminder','Ajouté: "'+v+'"');
+  S.reminders.push(r);
+  document.getElementById('rem-in').value='';
+  document.getElementById('rem-date').value='';
+  document.getElementById('rem-time').value='09:00';
+  document.getElementById('rem-duration').value='60';
+  autoSave();renderReminders();logA('reminder','Ajouté: "'+v+'"');
 }
 function saveReminder(id){
   const r=S.reminders.find(x=>x.id===id);if(!r)return;
@@ -4721,7 +4746,8 @@ function renderReminders(){
         <div class="item-meta-row">
           <div class="item-meta" style="margin-top:4px">
             <span class="tag ${bc[r._s]}">${rSL[r._s]}</span>
-            ${r.date?`<span class="meta-date">${r.date.split('-').reverse().join('/')}</span>`:''}
+            ${r.date?`<span class="meta-date">${r.date.split('-').reverse().join('/')} ${r.time||'09:00'}</span>`:''}
+            ${r.duration?`<span class="tag" style="background:var(--bg2);color:var(--text3)">${r.duration>=60?Math.floor(r.duration/60)+'h'+(r.duration%60?r.duration%60+'min':''):r.duration+'min'}</span>`:''}
             ${r.recur!=='none'?`<span class="tag" style="background:var(--bg2);color:var(--text3)">${rRL[r.recur]}</span>`:''}
             ${getCalendarSyncBadge(r)}
           </div>
@@ -7139,21 +7165,27 @@ async function syncToCalendar() {
       continue;
     }
     
+    // Construire la date/heure de début
+    const startDateTime = new Date(r.date + 'T' + (r.time || '09:00') + ':00');
+    // Calculer la fin en ajoutant la durée en minutes
+    const durationMs = (r.duration || 60) * 60 * 1000;
+    const endDateTime = new Date(startDateTime.getTime() + durationMs);
+    
     const event = {
       summary: `[projet001] ${r.text}`,
       start: {
-        dateTime: new Date(r.date + 'T00:00:00').toISOString(),
+        dateTime: startDateTime.toISOString(),
         timeZone: 'Europe/Paris'
       },
       end: {
-        dateTime: new Date(new Date(r.date + 'T00:00:00').getTime() + 60 * 60 * 1000).toISOString(),
+        dateTime: endDateTime.toISOString(),
         timeZone: 'Europe/Paris'
       },
       description: `Créé depuis projet001 · ID: ${r.id}`,
       colorId: '9'
     };
     
-    console.log(`📤 Export reminder "${r.text}" à ${r.date}...`);
+    console.log(`📤 Export reminder "${r.text}" à ${r.date} ${r.time} (${r.duration}min)...`);
     
     try {
       const resp = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events`, {
