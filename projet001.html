@@ -2044,12 +2044,7 @@ async function checkAndConnectDrive() {
     toast('🔄 Synchronisation...');
     try {
       await drivePull();
-      // Vérifier aussi Calendar
-      if (!calendarConnected) {
-        toast('💡 Tip: Connectez Calendar pour synchroniser les reminders');
-      } else {
-        toast('✓ Synchronisé');
-      }
+      toast('✓ Synchronisé');
     } catch (e) {
       console.error('Erreur sync:', e);
       toast('❌ Erreur de synchronisation');
@@ -2057,23 +2052,9 @@ async function checkAndConnectDrive() {
     return;
   }
   
-  // Pas connecté, proposer la connexion
-  const shouldConnect = confirm(
-    '📂 Google Drive non connecté\n\n' +
-    'Voulez-vous vous connecter pour :\n' +
-    '• Synchroniser vos données\n' +
-    '• Sauvegarder automatiquement\n' +
-    '• Accéder depuis tous vos appareils'
-  );
-  
-  if (shouldConnect) {
-    try {
-      driveAuth();
-    } catch (e) {
-      console.error('Erreur connexion:', e);
-      toast('❌ Erreur de connexion');
-    }
-  }
+  // Pas connecté, lancer la connexion (équivalent du bouton "Connecter Google")
+  toast('📂 Connexion à Google...');
+  driveAuth();
 }
 
 /* ══ CATEGORY HELPERS ══ */
