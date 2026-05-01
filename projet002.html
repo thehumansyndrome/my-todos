@@ -621,6 +621,12 @@ async function syncToCalendar() {
   setStatus('🟡 Export Calendar...');
   console.log('🔄 Début export Calendar...');
   
+  // OPTION 1: Utiliser le calendrier principal
+  // Pour éviter le problème de création de calendrier, on utilise 'primary'
+  let calendarId = 'primary';
+  
+  // OPTION 2: Si tu veux quand même créer un calendrier dédié, décommente ci-dessous
+  /*
   let calendarId = localStorage.getItem(CALDID);
   if (!calendarId) {
     console.log('📅 Création nouveau calendrier...');
@@ -659,6 +665,9 @@ async function syncToCalendar() {
   } else {
     console.log('📅 Calendrier existant:', calendarId);
   }
+  */
+  
+  console.log('📅 Utilisation calendrier:', calendarId);
   
   // Compter les reminders à exporter
   const toExport = S.reminders.filter(r => r.date && !r.calendarEventId);
@@ -684,7 +693,7 @@ async function syncToCalendar() {
     }
     
     const event = {
-      summary: r.text,
+      summary: `[projet002] ${r.text}`,
       start: {
         dateTime: r.date,
         timeZone: 'Europe/Paris'
@@ -693,7 +702,8 @@ async function syncToCalendar() {
         dateTime: new Date(new Date(r.date).getTime() + 60 * 60 * 1000).toISOString(),
         timeZone: 'Europe/Paris'
       },
-      description: `Créé depuis projet002 · ID: ${r.id}`
+      description: `Créé depuis projet002 · ID: ${r.id}`,
+      colorId: '9' // Bleu pour distinguer les événements projet002
     };
     
     console.log(`📤 Export reminder "${r.text}" à ${r.date}...`);
@@ -711,6 +721,7 @@ async function syncToCalendar() {
       if (!resp.ok) {
         const err = await resp.json();
         console.error(`❌ Erreur export "${r.text}":`, err);
+        alert(`Erreur export "${r.text}": ${err.error?.message || resp.statusText}`);
         continue;
       }
       
@@ -720,6 +731,7 @@ async function syncToCalendar() {
       console.log(`✅ Reminder "${r.text}" exporté → ${data.id}`);
     } catch (e) {
       console.error(`❌ Erreur export reminder "${r.text}":`, e);
+      alert(`Erreur réseau: ${e.message}`);
     }
   }
   
@@ -729,7 +741,7 @@ async function syncToCalendar() {
   setStatus('🟢 Sync ✓');
   
   console.log(`✅ Export terminé: ${exported}/${toExport.length} reminders exportés`);
-  alert(`✅ ${exported} reminder(s) exporté(s) vers Google Calendar`);
+  alert(`✅ ${exported} reminder(s) exporté(s) vers Google Calendar (calendrier principal)`);
 }
 
 async function syncFromCalendar() {
