@@ -7341,11 +7341,11 @@ async function syncToCalendar() {
         continue;
       }
       
-      // Google Tasks attend la date au format RFC 3339 avec timezone
-      // Pour éviter les décalages, on utilise la date à midi UTC
+      // Google Tasks avec fuseau horaire Europe/Paris explicite
+      // Pour que le 3 mai s'affiche bien le 3 mai à Paris
       const task = {
         title: r.text,
-        due: r.date + 'T12:00:00.000Z', // Midi UTC = pas de décalage
+        due: r.date + 'T00:00:00+02:00', // +02:00 pour Europe/Paris (été)
         notes: `Créé depuis projet001 · ID: ${r.id}`
       };
       
