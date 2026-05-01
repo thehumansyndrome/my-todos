@@ -7343,7 +7343,7 @@ async function syncToCalendar() {
       
       const task = {
         title: r.text,
-        due: new Date(r.date + 'T00:00:00').toISOString(),
+        due: r.date + 'T00:00:00.000Z', // Format RFC 3339: YYYY-MM-DDT00:00:00.000Z
         notes: `Créé depuis projet001 · ID: ${r.id}`
       };
       
