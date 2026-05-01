@@ -579,8 +579,8 @@ function loadCalendarToken() {
 }
 
 async function connectCalendar() {
-  const CLIENT_ID = '962903341875-c77jgb3u9dvbtm79u3kkr06cej748haf.apps.googleusercontent.com';
-  const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/calendar.events';
+  const CLIENT_ID = '962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com';
+  const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/calendar';
   
   return new Promise((resolve, reject) => {
     google.accounts.oauth2.initTokenClient({
@@ -612,13 +612,18 @@ async function syncToCalendar() {
   }
   
   const token = sessionStorage.getItem(CALTOK);
-  if (!token) return;
+  if (!token) {
+    console.error('Pas de token Calendar');
+    alert('Erreur: Pas de token Calendar. Reconnectez-vous.');
+    return;
+  }
   
   setStatus('🟡 Export Calendar...');
+  console.log('🔄 Début export Calendar...');
   
   let calendarId = localStorage.getItem(CALDID);
   if (!calendarId) {
-    // Créer un calendrier dédié "projet001 Reminders"
+    console.log('📅 Création nouveau calendrier...');
     try {
       const resp = await fetch('https://www.googleapis.com/calendar/v3/calendars', {
         method: 'POST',
@@ -632,20 +637,51 @@ async function syncToCalendar() {
           timeZone: 'Europe/Paris'
         })
       });
+      
+      if (!resp.ok) {
+        const err = await resp.json();
+        console.error('Erreur API Calendar:', err);
+        alert(`Erreur création calendrier: ${err.error?.message || resp.statusText}`);
+        setStatus('🔴 Erreur');
+        return;
+      }
+      
       const data = await resp.json();
       calendarId = data.id;
       localStorage.setItem(CALDID, calendarId);
+      console.log('✅ Calendrier créé:', calendarId);
     } catch (e) {
       console.error('Erreur création calendrier:', e);
+      alert('Erreur création calendrier: ' + e.message);
       setStatus('🔴 Erreur');
       return;
     }
+  } else {
+    console.log('📅 Calendrier existant:', calendarId);
   }
+  
+  // Compter les reminders à exporter
+  const toExport = S.reminders.filter(r => r.date && !r.calendarEventId);
+  console.log(`📤 ${toExport.length} reminders à exporter`);
+  
+  if (toExport.length === 0) {
+    alert('Aucun reminder à exporter (tous déjà synchronisés ou sans date)');
+    setStatus('🟢 Sync ✓');
+    return;
+  }
+  
+  let exported = 0;
   
   // Exporter chaque reminder vers Calendar
   for (const r of S.reminders) {
-    if (!r.date) continue; // Skip reminders sans date
-    if (r.calendarEventId) continue; // Déjà exporté
+    if (!r.date) {
+      console.log(`⏭️ Skip reminder "${r.text}" (pas de date)`);
+      continue;
+    }
+    if (r.calendarEventId) {
+      console.log(`⏭️ Skip reminder "${r.text}" (déjà exporté)`);
+      continue;
+    }
     
     const event = {
       summary: r.text,
@@ -654,11 +690,13 @@ async function syncToCalendar() {
         timeZone: 'Europe/Paris'
       },
       end: {
-        dateTime: new Date(new Date(r.date).getTime() + 60 * 60 * 1000).toISOString(), // +1h
+        dateTime: new Date(new Date(r.date).getTime() + 60 * 60 * 1000).toISOString(),
         timeZone: 'Europe/Paris'
       },
       description: `Créé depuis projet002 · ID: ${r.id}`
     };
+    
+    console.log(`📤 Export reminder "${r.text}" à ${r.date}...`);
     
     try {
       const resp = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events`, {
@@ -669,10 +707,19 @@ async function syncToCalendar() {
         },
         body: JSON.stringify(event)
       });
+      
+      if (!resp.ok) {
+        const err = await resp.json();
+        console.error(`❌ Erreur export "${r.text}":`, err);
+        continue;
+      }
+      
       const data = await resp.json();
       r.calendarEventId = data.id;
+      exported++;
+      console.log(`✅ Reminder "${r.text}" exporté → ${data.id}`);
     } catch (e) {
-      console.error('Erreur export reminder:', e);
+      console.error(`❌ Erreur export reminder "${r.text}":`, e);
     }
   }
   
@@ -680,6 +727,9 @@ async function syncToCalendar() {
   autoSave();
   renderReminders();
   setStatus('🟢 Sync ✓');
+  
+  console.log(`✅ Export terminé: ${exported}/${toExport.length} reminders exportés`);
+  alert(`✅ ${exported} reminder(s) exporté(s) vers Google Calendar`);
 }
 
 async function syncFromCalendar() {
@@ -867,8 +917,8 @@ function clearAll() {
 }
 
 // === DRIVE SYNC ===
-const CLIENT_ID = '962903341875-c77jgb3u9dvbtm79u3kkr06cej748haf.apps.googleusercontent.com';
-const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/calendar.events';
+const CLIENT_ID = '962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com';
+const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/calendar';
 
 function loadToken() {
   const tok = sessionStorage.getItem(FTOK);
