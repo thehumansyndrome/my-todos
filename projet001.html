@@ -7070,26 +7070,28 @@ function updateCalendarUI() {
 
 async function connectCalendar() {
   return new Promise((resolve, reject) => {
-    google.accounts.oauth2.initTokenClient({
-      client_id: drCfg.clientId,
-      scope: CALENDAR_SCOPES,
-      callback: (resp) => {
-        if (resp.error) {
-          console.error('OAuth error:', resp.error);
-          toast('❌ Erreur de connexion Calendar');
-          reject(resp.error);
-          return;
+    loadGIS(() => {
+      google.accounts.oauth2.initTokenClient({
+        client_id: drCfg.clientId,
+        scope: CALENDAR_SCOPES,
+        callback: (resp) => {
+          if (resp.error) {
+            console.error('OAuth error:', resp.error);
+            toast('❌ Erreur de connexion Calendar');
+            reject(resp.error);
+            return;
+          }
+          sessionStorage.setItem(CALTOK, resp.access_token);
+          if (!drTok) {
+            drTok = resp.access_token;
+          }
+          calendarConnected = true;
+          updateCalendarUI();
+          toast('✓ Connecté à Calendar');
+          resolve(resp.access_token);
         }
-        sessionStorage.setItem(CALTOK, resp.access_token);
-        if (!drTok) {
-          drTok = resp.access_token;
-        }
-        calendarConnected = true;
-        updateCalendarUI();
-        toast('✓ Connecté à Calendar');
-        resolve(resp.access_token);
-      }
-    }).requestAccessToken();
+      }).requestAccessToken();
+    });
   });
 }
 
@@ -7104,7 +7106,7 @@ async function syncToCalendar() {
     return;
   }
   
-  setStatus('sync');
+  toast('🔄 Export Calendar...');
   console.log('🔄 Début export Calendar...');
   
   // Utiliser le calendrier principal
@@ -7117,7 +7119,6 @@ async function syncToCalendar() {
   
   if (toExport.length === 0) {
     toast('Aucun reminder à exporter (tous déjà synchronisés ou sans date)');
-    setStatus('synced');
     return;
   }
   
@@ -7183,7 +7184,6 @@ async function syncToCalendar() {
   autoSave();
   renderReminders();
   updateCalendarUI();
-  setStatus('synced');
   
   console.log(`✅ Export terminé: ${exported}/${toExport.length} reminders exportés`);
   toast(`✓ ${exported} reminder(s) exporté(s) vers Calendar`);
@@ -7202,7 +7202,7 @@ async function syncFromCalendar() {
   
   const calendarId = 'primary';
   
-  setStatus('sync');
+  toast('🔄 Import depuis Calendar...');
   console.log('🔄 Import depuis Calendar...');
   
   try {
@@ -7221,7 +7221,6 @@ async function syncFromCalendar() {
       const err = await resp.json();
       console.error('Erreur import Calendar:', err);
       toast('❌ Erreur import Calendar');
-      setStatus('error');
       return;
     }
     
@@ -7255,14 +7254,12 @@ async function syncFromCalendar() {
     autoSave();
     renderReminders();
     updateCalendarUI();
-    setStatus('synced');
     
     console.log(`✅ Import terminé: ${imported} nouveau(x) reminder(s)`);
     toast(`✓ ${imported} reminder(s) importé(s) de Calendar`);
   } catch (e) {
     console.error('Erreur import Calendar:', e);
     toast('❌ Erreur import Calendar');
-    setStatus('error');
   }
 }
 
