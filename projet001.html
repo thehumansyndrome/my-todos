@@ -1462,9 +1462,16 @@ div:hover>.item-img-del{display:block;}
       <label class="cam-btn" title="Prendre une photo">📷<input type="file" accept="image/*" capture="environment" style="display:none" onchange="handleAddRowPhoto(this,'tab-reminders')"></label>
     </div>
     <div id="pending-imgs-tab-reminders" style="display:none;flex-wrap:wrap;gap:6px;margin:4px 0 2px 0;"></div>
-    <div style="margin:8px 0;display:flex;gap:8px;align-items:center;">
-      <button class="btn sm" onclick="prepareCalendarSync()" style="background:var(--blue);color:#fff;border:none;">🗓️ Sync Calendar</button>
-      <span id="cal-sync-status" style="font-size:12px;color:var(--muted);"></span>
+    <div style="background:var(--card);border:1px solid var(--line);border-radius:var(--r2);padding:12px;margin:8px 0;">
+      <div style="font-size:13px;font-weight:500;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+        📅 Synchronisation Calendar
+      </div>
+      <div id="cal-status" style="font-size:11px;color:var(--muted);margin-bottom:8px;">Non connecté</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn sm" onclick="connectCalendar()" style="background:var(--blue);color:#fff;border:none;">🔗 Connecter</button>
+        <button class="btn sm" id="sync-to-cal" onclick="syncToCalendar()" disabled style="background:var(--green);color:#fff;border:none;">↗ Exporter</button>
+        <button class="btn sm" id="sync-from-cal" onclick="syncFromCalendar()" disabled style="background:var(--green);color:#fff;border:none;">↙ Importer</button>
+      </div>
     </div>
     <div class="filters" id="rem-filters"></div>
     <div class="list" id="rem-list"></div>
@@ -1843,6 +1850,12 @@ let S={todos:[],notes:[],reminders:[],habits:[],habitLogs:{},categories:[],chall
 let AL=[];
 let wOff=0, tF='all', hzF='all', dF='all', rF='all', hF='all', chF='all', notesQ='';
 
+// Calendar sync constants
+const CALTOK = 'td_caltok_projet001';
+const CALDID = 'td_caldid_projet001';
+const CALENDAR_SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/calendar';
+let calendarConnected = false;
+
 function ensureState(){
   // Guarantee every key always exists — defensive against partial/missing data
   if(!S.todos) S.todos=[];
@@ -1900,6 +1913,7 @@ function ensureState(){
   if(!S.projects) S.projects=[];
   if(!S.backlog) S.backlog=[];
   if(!S.sharedTeam) S.sharedTeam=[];
+  if(!S.lastCalendarSync) S.lastCalendarSync=null;
 }
 
 function save(){try{localStorage.setItem(SK,JSON.stringify(S));}catch(e){}}
@@ -1926,6 +1940,7 @@ function load(){
   applyHzEscalation();
 }
 load();
+loadCalendarToken();
 
 /* ══ CATEGORY HELPERS ══ */
 function getCategories(){ return S.categories; }
@@ -7019,50 +7034,238 @@ function ensureAdminOnItems(){
 }
 
 /* ══ CALENDAR SYNC ══ */
-function prepareCalendarSync(){
-  // Filtrer les reminders non-done qui ne sont pas déjà synchronisés
-  const pending = S.reminders.filter(r => 
-    !r.done && 
-    r.date && 
-    r.calendarSync !== 'done' && 
-    r.calendarSync !== 'pending'
-  );
+function getCalendarSyncBadge(r){
+  if(!r.calendarEventId) return '';
+  return '<span class="tag" style="background:#D1FAE5;color:#065F46;font-size:10px;padding:2px 6px;">📅 Calendar</span>';
+}
+
+// === CALENDAR SYNC ===
+
+function loadCalendarToken() {
+  const tok = sessionStorage.getItem(CALTOK);
+  if (tok) {
+    calendarConnected = true;
+    updateCalendarUI();
+  }
+}
+
+function updateCalendarUI() {
+  const statusEl = document.getElementById('cal-status');
+  const syncToBtn = document.getElementById('sync-to-cal');
+  const syncFromBtn = document.getElementById('sync-from-cal');
   
-  if(!pending.length){
-    toast('Aucun reminder à synchroniser');
+  if (!statusEl) return;
+  
+  if (calendarConnected) {
+    const lastSync = S.lastCalendarSync ? new Date(S.lastCalendarSync).toLocaleString('fr-FR') : 'jamais';
+    statusEl.textContent = `✓ Connecté · Dernière sync: ${lastSync}`;
+    if (syncToBtn) syncToBtn.disabled = false;
+    if (syncFromBtn) syncFromBtn.disabled = false;
+  } else {
+    statusEl.textContent = 'Non connecté';
+    if (syncToBtn) syncToBtn.disabled = true;
+    if (syncFromBtn) syncFromBtn.disabled = true;
+  }
+}
+
+async function connectCalendar() {
+  return new Promise((resolve, reject) => {
+    google.accounts.oauth2.initTokenClient({
+      client_id: drCfg.clientId,
+      scope: CALENDAR_SCOPES,
+      callback: (resp) => {
+        if (resp.error) {
+          console.error('OAuth error:', resp.error);
+          toast('❌ Erreur de connexion Calendar');
+          reject(resp.error);
+          return;
+        }
+        sessionStorage.setItem(CALTOK, resp.access_token);
+        if (!drTok) {
+          drTok = resp.access_token;
+        }
+        calendarConnected = true;
+        updateCalendarUI();
+        toast('✓ Connecté à Calendar');
+        resolve(resp.access_token);
+      }
+    }).requestAccessToken();
+  });
+}
+
+async function syncToCalendar() {
+  if (!calendarConnected) {
+    await connectCalendar();
+  }
+  
+  const token = sessionStorage.getItem(CALTOK);
+  if (!token) {
+    toast('❌ Pas de token Calendar. Reconnectez-vous.');
     return;
   }
   
-  // Marquer comme pending
-  pending.forEach(r => {
-    r.calendarSync = 'pending';
-    if(!r.calendarTime) r.calendarTime = '09:00'; // Heure par défaut
-    if(!r.calendarDuration) r.calendarDuration = 60; // 1h par défaut
-  });
+  setStatus('sync');
+  console.log('🔄 Début export Calendar...');
   
+  // Utiliser le calendrier principal
+  let calendarId = 'primary';
+  console.log('📅 Utilisation calendrier:', calendarId);
+  
+  // Compter les reminders à exporter
+  const toExport = S.reminders.filter(r => r.date && !r.calendarEventId && !r.done);
+  console.log(`📤 ${toExport.length} reminders à exporter`);
+  
+  if (toExport.length === 0) {
+    toast('Aucun reminder à exporter (tous déjà synchronisés ou sans date)');
+    setStatus('synced');
+    return;
+  }
+  
+  let exported = 0;
+  
+  // Exporter chaque reminder vers Calendar
+  for (const r of S.reminders) {
+    if (!r.date) {
+      console.log(`⏭️ Skip reminder "${r.text}" (pas de date)`);
+      continue;
+    }
+    if (r.calendarEventId) {
+      console.log(`⏭️ Skip reminder "${r.text}" (déjà exporté)`);
+      continue;
+    }
+    if (r.done) {
+      console.log(`⏭️ Skip reminder "${r.text}" (déjà fait)`);
+      continue;
+    }
+    
+    const event = {
+      summary: `[projet001] ${r.text}`,
+      start: {
+        dateTime: new Date(r.date + 'T00:00:00').toISOString(),
+        timeZone: 'Europe/Paris'
+      },
+      end: {
+        dateTime: new Date(new Date(r.date + 'T00:00:00').getTime() + 60 * 60 * 1000).toISOString(),
+        timeZone: 'Europe/Paris'
+      },
+      description: `Créé depuis projet001 · ID: ${r.id}`,
+      colorId: '9'
+    };
+    
+    console.log(`📤 Export reminder "${r.text}" à ${r.date}...`);
+    
+    try {
+      const resp = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(event)
+      });
+      
+      if (!resp.ok) {
+        const err = await resp.json();
+        console.error(`❌ Erreur export "${r.text}":`, err);
+        continue;
+      }
+      
+      const data = await resp.json();
+      r.calendarEventId = data.id;
+      exported++;
+      console.log(`✅ Reminder "${r.text}" exporté → ${data.id}`);
+    } catch (e) {
+      console.error(`❌ Erreur export reminder "${r.text}":`, e);
+    }
+  }
+  
+  S.lastCalendarSync = new Date().toISOString();
   autoSave();
   renderReminders();
+  updateCalendarUI();
+  setStatus('synced');
   
-  // Message d'information
-  const count = pending.length;
-  document.getElementById('cal-sync-status').innerHTML = 
-    `✓ ${count} reminder${count>1?'s':''} marqué${count>1?'s':''} pour sync<br>` +
-    `<span style="font-size:11px;">Lance Claude avec le prompt CALENDAR-SYNC-PROMPT.md</span>`;
-  
-  toast(`✓ ${count} reminder${count>1?'s':''} prêt${count>1?'s':''} pour Calendar sync`);
+  console.log(`✅ Export terminé: ${exported}/${toExport.length} reminders exportés`);
+  toast(`✓ ${exported} reminder(s) exporté(s) vers Calendar`);
 }
 
-function getCalendarSyncBadge(r){
-  if(!r.calendarSync) return '';
+async function syncFromCalendar() {
+  if (!calendarConnected) {
+    await connectCalendar();
+  }
   
-  const badges = {
-    'pending': '<span class="tag" style="background:#FEF3C7;color:#92400E;font-size:10px;padding:2px 6px;">⏳ Sync pending</span>',
-    'done': '<span class="tag" style="background:#D1FAE5;color:#065F46;font-size:10px;padding:2px 6px;">✓ In Calendar</span>',
-    'error': '<span class="tag" style="background:#FEE2E2;color:#991B1B;font-size:10px;padding:2px 6px;">⚠ Sync error</span>'
-  };
+  const token = sessionStorage.getItem(CALTOK);
+  if (!token) {
+    toast('❌ Pas de token Calendar');
+    return;
+  }
   
-  return badges[r.calendarSync] || '';
+  const calendarId = 'primary';
+  
+  setStatus('sync');
+  console.log('🔄 Import depuis Calendar...');
+  
+  try {
+    const resp = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events?` +
+      `timeMin=${new Date().toISOString()}&` +
+      `q=[projet001]&` +
+      `singleEvents=true&` +
+      `orderBy=startTime`,
+      {
+        headers: { 'Authorization': `Bearer ${token}` }
+      }
+    );
+    
+    if (!resp.ok) {
+      const err = await resp.json();
+      console.error('Erreur import Calendar:', err);
+      toast('❌ Erreur import Calendar');
+      setStatus('error');
+      return;
+    }
+    
+    const data = await resp.json();
+    
+    // Importer les événements qui ne sont pas déjà dans les reminders
+    const existingIds = new Set(S.reminders.map(r => r.calendarEventId));
+    let imported = 0;
+    
+    for (const event of data.items || []) {
+      if (existingIds.has(event.id)) continue;
+      
+      // Vérifier si l'événement vient de projet001 (via description)
+      const isFromProjet = event.description && event.description.includes('projet001');
+      
+      const reminder = {
+        id: uid(),
+        text: event.summary.replace('[projet001] ', ''),
+        date: event.start.dateTime ? event.start.dateTime.split('T')[0] : event.start.date,
+        recur: 'none',
+        done: false,
+        ts: Date.now(),
+        calendarEventId: event.id,
+        source: isFromProjet ? 'projet001' : 'calendar'
+      };
+      S.reminders.push(reminder);
+      imported++;
+    }
+    
+    S.lastCalendarSync = new Date().toISOString();
+    autoSave();
+    renderReminders();
+    updateCalendarUI();
+    setStatus('synced');
+    
+    console.log(`✅ Import terminé: ${imported} nouveau(x) reminder(s)`);
+    toast(`✓ ${imported} reminder(s) importé(s) de Calendar`);
+  } catch (e) {
+    console.error('Erreur import Calendar:', e);
+    toast('❌ Erreur import Calendar');
+    setStatus('error');
+  }
 }
+
 
 </script>
 
