@@ -7341,9 +7341,11 @@ async function syncToCalendar() {
         continue;
       }
       
+      // Google Tasks attend la date au format RFC 3339 avec timezone
+      // Pour éviter les décalages, on utilise la date à midi UTC
       const task = {
         title: r.text,
-        due: r.date + 'T00:00:00.000Z', // Format RFC 3339: YYYY-MM-DDT00:00:00.000Z
+        due: r.date + 'T12:00:00.000Z', // Midi UTC = pas de décalage
         notes: `Créé depuis projet001 · ID: ${r.id}`
       };
       
