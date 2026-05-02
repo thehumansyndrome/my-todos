@@ -374,6 +374,7 @@ input,select,textarea{background:var(--bg);color:var(--text);}
   <div class="suivi-header">
     <button class="btn sm" onclick="loadGlobalData()">↻ Actualiser</button>
     <button class="btn sm" id="global-done-btn" onclick="toggleGlobalDone()" style="margin-left:4px;">Masquer terminées</button>
+    <button class="btn sm" id="global-archive-btn" onclick="toggleGlobalArchive()" style="margin-left:4px;">Masquer archivés</button>
     <span id="global-status" style="font-size:12px;color:var(--muted);flex:1;text-align:right;"></span>
   </div>
   <div style="margin:12px 0;">
@@ -1926,6 +1927,7 @@ async function _docSave(toastMsg) {
 // Patched into renderSuivi via _docIndex
 var _docIndex = {};
 var _globalHideDone = false;
+var _globalHideArchive = false;
 async function loadGlobalData() {
   const el = document.getElementById('global-content');
   const st = document.getElementById('global-status');
@@ -1959,6 +1961,14 @@ function toggleGlobalDone() {
   if (btn) btn.textContent = _globalHideDone ? 'Afficher terminées' : 'Masquer terminées';
   renderGlobal();
 }
+
+function toggleGlobalArchive() {
+  _globalHideArchive = !_globalHideArchive;
+  const btn = document.getElementById('global-archive-btn');
+  if (btn) btn.textContent = _globalHideArchive ? 'Afficher archivés' : 'Masquer archivés';
+  renderGlobal();
+}
+
 // ── Smart task parsing (same as notes2) ──
 function slugForMatch(s){
   return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
@@ -2186,7 +2196,7 @@ function renderGlobal() {
   // ── User Stories ──
   if (allUS.length) {
     h += `<div class="suivi-section"><div class="suivi-section-title">User Stories (${allUS.length})</div>`;
-    allUS.filter(e => matchesSearch(e, _globalFilterQuery)).forEach((e,i) => {
+    allUS.filter(e => matchesSearch(e, _globalFilterQuery) && !(_globalHideArchive && e.status === 'archive')).forEach((e,i) => {
       _docIndex['usg'+i]=e;
       const st=e.status||'brouillon';
       const p=getProj(e.projet);
@@ -2205,7 +2215,7 @@ function renderGlobal() {
   // ── Modes Opératoires ──
   if (allMO.length) {
     h += `<div class="suivi-section"><div class="suivi-section-title">Modes Opératoires (${allMO.length})</div>`;
-    allMO.filter(e => matchesSearch(e, _globalFilterQuery)).forEach((e,i) => {
+    allMO.filter(e => matchesSearch(e, _globalFilterQuery) && !(_globalHideArchive && e.status === 'archive')).forEach((e,i) => {
       _docIndex['mog'+i]=e;
       const st=e.status||'brouillon';
       const p=getProj(e.projet);
@@ -2224,7 +2234,7 @@ function renderGlobal() {
   if (allCR.length) {
     const sorted = allCR.slice().sort((a,b)=>(b.savedAt||'').localeCompare(a.savedAt||''));
     h += `<div class="suivi-section"><div class="suivi-section-title">Comptes Rendus (${allCR.length})</div>`;
-    sorted.filter(e => matchesSearch(e, _globalFilterQuery)).forEach((e,i) => {
+    sorted.filter(e => matchesSearch(e, _globalFilterQuery) && !(_globalHideArchive && e.status === 'archive')).forEach((e,i) => {
       _docIndex['crg'+i]=e;
       const st=e.status||'brouillon';
       const p=getProj(e.projet);
