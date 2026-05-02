@@ -272,11 +272,15 @@ input,select,textarea{background:var(--bg);color:var(--text);}
 <body>
 
 <div class="header">
-  <span class="app-name">Projects</span>
-  <div class="sync-dot" id="sync-dot"></div>
-  <span class="sync-label" id="sync-label">Local</span>
-  <button class="hbtn" id="theme-btn" onclick="toggleTheme()" title="Thème">☀︎</button>
-  <button class="hbtn" id="hbtn-cloud" onclick="accessToken ? switchTab('log') : driveAuth()" title="Connecter Google Drive">☁</button>
+  <div class="header-left">
+    <span class="app-name">Projects</span>
+    <div class="sync-dot" id="sync-dot"></div>
+    <span class="sync-label" id="sync-label">Local</span>
+  </div>
+  <div class="header-right">
+    <button class="hbtn" id="hbtn-cloud" onclick="accessToken ? switchTab('log') : driveAuth()" title="Connecter Google Drive">☁</button>
+    <button class="hbtn" id="theme-btn" onclick="toggleTheme()" title="Thème">☀︎</button>
+  </div>
 </div>
 
 <div class="tabs" id="tabs">
