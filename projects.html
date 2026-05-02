@@ -988,20 +988,6 @@ function renderSuivi() {
     </div>`;
   }
 
-
-  function matchesSearch(item, query) {
-    if (!query) return true;
-    const searchable = [
-      item.text || '',
-      item.titre || '',
-      item.title || '',
-      item.description || '',
-      item.redacteur || '',
-      item.valideur || ''
-    ].join(' ').toLowerCase();
-    return searchable.indexOf(query) >= 0;
-  }
-
   // KPIs
   h += `<div class="kpi-grid">
     <div class="kpi-box"><div class="kpi-n">${totalUS}</div><div class="kpi-l">US totales</div></div>
@@ -2117,6 +2103,20 @@ function filterGlobalView() {
 function renderGlobal() {
   const el = document.getElementById('global-content'); if (!el) return;
   const allUS = suiviData.us||[], allMO = suiviData.mo||[], allCR = suiviData.cr||[], allBL = suiviData.backlog||[];
+  
+  // Helper function pour la recherche
+  function matchesSearch(item, query) {
+    if (!query) return true;
+    const searchable = [
+      item.text || '',
+      item.titre || '',
+      item.title || '',
+      item.description || '',
+      item.redacteur || '',
+      item.valideur || ''
+    ].join(' ').toLowerCase();
+    return searchable.indexOf(query) >= 0;
+  }
   const usValide = allUS.filter(e=>e.status==='valide').length;
   const crValide = allCR.filter(e=>e.status==='valide').length;
   const moValide = allMO.filter(e=>e.status==='valide').length;
