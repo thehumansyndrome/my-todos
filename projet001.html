@@ -347,6 +347,7 @@ div:hover>.item-img-del{display:block;}
 
 /* ── MOBILE 2-LINE ITEM LAYOUT ── */
 @media(max-width:600px){
+  .undo-label{display:none;}
   .item{flex-wrap:wrap;gap:6px 8px;padding:12px 0;}
   /* Line 1: checkbox + text — full width */
   .item > .item-check{order:1;margin-top:3px;flex-shrink:0;}
@@ -2269,6 +2270,7 @@ function updateUndoBtn(){
     btn.style.display = '';
     btn.title = `Annuler : "${label}"`;
     btn.textContent = '↩ Undo';
+    btn.innerHTML = '↩ <span class="undo-label">Undo</span>';
   } else {
     btn.style.display = 'none';
   }
