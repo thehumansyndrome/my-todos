@@ -193,19 +193,16 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
 
 /* ── Autocomplete dropdown ── */
 .autocomplete-dropdown{
-  position:absolute;
-  bottom:0;
-  left:0;
-  right:0;
+  position:fixed;
   background:var(--surface);
   border:1px solid var(--border);
-  border-top:2px solid var(--accent);
   border-radius:var(--radius);
-  box-shadow:0 -4px 12px rgba(0,0,0,.1);
+  box-shadow:0 4px 12px rgba(0,0,0,.1);
   max-height:200px;
   overflow-y:auto;
-  z-index:10;
+  z-index:1000;
   display:none;
+  min-width:200px;
 }
 .autocomplete-dropdown.show{display:block;}
 .autocomplete-item{
@@ -266,6 +263,61 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
 ::-webkit-scrollbar{width:4px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+/* ── Word count ── */
+.wc-bar{font-size:11px;color:var(--muted);font-family:var(--mono);padding:0 0 0 16px;display:flex;align-items:center;gap:10px;}
+
+/* ── Trash sidebar section ── */
+.trash-section{border-top:1px solid var(--border);padding:8px 12px 4px;}
+.trash-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:5px;user-select:none;}
+.trash-item{padding:6px 10px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;color:var(--muted);border-radius:var(--radius);transition:background .12s;}
+.trash-item:hover{background:var(--bg);color:var(--text);}
+
+/* ── Focus mode ── */
+.focus-mode .sidebar{display:none!important;}
+.focus-mode .tabs-bar{display:none!important;}
+.focus-mode .editor-toolbar{display:none!important;}
+.focus-mode .export-bar{display:none!important;}
+.focus-mode .date-footer{display:none!important;}
+.focus-mode .drive-bar{display:none!important;}
+.focus-mode .editor-raw textarea{padding:40px min(80px, 10vw)!important;font-size:16px!important;line-height:1.85!important;}
+.focus-mode .header{background:transparent;border-color:transparent;}
+.focus-mode .header .app-title,.focus-mode .header .sync-dot{opacity:0;transition:opacity .3s;}
+.focus-mode .header:hover .app-title,.focus-mode .header:hover .sync-dot{opacity:1;}
+#focus-btn.on{color:var(--accent);background:var(--border);}
+
+/* ── YAML fold ── */
+.yaml-fold-btn{font-size:10px;padding:2px 7px;border-radius:10px;border:1px solid var(--border);color:var(--muted);cursor:pointer;background:transparent;transition:all .15s;white-space:nowrap;}
+.yaml-fold-btn:hover{background:var(--border);color:var(--text);}
+.yaml-folded #editor-raw textarea{margin-top:32px;}
+.yaml-fold-overlay{
+  position:absolute;top:0;left:0;right:0;
+  height:28px;background:var(--surface);
+  border-bottom:1px solid var(--border);
+  display:none;align-items:center;padding:0 24px;
+  font-size:11px;color:var(--muted);font-family:var(--mono);
+  z-index:2;gap:8px;
+}
+.yaml-folded .yaml-fold-overlay{display:flex;}
+
+/* ── Trash restore toast ── */
+.restore-btn{font-size:12px;font-weight:600;text-decoration:underline;cursor:pointer;background:none;border:none;color:inherit;font-family:inherit;padding:0;margin-left:8px;}
+
+/* ── Markdown in free notes ── */
+.md-h1{font-size:20px;font-weight:600;letter-spacing:-.01em;margin:20px 0 8px;line-height:1.3;}
+.md-h2{font-size:16px;font-weight:600;margin:16px 0 6px;line-height:1.4;}
+.md-h3{font-size:14px;font-weight:600;margin:12px 0 4px;color:var(--muted);}
+.md-p{margin:6px 0;line-height:1.7;font-size:14px;}
+.md-ul,.md-ol{padding-left:20px;margin:6px 0;}
+.md-li{line-height:1.65;font-size:14px;margin:2px 0;}
+.md-code{font-family:var(--mono);font-size:12px;background:var(--bg);padding:1px 5px;border-radius:3px;border:1px solid var(--border);}
+.md-pre{font-family:var(--mono);font-size:12px;background:var(--bg);padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border);overflow-x:auto;margin:8px 0;white-space:pre;}
+.md-blockquote{border-left:3px solid var(--accent);padding:4px 12px;margin:8px 0;color:var(--muted);font-style:italic;}
+.md-hr{border:none;border-top:1px solid var(--border);margin:16px 0;}
+.md-strong{font-weight:600;}
+.md-em{font-style:italic;}
+.md-cb{accent-color:var(--accent);margin-right:6px;}
+.md-strike{text-decoration:line-through;color:var(--muted);}
 </style>
 </head>
 <body>
@@ -278,6 +330,8 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
     <span class="sync-dot" id="sync-dot">⚫ Local</span>
   </div>
   <div class="header-right">
+    <a href="projects.html" class="icon-btn" title="Ouvrir Projects" style="text-decoration:none;">🗂</a>
+    <button class="icon-btn" id="focus-btn" onclick="toggleFocus()" title="Mode focus (F11)">⊡</button>
     <button class="icon-btn" onclick="handleDriveBtn()" title="Google Drive">☁</button>
     <button class="icon-btn" id="theme-btn" onclick="toggleTheme()" title="Thème">☀︎</button>
   </div>
@@ -297,6 +351,10 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
     </div>
     <div class="tag-filter" id="tag-filter"></div>
     <div class="note-list" id="note-list"></div>
+    <div class="trash-section" id="trash-section" style="display:none;">
+      <div class="trash-label" onclick="toggleTrashPanel()">🗑 <span id="trash-count">0</span> supprimée(s) <span id="trash-chevron">▸</span></div>
+      <div id="trash-list" style="display:none;margin-top:4px;"></div>
+    </div>
   </div>
 
   <div class="editor-pane hidden" id="editor-pane">
@@ -330,6 +388,8 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
             <button class="vt-btn" id="vt-preview" onclick="setView('preview')">Rendu</button>
           </div>
         </div>
+          <button class="yaml-fold-btn" id="yaml-fold-toggle-btn" onclick="toggleYamlFold()" style="display:none;" title="Masquer/Afficher YAML">YAML ▾</button>
+        </div>
         <div class="toolbar-right">
           <button class="todo-badge" id="todo-create-btn" style="display:none;" onclick="createTodosFromNote()">⚡ <span id="todo-create-count">0</span> tâche(s)</button>
           <button class="btn danger sm" onclick="deleteNote()">Supprimer</button>
@@ -338,6 +398,10 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
 
       <div class="editor-body" id="editor-body">
         <div class="editor-raw" id="editor-raw">
+          <div class="yaml-fold-overlay" id="yaml-fold-overlay">
+            <span id="yaml-fold-label"></span>
+            <button class="yaml-fold-btn" onclick="toggleYamlFold()">Afficher YAML ▾</button>
+          </div>
           <div class="note-ta-wrap">
             <div id="todo-hl-layer" class="todo-highlight-layer" aria-hidden="true"></div>
             <textarea id="note-ta" spellcheck="true"
@@ -357,8 +421,9 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
         <button class="btn sm" id="validate-btn" onclick="validateCRNote()" style="display:none;color:var(--green);border-color:var(--green);">✓ Valider → projet001</button>
       </div>
 
-      <div class="date-footer" id="date-footer" style="display:none;">
-        ✎ <span id="date-text"></span>
+      <div class="date-footer" id="date-footer" style="display:none;flex-direction:column;gap:2px;">
+        <div>✎ <span id="date-text"></span></div>
+        <div class="wc-bar"><span id="wc-text"></span></div>
       </div>
     </div>
   </div>
@@ -382,15 +447,9 @@ var curId=null, searchQ='', activeTag=null, favFilter=false, curView='raw', curT
 var openTabs=[], dragIdx=null, saveTimer=null;
 var driveFileId=null, tokenClient=null, pollTimer=null;
 var accessToken=sessionStorage.getItem(TOK)||null;
-var isEditing=false; // Track if user is actively editing
 
 // ── Templates ─────────────────────────────────────────────────────────────────
 function getTodayCR(){var d=new Date();return String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+d.getFullYear();}
-function getNextWeekCR(){
-  var d=new Date();
-  d.setDate(d.getDate()+7);
-  return String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+d.getFullYear();
-}
 function getCRTitleDate(){
   var d=new Date();
   var months=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
@@ -399,13 +458,6 @@ function getCRTitleDate(){
 function buildCRDateTitle(){
   var dateStr=getCRTitleDate();
   return "CR de la réunion du "+dateStr;
-}
-function buildCRDateTitleWithTime(){
-  var d=new Date();
-  var dateStr=getCRTitleDate();
-  var hours=String(d.getHours()).padStart(2,'0');
-  var minutes=String(d.getMinutes()).padStart(2,'0');
-  return "CR de la réunion du "+dateStr+" à "+hours+":"+minutes;
 }
 function buildCRTitle(projet){
   // Legacy: called with projet only → generates full auto title
@@ -422,11 +474,7 @@ var TMPLS=[
   {id:'none',name:'Note libre',desc:'Texte brut, aucun rendu',
    placeholder:'Titre\n\nÉcris ici…'},
   {id:'cr',name:'Compte Rendu',desc:'Réunion → décisions, actions (format CR Generator)',
-   get placeholder(){
-     var allParticipants = (sharedTeam||[]).map(function(m){ return '@'+m.alias; }).join(', ');
-     var nextDate = getNextWeekCR();
-     return '---\ntitle: '+buildCRDateTitleWithTime()+'\ndate: '+getTodayCR()+'\nprojet: \nduree: 30 min\nparticipants: '+allParticipants+'\nobjectif: \nnext-date: '+nextDate+'\nnext-agenda: \n---\n\nD: \nD: \n\nA:   @ !p '+getTodayCR()+'\nA:   @ !p '+getTodayCR();
-   }},
+   get placeholder(){return '---\ntitle: \ndate: '+getTodayCR()+'\nprojet: \nduree: \nparticipants: \nobjectif: \nnext-date: \nnext-agenda: \n---\n\nD: \nD: \n\nA:   '+getTodayCR()+'\nA:   '+getTodayCR();}},
   {id:'standup',name:'Standup',desc:"Hier / Aujourd'hui / Blocages",
    placeholder:"Standup\n\nhier: \n- \n\naujourd'hui: \n- \n\nblocages: \n- "},
   {id:'reflexion',name:'Note de réflexion',desc:'Problème → options → décision',
@@ -506,7 +554,6 @@ function newNote(tmplId){
 }
 
 function openNote(id){
-  isEditing=false; // Reset editing flag when switching notes
   curId=id;
   var n=S.notes.find(function(x){return x.id===id;});
   if(!n)return;
@@ -668,7 +715,6 @@ function onPaste(e){
 function onNoteInput(){
   var n=S.notes.find(function(x){return x.id===curId;});
   if(!n)return;
-  isEditing=true; // User is actively editing
   n.body=document.getElementById('note-ta').value;
   n.updated=Date.now();
   if(curView!=='raw')updatePreview();
@@ -914,32 +960,17 @@ function parseCR(body){
       else if((m=line.match(/^dur[eé]e\s*:\s*(.*)/i)))cr.duree       =m[1].trim();
       else if((m=line.match(/^participants\s*:\s*(.*)/i)))cr.participants=m[1].trim();
       else if((m=line.match(/^objectif\s*:\s*(.*)/i)))cr.objectif    =m[1].trim();
-      else if((m=line.match(/^projet\s*:\s*(.*)/i))) {
-        var projetVal = m[1].trim();
-        // Si le projet commence par #, résoudre le hashtag
-        if(projetVal.startsWith('#')){
-          var slug = projetVal.substring(1).toLowerCase();
-          var resolved = resolveProjectSlug(slug);
-          cr.projet = resolved ? resolved.name : projetVal;
-        } else {
-          cr.projet = projetVal;
-        }
-      }
+      else if((m=line.match(/^projet\s*:\s*(.*)/i)))  cr.projet      =m[1].trim();
       else if((m=line.match(/^next-date\s*:\s*(.*)/i)))cr.nextDate   =m[1].trim();
       else if((m=line.match(/^next-agenda\s*:\s*(.*)/i)))cr.nextAgenda=m[1].trim();
     } else {
       if((m=line.match(/^D\s*:\s*(.+)/i)))cr.decisions.push(m[1].trim());
       else if((m=line.match(/^A\s*:\s*(.+)/i))){
-        var raw=m[1].trim(),assignee='',due='',pri='',txt=raw;
-        var am=raw.match(/@(\S+)/);
-        var dm=raw.match(/\b(\d{2}-\d{2}-\d{4})\b/);
-        var pm=raw.match(/!(p[123])/i);
+        var raw=m[1].trim(),assignee='',due='',txt=raw;
+        var am=raw.match(/@(\S+)/),dm=raw.match(/\b(\d{2}-\d{2}-\d{4})\b/);
         if(am){assignee=am[1];txt=txt.replace(am[0],'').trim();}
-        if(pm){pri=pm[1].toLowerCase();txt=txt.replace(pm[0],'').trim();}
         if(dm){due=dm[1];txt=txt.replace(dm[0],'').trim();}
-        // Nettoyer les espaces multiples
-        txt=txt.replace(/\s+/g,' ').trim();
-        cr.actions.push({text:txt,assignee:assignee,due:due,pri:pri});
+        cr.actions.push({text:txt,assignee:assignee,due:due});
       }
     }
   }
@@ -973,12 +1004,6 @@ function renderCR(body){
     cr.actions.forEach(function(a,i){
       h+='<div class="pr-item"><span class="pr-icon" style="font-family:var(--mono);font-size:12px;min-width:20px;">'+(i+1)+'.</span><div class="pr-body">'+esc(a.text);
       if(a.assignee)h+=' '+aliasAvatarHtml(a.assignee);
-      // Afficher la priorité
-      if(a.pri){
-        var priColors={p1:'#DC2626',p2:'#D97706',p3:'#16A34A'};
-        var priLabels={p1:'P1',p2:'P2',p3:'P3'};
-        h+=' <span style="display:inline-flex;align-items:center;justify-content:center;font-size:10px;padding:3px 7px;border-radius:12px;background:'+(priColors[a.pri]||'#888')+'15;color:'+(priColors[a.pri]||'#888')+';font-weight:600;vertical-align:middle;">'+(priLabels[a.pri]||a.pri.toUpperCase())+'</span>';
-      }
       if(a.due)h+=' <span style="color:var(--amber);font-size:12px;">\uD83D\uDCC5 '+esc(a.due)+'</span>';
       h+='</div></div>';
     });
@@ -1089,12 +1114,7 @@ function mobileBack(){
 
 // ── Persist ───────────────────────────────────────────────────────────────────
 function debounceSave(){setSyncDot('pending');clearTimeout(saveTimer);saveTimer=setTimeout(autoSave,1500);}
-function autoSave(){
-  localStorage.setItem(SK,JSON.stringify(S));
-  if(accessToken)pushToDrive();
-  else setSyncDot('local');
-  isEditing=false; // Editing complete, sync is now safe
-}
+function autoSave(){localStorage.setItem(SK,JSON.stringify(S));if(accessToken)pushToDrive();else setSyncDot('local');}
 function setSyncDot(s){var m={local:'⚫ Local',pending:'🟡 Pending',sync:'🟢 Sync ✓',error:'🔴 Erreur'};document.getElementById('sync-dot').textContent=m[s]||'⚫ Local';}
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
@@ -1131,43 +1151,15 @@ function renderParticipantChips(participants){
   var names=participants.split(',').map(function(n){return n.trim();}).filter(Boolean);
   if(!names.length)return'';
   var h='<div style="display:flex;flex-wrap:wrap;gap:5px;margin:4px 0;">';
-  names.forEach(function(nom,idx){
+  names.forEach(function(nom){
     var resolved=nom.startsWith('@')?resolveAlias(nom):null;
     var displayNom=resolved?resolved.nom:nom;
     var ini=resolved?resolved.initiales:pInitials(nom);
     var col=pColor(displayNom);
-    h+='<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 3px 3px 5px;border-radius:20px;border:1px solid var(--border);background:var(--bg);">'
-      +'<span class="pr-avatar-mini c'+col+'">'+esc(ini)+'</span>'+esc(displayNom)
-      +'<span onclick="removeParticipant('+idx+')" style="cursor:pointer;opacity:0.5;font-size:14px;line-height:1;padding:0 4px;" onmouseover="this.style.opacity=1;this.style.color=\'var(--red)\'" onmouseout="this.style.opacity=0.5;this.style.color=\'\'">×</span>'
-      +'</span>';
+    h+='<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:3px 10px 3px 5px;border-radius:20px;border:1px solid var(--border);background:var(--bg);">'
+      +'<span class="pr-avatar-mini c'+col+'">'+esc(ini)+'</span>'+esc(displayNom)+'</span>';
   });
   return h+'</div>';
-}
-
-function removeParticipant(index){
-  var n=S.notes.find(function(x){return x.id===curId;});
-  if(!n)return;
-  var lines=(n.body||'').split('\n');
-  var inFront=false;
-  
-  for(var i=0;i<lines.length;i++){
-    var line=lines[i].trim();
-    if(line==='---'){
-      if(!inFront)inFront=true;
-      else break;
-    }
-    if(inFront&&line.match(/^participants\s*:\s*/i)){
-      var match=line.match(/^(participants\s*:\s*)(.*)/i);
-      if(match){
-        var participants=match[2].split(',').map(function(p){return p.trim();}).filter(Boolean);
-        participants.splice(index,1);
-        lines[i]=match[1]+participants.join(', ');
-        document.getElementById('note-ta').value=lines.join('\n');
-        onNoteInput();
-        return;
-      }
-    }
-  }
 }
 
 // ── Shared state (projet001 + shared.json) ────────────────────────────────────
@@ -1175,8 +1167,6 @@ var sharedProjects = [];
 var sharedTeam = [];
 var todoFileId = null;
 var todoFullData = null;
-var crGeneratorData = null;
-var crGeneratorFileId = null;
 
 function loadSharedData(){
   if(!accessToken)return;
@@ -1210,36 +1200,6 @@ function loadSharedData(){
   .then(function(data){
     if(data)todoFullData=data;
   }).catch(function(){});
-
-  // Load notes2-cr-export.json for CR exports to CR Generator 2
-  var q3=encodeURIComponent("name='notes2-cr-export.json' and trashed=false");
-  fetch('https://www.googleapis.com/drive/v3/files?q='+q3+'&fields=files(id)&orderBy=modifiedTime+desc',
-    {headers:{Authorization:'Bearer '+accessToken}})
-  .then(function(r){return r.json();})
-  .then(function(d){
-    crGeneratorFileId=d.files&&d.files[0]?d.files[0].id:null;
-    if(!crGeneratorFileId){
-      // Create the file if it doesn't exist
-      return fetch('https://www.googleapis.com/drive/v3/files',{
-        method:'POST',
-        headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
-        body:JSON.stringify({name:'notes2-cr-export.json',mimeType:'application/json'})
-      }).then(function(r){return r.json();}).then(function(file){
-        crGeneratorFileId=file.id;
-        // Initialize with empty history
-        crGeneratorData={history:[]};
-        return null;
-      });
-    }
-    return fetch('https://www.googleapis.com/drive/v3/files/'+crGeneratorFileId+'?alt=media',
-      {headers:{Authorization:'Bearer '+accessToken}});
-  }).then(function(r){return r?r.json():null;})
-  .then(function(data){
-    if(data)crGeneratorData=data;
-    if(!crGeneratorData)crGeneratorData={history:[]};
-  }).catch(function(e){
-    console.error('Erreur chargement notes2-cr-export.json:',e);
-  });
 }
 
 function writeTodoFile(){
@@ -1249,15 +1209,6 @@ function writeTodoFile(){
      body:JSON.stringify(todoFullData)})
   .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);})
   .catch(function(e){toast('❌ projet001 : '+e.message);});
-}
-
-function writeCRGeneratorFile(){
-  if(!accessToken||!crGeneratorData||!crGeneratorFileId)return;
-  fetch('https://www.googleapis.com/upload/drive/v3/files/'+crGeneratorFileId+'?uploadType=media',
-    {method:'PATCH',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
-     body:JSON.stringify(crGeneratorData)})
-  .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);})
-  .catch(function(e){toast('❌ notes2-cr-export : '+e.message);});
 }
 
 function validateCRNote(){
@@ -1294,27 +1245,16 @@ function validateCRNote(){
       });
       if(member)assigneeIds=[member.id];
     }
-    var now=new Date();
-    var dateStr=now.toLocaleDateString('fr-FR');
-    var timeStr=now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-    var crTitleForComment=cr.title||'CR sans titre';
-    
     var task={
       id:'cr'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
       text:action.text,
       projId:projId,
-      pri:action.pri||'p2',
+      pri:'p2',
       done:false,
       ts:Date.now(),
       assigneeIds:assigneeIds,
       source:'cr',
-      crTitle:buildCRDisplayTitle(cr.projet, cr.title),
-      comments:[{
-        id:'auto'+Date.now(),
-        text:'Tâche créée le '+dateStr+' à '+timeStr+' dans le CR '+crTitleForComment,
-        author:'system',
-        ts:Date.now()
-      }]
+      crTitle:buildCRDisplayTitle(cr.projet, cr.title)
     };
     if(action.due)task.dueDate=action.due;
     todoFullData.backlog.unshift(task);
@@ -1326,63 +1266,6 @@ function validateCRNote(){
     toast('✓ '+added+' action'+(added>1?'s':'')+' → projet001'+(cr.projet?' ['+cr.projet+']':''));
   } else {
     toast('Actions déjà dans projet001');
-  }
-
-  // Copy CR to CR Generator 2
-  if(crGeneratorData){
-    console.log('CR Generator Data avant:', crGeneratorData);
-    crGeneratorData.history=crGeneratorData.history||[];
-    console.log('Nombre de CR avant ajout:', crGeneratorData.history.length);
-    // Check if CR already exists
-    var existingCR=crGeneratorData.history.find(function(e){
-      return e.raw===n.body&&e.projet===cr.projet;
-    });
-    if(!existingCR){
-      // Parser la date du CR pour avoir le bon timestamp
-      var crTimestamp = Date.now(); // Fallback
-      
-      // Extraire la date et l'heure du titre ou des champs YAML
-      var crDate = cr.date; // Format: DD-MM-YYYY
-      var crTitle = cr.title || ''; // Format: "CR de la réunion du 26 avril 2026 à 23:16"
-      
-      if (crDate && crDate.match(/^\d{2}-\d{2}-\d{4}$/)) {
-        var parts = crDate.split('-');
-        var year = parseInt(parts[2]);
-        var month = parseInt(parts[1]) - 1;
-        var day = parseInt(parts[0]);
-        
-        // Extraire l'heure du titre si disponible
-        var timeMatch = crTitle.match(/à (\d{1,2}):(\d{2})/);
-        var hours = timeMatch ? parseInt(timeMatch[1]) : 0;
-        var minutes = timeMatch ? parseInt(timeMatch[2]) : 0;
-        
-        var d = new Date(year, month, day, hours, minutes);
-        crTimestamp = d.getTime();
-      }
-      
-      var crEntry={
-        id:'n2_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
-        raw:n.body,
-        projet:cr.projet||'', // Utiliser le nom du projet, pas l'ID
-        status:'valide',
-        publishedAt:new Date().toLocaleString('fr-FR'),
-        ts:crTimestamp
-      };
-      console.log('Ajout du CR:', crEntry);
-      crGeneratorData.history.unshift(crEntry);
-      console.log('Nombre de CR après ajout:', crGeneratorData.history.length);
-      if(crGeneratorData.history.length>100)crGeneratorData.history.pop();
-      writeCRGeneratorFile();
-      toast('✓ CR copié dans CR Generator 2');
-    } else {
-      console.log('CR déjà existant, pas de copie');
-      toast('CR déjà dans CR Generator 2');
-    }
-  } else if(accessToken){
-    console.log('crGeneratorData est null ou undefined');
-    toast('⚠ notes2-cr-export.json non chargé');
-  } else {
-    console.log('Pas de token d\'accès');
   }
 }
 
@@ -1408,10 +1291,6 @@ async function findDriveFile(){
 }
 async function pullFromDrive(){
   if(!accessToken)return;
-  if(isEditing){
-    console.log('[Notes2] Sync skipped: user is editing');
-    return; // Don't sync while user is actively typing
-  }
   try{
     setSyncDot('pending');
     driveFileId=driveFileId||await findDriveFile();
@@ -1647,12 +1526,7 @@ function createAutocompleteDropdown(){
     dropdown=document.createElement('div');
     dropdown.id='autocomplete-dropdown';
     dropdown.className='autocomplete-dropdown';
-    var wrapper=document.querySelector('.note-ta-wrap');
-    if(wrapper){
-      wrapper.appendChild(dropdown);
-    } else {
-      document.body.appendChild(dropdown);
-    }
+    document.body.appendChild(dropdown);
   }
   return dropdown;
 }
@@ -1699,29 +1573,6 @@ function showAutocomplete(input,trigger,query,cursorPos){
       {type:'priority',id:'p2',label:'Priorité P2',tag:'!p2',color:'#D97706'},
       {type:'priority',id:'p3',label:'Priorité P3',tag:'!p3',color:'#16A34A'}
     ].filter(function(i){return i.tag.indexOf(autocompleteState.query)>=0;});
-  } else if(trigger==='%'){
-    // Date picker: show today + next 6 days
-    var today=new Date();
-    var dayNames=['dim','lun','mar','mer','jeu','ven','sam'];
-    var monthNames=['jan','fév','mar','avr','mai','juin','juil','août','sep','oct','nov','déc'];
-    items=[];
-    for(var i=0;i<7;i++){
-      var d=new Date(today);
-      d.setDate(today.getDate()+i);
-      var dayName=dayNames[d.getDay()];
-      var dd=String(d.getDate()).padStart(2,'0');
-      var mm=String(d.getMonth()+1).padStart(2,'0');
-      var yyyy=d.getFullYear();
-      var dateStr=dd+'-'+mm+'-'+yyyy;
-      var label=(i===0?'Aujourd\'hui':i===1?'Demain':dayName.charAt(0).toUpperCase()+dayName.slice(1))+' '+d.getDate()+' '+monthNames[d.getMonth()];
-      items.push({
-        type:'date',
-        id:dateStr,
-        label:label,
-        tag:dateStr,
-        color:'var(--primary)'
-      });
-    }
   }
   
   autocompleteState.items=items;
@@ -1735,8 +1586,6 @@ function showAutocomplete(input,trigger,query,cursorPos){
       avatar='<span class="ac-avatar" style="background:'+item.color+';border-radius:4px;">📁</span>';
     } else if(item.type==='priority'){
       avatar='<span class="ac-avatar" style="background:'+item.color+';border-radius:4px;">⚡</span>';
-    } else if(item.type==='date'){
-      avatar='<span class="ac-avatar" style="background:'+item.color+';border-radius:4px;">📅</span>';
     }
     return '<div class="autocomplete-item'+(idx===0?' selected':'')+'" data-index="'+idx+'">'+
       avatar+
@@ -1745,7 +1594,10 @@ function showAutocomplete(input,trigger,query,cursorPos){
     '</div>';
   }).join('');
   
-  // Just show the dropdown (CSS positions it at bottom of wrapper)
+  // Position dropdown near cursor
+  var rect=input.getBoundingClientRect();
+  dropdown.style.left=rect.left+'px';
+  dropdown.style.top=(rect.top+30)+'px';
   dropdown.classList.add('show');
   autocompleteState.visible=true;
   
@@ -1816,21 +1668,6 @@ function handleAutocompleteInput(e){
   var text=input.value;
   var cursorPos=input.selectionStart;
   
-  // Trouver le début de la ligne actuelle
-  var lineStart=cursorPos;
-  while(lineStart>0&&text[lineStart-1]!=='\n')lineStart--;
-  
-  // Extraire la ligne jusqu'au curseur
-  var lineText=text.substring(lineStart,cursorPos);
-  
-  // Si la ligne commence par "A:" (action), désactiver l'autocomplete
-  var isActionLine=/^\s*A\s*:/.test(lineText);
-  if(isActionLine){
-    console.log('[Notes2] Autocomplete désactivé sur ligne A:', lineText);
-    hideAutocomplete();
-    return;
-  }
-  
   // Detect active trigger
   var triggerPos=-1;
   var trigger=null;
@@ -1838,7 +1675,7 @@ function handleAutocompleteInput(e){
   for(var i=cursorPos-1;i>=0;i--){
     var char=text[i];
     if(char===' '||char==='\n')break;
-    if(char==='@'||char==='#'||char==='!'||char==='%'){
+    if(char==='@'||char==='#'||char==='!'){
       trigger=char;
       triggerPos=i;
       break;
@@ -1888,6 +1725,337 @@ document.addEventListener('click',function(e){
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 init();
+
+// ════════════════════════════════════════════════════════════════════════════
+// IMPROVEMENTS BLOCK
+// ════════════════════════════════════════════════════════════════════════════
+
+// ── 3. Soft delete / Trash ─────────────────────────────────────────────────
+function ensureTrash(){if(!Array.isArray(S.trash))S.trash=[];}
+
+// Override deleteNote
+function deleteNote(){
+  if(!curId)return;
+  var n=S.notes.find(function(x){return x.id===curId;});
+  if(!n)return;
+  var title=noteTitle(n)||'cette note';
+  // Move to trash instead of permanent delete
+  ensureTrash();
+  S.trash.unshift({note:JSON.parse(JSON.stringify(n)),deletedAt:Date.now()});
+  if(S.trash.length>50)S.trash.length=50; // cap at 50
+  var del=curId;
+  S.notes=S.notes.filter(function(x){return x.id!==del;});
+  openTabs=openTabs.filter(function(t){return t.id!==del;});
+  curId=null;curTmpl=null;
+  var next=openTabs[openTabs.length-1];
+  if(next){openNote(next.id);}
+  else{
+    document.getElementById('editor-active').style.display='none';
+    document.getElementById('editor-empty').style.display='flex';
+    updateDateFooter();
+  }
+  autoSave();renderList();renderTabs();saveTabs();renderTrash();
+  if(window.innerWidth<=680)mobileBack();
+  // Toast with undo
+  var el=document.getElementById('toast');
+  el.innerHTML='Supprimée <button class="restore-btn" onclick="restoreFromTrash(\''+del+'\')">Annuler</button>';
+  el.classList.add('show');
+  clearTimeout(window._tt);
+  window._tt=setTimeout(function(){el.classList.remove('show');},5000);
+}
+
+function restoreFromTrash(id){
+  ensureTrash();
+  var idx=S.trash.findIndex(function(x){return x.note&&x.note.id===id;});
+  if(idx<0)return;
+  var entry=S.trash.splice(idx,1)[0];
+  S.notes.unshift(entry.note);
+  autoSave();renderList();renderTabs();renderTrash();
+  openNote(entry.note.id);
+  toast('Note restaurée ✓');
+}
+
+function emptyTrash(){
+  ensureTrash();
+  if(!S.trash.length)return;
+  if(!confirm('Supprimer définitivement les '+S.trash.length+' note(s) dans la corbeille ?'))return;
+  S.trash=[];
+  autoSave();renderTrash();
+  toast('Corbeille vidée');
+}
+
+function toggleTrashPanel(){
+  var list=document.getElementById('trash-list');
+  var chev=document.getElementById('trash-chevron');
+  var open=list.style.display==='none';
+  list.style.display=open?'':'none';
+  if(chev)chev.textContent=open?'▾':'▸';
+  if(open)renderTrashList();
+}
+
+function renderTrash(){
+  ensureTrash();
+  // Clean entries older than 30 days
+  var cutoff=Date.now()-30*86400000;
+  S.trash=S.trash.filter(function(x){return x.deletedAt>cutoff;});
+  var sec=document.getElementById('trash-section');
+  var cnt=document.getElementById('trash-count');
+  if(!sec||!cnt)return;
+  sec.style.display=S.trash.length?'':'none';
+  cnt.textContent=S.trash.length;
+}
+
+function renderTrashList(){
+  ensureTrash();
+  var el=document.getElementById('trash-list');if(!el)return;
+  if(!S.trash.length){el.innerHTML='<div style="font-size:12px;color:var(--muted);padding:4px 0;">Vide</div>';return;}
+  el.innerHTML=S.trash.map(function(x,i){
+    var t=x.note?noteTitle(x.note)||'Sans titre':'?';
+    return '<div class="trash-item"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(t)+'</span>'
+      +'<button onclick="event.stopPropagation();restoreFromTrash(\''+x.note.id+'\')" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--blue);padding:0;white-space:nowrap;">↩ Rétablir</button></div>';
+  }).join('')
+  +'<div style="margin-top:6px;"><button onclick="emptyTrash()" style="background:none;border:none;font-size:11px;color:var(--red);cursor:pointer;padding:2px 0;">Vider la corbeille</button></div>';
+}
+
+// ── 2. Word count + reading time ───────────────────────────────────────────
+function updateWordCount(){
+  var el=document.getElementById('wc-text');
+  if(!el)return;
+  var n=S.notes.find(function(x){return x.id===curId;});
+  if(!n){el.textContent='';return;}
+  var body=(n.body||'');
+  // Skip YAML front matter
+  if(body.trimStart().startsWith('---')){
+    var end=body.indexOf('\n---',3);
+    if(end>0)body=body.slice(end+4);
+  }
+  var words=body.trim().split(/\s+/).filter(function(w){return w.length>0;});
+  var wc=words.length;
+  var min=Math.max(1,Math.round(wc/200));
+  el.textContent=wc+' mot'+(wc>1?'s':'')+' · ~'+min+' min de lecture';
+}
+
+// ── 8. Focus / zen mode ────────────────────────────────────────────────────
+var _focusMode=false;
+function toggleFocus(){
+  _focusMode=!_focusMode;
+  document.documentElement.classList.toggle('focus-mode',_focusMode);
+  var btn=document.getElementById('focus-btn');
+  if(btn)btn.classList.toggle('on',_focusMode);
+  toast(_focusMode?'Mode focus — F11 ou Échap pour quitter':'Mode normal');
+}
+
+// ── 6. YAML fold ──────────────────────────────────────────────────────────
+var _yamlFolded=false;
+function updateYamlFoldBtn(){
+  var n=S.notes.find(function(x){return x.id===curId;});
+  var hasYaml=n&&(n.body||'').trimStart().startsWith('---');
+  var btn=document.getElementById('yaml-fold-toggle-btn');
+  if(btn)btn.style.display=(hasYaml&&curView!=='raw')?'':'none';
+  if(!hasYaml&&_yamlFolded)unfoldYaml();
+}
+function foldYaml(){
+  var n=S.notes.find(function(x){return x.id===curId;});
+  if(!n)return;
+  var lines=(n.body||'').split('\n');
+  // Extract YAML fields for summary
+  var fields=[];
+  var inY=false;
+  for(var i=0;i<lines.length;i++){
+    if(lines[i].trim()==='---'){if(!inY){inY=true;continue;}else break;}
+    if(inY){var m=lines[i].match(/^(\w[\w-]*)\s*:\s*(.+)/);if(m&&m[2].trim())fields.push(m[1]+': '+m[2].trim());}
+  }
+  var label=document.getElementById('yaml-fold-label');
+  if(label)label.textContent=fields.slice(0,3).join(' · ')+(fields.length>3?' …':'');
+  var btn=document.getElementById('yaml-fold-toggle-btn');
+  if(btn)btn.textContent='YAML ▸';
+  document.getElementById('editor-raw').classList.add('yaml-folded');
+  var overlay=document.getElementById('yaml-fold-overlay');
+  if(overlay)overlay.style.display='flex';
+  _yamlFolded=true;
+  // Offset textarea scroll to hide YAML
+  var ta=document.getElementById('note-ta');
+  if(ta){var yamlEnd=(n.body||'').indexOf('\n---',3);if(yamlEnd>0){ta.style.marginTop='30px';}}
+}
+function unfoldYaml(){
+  var btn=document.getElementById('yaml-fold-toggle-btn');
+  if(btn)btn.textContent='YAML ▾';
+  document.getElementById('editor-raw').classList.remove('yaml-folded');
+  var overlay=document.getElementById('yaml-fold-overlay');
+  if(overlay)overlay.style.display='none';
+  var ta=document.getElementById('note-ta');
+  if(ta)ta.style.marginTop='';
+  _yamlFolded=false;
+}
+function toggleYamlFold(){if(_yamlFolded)unfoldYaml();else foldYaml();}
+
+// ── 7. Markdown renderer for free notes ────────────────────────────────────
+function renderMarkdown(text){
+  var n=S.notes.find(function(x){return x.id===curId;});
+  var imgs=(n&&n.images)?n.images:{};
+  var lines=text.split('\n');
+  var out=[];
+  var inCode=false,codeLines=[],inUl=false,inOl=false;
+
+  function flushList(){
+    if(inUl){out.push('</ul>');inUl=false;}
+    if(inOl){out.push('</ol>');inOl=false;}
+  }
+
+  function inlineFormat(s){
+    // escape
+    s=s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    // images [img:id]
+    s=s.replace(/\[img:([a-z0-9]+)\]/g,function(_,id){
+      var src=imgs[id];return src?'<img class="pr-img" src="'+src+'" alt="image">':'';
+    });
+    // links
+    s=s.replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g,'<a class="pr-link" href="$2" target="_blank">$1</a>');
+    // autolink
+    s=s.replace(/(^|[\s(])(https?:\/\/[^\s<>"]+)/g,'$1<a class="pr-link" href="$2" target="_blank">$2</a>');
+    // bold
+    s=s.replace(/\*\*([^*]+)\*\*/g,'<strong class="md-strong">$1</strong>');
+    s=s.replace(/__([^_]+)__/g,'<strong class="md-strong">$1</strong>');
+    // italic
+    s=s.replace(/\*([^*]+)\*/g,'<em class="md-em">$1</em>');
+    s=s.replace(/_([^_]+)_/g,'<em class="md-em">$1</em>');
+    // strikethrough
+    s=s.replace(/~~([^~]+)~~/g,'<span class="md-strike">$1</span>');
+    // inline code
+    s=s.replace(/`([^`]+)`/g,'<code class="md-code">$1</code>');
+    // YouTube
+    s=s.replace(/https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/g,
+      function(_,vid){return '<div class="pr-yt"><iframe src="https://www.youtube-nocookie.com/embed/'+vid+'" allowfullscreen loading="lazy"></iframe></div>';});
+    return s;
+  }
+
+  for(var i=0;i<lines.length;i++){
+    var line=lines[i];
+    // Code fence
+    if(line.startsWith('```')){
+      if(!inCode){inCode=true;codeLines=[];continue;}
+      else{flushList();out.push('<pre class="md-pre">'+codeLines.map(function(l){return l.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}).join('\n')+'</pre>');inCode=false;continue;}
+    }
+    if(inCode){codeLines.push(line);continue;}
+    // HR
+    if(/^---+$/.test(line.trim())||/^\*\*\*+$/.test(line.trim())){flushList();out.push('<hr class="md-hr">');continue;}
+    // Headings
+    var hm=line.match(/^(#{1,3})\s+(.*)/);
+    if(hm){flushList();var lvl=hm[1].length;out.push('<div class="md-h'+lvl+'">'+inlineFormat(hm[2])+'</div>');continue;}
+    // Blockquote
+    if(line.startsWith('>')){flushList();out.push('<div class="md-blockquote">'+inlineFormat(line.slice(1).trim())+'</div>');continue;}
+    // Unordered list
+    var ulm=line.match(/^[-*]\s+(.*)/);
+    if(ulm){
+      if(inOl){out.push('</ol>');inOl=false;}
+      if(!inUl){out.push('<ul class="md-ul">');inUl=true;}
+      // checkbox
+      var cbm=ulm[1].match(/^\[([ x])\]\s*(.*)/i);
+      if(cbm){out.push('<li class="md-li"><input type="checkbox" class="md-cb"'+(cbm[1].toLowerCase()==='x'?' checked':'')+' disabled>'+inlineFormat(cbm[2])+'</li>');}
+      else{out.push('<li class="md-li">'+inlineFormat(ulm[1])+'</li>');}
+      continue;
+    }
+    // Ordered list
+    var olm=line.match(/^(\d+)\.\s+(.*)/);
+    if(olm){
+      if(inUl){out.push('</ul>');inUl=false;}
+      if(!inOl){out.push('<ol class="md-ol">');inOl=true;}
+      out.push('<li class="md-li">'+inlineFormat(olm[2])+'</li>');
+      continue;
+    }
+    flushList();
+    // Empty line
+    if(!line.trim()){out.push('<div style="height:0.5em;"></div>');continue;}
+    // img
+    var imgM=line.match(/^\[img:([a-z0-9]+)\]$/);
+    if(imgM){var src=imgs[imgM[1]];if(src)out.push('<img class="pr-img" src="'+src+'" alt="">');continue;}
+    // Paragraph
+    out.push('<p class="md-p">'+inlineFormat(line)+'</p>');
+  }
+  flushList();
+  return out.join('');
+}
+
+// ── 7. Override renderFree to use Markdown ─────────────────────────────────
+var _origRenderFree=renderFree;
+renderFree=function(body){
+  if(!body||!body.trim())return'<div class="pr-empty">Note vide</div>';
+  var lines=body.split('\n');
+  // Extract title (first non-empty line)
+  var titleIdx=lines.findIndex(function(l){return l.trim();});
+  var title=titleIdx>=0?lines[titleIdx].replace(/^#+\s*/,'').trim():'';
+  var rest=lines.slice(titleIdx+1).join('\n').trim();
+  var tags=(body.match(/#[\w\u00C0-\u024F]+/g)||[]).map(function(t){return '<span class="pr-tag">'+esc(t)+'</span>';}).join('');
+  return (title?'<div class="pr-title">'+esc(title)+'</div>':'')
+    +(tags?'<div style="margin-bottom:12px;">'+tags+'</div>':'')
+    +(rest?renderMarkdown(rest):'');
+};
+
+// ── 5. Keyboard shortcuts ──────────────────────────────────────────────────
+document.addEventListener('keydown',function(e){
+  var mod=e.ctrlKey||e.metaKey;
+  // Ctrl+S = force save
+  if(mod&&e.key==='s'){e.preventDefault();if(curId){autoSave();toast('✓ Sauvegardé');}}
+  // Ctrl+N = new note
+  if(mod&&e.key==='n'){e.preventDefault();newNote();if(window.innerWidth<=680)showEditor();}
+  // Ctrl+W = close tab
+  if(mod&&e.key==='w'){e.preventDefault();if(curId)closeTab({stopPropagation:function(){}},curId);}
+  // F11 or Ctrl+Shift+F = focus mode (only when editor is visible)
+  if(e.key==='F11'&&!e.ctrlKey&&!e.shiftKey){e.preventDefault();toggleFocus();}
+  if(mod&&e.shiftKey&&e.key==='F'){e.preventDefault();toggleFocus();}
+  // Escape = exit focus mode
+  if(e.key==='Escape'&&_focusMode){toggleFocus();}
+  // Ctrl+Shift+Y = toggle YAML fold
+  if(mod&&e.shiftKey&&e.key==='Y'){e.preventDefault();toggleYamlFold();}
+});
+
+// ── 4. Patch updatePreview to also update YAML fold btn ────────────────────
+var _origUpdatePreview=updatePreview;
+updatePreview=function(){_origUpdatePreview();updateYamlFoldBtn();};
+
+// ── Patch openNote to call new update fns ──────────────────────────────────
+var _origOpenNote=openNote;
+openNote=function(id){
+  _origOpenNote(id);
+  updateWordCount();
+  renderTrash();
+  _yamlFolded=false;
+  unfoldYaml();
+  updateYamlFoldBtn();
+};
+
+// ── Patch onNoteInput to update word count ─────────────────────────────────
+var _origOnNoteInput=onNoteInput;
+onNoteInput=function(){
+  _origOnNoteInput();
+  updateWordCount();
+};
+
+// ── Patch updateDateFooter to show wc bar ─────────────────────────────────
+var _origUpdateDateFooter=updateDateFooter;
+updateDateFooter=function(){
+  _origUpdateDateFooter();
+  updateWordCount();
+};
+
+// ── Patch init to call renderTrash ────────────────────────────────────────
+var _origInit=init;
+init=function(){_origInit();renderTrash();};
+
+// ── Patch ensureState to include trash ────────────────────────────────────
+var _origEnsureState=ensureState;
+ensureState=function(){_origEnsureState();if(!Array.isArray(S.trash))S.trash=[];};
+
+// ── Keyboard hint in placeholder ─────────────────────────────────────────
+var _noteTaKb=document.getElementById('note-ta');
+if(_noteTaKb){
+  _noteTaKb.setAttribute('placeholder',
+    'Commence à écrire…\n\nUtilise des #tags dans ton texte.\nLa première ligne devient le titre.\nColle une image (Ctrl+V) ou une URL YouTube.\n/todo texte #projet @alias !p1 26-04-2026\n\nRaccourcis : Ctrl+S sauvegarder · Ctrl+N nouvelle note · Ctrl+W fermer onglet · F11 focus');
+}
+// ════════════════════════════════════════════════════════════════════════════
+// END IMPROVEMENTS BLOCK
+// ════════════════════════════════════════════════════════════════════════════
+
 </script>
 </body>
 </html>
