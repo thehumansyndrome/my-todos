@@ -2327,29 +2327,31 @@ function renderGlobal() {
 
   // ── Tâches (actives + terminées) ──
   if (allBL.length) {
-    const byProj = {};
-    allBL.filter(b => !(_globalHideDone && b.done) && matchesSearch(b, _globalFilterQuery) && matchesProjFilter(b)).forEach(b => {
-      const p = getProj(b.projId);
-      const key = p ? p.name : 'Sans projet'; const col = p ? p.color : 'var(--muted)';
-      if (!byProj[key]) byProj[key] = {items:[], color:col};
-      byProj[key].items.push(b);
-    });
-    h += `<div class="suivi-section"><div class="suivi-section-title">Tâches (${allBL.length})</div>`;
-    Object.keys(byProj).sort().forEach(pk => {
-      const grp = byProj[pk];
-      const active = grp.items.filter(b=>!b.done).length;
-      h += `<div style="font-size:11px;font-weight:600;color:${grp.color};margin:10px 0 4px;text-transform:uppercase;letter-spacing:.04em;">${esc(pk)} — ${active} actives / ${grp.items.length} total</div>`;
-      grp.items.forEach(b => {
+    const filteredBL = allBL.filter(b => !(_globalHideDone && b.done) && matchesSearch(b, _globalFilterQuery) && matchesProjFilter(b))
+      .sort((a,b) => {
+        // Active first, then by priority, then by date
+        if (a.done !== b.done) return a.done ? 1 : -1;
+        const po = {p1:0,p2:1,p3:2}; const pa=po[a.pri]??1, pb=po[b.pri]??1;
+        if (pa !== pb) return pa - pb;
+        return (b.ts||0) - (a.ts||0);
+      });
+    if (filteredBL.length) {
+      h += `<div class="suivi-section"><div class="suivi-section-title">Tâches (${filteredBL.length})</div>`;
+      filteredBL.forEach(b => {
+        const p = getProj(b.projId);
         const priCol = b.pri==='p1'?'var(--red)':b.pri==='p2'?'var(--amber)':'var(--muted)';
+        const dateStr = b.dueDate ? `<span style="font-size:10px;color:var(--muted);white-space:nowrap;">📅 ${b.dueDate.split('-').reverse().slice(0,2).join('/')}</span>` : b.ts ? `<span style="font-size:10px;color:var(--muted);white-space:nowrap;">${new Date(b.ts).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit'})}</span>` : '';
         h += `<div class="suivi-row" style="cursor:pointer;${b.done?'opacity:.5':''}" onclick="if(!event.target.closest('input'))openTD('${b.id}')">
           <input type="checkbox" ${b.done?'checked':''} data-action="toggleGlobalTask" data-id="${b.id}" style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);flex-shrink:0;" onclick="event.stopPropagation()">
           <span class="suivi-row-title"${b.done?' style="text-decoration:line-through;color:var(--muted)"':''}>${esc(b.text||'')}</span>
+          ${projBadge(p)}
           ${b.pri?`<span style="font-size:11px;font-weight:600;color:${priCol}">${b.pri.toUpperCase()}</span>`:''}
           <span style="display:inline-flex;gap:3px;">${adminBadgeHtml(b)}</span>
+          ${dateStr}
         </div>`;
       });
-    });
-    h += '</div>';
+      h += '</div>';
+    }
   }
 
   // ── User Stories ──
