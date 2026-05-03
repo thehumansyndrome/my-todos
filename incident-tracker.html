@@ -629,10 +629,14 @@ function load(){
     if (Array.isArray(c.projects) && c.projects.length) sharedProjects = c.projects;
     if (Array.isArray(c.team)     && c.team.length)     sharedTeam     = c.team;
   } catch(e){}
-  // restore current edit draft
+  // restore current edit draft — only if the incident still exists
   try {
     var draft = JSON.parse(localStorage.getItem(SK+'_draft') || '{}');
-    if (draft && draft.editingId) editingId = draft.editingId;
+    if (draft && draft.editingId && S.incidents.some(function(x){return x.id===draft.editingId;})){
+      editingId = draft.editingId;
+    } else {
+      editingId = null; // incident was deleted or draft is stale
+    }
     if (draft && draft.curMarkers) curMarkers = draft.curMarkers;
   } catch(e){}
   renderAll();
@@ -896,16 +900,16 @@ function diffAndLog(old, neu){
 function saveIncident(){
   var p = getEditorPayload();
   if (!p.title){ toast('Titre requis'); return; }
-  if (editingId){
-    var e = S.incidents.find(function(x){return x.id===editingId;});
-    if (e){
-      diffAndLog(e, p);
-      // apply
-      Object.keys(p).forEach(function(k){ e[k] = p[k]; });
-      e.updated = Date.now();
-      toast('✓ Incident mis à jour');
-    }
+  var e = editingId ? S.incidents.find(function(x){return x.id===editingId;}) : null;
+  if (e){
+    // Update existing
+    diffAndLog(e, p);
+    Object.keys(p).forEach(function(k){ e[k] = p[k]; });
+    e.updated = Date.now();
+    toast('✓ Incident mis à jour');
   } else {
+    // Create new (editingId null OR stale id pointing to nothing)
+    editingId = null;
     var id = 'inc_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
     var n = Object.assign({id:id, created:Date.now(), updated:Date.now(), history:[]}, p);
     if (!n.declarantId) n.declarantId = getAdminId() || '';
@@ -915,6 +919,7 @@ function saveIncident(){
     toast('✓ Incident créé');
   }
   persist();
+  saveDraft();
   renderIncidentList();
   renderDashboard();
 }
