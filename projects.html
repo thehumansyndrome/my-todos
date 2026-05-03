@@ -2269,7 +2269,13 @@ function renderGlobal() {
   function getProj(id) { return S.projects.find(p=>p.id===id) || (suiviData.sharedProjects||[]).find(p=>p.id===id) || null; }
   const STLBL = {brouillon:'Brouillon',validation:'En validation',valide:'Validé ✓',renvoye:'Renvoyé',archive:'Archivé'};
   const STCLS = {brouillon:'s-archive',validation:'s-pause',valide:'s-actif',renvoye:'s-termine',archive:'s-archive'};
-  function rowIcon(st) { return st==='valide'?'<span style="color:var(--green);font-size:13px;flex-shrink:0;">✓</span>':'<span style="color:var(--muted);font-size:13px;flex-shrink:0;">○</span>'; }
+  function rowIcon(st) {
+    if (st==='valide')     return '<span style="color:var(--green);font-size:13px;flex-shrink:0;" title="Validé">✓</span>';
+    if (st==='validation') return '<span style="color:var(--amber);font-size:13px;flex-shrink:0;" title="En validation">◑</span>';
+    if (st==='renvoye')    return '<span style="color:var(--blue);font-size:13px;flex-shrink:0;" title="Renvoyé">↩</span>';
+    if (st==='archive')    return '<span style="color:var(--muted);font-size:11px;flex-shrink:0;" title="Archivé">▣</span>';
+    return '<span style="color:var(--muted);font-size:13px;flex-shrink:0;" title="Brouillon">○</span>';
+  }
   function projBadge(p) { return p?`<span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:12px;border:1px solid ${p.color};color:${p.color};">${esc(p.name)}</span>`:''; }
 
   // ── Quick-add bar (always shown when projet001 loaded) ──
