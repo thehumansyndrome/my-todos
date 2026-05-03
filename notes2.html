@@ -1997,13 +1997,12 @@ renderFree=function(body){
 document.addEventListener('keydown',function(e){
   var mod=e.ctrlKey||e.metaKey;
   // Ctrl+S = force save
-  if(mod&&e.key==='s'){e.preventDefault();if(curId){autoSave();toast('✓ Sauvegardé');}}
-  // Ctrl+N = new note
-  if(mod&&e.key==='n'){e.preventDefault();newNote();if(window.innerWidth<=680)showEditor();}
-  // Ctrl+W = close tab
-  if(mod&&e.key==='w'){e.preventDefault();if(curId)closeTab({stopPropagation:function(){}},curId);}
-  // F11 or Ctrl+Shift+F = focus mode (only when editor is visible)
-  if(e.key==='F11'&&!e.ctrlKey&&!e.shiftKey){e.preventDefault();toggleFocus();}
+  if(mod&&!e.shiftKey&&e.key==='s'){e.preventDefault();if(curId){autoSave();toast('✓ Sauvegardé');}}
+  // Alt+N = new note (Ctrl+N = new browser window)
+  if(e.altKey&&e.key==='n'){e.preventDefault();newNote();if(window.innerWidth<=680)showEditor();}
+  // Alt+W = close tab (Ctrl+W = close browser tab)
+  if(e.altKey&&e.key==='w'){e.preventDefault();if(curId)closeTab({stopPropagation:function(){}},curId);}
+  // Ctrl+Shift+F = focus mode (F11 = browser fullscreen)
   if(mod&&e.shiftKey&&e.key==='F'){e.preventDefault();toggleFocus();}
   // Escape = exit focus mode
   if(e.key==='Escape'&&_focusMode){toggleFocus();}
@@ -2052,7 +2051,7 @@ ensureState=function(){_origEnsureState();if(!Array.isArray(S.trash))S.trash=[];
 var _noteTaKb=document.getElementById('note-ta');
 if(_noteTaKb){
   _noteTaKb.setAttribute('placeholder',
-    'Commence à écrire…\n\nUtilise des #tags dans ton texte.\nLa première ligne devient le titre.\nColle une image (Ctrl+V) ou une URL YouTube.\n/todo texte #projet @alias !p1 26-04-2026\n\nRaccourcis : Ctrl+S sauvegarder · Ctrl+N nouvelle note · Ctrl+W fermer onglet · F11 focus');
+    'Commence à écrire…\n\nUtilise des #tags dans ton texte.\nLa première ligne devient le titre.\nColle une image (Ctrl+V) ou une URL YouTube.\n/todo texte #projet @alias !p1 26-04-2026\n\nRaccourcis : Ctrl+S sauvegarder · Alt+N nouvelle note · Alt+W fermer onglet · Ctrl+Shift+F focus');
 }
 // ════════════════════════════════════════════════════════════════════════════
 // END IMPROVEMENTS BLOCK
