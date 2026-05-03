@@ -907,19 +907,23 @@ function saveIncident(){
     Object.keys(p).forEach(function(k){ e[k] = p[k]; });
     e.updated = Date.now();
     toast('✓ Incident mis à jour');
+    persist();
+    saveDraft();
   } else {
-    // Create new (editingId null OR stale id pointing to nothing)
-    editingId = null;
+    // Create new
     var id = 'inc_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
     var n = Object.assign({id:id, created:Date.now(), updated:Date.now(), history:[]}, p);
     if (!n.declarantId) n.declarantId = getAdminId() || '';
     n.history.unshift({ts:Date.now(), authorId:getAdminId()||'', authorName:(getAdminId()?(memberById(getAdminId())||{}).nom:'?'), field:'créé', from:'—', to:n.title});
     S.incidents.unshift(n);
-    editingId = n.id;
     toast('✓ Incident créé');
+    persist();
+    // Reset editor so next save creates a new incident
+    editingId = null;
+    curMarkers = {types:[], impacts:[]};
+    loadEditorFromState();
+    saveDraft();
   }
-  persist();
-  saveDraft();
   renderIncidentList();
   renderDashboard();
 }
