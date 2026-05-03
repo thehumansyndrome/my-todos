@@ -1520,11 +1520,58 @@ function refreshTD(){
   const t=tdGetTask(); if(!t) return;
   const ta=document.getElementById('td-title'); ta.value=t.text||''; tdAutoResize(ta);
   const st=t.status||'brouillon';
+  const pri=t.pri||'p2';
+  const priColor=pri==='p1'?'var(--red)':pri==='p2'?'var(--amber)':'var(--muted)';
   document.getElementById('td-badges').innerHTML=
-    `<span class="td-status-badge ${st==='valide'?'td-status-valide':'td-status-brouillon'}" onclick="tdToggleStatus()">${st==='valide'?'Validé ✓':'Brouillon'}</span>`;
-  tdRenderTeam(t); tdRenderComments(t); tdRenderHistory(t);
+    `<span class="td-status-badge ${st==='valide'?'td-status-valide':'td-status-brouillon'}" onclick="tdToggleStatus()">${st==='valide'?'Validé ✓':'Brouillon'}</span>`+
+    `<span class="td-status-badge" style="color:${priColor};border-color:${priColor};">${pri.toUpperCase()}</span>`;
+  tdRenderParams(t); tdRenderTeam(t); tdRenderComments(t); tdRenderHistory(t);
 }
 function tdAutoResize(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
+
+function tdRenderParams(t){
+  const priSel=document.getElementById('td-pri');
+  const projSel=document.getElementById('td-proj');
+  const dueIn=document.getElementById('td-duedate');
+  if(!priSel||!projSel||!dueIn) return;
+  // Priority
+  priSel.value=t.pri||'p2';
+  // Projects: union of S.projects (managed here) + suiviData.sharedProjects
+  const allProj=(S.projects||[]).slice();
+  (suiviData.sharedProjects||[]).forEach(p=>{ if(!allProj.find(x=>x.id===p.id)) allProj.push(p); });
+  const opts=['<option value="">— Sans projet —</option>']
+    .concat(allProj.map(p=>`<option value="${p.id}"${t.projId===p.id?' selected':''}>${esc(p.name||p.nom||'')}</option>`));
+  projSel.innerHTML=opts.join('');
+  if(t.projId) projSel.value=t.projId;
+  // Due date (already YYYY-MM-DD or empty)
+  dueIn.value=t.dueDate||'';
+}
+function tdSaveParams(){
+  const t=tdGetTask(); if(!t) return;
+  const newPri=document.getElementById('td-pri').value;
+  const newProj=document.getElementById('td-proj').value||null;
+  const newDue=document.getElementById('td-duedate').value||'';
+  const oldPri=t.pri||'p2';
+  const oldProj=t.projId||null;
+  const oldDue=t.dueDate||'';
+  if(newPri!==oldPri){ tdLog(t,'priorité',oldPri.toUpperCase(),newPri.toUpperCase()); t.pri=newPri; }
+  if(newProj!==oldProj){
+    const allProj=(S.projects||[]).concat(suiviData.sharedProjects||[]);
+    const fromP=oldProj?(allProj.find(p=>p.id===oldProj)||{}):null;
+    const toP  =newProj?(allProj.find(p=>p.id===newProj)||{}):null;
+    tdLog(t,'projet',fromP?(fromP.name||fromP.nom||'?'):'—',toP?(toP.name||toP.nom||'?'):'—');
+    t.projId=newProj;
+  }
+  if(newDue!==oldDue){
+    tdLog(t,'échéance',oldDue||'—',newDue||'—');
+    if(newDue) t.dueDate=newDue; else delete t.dueDate;
+  }
+  // Sync to suiviData.backlog
+  const numId=typeof tdTaskId==='string'?parseInt(tdTaskId,10):tdTaskId;
+  const sb=suiviData.backlog.find(x=>x.id===numId||x.id===tdTaskId);
+  if(sb){ sb.pri=t.pri; sb.projId=t.projId; if(t.dueDate) sb.dueDate=t.dueDate; else delete sb.dueDate; }
+  tdSave();
+}
 
 function tdSaveTitle(){
   const t=tdGetTask(); if(!t) return;
@@ -2523,6 +2570,18 @@ document.addEventListener('click',e=>{
     <button class="td-drawer-close" onclick="closeTD()">&#x2715;</button>
   </div>
   <div class="td-drawer-body">
+    <div class="td-drawer-section" id="td-sec-params">
+      <div class="td-drawer-section-title">&#x2699; Param&egrave;tres</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        <select id="td-pri" onchange="tdSaveParams()" style="font-family:var(--mono);font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none;">
+          <option value="p1">P1</option>
+          <option value="p2">P2</option>
+          <option value="p3">P3</option>
+        </select>
+        <select id="td-proj" onchange="tdSaveParams()" style="font-family:var(--sans);font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none;max-width:220px;"></select>
+        <input id="td-duedate" type="date" onchange="tdSaveParams()" style="font-family:var(--mono);font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none;">
+      </div>
+    </div>
     <div class="td-drawer-section">
       <div class="td-drawer-section-title">&#x1F465; &Eacute;quipe</div>
       <div id="td-team"></div>
