@@ -3664,13 +3664,15 @@ function todoItemHtml(t){
   const cat = getCatById(t.cat);
   const isDarkMode = document.documentElement.getAttribute('data-theme')==='dark';
   const catColor = isDarkMode ? (cat.darkColor||cat.textColor) : cat.textColor;
-  const catBadge = `<span style="font-family:var(--mono);font-size:9px;font-weight:500;padding:1px 5px;border-radius:2px;letter-spacing:.04em;text-transform:uppercase;background:transparent;color:${catColor};border:1px solid ${catColor};opacity:.9;">${esc(cat.label)}</span>`;
+  const catBadge = `<span style="display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.03em;text-transform:uppercase;color:${catColor};"><span style="width:5px;height:5px;border-radius:50%;background:${catColor};flex-shrink:0;display:inline-block;"></span>${esc(cat.label)}</span>`;
   const catOptions = S.categories.map(c=>`<option value="${c.id}"${t.cat===c.id?' selected':''}>${c.label}</option>`).join('');
   const pl={p1:'p1',p2:'p2',p3:'p3'};
   const hasComment = !!(t.comment && t.comment.trim());
   const HZ_LABELS={now:'Now',today:'Today',later:'Later',waiting:'Waiting'};
   const hz=t.hz==='someday'?'later':(t.hz||'later');
-  const hzBadge=`<span class="hz-${hz}" style="font-family:var(--mono);font-size:9px;font-weight:500;letter-spacing:.04em;padding:1px 4px;border-radius:2px;border:1px solid currentColor;opacity:.8;">${HZ_LABELS[hz]||hz}</span>`;
+  const HZ_COLORS={now:'#10B981',today:'#F59E0B',later:'#9CA3AF',waiting:'#6366F1'};
+  const hzColor = HZ_COLORS[hz]||'#9CA3AF';
+  const hzBadge=`<span style="display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.03em;text-transform:uppercase;color:${hzColor};"><span style="width:5px;height:5px;border-radius:50%;background:${hzColor};flex-shrink:0;display:inline-block;"></span>${HZ_LABELS[hz]||hz}</span>`;
   
   // Task age badge
   const age = getTaskAgeBadge(t.ts);
@@ -3713,7 +3715,7 @@ function todoItemHtml(t){
         }>${esc(t.text)}</div>
       ${isSubtask ? '' : `<div class="item-meta-row">
         <div class="item-meta">
-          <span class="tag ${pl[t.pri]||'p2'}">${t.pri.toUpperCase()}</span>
+          <span style="display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;color:${t.pri==='p1'?'#DC2626':t.pri==='p2'?'#D97706':'#4F46E5'};"><span style="width:5px;height:5px;border-radius:50%;background:${t.pri==='p1'?'#DC2626':t.pri==='p2'?'#D97706':'#4F46E5'};flex-shrink:0;display:inline-block;"></span>${t.pri.toUpperCase()}</span>
           ${catBadge}
           ${hzBadge}
           ${ageBadge}
@@ -5821,7 +5823,7 @@ function renderBacklog(){
       <div class="item-body">
         <div class="bl-text" id="blt-${b.id}">${esc(b.text)}</div>
         <div class="bl-meta item-meta">
-          <span class="tag ${priCls[b.pri]||'p2'}">${b.pri.toUpperCase()}</span>
+          <span style="display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;color:${b.pri==='p1'?'#DC2626':b.pri==='p2'?'#D97706':'#4F46E5'};"><span style="width:5px;height:5px;border-radius:50%;background:${b.pri==='p1'?'#DC2626':b.pri==='p2'?'#D97706':'#4F46E5'};flex-shrink:0;display:inline-block;"></span>${b.pri.toUpperCase()}</span>
           ${assigneeBadgesHtml(b.assigneeIds,b.id,'backlog')}
           ${bStBadge}
           ${projBadge}
@@ -6594,15 +6596,18 @@ function udSaveTitle(){
 }
 function udRenderBadges(t){
   const el=document.getElementById('ud-badges');
+  const PRI_DOT=(pri)=>{const c=pri==='p1'?'#DC2626':pri==='p2'?'#D97706':'#4F46E5';return`<span style="display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;color:${c};"><span style="width:5px;height:5px;border-radius:50%;background:${c};flex-shrink:0;display:inline-block;"></span>${(pri||'p2').toUpperCase()}</span>`;};
   let html='';
   if(udType==='todo'){
     const cat=getCatById(t.cat);
     const isDark=document.documentElement.getAttribute('data-theme')==='dark';
     const cc=isDark?(cat.darkColor||cat.textColor):cat.textColor;
-    html+=`<span style="font-family:var(--mono);font-size:9px;font-weight:500;padding:1px 5px;border-radius:2px;letter-spacing:.04em;text-transform:uppercase;background:transparent;color:${cc};border:1px solid ${cc};">${esc(cat.label)}</span>`;
-    html+=`<span class="tag p${(t.pri||'p2').slice(1)}">${(t.pri||'P2').toUpperCase()}</span>`;
+    html+=`<span style="display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:10px;font-weight:500;text-transform:uppercase;color:${cc};"><span style="width:5px;height:5px;border-radius:50%;background:${cc};flex-shrink:0;display:inline-block;"></span>${esc(cat.label)}</span>`;
+    html+=PRI_DOT(t.pri||'p2');
     const hz=t.hz||'later';
-    html+=`<span class="hz-${hz}" style="font-family:var(--mono);font-size:9px;padding:1px 4px;border-radius:2px;border:1px solid currentColor;opacity:.8;">${UD_HZ[hz]||hz}</span>`;
+    const HZ_COLORS={now:'#10B981',today:'#F59E0B',later:'#9CA3AF',waiting:'#6366F1'};
+    const hzC=HZ_COLORS[hz]||'#9CA3AF';
+    html+=`<span style="display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:10px;font-weight:500;text-transform:uppercase;color:${hzC};"><span style="width:5px;height:5px;border-radius:50%;background:${hzC};flex-shrink:0;display:inline-block;"></span>${UD_HZ[hz]||hz}</span>`;
     const tst=t.taskStatus||'brouillon';
     const tstClass=tst==='valide'?'ud-status-valide':tst==='abandonne'?'ud-status-abandonne':'ud-status-brouillon';
     const tstLabel=tst==='valide'?'Valide\u0301 \u2713':tst==='abandonne'?'Abandonn\u00e9':'Brouillon';
@@ -6613,13 +6618,13 @@ function udRenderBadges(t){
     const aType=t._archiveType||'todo';
     html+=`<span class="ud-status-badge ud-status-abandonne" style="cursor:default;">⬜ Archivé</span>`;
     html+=`<span style="font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:2px;border:1px solid var(--line2);color:var(--text3);">${typeIcon[aType]||'✓'} ${typeLabels[aType]||aType}</span>`;
-    if(t.pri) html+=`<span class="tag p${(t.pri||'p2').slice(1)}">${(t.pri||'P2').toUpperCase()}</span>`;
+    if(t.pri) html+=PRI_DOT(t.pri);
   } else {
     const st=t.status||'brouillon';
     const stCls=st==='valide'?'ud-status-valide':st==='abandonne'?'ud-status-abandonne':'ud-status-brouillon';
     const stLbl=st==='valide'?'Validé ✓':st==='abandonne'?'Abandonné':'Brouillon';
     html+=`<span class="ud-status-badge ${stCls}" onclick="udToggleStatus()" title="Cliquer pour changer">${stLbl}</span>`;
-    html+=`<span class="tag p${(t.pri||'p2').slice(1)}">${(t.pri||'P2').toUpperCase()}</span>`;
+    html+=PRI_DOT(t.pri||'p2');
   }
   el.innerHTML=html;
 }
