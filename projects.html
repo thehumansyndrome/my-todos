@@ -287,9 +287,9 @@ input,select,textarea{background:var(--bg);color:var(--text);}
 </div>
 
 <div class="tabs" id="tabs">
-  <button class="tab active" onclick="switchTab('projets')">Projets</button>
+  <button class="tab active" onclick="switchTab('global')">Vue globale</button>
+  <button class="tab" onclick="switchTab('projets')">Projets</button>
   <button class="tab" onclick="switchTab('suivi')">Suivi</button>
-  <button class="tab" onclick="switchTab('global')">Vue globale</button>
   <button class="tab" onclick="switchTab('equipe')">Équipe</button>
   <button class="tab" onclick="switchTab('log')">Log</button>
 </div>
@@ -297,7 +297,7 @@ input,select,textarea{background:var(--bg);color:var(--text);}
 <div class="page">
 
 <!-- ══ PROJETS ══ -->
-<div id="tab-projets" class="section active">
+<div id="tab-projets" class="section">
 
   <!-- Form -->
   <div class="form-card" id="proj-form">
@@ -370,7 +370,7 @@ input,select,textarea{background:var(--bg);color:var(--text);}
 </div>
 
 <!-- ══ VUE GLOBALE ══ -->
-<div id="tab-global" class="section">
+<div id="tab-global" class="section active">
   <div class="suivi-header">
     <button class="btn sm" onclick="loadGlobalData()">↻ Actualiser</button>
     <button class="btn sm" id="global-done-btn" onclick="toggleGlobalDone()" style="margin-left:4px;">Masquer terminées</button>
@@ -555,7 +555,7 @@ function setSync(state) {
 }
 
 /* ══ TABS ══ */
-const TABS = ['projets','suivi','global','equipe','log'];
+const TABS = ['global','projets','suivi','equipe','log'];
 function switchTab(t) {
   document.querySelectorAll('.tab').forEach((b,i) => b.classList.toggle('active', TABS[i]===t));
   TABS.forEach(id => {
@@ -1464,6 +1464,8 @@ function load() {
   buildColorPicker('proj-color-picker', PROJ_COLORS, projSelectedColor, selectProjColor);
   buildColorPicker('team-color-picker', TEAM_COLORS, teamSelectedColor, selectTeamColor);
   renderProjects();
+  // Load Vue Globale on boot if Drive already connected
+  if (accessToken) { loadGlobalData(); }
   // Restore poll preference
   const savedPoll = localStorage.getItem(POLL_KEY);
   if (savedPoll !== null) {
