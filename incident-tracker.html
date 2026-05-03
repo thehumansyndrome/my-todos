@@ -1366,9 +1366,55 @@ function initDrive(){
       pushToDrive();
       loadSharedProjects();
       loadTaches();
+      startPoll();
     }
   });
-  if (accessToken){ updateDriveUI(true); loadSharedProjects(); loadTaches(); }
+  if (accessToken){ updateDriveUI(true); loadSharedProjects(); loadTaches(); startPoll(); }
+}
+
+// ── Polling : recharge si incident-tracker.json modifié depuis une autre app ──
+var _pollInterval = null;
+var _lastModifiedTime = null;
+
+function startPoll(){
+  if (_pollInterval) return;
+  _pollInterval = setInterval(pollOnce, 15000);
+}
+
+function pollOnce(){
+  if (!accessToken || !driveFileId) return;
+  fetch('https://www.googleapis.com/drive/v3/files/'+driveFileId+'?fields=modifiedTime',
+    {headers:{Authorization:'Bearer '+accessToken}})
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.modifiedTime) return;
+      if (_lastModifiedTime && d.modifiedTime !== _lastModifiedTime){
+        // File changed externally — reload silently
+        pullFromDriveSilent();
+      }
+      _lastModifiedTime = d.modifiedTime;
+    }).catch(function(){});
+}
+
+function pullFromDriveSilent(){
+  if (!accessToken || !driveFileId) return;
+  fetch('https://www.googleapis.com/drive/v3/files/'+driveFileId+'?alt=media',
+    {headers:{Authorization:'Bearer '+accessToken}})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if (!data) return;
+      S = data;
+      ensureState();
+      try { localStorage.setItem(SK, JSON.stringify(S)); } catch(e){}
+      renderAll();
+      // Refresh editor if current incident was modified externally
+      if (editingId){
+        var it = S.incidents.find(function(x){return x.id===editingId;});
+        if (it) loadEditorFromState();
+      }
+      setSyncDot('ok');
+      toast('↻ Synchronisé depuis Drive');
+    }).catch(function(){});
 }
 function handleDriveBtn(){
   if (!tokenClient){ toast('Drive non initialisé'); return; }
@@ -1399,10 +1445,17 @@ function refreshTokenIfNeeded(cb){
 }
 function findDriveFile(){
   var q = encodeURIComponent("name='"+DRIVE_FILE+"' and trashed=false");
-  return fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id)&orderBy=modifiedTime+desc',
+  return fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id,modifiedTime)&orderBy=modifiedTime+desc',
     {headers:{Authorization:'Bearer '+accessToken}})
     .then(function(r){return r.json();})
-    .then(function(d){return d.files && d.files[0] ? d.files[0].id : null;});
+    .then(function(d){
+      if (d.files && d.files[0]){
+        // Initialise lastModifiedTime so first poll doesn't trigger a false reload
+        if (!_lastModifiedTime) _lastModifiedTime = d.files[0].modifiedTime;
+        return d.files[0].id;
+      }
+      return null;
+    });
 }
 function pushToDrive(){
   if (!accessToken){ return; }
