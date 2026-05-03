@@ -386,6 +386,9 @@ input,select,textarea{background:var(--bg);color:var(--text);}
       oninput="filterGlobalView()"
     >
   </div>
+  <div id="global-proj-filters" style="display:none;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+    <span style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-right:2px;">Projet :</span>
+  </div>
   <div id="global-content"><div class="empty"><div class="empty-icon">🌐</div>Cliquez sur Actualiser pour charger la vue globale</div></div>
 </div>
 
@@ -1980,6 +1983,7 @@ async function _docSave(toastMsg) {
 var _docIndex = {};
 var _globalHideDone = false;
 var _globalHideArchive = false;
+var _globalProjFilter = 'all'; // 'all' | project name string
 async function loadGlobalData() {
   const el = document.getElementById('global-content');
   const st = document.getElementById('global-status');
@@ -2006,6 +2010,7 @@ async function loadGlobalData() {
     } catch(e) { console.warn('global load', f.name, e); }
   }
   renderGlobal();
+  renderGlobalProjFilters();
   st.textContent = `${(suiviData.cr||[]).length} CR · ${(suiviData.mo||[]).length} MO · ${(suiviData.us||[]).length} US · ${(suiviData.backlog||[]).length} tâches · ${(suiviData.incidents||[]).length} incidents`;
 }
 
@@ -2020,6 +2025,32 @@ function toggleGlobalArchive() {
   _globalHideArchive = !_globalHideArchive;
   const btn = document.getElementById('global-archive-btn');
   if (btn) btn.textContent = _globalHideArchive ? 'Afficher archivés' : 'Masquer archivés';
+  renderGlobal();
+}
+
+function renderGlobalProjFilters() {
+  const el = document.getElementById('global-proj-filters'); if (!el) return;
+  // Collect all project names from loaded data
+  const names = new Set();
+  (suiviData.backlog||[]).forEach(t => { const p = (S.projects||[]).find(x=>x.id===t.projId)||(suiviData.sharedProjects||[]).find(x=>x.id===t.projId); if(p) names.add(p.name||p.nom||''); });
+  (suiviData.us||[]).forEach(e => { if(e.projet) names.add(e.projet); });
+  (suiviData.mo||[]).forEach(e => { if(e.projet) names.add(e.projet); });
+  (suiviData.cr||[]).forEach(e => { if(e.projet) names.add(e.projet); });
+  (suiviData.incidents||[]).forEach(e => { if(e.projet) names.add(e.projet); });
+  if (names.size === 0) { el.style.display='none'; return; }
+  el.style.display = 'flex';
+  const PILL = (label, val) => {
+    const active = _globalProjFilter === val;
+    return `<span onclick="setGlobalProjFilter('${val.replace(/'/g,"\\'")}')" style="cursor:pointer;font-size:12px;font-weight:500;padding:4px 12px;border-radius:16px;border:1px solid ${active?'var(--accent)':'var(--border)'};background:${active?'var(--accent)':'transparent'};color:${active?'var(--bg)':'var(--muted)'};transition:all .15s;user-select:none;">${esc(label)}</span>`;
+  };
+  el.innerHTML = '<span style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-right:2px;align-self:center;">Projet :</span>' +
+    PILL('Tous', 'all') +
+    [...names].sort().map(n => PILL(n, n)).join('');
+}
+
+function setGlobalProjFilter(val) {
+  _globalProjFilter = val;
+  renderGlobalProjFilters();
   renderGlobal();
 }
 
@@ -2181,6 +2212,17 @@ function renderGlobal() {
     ].join(' ').toLowerCase();
     return searchable.indexOf(query) >= 0;
   }
+
+  function matchesProjFilter(item) {
+    if (_globalProjFilter === 'all') return true;
+    // Tasks use projId
+    if (item.projId !== undefined) {
+      const p = getProj(item.projId);
+      return p && (p.name||p.nom||'') === _globalProjFilter;
+    }
+    // Docs use projet (name string)
+    return (item.projet||'') === _globalProjFilter;
+  }
   const usValide = allUS.filter(e=>e.status==='valide').length;
   const crValide = allCR.filter(e=>e.status==='valide').length;
   const moValide = allMO.filter(e=>e.status==='valide').length;
@@ -2238,6 +2280,7 @@ function renderGlobal() {
 
     const filteredINC = allINC
       .filter(e => matchesSearch(e, _globalFilterQuery))
+      .filter(e => matchesProjFilter(e))
       .filter(e => !(_globalHideArchive && (e.status==='archive'||e.status==='cloture')))
       .sort((a,b) => {
         const aActive = (a.status==='ouvert'||a.status==='encours') ? 0 : 1;
@@ -2272,7 +2315,7 @@ function renderGlobal() {
   // ── Tâches (actives + terminées) ──
   if (allBL.length) {
     const byProj = {};
-    allBL.filter(b => !(_globalHideDone && b.done) && matchesSearch(b, _globalFilterQuery)).forEach(b => {
+    allBL.filter(b => !(_globalHideDone && b.done) && matchesSearch(b, _globalFilterQuery) && matchesProjFilter(b)).forEach(b => {
       const p = getProj(b.projId);
       const key = p ? p.name : 'Sans projet'; const col = p ? p.color : 'var(--muted)';
       if (!byProj[key]) byProj[key] = {items:[], color:col};
@@ -2299,7 +2342,7 @@ function renderGlobal() {
   // ── User Stories ──
   if (allUS.length) {
     h += `<div class="suivi-section"><div class="suivi-section-title">User Stories (${allUS.length})</div>`;
-    allUS.filter(e => matchesSearch(e, _globalFilterQuery) && !(_globalHideArchive && e.status === 'archive')).forEach((e,i) => {
+    allUS.filter(e => matchesSearch(e, _globalFilterQuery) && matchesProjFilter(e) && !(_globalHideArchive && e.status === 'archive')).forEach((e,i) => {
       _docIndex['usg'+i]=e;
       const st=e.status||'brouillon';
       const p=getProj(e.projet);
@@ -2318,7 +2361,7 @@ function renderGlobal() {
   // ── Modes Opératoires ──
   if (allMO.length) {
     h += `<div class="suivi-section"><div class="suivi-section-title">Modes Opératoires (${allMO.length})</div>`;
-    allMO.filter(e => matchesSearch(e, _globalFilterQuery) && !(_globalHideArchive && e.status === 'archive')).forEach((e,i) => {
+    allMO.filter(e => matchesSearch(e, _globalFilterQuery) && matchesProjFilter(e) && !(_globalHideArchive && e.status === 'archive')).forEach((e,i) => {
       _docIndex['mog'+i]=e;
       const st=e.status||'brouillon';
       const p=getProj(e.projet);
@@ -2337,7 +2380,7 @@ function renderGlobal() {
   if (allCR.length) {
     const sorted = allCR.slice().sort((a,b)=>(b.savedAt||'').localeCompare(a.savedAt||''));
     h += `<div class="suivi-section"><div class="suivi-section-title">Comptes Rendus (${allCR.length})</div>`;
-    sorted.filter(e => matchesSearch(e, _globalFilterQuery) && !(_globalHideArchive && e.status === 'archive')).forEach((e,i) => {
+    sorted.filter(e => matchesSearch(e, _globalFilterQuery) && matchesProjFilter(e) && !(_globalHideArchive && e.status === 'archive')).forEach((e,i) => {
       _docIndex['crg'+i]=e;
       const st=e.status||'brouillon';
       const p=getProj(e.projet);
