@@ -2030,13 +2030,22 @@ function toggleGlobalArchive() {
 
 function renderGlobalProjFilters() {
   const el = document.getElementById('global-proj-filters'); if (!el) return;
-  // Collect all project names from loaded data
+  const allProj = (S.projects||[]).concat((suiviData.sharedProjects||[]).filter(p=>!(S.projects||[]).find(x=>x.id===p.id)));
+  function projName(val) {
+    if (!val) return null;
+    // If it looks like an ID, resolve it
+    const byId = allProj.find(p=>p.id===val);
+    if (byId) return byId.name||byId.nom||null;
+    // Otherwise it's already a name — keep it only if non-empty and not an internal ID pattern
+    if (/^p_\d+/.test(val)) return null; // skip raw IDs we can't resolve
+    return val;
+  }
   const names = new Set();
-  (suiviData.backlog||[]).forEach(t => { const p = (S.projects||[]).find(x=>x.id===t.projId)||(suiviData.sharedProjects||[]).find(x=>x.id===t.projId); if(p) names.add(p.name||p.nom||''); });
-  (suiviData.us||[]).forEach(e => { if(e.projet) names.add(e.projet); });
-  (suiviData.mo||[]).forEach(e => { if(e.projet) names.add(e.projet); });
-  (suiviData.cr||[]).forEach(e => { if(e.projet) names.add(e.projet); });
-  (suiviData.incidents||[]).forEach(e => { if(e.projet) names.add(e.projet); });
+  (suiviData.backlog||[]).forEach(t => { const n=projName(t.projId); if(n) names.add(n); });
+  (suiviData.us||[]).forEach(e => { const n=projName(e.projet); if(n) names.add(n); });
+  (suiviData.mo||[]).forEach(e => { const n=projName(e.projet); if(n) names.add(n); });
+  (suiviData.cr||[]).forEach(e => { const n=projName(e.projet); if(n) names.add(n); });
+  (suiviData.incidents||[]).forEach(e => { const n=projName(e.projet); if(n) names.add(n); });
   if (names.size === 0) { el.style.display='none'; return; }
   el.style.display = 'flex';
   const PILL = (label, val) => {
@@ -2215,13 +2224,17 @@ function renderGlobal() {
 
   function matchesProjFilter(item) {
     if (_globalProjFilter === 'all') return true;
+    const allProj = (S.projects||[]).concat((suiviData.sharedProjects||[]).filter(p=>!(S.projects||[]).find(x=>x.id===p.id)));
     // Tasks use projId
     if (item.projId !== undefined) {
-      const p = getProj(item.projId);
+      const p = allProj.find(x=>x.id===item.projId);
       return p && (p.name||p.nom||'') === _globalProjFilter;
     }
-    // Docs use projet (name string)
-    return (item.projet||'') === _globalProjFilter;
+    // Docs: e.projet may be a name or an ID
+    if (!item.projet) return false;
+    const byId = allProj.find(p=>p.id===item.projet);
+    const name = byId ? (byId.name||byId.nom||'') : item.projet;
+    return name === _globalProjFilter;
   }
   const usValide = allUS.filter(e=>e.status==='valide').length;
   const crValide = allCR.filter(e=>e.status==='valide').length;
