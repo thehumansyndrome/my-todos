@@ -548,7 +548,9 @@ function toggleTheme(){
 // ── CRUD ──────────────────────────────────────────────────────────────────────
 function newNote(tmplId){
   var tmpl=TMPLS.find(function(t){return t.id===(tmplId||'none');})||TMPLS[0];
-  var n={id:uid(),body:tmpl.placeholder||'',template:tmpl.id,favorite:false,images:{},created:Date.now(),updated:Date.now()};
+  // Free notes start empty — placeholder shown natively by textarea
+  var body = tmpl.id==='none' ? '' : (tmpl.placeholder||'');
+  var n={id:uid(),body:body,template:tmpl.id,favorite:false,images:{},created:Date.now(),updated:Date.now()};
   S.notes.unshift(n);
   autoSave();
   openNote(n.id);
@@ -892,9 +894,9 @@ function applyTmpl(tmplId){
   if(!n){newNote(tmplId);return;}
   var isEmpty=!n.body.trim();
   var sameTemplate=n.template===tmplId;
-  // Load placeholder if note is empty, or same template (refresh), or user confirms
+  var newBody = tmpl.id==='none' ? '' : (tmpl.placeholder||'');
   if(isEmpty||sameTemplate){
-    n.body=tmpl.placeholder||'';
+    n.body=newBody;
     document.getElementById('note-ta').value=n.body;
   } else if(tmpl.id!=='none'){
     if(!confirm('Remplacer le contenu par le template "'+tmpl.name+'" ?'))return;
