@@ -280,20 +280,13 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
 .focus-mode .export-bar{display:none!important;}
 .focus-mode .date-footer{display:none!important;}
 .focus-mode .drive-bar{display:none!important;}
-.focus-mode #editor-active{display:flex!important;flex-direction:column;height:100%;}
-.focus-mode .editor-body{flex:1;display:flex;}
-.focus-mode .editor-raw{flex:1;display:flex;flex-direction:column;}
-.focus-mode .note-ta-wrap{flex:1;display:flex;flex-direction:column;}
 .focus-mode .editor-raw textarea{
-  flex:1;
   padding:60px min(100px,12vw)!important;
   font-size:16px!important;
   line-height:1.9!important;
-  background:var(--bg)!important;
 }
-.focus-mode .header{background:transparent;border-color:transparent;position:fixed;top:0;left:0;right:0;z-index:200;opacity:0;transition:opacity .3s;}
-.focus-mode .header:hover{opacity:1;}
-.focus-mode .editor-pane{position:fixed;inset:0;background:var(--bg);z-index:100;}
+.focus-mode .header{opacity:0;transition:opacity .3s;pointer-events:none;}
+.focus-mode .header:hover{opacity:1;pointer-events:all;}
 #focus-btn.on{color:var(--accent);background:var(--border);}
 
 /* ── YAML fold ── */
@@ -397,7 +390,6 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
             <button class="vt-btn" id="vt-split" onclick="setView('split')">Split</button>
             <button class="vt-btn" id="vt-preview" onclick="setView('preview')">Rendu</button>
           </div>
-        </div>
           <button class="yaml-fold-btn" id="yaml-fold-toggle-btn" onclick="toggleYamlFold()" style="display:none;" title="Masquer/Afficher YAML">YAML ▾</button>
         </div>
         <div class="toolbar-right">
