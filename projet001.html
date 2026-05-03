@@ -285,7 +285,6 @@ div:hover>.item-img-del{display:block;}
   display:flex;align-items:flex-start;gap:10px;
   padding:10px 0;
   border-bottom:1px solid var(--border);
-  background:var(--surface);
   transition:opacity .15s;
   position:relative;
 }
@@ -436,7 +435,6 @@ div:hover>.item-img-del{display:block;}
 .bl-item{
   display:flex;align-items:flex-start;gap:10px;
   padding:10px 0;border-bottom:1px solid var(--border);
-  background:var(--surface);
   position:relative;
 }
 .bl-item:first-child{border-top:1px solid var(--border);}
@@ -595,7 +593,7 @@ div:hover>.item-img-del{display:block;}
 .hcard{
   border:none;border-bottom:1px solid var(--border);
   margin-bottom:0;overflow:hidden;
-  background:var(--surface);
+  background:transparent;
   padding:16px 0 8px;
 }
 .hcard:first-child{border-top:1px solid var(--border);}
@@ -975,7 +973,6 @@ div:hover>.item-img-del{display:block;}
 .courses-item{
   display:flex;align-items:center;gap:10px;
   padding:10px 0;border-bottom:1px solid var(--border);
-  background:var(--surface);
 }
 .courses-item:first-child{border-top:1px solid var(--border);}
 .courses-item.bought{opacity:.4;}
@@ -1110,7 +1107,6 @@ div:hover>.item-img-del{display:block;}
   break-inside:avoid;
   border-radius:var(--r2);
   border:1px solid rgba(0,0,0,.06);
-  background:var(--surface);
   padding:12px 14px 10px;
   margin-bottom:10px;
   cursor:pointer;
@@ -1273,6 +1269,15 @@ div:hover>.item-img-del{display:block;}
 .ud-comment-text{font-size:13px;line-height:1.5;}
 .ud-comment-meta{font-size:11px;color:var(--muted);margin-top:3px;}
 
+
+/* ── Item images ── */
+.item-imgs{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 3px;}
+.item-thumb{max-width:80px;max-height:64px;border-radius:4px;border:1px solid var(--border);object-fit:cover;cursor:pointer;transition:opacity .15s;}
+.item-thumb:hover{opacity:.82;}
+.item-img-del{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;line-height:1;padding:0;display:none;}
+div:hover>.item-img-del{display:flex;align-items:center;justify-content:center;}
+.img-pick-btn{background:none;border:none;cursor:pointer;font-size:14px;padding:2px 4px;opacity:.5;line-height:1;color:var(--text);}
+.img-pick-btn:hover{opacity:1;}
 </style>
 </head>
 <body>
@@ -3664,15 +3669,13 @@ function todoItemHtml(t){
   const cat = getCatById(t.cat);
   const isDarkMode = document.documentElement.getAttribute('data-theme')==='dark';
   const catColor = isDarkMode ? (cat.darkColor||cat.textColor) : cat.textColor;
-  const catBadge = `<span style="display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.03em;text-transform:uppercase;color:${catColor};"><span style="width:5px;height:5px;border-radius:50%;background:${catColor};flex-shrink:0;display:inline-block;"></span>${esc(cat.label)}</span>`;
+  const catBadge = `<span style="font-family:var(--mono);font-size:9px;font-weight:500;padding:1px 5px;border-radius:2px;letter-spacing:.04em;text-transform:uppercase;background:transparent;color:${catColor};border:1px solid ${catColor};opacity:.9;">${esc(cat.label)}</span>`;
   const catOptions = S.categories.map(c=>`<option value="${c.id}"${t.cat===c.id?' selected':''}>${c.label}</option>`).join('');
   const pl={p1:'p1',p2:'p2',p3:'p3'};
   const hasComment = !!(t.comment && t.comment.trim());
   const HZ_LABELS={now:'Now',today:'Today',later:'Later',waiting:'Waiting'};
   const hz=t.hz==='someday'?'later':(t.hz||'later');
-  const HZ_COLORS={now:'#10B981',today:'#F59E0B',later:'#9CA3AF',waiting:'#6366F1'};
-  const hzColor = HZ_COLORS[hz]||'#9CA3AF';
-  const hzBadge=`<span style="display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.03em;text-transform:uppercase;color:${hzColor};"><span style="width:5px;height:5px;border-radius:50%;background:${hzColor};flex-shrink:0;display:inline-block;"></span>${HZ_LABELS[hz]||hz}</span>`;
+  const hzBadge=`<span class="hz-${hz}" style="font-family:var(--mono);font-size:9px;font-weight:500;letter-spacing:.04em;padding:1px 4px;border-radius:2px;border:1px solid currentColor;opacity:.8;">${HZ_LABELS[hz]||hz}</span>`;
   
   // Task age badge
   const age = getTaskAgeBadge(t.ts);
@@ -3715,7 +3718,7 @@ function todoItemHtml(t){
         }>${esc(t.text)}</div>
       ${isSubtask ? '' : `<div class="item-meta-row">
         <div class="item-meta">
-          <span style="display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;color:${t.pri==='p1'?'#DC2626':t.pri==='p2'?'#D97706':'#4F46E5'};"><span style="width:5px;height:5px;border-radius:50%;background:${t.pri==='p1'?'#DC2626':t.pri==='p2'?'#D97706':'#4F46E5'};flex-shrink:0;display:inline-block;"></span>${t.pri.toUpperCase()}</span>
+          <span class="tag ${pl[t.pri]||'p2'}">${t.pri.toUpperCase()}</span>
           ${catBadge}
           ${hzBadge}
           ${ageBadge}
@@ -5822,8 +5825,9 @@ function renderBacklog(){
       <input type="checkbox" class="item-check" ${b.done?'checked':''} onchange="toggleBacklog('${b.id}')">
       <div class="item-body">
         <div class="bl-text" id="blt-${b.id}">${esc(b.text)}</div>
+        ${_itemImgsHtml(b.images||[],'backlog',b.id)}
         <div class="bl-meta item-meta">
-          <span style="display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;color:${b.pri==='p1'?'#DC2626':b.pri==='p2'?'#D97706':'#4F46E5'};"><span style="width:5px;height:5px;border-radius:50%;background:${b.pri==='p1'?'#DC2626':b.pri==='p2'?'#D97706':'#4F46E5'};flex-shrink:0;display:inline-block;"></span>${b.pri.toUpperCase()}</span>
+          <span class="tag ${priCls[b.pri]||'p2'}">${b.pri.toUpperCase()}</span>
           ${assigneeBadgesHtml(b.assigneeIds,b.id,'backlog')}
           ${bStBadge}
           ${projBadge}
@@ -5831,8 +5835,12 @@ function renderBacklog(){
           <span class="meta-date">${fd(b.ts)}</span>
         </div>
       </div>
-      <button class="del" onclick="delBacklogItem('${b.id}')">×</button>
-    </div>`;
+      <div style="display:flex;gap:2px;align-items:center;flex-shrink:0;">
+        <label class="img-pick-btn" title="Ajouter une image" style="cursor:pointer;">📷<input type="file" accept="image/*" capture="environment" style="display:none" onchange="blImgPickFile(this,'${b.id}')"></label>
+        <label class="img-pick-btn" title="Galerie" style="cursor:pointer;">🖼<input type="file" accept="image/*" style="display:none" onchange="blImgPickFile(this,'${b.id}')"></label>
+        <button class="del" onclick="delBacklogItem('${b.id}')">×</button>
+      </div>
+    </div>`
   }).join('');
 }
 
@@ -6596,18 +6604,15 @@ function udSaveTitle(){
 }
 function udRenderBadges(t){
   const el=document.getElementById('ud-badges');
-  const PRI_DOT=(pri)=>{const c=pri==='p1'?'#DC2626':pri==='p2'?'#D97706':'#4F46E5';return`<span style="display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;color:${c};"><span style="width:5px;height:5px;border-radius:50%;background:${c};flex-shrink:0;display:inline-block;"></span>${(pri||'p2').toUpperCase()}</span>`;};
   let html='';
   if(udType==='todo'){
     const cat=getCatById(t.cat);
     const isDark=document.documentElement.getAttribute('data-theme')==='dark';
     const cc=isDark?(cat.darkColor||cat.textColor):cat.textColor;
-    html+=`<span style="display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:10px;font-weight:500;text-transform:uppercase;color:${cc};"><span style="width:5px;height:5px;border-radius:50%;background:${cc};flex-shrink:0;display:inline-block;"></span>${esc(cat.label)}</span>`;
-    html+=PRI_DOT(t.pri||'p2');
+    html+=`<span style="font-family:var(--mono);font-size:9px;font-weight:500;padding:1px 5px;border-radius:2px;letter-spacing:.04em;text-transform:uppercase;background:transparent;color:${cc};border:1px solid ${cc};">${esc(cat.label)}</span>`;
+    html+=`<span class="tag p${(t.pri||'p2').slice(1)}">${(t.pri||'P2').toUpperCase()}</span>`;
     const hz=t.hz||'later';
-    const HZ_COLORS={now:'#10B981',today:'#F59E0B',later:'#9CA3AF',waiting:'#6366F1'};
-    const hzC=HZ_COLORS[hz]||'#9CA3AF';
-    html+=`<span style="display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:10px;font-weight:500;text-transform:uppercase;color:${hzC};"><span style="width:5px;height:5px;border-radius:50%;background:${hzC};flex-shrink:0;display:inline-block;"></span>${UD_HZ[hz]||hz}</span>`;
+    html+=`<span class="hz-${hz}" style="font-family:var(--mono);font-size:9px;padding:1px 4px;border-radius:2px;border:1px solid currentColor;opacity:.8;">${UD_HZ[hz]||hz}</span>`;
     const tst=t.taskStatus||'brouillon';
     const tstClass=tst==='valide'?'ud-status-valide':tst==='abandonne'?'ud-status-abandonne':'ud-status-brouillon';
     const tstLabel=tst==='valide'?'Valide\u0301 \u2713':tst==='abandonne'?'Abandonn\u00e9':'Brouillon';
@@ -6618,13 +6623,13 @@ function udRenderBadges(t){
     const aType=t._archiveType||'todo';
     html+=`<span class="ud-status-badge ud-status-abandonne" style="cursor:default;">⬜ Archivé</span>`;
     html+=`<span style="font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:2px;border:1px solid var(--line2);color:var(--text3);">${typeIcon[aType]||'✓'} ${typeLabels[aType]||aType}</span>`;
-    if(t.pri) html+=PRI_DOT(t.pri);
+    if(t.pri) html+=`<span class="tag p${(t.pri||'p2').slice(1)}">${(t.pri||'P2').toUpperCase()}</span>`;
   } else {
     const st=t.status||'brouillon';
     const stCls=st==='valide'?'ud-status-valide':st==='abandonne'?'ud-status-abandonne':'ud-status-brouillon';
     const stLbl=st==='valide'?'Validé ✓':st==='abandonne'?'Abandonné':'Brouillon';
     html+=`<span class="ud-status-badge ${stCls}" onclick="udToggleStatus()" title="Cliquer pour changer">${stLbl}</span>`;
-    html+=PRI_DOT(t.pri||'p2');
+    html+=`<span class="tag p${(t.pri||'p2').slice(1)}">${(t.pri||'P2').toUpperCase()}</span>`;
   }
   el.innerHTML=html;
 }
@@ -7475,6 +7480,94 @@ async function syncFromCalendar() {
   }
 }
 
+
+
+
+// ── Image utilities (shared) ─────────────────────────────────────────────
+const _IMG_MAX_PX = 1200, _IMG_QUALITY = 0.82;
+function _compressImage(file){
+  return new Promise(function(res,rej){
+    if(file.type==='image/gif'||file.type==='image/svg+xml'){
+      var r=new FileReader();r.onload=function(e){res(e.target.result);};r.onerror=rej;r.readAsDataURL(file);return;
+    }
+    var img=new Image();var url=URL.createObjectURL(file);
+    img.onload=function(){
+      URL.revokeObjectURL(url);
+      var w=img.width,h=img.height;
+      var ratio=Math.min(_IMG_MAX_PX/w,_IMG_MAX_PX/h,1);
+      w=Math.round(w*ratio);h=Math.round(h*ratio);
+      var canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      res(canvas.toDataURL('image/jpeg',_IMG_QUALITY));
+    };
+    img.onerror=rej;img.src=url;
+  });
+}
+function _itemImgsHtml(images, ns, id){
+  if(!images||!images.length)return'';
+  return'<div class="item-imgs">'+images.map(function(img,i){
+    var src=img?(img.src||img):'';if(!src)return'';
+    return'<div style="position:relative;display:inline-block;">'
+      +'<img src="'+src+'" class="item-thumb" onclick="event.stopPropagation();_openImgViewer(\''+ns+'\',\''+id+'\','+i+')">'
+      +'<button class="item-img-del" onclick="event.stopPropagation();_delImg(\''+ns+'\',\''+id+'\','+i+')">🗑</button>'
+      +'</div>';
+  }).join('')+'</div>';
+}
+var _imgViewers={};
+function _openImgViewer(ns, id, startIdx){
+  var getter=_imgViewers[ns];if(!getter)return;
+  var imgs=getter(id);if(!imgs||!imgs.length)return;
+  var cur=startIdx;
+  var ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  var render=function(){
+    var src=imgs[cur]?(imgs[cur].src||imgs[cur]):'';
+    ov.innerHTML='<img src="'+src+'" style="max-width:92vw;max-height:88vh;border-radius:6px;object-fit:contain;">'
+      +(imgs.length>1?'<button onclick="event.stopPropagation();_ivNav(-1)" style="position:fixed;left:16px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:#fff;font-size:22px;width:40px;height:40px;border-radius:50%;cursor:pointer;">‹</button>'
+        +'<button onclick="event.stopPropagation();_ivNav(1)" style="position:fixed;right:16px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:#fff;font-size:22px;width:40px;height:40px;border-radius:50%;cursor:pointer;">›</button>'
+        +'<div style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.6);font-size:12px;">'+(cur+1)+' / '+imgs.length+'</div>':'')
+      +'<button onclick="_ivClose()" style="position:fixed;top:14px;right:16px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:18px;width:34px;height:34px;border-radius:50%;cursor:pointer;">×</button>';
+  };
+  window._ivNav=function(d){cur=(cur+d+imgs.length)%imgs.length;render();};
+  window._ivClose=function(){document.body.removeChild(ov);document.removeEventListener('keydown',_ivKey);};
+  var _ivKey=function(e){if(e.key==='Escape')_ivClose();else if(e.key==='ArrowLeft')_ivNav(-1);else if(e.key==='ArrowRight')_ivNav(1);};
+  document.addEventListener('keydown',_ivKey);
+  ov.addEventListener('click',_ivClose);
+  render();document.body.appendChild(ov);
+}
+// ── END Image utilities ───────────────────────────────────────────────────
+
+// ── Backlog image support ─────────────────────────────────────────────────
+_imgViewers['backlog'] = function(id){
+  var b = (S.backlog||[]).find(function(x){return x.id===id;});
+  return b ? (b.images||[]) : [];
+};
+function _delImg(ns, id, idx){
+  if(ns==='backlog'){
+    var b=(S.backlog||[]).find(function(x){return x.id===id;});
+    if(!b||!b.images)return;
+    b.images.splice(idx,1);
+    autoSave();renderBacklog();
+  } else if(ns==='incident'){
+    var it=(S.incidents||[]).find(function(x){return x.id===id;});
+    if(!it||!it.images)return;
+    it.images.splice(idx,1);
+    persist();renderIncidentList();if(drawerId===id)refreshDrawer();
+  } else if(ns==='mo'){
+    var e=(S.history||[]).find(function(x){return x.id===id;});
+    if(!e||!e.images)return;
+    e.images.splice(idx,1);
+    autoSave();if(drawerEntryId===id)refreshDrawer();
+  }
+}
+async function blImgPickFile(input, id){
+  var file=input.files&&input.files[0];if(!file)return;input.value='';
+  var b=(S.backlog||[]).find(function(x){return x.id===id;});if(!b)return;
+  if(!b.images)b.images=[];
+  var b64=await _compressImage(file);
+  b.images.push({type:'base64',src:b64});
+  autoSave();renderBacklog();toast('📷 Image ajoutée');
+}
 
 </script>
 
