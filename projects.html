@@ -2309,7 +2309,7 @@ function renderGlobal() {
         const sevColor = SEV_COLOR[e.severity]||'var(--muted)';
         const stColor  = ST_COLOR[e.status]||'var(--muted)';
         const allMark  = (e.markers_types||[]).concat(e.markers_impacts||[]);
-        const p = e.projet ? (getProj(followiData => null) || {name: e.projet}) : null;
+        const incProj  = e.projet ? (getProj(e.projet) || {name:e.projet, color:'var(--muted)'}) : null;
         const commentCount = (e.comments||[]).length;
         _docIndex['incg'+i] = e;
         h += `<div class="suivi-row" style="cursor:pointer;border-left:3px solid ${sevColor};${!isActive?'opacity:.6':''}" onclick="openIncidentDrawer(_docIndex['incg${i}'].id)">
@@ -2317,7 +2317,7 @@ function renderGlobal() {
           <span class="suivi-row-title">${esc(e.title||'Sans titre')}</span>
           <span style="font-size:10px;font-weight:600;color:${sevColor};border:1px solid ${sevColor};padding:1px 6px;border-radius:10px;white-space:nowrap;">${SEV_LABEL[e.severity]||''}</span>
           <span style="font-size:10px;color:${stColor};white-space:nowrap;">${ST_LABEL[e.status]||''}</span>
-          ${e.projet?`<span style="font-size:11px;font-weight:500;padding:2px 7px;border-radius:12px;border:1px solid var(--border);color:var(--muted);">${esc(e.projet)}</span>`:''}
+          ${projBadge(incProj)}
           ${commentCount?`<span style="font-size:10px;color:var(--muted);">💬 ${commentCount}</span>`:''}
         </div>`;
       });
