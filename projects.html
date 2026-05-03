@@ -856,13 +856,14 @@ async function loadSuiviData() {
   toast('Chargement…');
 
   const files = [
-    {key:'us',     name:'us-generator.json'},
-    {key:'mo',     name:'mo-generator.json'},
-    {key:'cr',     name:'cr-generator.json'},
-    {key:'todos',  name:'projet001.json'},
-    {key:'shared', name:'shared.json'},
+    {key:'us',        name:'us-generator.json'},
+    {key:'mo',        name:'mo-generator.json'},
+    {key:'cr',        name:'cr-generator.json'},
+    {key:'todos',     name:'projet001.json'},
+    {key:'shared',    name:'shared.json'},
+    {key:'incidents', name:'incident-tracker.json'},
   ];
-  suiviData = {us:[], mo:[], cr:[], backlog:[], sharedProjects:[], sharedTeam:[], usFullData:null, usFileId:null, moFullData:null, moFileId:null, crFullData:null, crFileId:null};
+  suiviData = {us:[], mo:[], cr:[], backlog:[], sharedProjects:[], sharedTeam:[], incidents:[], usFullData:null, usFileId:null, moFullData:null, moFileId:null, crFullData:null, crFileId:null};
 
   for (const f of files) {
     try {
@@ -883,6 +884,8 @@ async function loadSuiviData() {
         } else if (f.key === 'shared') {
           suiviData.sharedProjects = Array.isArray(data.projects) ? data.projects : [];
           suiviData.sharedTeam = Array.isArray(data.team) ? data.team : [];
+        } else if (f.key === 'incidents') {
+          suiviData.incidents = Array.isArray(data.incidents) ? data.incidents : [];
         } else {
           suiviData[f.key] = data.history || data.entries || [];
           suiviData[f.key+'FullData'] = data;
@@ -896,7 +899,7 @@ async function loadSuiviData() {
   const _diagProj = document.getElementById('suivi-proj-sel').value;
   console.log('[Suivi] CR chargés:', _diagCR.length, '| projId sélectionné:', _diagProj);
   _diagCR.forEach(function(e){ console.log('  CR:', e.title||e.titre, '| e.projet:', e.projet); });
-  toast('✓ ' + _diagCR.length + ' CR · ' + (suiviData.us||[]).length + ' US · ' + (suiviData.mo||[]).length + ' MO chargés');
+  toast('✓ ' + _diagCR.length + ' CR · ' + (suiviData.us||[]).length + ' US · ' + (suiviData.mo||[]).length + ' MO · ' + (suiviData.incidents||[]).length + ' incidents chargés');
 }
 
 
@@ -1515,6 +1518,7 @@ function closeTD(){
   document.getElementById('td-overlay').classList.remove('open');
   document.getElementById('td-drawer').classList.remove('open');
   tdTaskId = null;
+  restoreTDComments();
 }
 function refreshTD(){
   const t=tdGetTask(); if(!t) return;
@@ -2159,7 +2163,7 @@ function filterGlobalView() {
 
 function renderGlobal() {
   const el = document.getElementById('global-content'); if (!el) return;
-  const allUS = suiviData.us||[], allMO = suiviData.mo||[], allCR = suiviData.cr||[], allBL = suiviData.backlog||[];
+  const allUS = suiviData.us||[], allMO = suiviData.mo||[], allCR = suiviData.cr||[], allBL = suiviData.backlog||[], allINC = suiviData.incidents||[];
   
   // Helper function pour la recherche
   function matchesSearch(item, query) {
@@ -2178,6 +2182,9 @@ function renderGlobal() {
   const crValide = allCR.filter(e=>e.status==='valide').length;
   const moValide = allMO.filter(e=>e.status==='valide').length;
   const blActive = allBL.filter(e=>!e.done).length, blDone = allBL.filter(e=>!!e.done).length;
+  const incActive = allINC.filter(e=>e.status==='ouvert'||e.status==='encours').length;
+  const incBloquant = allINC.filter(e=>(e.status==='ouvert'||e.status==='encours')&&e.severity==='bloquant').length;
+  const incCritique = allINC.filter(e=>(e.status==='ouvert'||e.status==='encours')&&e.severity==='critique').length;
 
   if (!allUS.length && !allMO.length && !allCR.length && !allBL.length) {
     el.innerHTML = '<div class="empty"><div class="empty-icon">🌐</div>Aucune donnée. Cliquez sur ↻ Actualiser après avoir connecté Drive.</div>';
@@ -2194,6 +2201,11 @@ function renderGlobal() {
   h += `<div class="kpi-box"><div class="kpi-n" style="color:var(--green)">${crValide}</div><div class="kpi-l">CR validés</div></div>`;
   h += `<div class="kpi-box"><div class="kpi-n">${blActive}</div><div class="kpi-l">Tâches actives</div></div>`;
   h += `<div class="kpi-box"><div class="kpi-n" style="color:var(--green)">${blDone}</div><div class="kpi-l">Tâches terminées</div></div>`;
+  if (allINC.length) {
+    h += `<div class="kpi-box"><div class="kpi-n" style="color:${incActive?'var(--amber)':'var(--green)'}">${incActive}</div><div class="kpi-l">Incidents actifs</div></div>`;
+    if (incBloquant) h += `<div class="kpi-box" style="border-color:var(--red)"><div class="kpi-n" style="color:var(--red)">${incBloquant}</div><div class="kpi-l">Bloquants</div></div>`;
+    if (incCritique) h += `<div class="kpi-box"><div class="kpi-n" style="color:var(--red)">${incCritique}</div><div class="kpi-l">Critiques</div></div>`;
+  }
   h += '</div>';
 
   function getProj(id) { return S.projects.find(p=>p.id===id) || (suiviData.sharedProjects||[]).find(p=>p.id===id) || null; }
@@ -2211,6 +2223,47 @@ function renderGlobal() {
     h += '<input type="text" id="global-add-text" placeholder="Nouvelle tâche @jv #projet !p1 26-04-2026">';
     h += '<button class="btn sm primary" onclick="addGlobalTask()">+ Ajouter</button>';
     h += '</div>';
+  }
+
+  // ── Incidents ──
+  if (allINC.length) {
+    const SEV_LABEL = {mineur:'Mineur', majeur:'Majeur', critique:'Critique', bloquant:'Bloquant'};
+    const SEV_COLOR = {mineur:'var(--muted)', majeur:'var(--amber)', critique:'var(--red)', bloquant:'var(--red)'};
+    const ST_LABEL  = {ouvert:'Ouvert', encours:'En cours', resolu:'Résolu ✓', cloture:'Clôturé', archive:'Archivé'};
+    const ST_COLOR  = {ouvert:'var(--red)', encours:'var(--amber)', resolu:'var(--green)', cloture:'var(--blue)', archive:'var(--muted)'};
+    const sevOrder  = {bloquant:0, critique:1, majeur:2, mineur:3};
+
+    const filteredINC = allINC
+      .filter(e => matchesSearch(e, _globalFilterQuery))
+      .filter(e => !(_globalHideArchive && (e.status==='archive'||e.status==='cloture')))
+      .sort((a,b) => {
+        const aActive = (a.status==='ouvert'||a.status==='encours') ? 0 : 1;
+        const bActive = (b.status==='ouvert'||b.status==='encours') ? 0 : 1;
+        if (aActive !== bActive) return aActive - bActive;
+        return (sevOrder[a.severity]||9) - (sevOrder[b.severity]||9);
+      });
+
+    if (filteredINC.length) {
+      h += `<div class="suivi-section"><div class="suivi-section-title">Incidents (${filteredINC.length})</div>`;
+      filteredINC.forEach((e, i) => {
+        const isActive = e.status==='ouvert'||e.status==='encours';
+        const sevColor = SEV_COLOR[e.severity]||'var(--muted)';
+        const stColor  = ST_COLOR[e.status]||'var(--muted)';
+        const allMark  = (e.markers_types||[]).concat(e.markers_impacts||[]);
+        const p = e.projet ? (getProj(followiData => null) || {name: e.projet}) : null;
+        const commentCount = (e.comments||[]).length;
+        _docIndex['incg'+i] = e;
+        h += `<div class="suivi-row" style="cursor:pointer;border-left:3px solid ${sevColor};${!isActive?'opacity:.6':''}" onclick="openIncidentDrawer(_docIndex['incg${i}'].id)">
+          <span style="width:8px;height:8px;border-radius:50%;background:${stColor};flex-shrink:0;display:inline-block;margin-top:3px;"></span>
+          <span class="suivi-row-title">${esc(e.title||'Sans titre')}</span>
+          <span style="font-size:10px;font-weight:600;color:${sevColor};border:1px solid ${sevColor};padding:1px 6px;border-radius:10px;white-space:nowrap;">${SEV_LABEL[e.severity]||''}</span>
+          <span style="font-size:10px;color:${stColor};white-space:nowrap;">${ST_LABEL[e.status]||''}</span>
+          ${e.projet?`<span style="font-size:11px;font-weight:500;padding:2px 7px;border-radius:12px;border:1px solid var(--border);color:var(--muted);">${esc(e.projet)}</span>`:''}
+          ${commentCount?`<span style="font-size:10px;color:var(--muted);">💬 ${commentCount}</span>`:''}
+        </div>`;
+      });
+      h += '</div>';
+    }
   }
 
   // ── Tâches (actives + terminées) ──
@@ -2308,6 +2361,134 @@ function renderGlobal() {
   
   // Attach autocomplete to input
   setTimeout(attachAutocomplete, 0);
+}
+
+// ── Incident drawer (Vue Globale) ────────────────────────────────────────
+function openIncidentDrawer(id) {
+  const all = suiviData.incidents || [];
+  const it = all.find(x => x.id === id); if (!it) return;
+
+  const SEV_LABEL = {mineur:'Mineur', majeur:'Majeur', critique:'Critique', bloquant:'Bloquant'};
+  const SEV_COLOR = {mineur:'var(--muted)', majeur:'var(--amber)', critique:'var(--red)', bloquant:'var(--red)'};
+  const ST_LABEL  = {ouvert:'Ouvert', encours:'En cours', resolu:'Résolu ✓', cloture:'Clôturé', archive:'Archivé'};
+  const ST_COLOR  = {ouvert:'var(--red)', encours:'var(--amber)', resolu:'var(--green)', cloture:'var(--blue)', archive:'var(--muted)'};
+
+  const sevColor = SEV_COLOR[it.severity]||'var(--muted)';
+  const stColor  = ST_COLOR[it.status]||'var(--muted)';
+  const team = suiviData.sharedTeam || S.team || [];
+  function mByid(mid) { return team.find(m=>m.id===mid); }
+
+  // Reuse TD drawer
+  const ta = document.getElementById('td-title');
+  ta.value = it.title||''; tdAutoResize(ta);
+  ta.onblur = null; // read-only in this context
+
+  document.getElementById('td-badges').innerHTML =
+    `<span class="td-status-badge" style="color:${sevColor};border-color:${sevColor};">${SEV_LABEL[it.severity]||''}</span>` +
+    `<span class="td-status-badge" style="color:${stColor};border-color:${stColor};">${ST_LABEL[it.status]||''}</span>`;
+
+  // Params section (read-only)
+  const parSec = document.getElementById('td-sec-params');
+  if (parSec) {
+    const priSel = document.getElementById('td-pri');
+    const projSel = document.getElementById('td-proj');
+    const dueIn = document.getElementById('td-duedate');
+    if (priSel) { priSel.value = ''; priSel.disabled = true; }
+    if (projSel) { projSel.innerHTML = `<option>${esc(it.projet||'—')}</option>`; projSel.disabled = true; }
+    if (dueIn) { dueIn.value = it.dueDate||''; dueIn.disabled = true; }
+  }
+
+  // Team
+  const teamEl = document.getElementById('td-team');
+  const members = [it.declarantId, it.assigneeId].filter(Boolean);
+  if (!members.length) {
+    teamEl.innerHTML = '<span style="font-size:13px;color:var(--muted)">Non assigné</span>';
+  } else {
+    teamEl.innerHTML = members.map(mid => {
+      const m = mByid(mid); if (!m) return '';
+      const role = mid===it.declarantId ? 'Déclarant' : 'Assigné';
+      return `<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:600;margin:0 4px 4px 0;background:${m.color};color:#fff;border:1px solid ${m.color};">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.25);color:#fff;font-size:9px;font-weight:700;">${m.initiales}</span>
+        ${m.nom.split(' ')[0]} <span style="opacity:.7;font-size:10px;">${role}</span></span>`;
+    }).join('');
+  }
+
+  // Build body : champs structurés + marqueurs + commentaires + historique
+  let body = '';
+  const allMark = (it.markers_types||[]).concat(it.markers_impacts||[]);
+  if (allMark.length) {
+    body += `<div class="td-drawer-section"><div class="td-drawer-section-title">Marqueurs</div><div style="display:flex;gap:5px;flex-wrap:wrap;">` +
+      allMark.map(m=>`<span style="font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid var(--border);color:var(--muted);">${esc(m)}</span>`).join('') +
+    `</div></div>`;
+  }
+  const fields = [
+    {label:'Description', val:it.description},
+    {label:'Impact',      val:it.impact},
+    {label:'Actions menées', val:it.actions},
+    {label:'Résolution',  val:it.resolution},
+    {label:'Cause racine',val:it.rootcause}
+  ];
+  fields.filter(f=>f.val).forEach(f=>{
+    body += `<div class="td-drawer-section"><div class="td-drawer-section-title">${f.label}</div><div style="font-size:13px;line-height:1.55;white-space:pre-wrap;">${esc(f.val)}</div></div>`;
+  });
+
+  // Commentaires (lecture seule ici)
+  const comments = it.comments||[];
+  body += `<div class="td-drawer-section"><div class="td-drawer-section-title">💬 Commentaires (${comments.length})</div>`;
+  if (!comments.length) {
+    body += `<span style="font-size:13px;color:var(--muted);">Aucun commentaire.</span>`;
+  } else {
+    comments.forEach(c => {
+      const m = mByid(c.authorId);
+      body += `<div style="padding:7px 10px;background:var(--bg);border-radius:var(--radius);margin-bottom:6px;">` +
+        (m ? `<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span style="width:20px;height:20px;border-radius:50%;background:${m.color};display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;">${m.initiales}</span><b style="font-size:12px;">${esc(m.nom)}</b></div>` : '') +
+        `<div style="font-size:13px;line-height:1.5;">${esc(c.text)}</div>` +
+        `<div style="font-size:11px;color:var(--muted);margin-top:3px;">${c.ts ? new Date(c.ts).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : ''}</div>` +
+      `</div>`;
+    });
+  }
+  body += `</div>`;
+
+  // Historique
+  const hist = (it.history||[]).slice(0,15);
+  if (hist.length) {
+    body += `<div class="td-drawer-section"><div class="td-drawer-section-title">📋 Historique</div>`;
+    hist.forEach(h => {
+      body += `<div class="td-history-item"><div class="td-history-meta">${h.ts?new Date(h.ts).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}):''} · <b>${esc(h.authorName||'?')}</b></div><div class="td-history-change"><span class="td-hist-tag">~ ${esc(h.field)}</span> <span style="color:var(--muted)">${esc(h.from||'—')}</span> → <span>${esc(h.to||'—')}</span></div></div>`;
+    });
+    body += `</div>`;
+  }
+
+  body += `<div class="td-drawer-section" style="padding-bottom:32px;">
+    <span style="font-size:12px;color:var(--muted);">Gérer cet incident dans <b>Incident Tracker</b>.</span>
+  </div>`;
+
+  document.getElementById('td-comments').innerHTML = '';
+  document.getElementById('td-history').innerHTML = body;
+  document.getElementById('td-comment-input').style.display = 'none';
+  document.getElementById('td-comment-input').nextElementSibling.style.display = 'none';
+
+  // Disable param selects (re-enable when opening a real task)
+  openTDDrawer();
+}
+
+function openTDDrawer() {
+  document.getElementById('td-overlay').style.opacity = '1';
+  document.getElementById('td-overlay').style.pointerEvents = 'all';
+  document.getElementById('td-drawer').classList.add('open');
+}
+
+function restoreTDComments() {
+  const inp = document.getElementById('td-comment-input');
+  if (inp) { inp.style.display = ''; }
+  const btn = inp ? inp.nextElementSibling : null;
+  if (btn) btn.style.display = '';
+  const priSel = document.getElementById('td-pri');
+  const projSel = document.getElementById('td-proj');
+  const dueIn = document.getElementById('td-duedate');
+  if (priSel) priSel.disabled = false;
+  if (projSel) projSel.disabled = false;
+  if (dueIn) dueIn.disabled = false;
 }
 
 function debugSuivi() {
