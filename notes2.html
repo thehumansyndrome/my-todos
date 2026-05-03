@@ -1844,7 +1844,7 @@ function toggleFocus(){
   document.documentElement.classList.toggle('focus-mode',_focusMode);
   var btn=document.getElementById('focus-btn');
   if(btn)btn.classList.toggle('on',_focusMode);
-  toast(_focusMode?'Mode focus — F11 ou Échap pour quitter':'Mode normal');
+  toast(_focusMode?'Mode focus — Ctrl+Shift+F ou Échap pour quitter':'Mode normal');
 }
 
 // ── 6. YAML fold ──────────────────────────────────────────────────────────
@@ -1853,7 +1853,8 @@ function updateYamlFoldBtn(){
   var n=S.notes.find(function(x){return x.id===curId;});
   var hasYaml=n&&(n.body||'').trimStart().startsWith('---');
   var btn=document.getElementById('yaml-fold-toggle-btn');
-  if(btn)btn.style.display=(hasYaml&&curView!=='raw')?'':'none';
+  // Show the fold button whenever the note has YAML front matter (in any view)
+  if(btn)btn.style.display=hasYaml?'':'none';
   if(!hasYaml&&_yamlFolded)unfoldYaml();
 }
 function foldYaml(){
@@ -1978,12 +1979,47 @@ function renderMarkdown(text){
   return out.join('');
 }
 
-// ── 7. Override renderFree to use Markdown ─────────────────────────────────
+// ── Patch: call new functions from existing ones directly ─────────────────
+// Instead of fragile override chains, we hook via direct calls
+
+// openNote: call new fns after original
+var _origOpenNote=openNote;
+openNote=function(id){
+  _origOpenNote(id);
+  updateWordCount();
+  renderTrash();
+  _yamlFolded=false;
+  unfoldYaml();
+  updateYamlFoldBtn();
+};
+
+// onNoteInput: update word count
+var _origOnNoteInput=onNoteInput;
+onNoteInput=function(){
+  _origOnNoteInput();
+  updateWordCount();
+  updateYamlFoldBtn();
+};
+
+// updateDateFooter: update word count display
+var _origUpdateDateFooter=updateDateFooter;
+updateDateFooter=function(){
+  _origUpdateDateFooter();
+  updateWordCount();
+};
+
+// setView: update yaml fold btn visibility
+var _origSetView=setView;
+setView=function(v){
+  _origSetView(v);
+  updateYamlFoldBtn();
+};
+
+// renderFree: use markdown
 var _origRenderFree=renderFree;
 renderFree=function(body){
   if(!body||!body.trim())return'<div class="pr-empty">Note vide</div>';
   var lines=body.split('\n');
-  // Extract title (first non-empty line)
   var titleIdx=lines.findIndex(function(l){return l.trim();});
   var title=titleIdx>=0?lines[titleIdx].replace(/^#+\s*/,'').trim():'';
   var rest=lines.slice(titleIdx+1).join('\n').trim();
@@ -1993,7 +2029,15 @@ renderFree=function(body){
     +(rest?renderMarkdown(rest):'');
 };
 
-// ── 5. Keyboard shortcuts ──────────────────────────────────────────────────
+// init: also render trash
+var _origInit=init;
+init=function(){_origInit();renderTrash();};
+
+// ensureState: also ensure trash array
+var _origEnsureState=ensureState;
+ensureState=function(){_origEnsureState();if(!Array.isArray(S.trash))S.trash=[];};
+
+// ── Keyboard shortcuts ────────────────────────────────────────────────────
 document.addEventListener('keydown',function(e){
   var mod=e.ctrlKey||e.metaKey;
   // Ctrl+S = force save
@@ -2010,44 +2054,7 @@ document.addEventListener('keydown',function(e){
   if(mod&&e.shiftKey&&e.key==='Y'){e.preventDefault();toggleYamlFold();}
 });
 
-// ── 4. Patch updatePreview to also update YAML fold btn ────────────────────
-var _origUpdatePreview=updatePreview;
-updatePreview=function(){_origUpdatePreview();updateYamlFoldBtn();};
-
-// ── Patch openNote to call new update fns ──────────────────────────────────
-var _origOpenNote=openNote;
-openNote=function(id){
-  _origOpenNote(id);
-  updateWordCount();
-  renderTrash();
-  _yamlFolded=false;
-  unfoldYaml();
-  updateYamlFoldBtn();
-};
-
-// ── Patch onNoteInput to update word count ─────────────────────────────────
-var _origOnNoteInput=onNoteInput;
-onNoteInput=function(){
-  _origOnNoteInput();
-  updateWordCount();
-};
-
-// ── Patch updateDateFooter to show wc bar ─────────────────────────────────
-var _origUpdateDateFooter=updateDateFooter;
-updateDateFooter=function(){
-  _origUpdateDateFooter();
-  updateWordCount();
-};
-
-// ── Patch init to call renderTrash ────────────────────────────────────────
-var _origInit=init;
-init=function(){_origInit();renderTrash();};
-
-// ── Patch ensureState to include trash ────────────────────────────────────
-var _origEnsureState=ensureState;
-ensureState=function(){_origEnsureState();if(!Array.isArray(S.trash))S.trash=[];};
-
-// ── Keyboard hint in placeholder ─────────────────────────────────────────
+// ── Keyboard hint in placeholder ──────────────────────────────────────────
 var _noteTaKb=document.getElementById('note-ta');
 if(_noteTaKb){
   _noteTaKb.setAttribute('placeholder',
