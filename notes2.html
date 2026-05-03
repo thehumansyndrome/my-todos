@@ -267,25 +267,51 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
 /* ── Custom templates modal ── */
 .ctmpl-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:none;align-items:center;justify-content:center;}
 .ctmpl-overlay.open{display:flex;}
-.ctmpl-modal{background:var(--surface);border:1px solid var(--border);border-radius:10px;width:min(620px,96vw);max-height:88vh;display:flex;flex-direction:column;overflow:hidden;}
-.ctmpl-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.ctmpl-modal{background:var(--surface);border:1px solid var(--border);border-radius:10px;width:min(820px,98vw);max-height:92vh;display:flex;flex-direction:column;overflow:hidden;}
+.ctmpl-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
 .ctmpl-header h2{font-size:14px;font-weight:600;}
-.ctmpl-body{display:flex;flex:1;overflow:hidden;}
-.ctmpl-list{width:200px;flex-shrink:0;border-right:1px solid var(--border);overflow-y:auto;padding:6px 0;}
+.ctmpl-body{display:flex;flex:1;overflow:hidden;min-height:0;}
+.ctmpl-list-col{width:190px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.ctmpl-list{flex:1;overflow-y:auto;padding:6px 0;}
 .ctmpl-list-item{padding:8px 14px;cursor:pointer;font-size:13px;transition:background .12s;display:flex;align-items:center;justify-content:space-between;gap:6px;}
 .ctmpl-list-item:hover{background:var(--bg);}
 .ctmpl-list-item.active{background:var(--bg);font-weight:500;}
 .ctmpl-list-item .ctmpl-del{opacity:0;font-size:11px;color:var(--red);background:none;border:none;cursor:pointer;padding:0;}
 .ctmpl-list-item:hover .ctmpl-del{opacity:1;}
-.ctmpl-add-btn{padding:8px 14px;font-size:12px;color:var(--blue);cursor:pointer;background:none;border:none;border-top:1px solid var(--border);width:100%;text-align:left;transition:background .12s;}
+.ctmpl-add-btn{padding:8px 14px;font-size:12px;color:var(--blue);cursor:pointer;background:none;border:none;border-top:1px solid var(--border);width:100%;text-align:left;transition:background .12s;flex-shrink:0;}
 .ctmpl-add-btn:hover{background:var(--bg);}
-.ctmpl-editor{flex:1;display:flex;flex-direction:column;padding:14px 16px;gap:10px;overflow-y:auto;}
-.ctmpl-editor input,.ctmpl-editor textarea{width:100%;font-family:var(--sans);font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none;box-sizing:border-box;}
-.ctmpl-editor input:focus,.ctmpl-editor textarea:focus{border-color:var(--accent);}
-.ctmpl-editor textarea{font-family:var(--mono);resize:vertical;min-height:160px;line-height:1.6;}
-.ctmpl-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:3px;}
+.ctmpl-editor{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+.ctmpl-editor-scroll{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:12px;}
+.ctmpl-editor input,.ctmpl-editor textarea,.ctmpl-editor select{width:100%;font-family:var(--sans);font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none;box-sizing:border-box;}
+.ctmpl-editor input:focus,.ctmpl-editor textarea:focus,.ctmpl-editor select:focus{border-color:var(--accent);}
+.ctmpl-editor textarea{font-family:var(--mono);resize:vertical;line-height:1.6;}
+.ctmpl-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:4px;}
+.ctmpl-sublabel{font-size:11px;color:var(--muted);margin-bottom:6px;line-height:1.5;}
 .ctmpl-empty{padding:30px;text-align:center;color:var(--muted);font-size:13px;}
-.ctmpl-footer{padding:10px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+.ctmpl-footer{padding:10px 16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:8px;flex-shrink:0;align-items:center;}
+.ctmpl-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;}
+.ctmpl-tab{padding:9px 16px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
+.ctmpl-tab.active{color:var(--text);border-bottom-color:var(--accent);}
+/* Variable chips */
+.ctmpl-vars{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:4px;}
+.ctmpl-var-chip{font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:10px;background:var(--bg);border:1px solid var(--border);cursor:pointer;color:var(--blue);transition:background .12s;}
+.ctmpl-var-chip:hover{background:var(--blue);color:#fff;border-color:var(--blue);}
+/* Fill-in modal */
+.ctmpl-fill-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;display:none;align-items:center;justify-content:center;}
+.ctmpl-fill-overlay.open{display:flex;}
+.ctmpl-fill-modal{background:var(--surface);border:1px solid var(--border);border-radius:10px;width:min(440px,96vw);display:flex;flex-direction:column;overflow:hidden;}
+.ctmpl-fill-body{padding:16px;display:flex;flex-direction:column;gap:12px;max-height:70vh;overflow-y:auto;}
+/* Sections preview */
+.ctr-section{margin-bottom:18px;}
+.ctr-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding-bottom:6px;border-bottom:1px solid var(--border);margin-bottom:8px;}
+.ctr-item{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;line-height:1.5;}
+.ctr-item:last-child{border-bottom:none;}
+.ctr-num{font-family:var(--mono);font-size:11px;color:var(--muted);min-width:18px;margin-top:2px;}
+.ctr-text{flex:1;}
+.ctr-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+.ctr-field-group{margin-bottom:12px;}
+.ctr-field-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;}
+.ctr-field-val{font-size:13px;line-height:1.5;}
 
 .wc-bar{font-size:11px;color:var(--muted);font-family:var(--mono);padding:0 0 0 16px;display:flex;align-items:center;gap:10px;}
 
@@ -461,7 +487,7 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
       <button class="icon-btn" onclick="closeCtmpl()" style="width:28px;height:28px;font-size:16px;">✕</button>
     </div>
     <div class="ctmpl-body">
-      <div style="display:flex;flex-direction:column;width:200px;flex-shrink:0;border-right:1px solid var(--border);">
+      <div class="ctmpl-list-col">
         <div class="ctmpl-list" id="ctmpl-list"></div>
         <button class="ctmpl-add-btn" onclick="ctmplNew()">＋ Nouveau template</button>
       </div>
@@ -470,8 +496,29 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
       </div>
     </div>
     <div class="ctmpl-footer">
-      <button class="btn sm" onclick="closeCtmpl()">Fermer</button>
-      <button class="btn sm primary" onclick="ctmplSave()">Enregistrer</button>
+      <span style="font-size:11px;color:var(--muted);" id="ctmpl-footer-hint"></span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn sm" onclick="closeCtmpl()">Fermer</button>
+        <button class="btn sm primary" onclick="ctmplSave()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Fill-in variables modal -->
+<div class="ctmpl-fill-overlay" id="ctmpl-fill-overlay" onclick="if(event.target===this)ctmplFillCancel()">
+  <div class="ctmpl-fill-modal">
+    <div class="ctmpl-header">
+      <h2 id="ctmpl-fill-title">Remplir le template</h2>
+      <button class="icon-btn" onclick="ctmplFillCancel()" style="width:28px;height:28px;font-size:16px;">✕</button>
+    </div>
+    <div class="ctmpl-fill-body" id="ctmpl-fill-body"></div>
+    <div class="ctmpl-footer">
+      <span style="font-size:11px;color:var(--muted);">Les variables {{auto}} sont remplies automatiquement.</span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn sm" onclick="ctmplFillCancel()">Annuler</button>
+        <button class="btn sm primary" onclick="ctmplFillApply()">Appliquer</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2100,144 +2147,254 @@ document.addEventListener('keydown',function(e){
   if(mod&&e.shiftKey&&e.key==='Y'){e.preventDefault();toggleYamlFold();}
 });
 
-// ── Custom templates ──────────────────────────────────────────────────────
+// ── Custom templates (Niveau A + B) ──────────────────────────────────────
 var CTMPL_KEY = 'td_ctmpls_notes2';
-var _ctmpls = [];
-var _ctmplEditId = null;
+var _ctmpls = [], _ctmplEditId = null, _ctmplActiveTab = 'body', _ctmplFillCallback = null;
+
+function ctmplAutoVars(){
+  var d=new Date();
+  var jours=['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+  var mois=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  return {'date':String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+d.getFullYear(),'date_longue':jours[d.getDay()]+' '+d.getDate()+' '+mois[d.getMonth()]+' '+d.getFullYear(),'heure':String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+}
+var CTMPL_AUTO_VARS=['date','date_longue','heure'];
+var CTMPL_MANUAL_VARS=['titre','projet','participants'];
+
+function ctmplDetectVars(body){
+  var found=[],re=/\{\{([\w_]+)\}\}/g,m;
+  while((m=re.exec(body))!==null){if(!found.includes(m[1]))found.push(m[1]);}
+  return found;
+}
+function ctmplNeedsPrompt(body){
+  return ctmplDetectVars(body).some(function(v){return CTMPL_MANUAL_VARS.includes(v);});
+}
+
+function ctmplRender(body,vars){
+  var text=body;
+  Object.keys(vars).forEach(function(k){text=text.replace(new RegExp('\\{\\{'+k+'\\}\\}','g'),vars[k]||'');});
+  var lines=text.split('\n'),out=[],i=0;
+  while(i<lines.length){
+    var line=lines[i];
+    var sm=line.match(/^\[section\s*:\s*(.+)\]\s*$/i);
+    if(sm){var items=[];i++;while(i<lines.length&&!lines[i].match(/^\[/)){var t2=lines[i].trim();if(t2)items.push(t2);i++;}
+      out.push('<div class="ctr-section"><div class="ctr-section-title">'+esc(sm[1])+'</div>'+items.map(function(it,idx){return '<div class="ctr-item"><span class="ctr-num">'+(idx+1)+'.</span><div class="ctr-text">'+esc(it)+'</div></div>';}).join('')+'</div>');continue;}
+    var cm=line.match(/^\[champ\s*:\s*(.+)\]\s*$/i);
+    if(cm){var val=[];i++;while(i<lines.length&&!lines[i].match(/^\[/)){if(lines[i].trim())val.push(lines[i].trim());i++;}
+      out.push('<div class="ctr-field-group"><div class="ctr-field-label">'+esc(cm[1])+'</div><div class="ctr-field-val">'+val.map(esc).join('<br>')+'</div></div>');continue;}
+    if(line.match(/^\[liste\]\s*$/i)){var litems=[];i++;while(i<lines.length&&!lines[i].match(/^\[\/liste\]\s*$/i)){if(lines[i].trim())litems.push(lines[i].trim());i++;}i++;
+      out.push('<ul style="padding-left:20px;margin:6px 0;font-size:13px;">'+litems.map(function(l){return '<li>'+esc(l)+'</li>';}).join('')+'</ul>');continue;}
+    if(!line.trim()){out.push('<div style="height:0.4em;"></div>');i++;continue;}
+    var hm=line.match(/^(#{1,3})\s+(.*)/);
+    if(hm){out.push('<div class="md-h'+hm[1].length+'">'+esc(hm[2])+'</div>');i++;continue;}
+    out.push('<p class="md-p">'+esc(line)+'</p>');i++;
+  }
+  return out.join('');
+}
 
 function loadCtmpls(){
   try{var r=localStorage.getItem(CTMPL_KEY);if(r)_ctmpls=JSON.parse(r);}catch(e){}
   if(!Array.isArray(_ctmpls))_ctmpls=[];
+  _ctmpls.forEach(function(t){if(!t.renderBody)t.renderBody='';if(t.useRender===undefined)t.useRender=false;});
 }
-function saveCtmpls(){
-  try{localStorage.setItem(CTMPL_KEY,JSON.stringify(_ctmpls));}catch(e){}
-  buildTmplMenu(); // refresh the Appliquer dropdown
-}
+function saveCtmpls(){try{localStorage.setItem(CTMPL_KEY,JSON.stringify(_ctmpls));}catch(e){}buildTmplMenu();}
+
 function openCtmpl(){
-  loadCtmpls();
-  renderCtmplList();
-  _ctmplEditId=null;
-  document.getElementById('ctmpl-editor').innerHTML='<div class="ctmpl-empty">Sélectionne ou crée un template</div>';
+  loadCtmpls();renderCtmplList();_ctmplEditId=null;
+  document.getElementById('ctmpl-editor').innerHTML='<div class="ctmpl-empty">Sélectionne ou crée un template à gauche</div>';
+  document.getElementById('ctmpl-footer-hint').textContent='';
   document.getElementById('ctmpl-overlay').classList.add('open');
 }
-function closeCtmpl(){
-  document.getElementById('ctmpl-overlay').classList.remove('open');
-}
+function closeCtmpl(){document.getElementById('ctmpl-overlay').classList.remove('open');}
+
 function renderCtmplList(){
   var el=document.getElementById('ctmpl-list');
-  if(!_ctmpls.length){
-    el.innerHTML='<div style="padding:12px 14px;font-size:12px;color:var(--muted);">Aucun template</div>';
-    return;
-  }
+  if(!_ctmpls.length){el.innerHTML='<div style="padding:12px 14px;font-size:12px;color:var(--muted);">Aucun template.<br>Crée-en un !</div>';return;}
   el.innerHTML=_ctmpls.map(function(t){
+    var badge=t.useRender?'<span style="font-size:9px;background:var(--accent);color:var(--bg);padding:1px 5px;border-radius:8px;margin-left:4px;">B</span>':'';
     return '<div class="ctmpl-list-item'+(t.id===_ctmplEditId?' active':'')+'" onclick="ctmplSelect(\''+t.id+'\')">'
-      +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(t.name||'Sans nom')+'</span>'
+      +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(t.name||'Sans nom')+badge+'</span>'
       +'<button class="ctmpl-del" onclick="event.stopPropagation();ctmplDelete(\''+t.id+'\')" title="Supprimer">✕</button>'
       +'</div>';
   }).join('');
 }
+
+function ctmplTab(tab){
+  _ctmplActiveTab=tab;
+  document.querySelectorAll('.ctmpl-tab').forEach(function(el){el.classList.toggle('active',el.dataset.tab===tab);});
+  document.getElementById('ctmpl-pane-body').style.display=tab==='body'?'':'none';
+  document.getElementById('ctmpl-pane-rendu').style.display=tab==='rendu'?'':'none';
+}
+
+function ctmplInsertVar(v){
+  var ta=document.getElementById('ctmpl-in-body');if(!ta)return;
+  var pos=ta.selectionStart,ins='{{'+v+'}}',val=ta.value;
+  ta.value=val.slice(0,pos)+ins+val.slice(pos);ta.selectionStart=ta.selectionEnd=pos+ins.length;ta.focus();
+}
+function ctmplInsertBlock(block){
+  var ta=document.getElementById('ctmpl-in-renderbody');if(!ta)return;
+  var pos=ta.selectionStart,ins='\n'+block+'\n',val=ta.value;
+  ta.value=val.slice(0,pos)+ins+val.slice(pos);ta.selectionStart=ta.selectionEnd=pos+ins.length;ta.focus();
+}
+
 function ctmplSelect(id){
   var t=_ctmpls.find(function(x){return x.id===id;});if(!t)return;
-  _ctmplEditId=id;
-  renderCtmplList();
+  _ctmplEditId=id;_ctmplActiveTab='body';renderCtmplList();
+  var varChips=['date','date_longue','heure','titre','projet','participants'].map(function(v){
+    var isAuto=['date','date_longue','heure'].includes(v);
+    return '<span class="ctmpl-var-chip" onclick="ctmplInsertVar(\''+v+'\')" title="'+(isAuto?'Auto':'À saisir')+'">{{'+v+'}}'+(isAuto?' ⚡':'')+'</span>';
+  }).join('');
+  var blockChips=['[section: Titre]','[champ: Libellé]','[liste]\n- item\n[/liste]'].map(function(s){
+    var label=s.split(':')[0].replace('[','').trim();
+    return '<span class="ctmpl-var-chip" style="color:var(--green);border-color:var(--green);" onclick="ctmplInsertBlock(this.dataset.block)" data-block="'+esc(s)+'">['+label+']</span>';
+  }).join('');
   document.getElementById('ctmpl-editor').innerHTML=
-    '<div><div class="ctmpl-label">Nom</div><input id="ctmpl-in-name" value="'+esc(t.name||'')+'" placeholder="Ex: Réunion client"></div>'
-    +'<div><div class="ctmpl-label">Description courte</div><input id="ctmpl-in-desc" value="'+esc(t.desc||'')+'" placeholder="Ex: CR commercial"></div>'
-    +'<div style="flex:1;display:flex;flex-direction:column;"><div class="ctmpl-label">Contenu de départ</div><textarea id="ctmpl-in-body" style="flex:1;min-height:200px;">'+esc(t.body||'')+'</textarea></div>';
+    '<div class="ctmpl-tabs">'
+      +'<div class="ctmpl-tab active" data-tab="body" onclick="ctmplTab(\'body\')">Contenu</div>'
+      +'<div class="ctmpl-tab" data-tab="rendu" onclick="ctmplTab(\'rendu\')">Rendu structuré (B)</div>'
+    +'</div>'
+    +'<div class="ctmpl-editor-scroll">'
+      +'<div id="ctmpl-pane-body">'
+        +'<div><div class="ctmpl-label">Nom</div><input id="ctmpl-in-name" value="'+esc(t.name||'')+'" placeholder="Ex: Réunion client"></div>'
+        +'<div><div class="ctmpl-label">Description</div><input id="ctmpl-in-desc" value="'+esc(t.desc||'')+'" placeholder="Ex: CR commercial"></div>'
+        +'<div><div class="ctmpl-label">Variables disponibles</div>'
+          +'<div class="ctmpl-sublabel">Clic = insère dans le contenu. ⚡ = automatique. Les autres seront demandés à l\'application.</div>'
+          +'<div class="ctmpl-vars">'+varChips+'</div></div>'
+        +'<div><div class="ctmpl-label">Contenu de départ</div>'
+          +'<textarea id="ctmpl-in-body" style="min-height:200px;">'+esc(t.body||'')+'</textarea></div>'
+      +'</div>'
+      +'<div id="ctmpl-pane-rendu" style="display:none;">'
+        +'<div style="margin-bottom:8px;"><label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">'
+          +'<input type="checkbox" id="ctmpl-in-userender"'+(t.useRender?' checked':'')+'>Activer le rendu structuré (Niveau B)</label></div>'
+        +'<div class="ctmpl-sublabel">Définissez l\'affichage en vue Rendu. Blocs disponibles :</div>'
+        +'<div class="ctmpl-vars" style="margin-bottom:8px;">'+blockChips+'</div>'
+        +'<div><div class="ctmpl-label">Corps du rendu</div>'
+          +'<div class="ctmpl-sublabel">[section: X] · [champ: X] · [liste]...[/liste] · # h1 ## h2 · {{variables}}</div>'
+          +'<textarea id="ctmpl-in-renderbody" style="min-height:200px;">'+esc(t.renderBody||'')+'</textarea></div>'
+      +'</div>'
+    +'</div>';
+  document.getElementById('ctmpl-footer-hint').textContent=t.useRender?'Rendu structuré actif':'';
 }
+
 function ctmplNew(){
   var id='ct_'+Date.now().toString(36);
-  _ctmpls.push({id:id,name:'',desc:'',body:''});
-  _ctmplEditId=id;
-  renderCtmplList();
-  ctmplSelect(id);
+  _ctmpls.push({id:id,name:'',desc:'',body:'',renderBody:'',useRender:false});
+  _ctmplEditId=id;renderCtmplList();ctmplSelect(id);
   setTimeout(function(){var el=document.getElementById('ctmpl-in-name');if(el)el.focus();},50);
 }
 function ctmplSave(){
   if(!_ctmplEditId){closeCtmpl();return;}
   var t=_ctmpls.find(function(x){return x.id===_ctmplEditId;});if(!t)return;
-  var name=document.getElementById('ctmpl-in-name');
-  var desc=document.getElementById('ctmpl-in-desc');
-  var body=document.getElementById('ctmpl-in-body');
-  if(!name||!name.value.trim()){toast('Donne un nom au template');return;}
-  t.name=name.value.trim();
-  t.desc=desc?desc.value.trim():'';
-  t.body=body?body.value:'';
-  saveCtmpls();
-  renderCtmplList();
+  var nameEl=document.getElementById('ctmpl-in-name');
+  if(!nameEl||!nameEl.value.trim()){toast('Donne un nom au template');return;}
+  t.name=nameEl.value.trim();
+  var descEl=document.getElementById('ctmpl-in-desc');if(descEl)t.desc=descEl.value.trim();
+  var bodyEl=document.getElementById('ctmpl-in-body');if(bodyEl)t.body=bodyEl.value;
+  var rbEl=document.getElementById('ctmpl-in-renderbody');if(rbEl)t.renderBody=rbEl.value;
+  var urEl=document.getElementById('ctmpl-in-userender');if(urEl)t.useRender=urEl.checked;
+  saveCtmpls();renderCtmplList();
+  document.getElementById('ctmpl-footer-hint').textContent=t.useRender?'Rendu structuré actif':'';
   toast('✓ Template "'+t.name+'" enregistré');
 }
 function ctmplDelete(id){
   var t=_ctmpls.find(function(x){return x.id===id;});
-  if(!t||!confirm('Supprimer le template "'+t.name+'" ?'))return;
+  if(!t||!confirm('Supprimer "'+t.name+'" ?'))return;
   _ctmpls=_ctmpls.filter(function(x){return x.id!==id;});
-  if(_ctmplEditId===id){
-    _ctmplEditId=null;
-    document.getElementById('ctmpl-editor').innerHTML='<div class="ctmpl-empty">Sélectionne ou crée un template</div>';
-  }
-  saveCtmpls();
-  renderCtmplList();
-  toast('Template supprimé');
+  if(_ctmplEditId===id){_ctmplEditId=null;document.getElementById('ctmpl-editor').innerHTML='<div class="ctmpl-empty">Sélectionne ou crée un template</div>';document.getElementById('ctmpl-footer-hint').textContent='';}
+  saveCtmpls();renderCtmplList();toast('Template supprimé');
 }
 
-// ── Patch buildTmplMenu to include custom templates ───────────────────────
-var _origBuildTmplMenu=buildTmplMenu;
-buildTmplMenu=function(){
-  loadCtmpls();
-  var menu=document.getElementById('tmpl-menu');
-  // Built-in templates
-  var html=TMPLS.map(function(t,i){
-    return (i>0?'<div class="tmpl-sep"></div>':'')
-      +'<div class="tmpl-item" onclick="applyTmpl(\''+t.id+'\')">'
-      +'<span class="tmpl-item-name">'+esc(t.name)+'</span>'
-      +'<span class="tmpl-item-desc">'+esc(t.desc)+'</span>'
-      +'</div>';
-  }).join('');
-  // Custom templates
-  if(_ctmpls.length){
-    html+='<div class="tmpl-sep"></div>';
-    html+='<div style="padding:5px 14px 3px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);">Mes templates</div>';
-    html+=_ctmpls.map(function(t){
-      return '<div class="tmpl-item" onclick="applyCustomTmpl(\''+t.id+'\')">'
-        +'<span class="tmpl-item-name">'+esc(t.name)+'</span>'
-        +(t.desc?'<span class="tmpl-item-desc">'+esc(t.desc)+'</span>':'')
-        +'</div>';
-    }).join('');
-  }
-  // Manage link
-  html+='<div class="tmpl-sep"></div>'
-    +'<div class="tmpl-item" onclick="toggleTmplMenu();openCtmpl();" style="color:var(--blue);">'
-    +'<span class="tmpl-item-name">⚙ Gérer mes templates…</span>'
-    +'</div>';
-  menu.innerHTML=html;
-};
+// Fill-in modal (Niveau A)
+var _ctmplFillTemplate=null;
+function ctmplShowFill(t,onApply){
+  _ctmplFillTemplate=t;_ctmplFillCallback=onApply;
+  var vars=ctmplDetectVars((t.body||'')+(t.renderBody||''));
+  var manualVars=vars.filter(function(v){return CTMPL_MANUAL_VARS.includes(v);});
+  document.getElementById('ctmpl-fill-title').textContent='Appliquer : '+t.name;
+  var body='';
+  manualVars.forEach(function(v){
+    if(v==='projet'){
+      var opts='<option value="">— Aucun —</option>'+(sharedProjects||[]).map(function(p){return '<option value="'+esc(p.name)+'">'+esc(p.name)+'</option>';}).join('');
+      body+='<div><div class="ctmpl-label">Projet</div><select id="ctmpl-fill-'+v+'" style="width:100%;padding:6px 9px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:13px;outline:none;">'+opts+'</select></div>';
+    } else {
+      body+='<div><div class="ctmpl-label">'+v.charAt(0).toUpperCase()+v.slice(1)+'</div><input id="ctmpl-fill-'+v+'" placeholder="'+v+'" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:13px;outline:none;box-sizing:border-box;"></div>';
+    }
+  });
+  document.getElementById('ctmpl-fill-body').innerHTML=body||'<div style="color:var(--muted);font-size:13px;">Seules des variables automatiques — application directe.</div>';
+  document.getElementById('ctmpl-fill-overlay').classList.add('open');
+  setTimeout(function(){var f=document.querySelector('#ctmpl-fill-body input,#ctmpl-fill-body select');if(f)f.focus();},50);
+}
+function ctmplFillCancel(){document.getElementById('ctmpl-fill-overlay').classList.remove('open');}
+function ctmplFillApply(){
+  var t=_ctmplFillTemplate;if(!t)return;
+  var vars=Object.assign({},ctmplAutoVars());
+  CTMPL_MANUAL_VARS.forEach(function(v){var el=document.getElementById('ctmpl-fill-'+v);if(el)vars[v]=el.value;});
+  ctmplFillCancel();
+  if(_ctmplFillCallback)_ctmplFillCallback(t,vars);
+}
 
+// Apply custom template
 function applyCustomTmpl(id){
   document.getElementById('tmpl-menu').style.display='none';
   document.getElementById('tmpl-btn').classList.remove('open');
   loadCtmpls();
   var t=_ctmpls.find(function(x){return x.id===id;});if(!t)return;
-  var n=S.notes.find(function(x){return x.id===curId;});
-  if(!n){
-    // create new note with this template
-    var nn={id:uid(),body:t.body||'',template:'custom_'+id,favorite:false,images:{},created:Date.now(),updated:Date.now()};
-    S.notes.unshift(nn);autoSave();openNote(nn.id);
-    if(window.innerWidth<=680)showEditor();
-    return;
-  }
-  if(n.body.trim()&&!confirm('Remplacer le contenu par "'+t.name+'" ?'))return;
-  n.body=t.body||'';
-  n.template='custom_'+id;
-  n.updated=Date.now();
-  document.getElementById('note-ta').value=n.body;
-  autoSave();updatePreview();updateExportBar();
-  if(curView==='raw')setView('split');
-  toast('Template : '+t.name);
+  var doApply=function(tmpl,vars){
+    var body=tmpl.body||'';
+    Object.keys(vars).forEach(function(k){body=body.replace(new RegExp('\\{\\{'+k+'\\}\\}','g'),vars[k]||'');});
+    var n=S.notes.find(function(x){return x.id===curId;});
+    if(n){
+      if(n.body.trim()&&!confirm('Remplacer le contenu par "'+tmpl.name+'" ?'))return;
+      n.body=body;n.template='custom_'+id;n.updated=Date.now();n._ctmplVars=vars;n._ctmplId=id;
+      document.getElementById('note-ta').value=n.body;
+      autoSave();updatePreview();updateExportBar();if(curView==='raw')setView('split');
+      toast('Template : '+tmpl.name);
+    } else {
+      var nn={id:uid(),body:body,template:'custom_'+id,favorite:false,images:{},created:Date.now(),updated:Date.now(),_ctmplVars:vars,_ctmplId:id};
+      S.notes.unshift(nn);autoSave();openNote(nn.id);if(window.innerWidth<=680)showEditor();
+    }
+  };
+  if(ctmplNeedsPrompt(t.body)){ctmplShowFill(t,doApply);}else{doApply(t,ctmplAutoVars());}
 }
 
-// Init: load custom templates on boot
-loadCtmpls();
-buildTmplMenu();
+// Patch updatePreview for custom render
+var _origUpdatePreviewCT=updatePreview;
+updatePreview=function(){
+  var n=S.notes.find(function(x){return x.id===curId;});
+  if(n&&n.template&&n.template.startsWith('custom_')){
+    var preview=document.getElementById('editor-preview');
+    if(preview&&preview.style.display!=='none'){
+      var tid=n.template.replace('custom_','');
+      loadCtmpls();var t=_ctmpls.find(function(x){return x.id===tid;});
+      if(t&&t.useRender&&t.renderBody){
+        var vars=Object.assign({},ctmplAutoVars(),n._ctmplVars||{});
+        preview.innerHTML=ctmplRender(t.renderBody,vars);
+        updateYamlFoldBtn();return;
+      }
+    }
+  }
+  _origUpdatePreviewCT();
+};
+
+// Patch buildTmplMenu
+var _origBuildTmplMenu=buildTmplMenu;
+buildTmplMenu=function(){
+  loadCtmpls();var menu=document.getElementById('tmpl-menu');
+  var html=TMPLS.map(function(t,i){
+    return (i>0?'<div class="tmpl-sep"></div>':'')+'<div class="tmpl-item" onclick="applyTmpl(\''+t.id+'\')">'
+      +'<span class="tmpl-item-name">'+esc(t.name)+'</span><span class="tmpl-item-desc">'+esc(t.desc)+'</span></div>';
+  }).join('');
+  if(_ctmpls.length){
+    html+='<div class="tmpl-sep"></div><div style="padding:5px 14px 3px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);">Mes templates</div>';
+    html+=_ctmpls.map(function(t){
+      var badge=t.useRender?'<span style="font-size:9px;background:var(--accent);color:var(--bg);padding:1px 5px;border-radius:8px;margin-left:4px;">B</span>':'';
+      return '<div class="tmpl-item" onclick="applyCustomTmpl(\''+t.id+'\')"><span class="tmpl-item-name">'+esc(t.name)+badge+'</span>'+(t.desc?'<span class="tmpl-item-desc">'+esc(t.desc)+'</span>':'')+'</div>';
+    }).join('');
+  }
+  html+='<div class="tmpl-sep"></div><div class="tmpl-item" onclick="toggleTmplMenu();openCtmpl();" style="color:var(--blue);"><span class="tmpl-item-name">⚙ Gérer mes templates…</span></div>';
+  menu.innerHTML=html;
+};
+
+loadCtmpls();buildTmplMenu();
 // ── END Custom templates ──────────────────────────────────────────────────
 var _noteTaKb=document.getElementById('note-ta');
 if(_noteTaKb){
