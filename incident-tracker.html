@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Incident Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── Tokens ── */
+:root{--bg:#F7F6F3;--surface:#FFFFFF;--border:#E5E3DE;--text:#1A1917;--muted:#7A7671;--accent:#1A1917;--green:#16A34A;--amber:#D97706;--red:#DC2626;--blue:#2563EB;--purple:#7C3AED;--radius:6px;--mono:'Geist Mono',monospace;--sans:'Geist',sans-serif;}
+[data-theme="sand"]{--bg:#F8F7FF;--surface:#FFFFFF;--border:#E2E0F0;--text:#1A1830;--muted:#6B6880;--accent:#4F46E5;}
+[data-theme="navy"]{--bg:#161925;--surface:#1F2437;--border:#2D3348;--text:#E8EAF0;--muted:#8890A8;--accent:#818CF8;--green:#34D399;--amber:#FCD34D;--red:#F87171;--blue:#60A5FA;--purple:#A78BFA;}
+[data-theme="dark"]{--bg:#111113;--surface:#1C1C1E;--border:#2C2C2E;--text:#F5F5F7;--muted:#8E8E93;--accent:#A78BFA;--green:#34D399;--amber:#FCD34D;--red:#F87171;--blue:#60A5FA;--purple:#C4B5FD;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-family:var(--sans);font-size:15px;background:var(--bg);color:var(--text);}
+body{min-height:100vh;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;}
+textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text);color-scheme:light;border:1px solid var(--border);border-radius:var(--radius);}
+[data-theme="navy"] textarea,[data-theme="navy"] input,[data-theme="navy"] select,
+[data-theme="dark"] textarea,[data-theme="dark"] input,[data-theme="dark"] select{color-scheme:dark;}
+input[type="search"]{-webkit-appearance:none;appearance:none;}
+
+/* ── Header ── */
+.header{position:sticky;top:0;z-index:100;background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;height:52px;display:flex;align-items:center;justify-content:space-between;}
+.header-left{display:flex;align-items:center;gap:12px;}
+.app-title{font-size:14px;font-weight:500;letter-spacing:-.01em;}
+.sync-dot{font-size:12px;color:var(--muted);}
+.header-right{display:flex;align-items:center;gap:8px;}
+.icon-btn{width:32px;height:32px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--muted);transition:background .15s;}
+.icon-btn:hover{background:var(--border);color:var(--text);}
+
+/* ── Tabs ── */
+.tabs{position:sticky;top:52px;z-index:99;background:var(--surface);border-bottom:1px solid var(--border);display:flex;padding:0 16px;gap:0;overflow-x:auto;}
+.tab{padding:10px 16px;font-size:13px;font-weight:400;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;transition:color .15s;white-space:nowrap;}
+.tab.active{color:var(--text);font-weight:500;border-bottom-color:var(--accent);}
+
+/* ── Page ── */
+.page{max-width:1100px;margin:0 auto;padding:20px 16px 80px;}
+.section{display:none;}
+.section.active{display:block;}
+
+/* ── Drive bar ── */
+.drive-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;font-size:13px;flex-wrap:wrap;}
+.drive-status{color:var(--muted);flex:1;min-width:200px;}
+
+/* ── Buttons ── */
+.btn{padding:7px 14px;border-radius:var(--radius);font-size:13px;font-weight:500;border:1px solid var(--border);color:var(--text);background:var(--surface);transition:background .15s;}
+.btn:hover{background:var(--border);}
+.btn.primary{background:var(--accent);color:var(--bg);border-color:var(--accent);}
+.btn.primary:hover{opacity:.88;}
+.btn.sm{padding:5px 10px;font-size:12px;}
+.btn.danger{color:var(--red);border-color:var(--red);}
+.btn.danger:hover{background:var(--red);color:#fff;}
+
+/* ── Editor ── */
+.editor-meta-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;}
+.meta-field{display:flex;flex-direction:column;gap:4px;min-width:150px;flex:1;}
+.meta-field.wide{min-width:240px;flex:2;}
+.meta-label{font-size:11px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.04em;}
+.meta-select,.meta-input{padding:6px 10px;font-size:13px;width:100%;}
+.meta-input.title{font-weight:500;font-size:14px;}
+
+/* ── Severity & Status badges ── */
+.sev-badge,.st-badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;border:1px solid;user-select:none;}
+.sev-mineur{color:var(--muted);border-color:var(--muted);background:transparent;}
+.sev-majeur{color:var(--amber);border-color:var(--amber);background:transparent;}
+.sev-critique{color:var(--red);border-color:var(--red);background:transparent;}
+.sev-bloquant{color:#fff;background:var(--red);border-color:var(--red);}
+.st-ouvert{color:var(--red);border-color:var(--red);background:transparent;}
+.st-encours{color:var(--amber);border-color:var(--amber);background:transparent;}
+.st-resolu{color:var(--green);border-color:var(--green);background:transparent;}
+.st-cloture{color:var(--blue);border-color:var(--blue);background:transparent;}
+.st-archive{color:var(--muted);border-color:var(--muted);background:transparent;}
+
+/* ── Editor pane ── */
+.editor-pane{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;}
+.field-block{margin-bottom:14px;}
+.field-block:last-child{margin-bottom:0;}
+.field-block-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+.field-block textarea{width:100%;min-height:60px;padding:8px 10px;font-size:13px;line-height:1.5;resize:vertical;}
+.field-block.short textarea{min-height:40px;}
+.field-block.long textarea{min-height:100px;}
+
+/* ── Marker chips (tags cliquables pour saisie rapide) ── */
+.markers-row{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;}
+.marker-chip{display:inline-flex;align-items:center;padding:3px 9px;border-radius:14px;font-size:11px;font-weight:500;border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;transition:all .12s;user-select:none;}
+.marker-chip:hover{border-color:var(--accent);background:var(--surface);}
+.marker-chip.active{background:var(--accent);color:var(--bg);border-color:var(--accent);}
+.marker-chip .mc-x{margin-left:4px;opacity:.6;font-size:10px;}
+.marker-chip.active .mc-x{opacity:.85;}
+.marker-section-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-right:6px;align-self:center;}
+
+/* Selected marker pills shown above field */
+.selected-markers{display:flex;flex-wrap:wrap;gap:5px;min-height:24px;margin-bottom:8px;}
+.sel-marker{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500;background:var(--accent);color:var(--bg);}
+.sel-marker .x{cursor:pointer;opacity:.85;}
+.sel-marker .x:hover{opacity:1;}
+
+/* Action button (insert into field) */
+.action-marker-chip{background:transparent;color:var(--blue);border-color:var(--blue);}
+.action-marker-chip:hover{background:var(--blue);color:#fff;}
+[data-theme="dark"] .action-marker-chip,[data-theme="navy"] .action-marker-chip{color:var(--blue);}
+
+/* ── Editor action bar (bottom) ── */
+.editor-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);}
+.btn.action-save{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600;}
+.btn.action-save:hover{opacity:.85;}
+.btn.action-resolve{background:transparent;color:var(--green);border-color:var(--green);font-weight:500;}
+.btn.action-resolve:hover{background:var(--green);color:#fff;}
+.btn.action-close{background:transparent;color:var(--blue);border-color:var(--blue);font-weight:500;}
+.btn.action-close:hover{background:var(--blue);color:#fff;}
+
+/* ── Filters / Search ── */
+.search-bar{display:flex;gap:8px;margin-bottom:12px;align-items:center;}
+.search-input{flex:1;font-family:var(--sans);font-size:13px;padding:7px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none;}
+.search-input:focus{border-color:var(--accent);}
+.filter-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;align-items:center;}
+.filter-row .lbl{font-size:12px;color:var(--muted);font-weight:500;}
+.pill{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all .15s;background:transparent;}
+.pill:hover{color:var(--text);}
+.pill.active{background:var(--accent);color:var(--bg);border-color:var(--accent);}
+.search-mark{background:#ffe066;color:#1a1a1a;border-radius:2px;padding:0 1px;}
+[data-theme="dark"] .search-mark,[data-theme="navy"] .search-mark{background:#5a4a00;color:#f5d76e;}
+
+/* ── Incident list ── */
+.incident-list{display:flex;flex-direction:column;gap:10px;}
+.incident-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;cursor:pointer;transition:border-color .15s;border-left:3px solid var(--border);}
+.incident-card:hover{border-color:var(--accent);}
+.incident-card.bd-mineur{border-left-color:var(--muted);}
+.incident-card.bd-majeur{border-left-color:var(--amber);}
+.incident-card.bd-critique{border-left-color:var(--red);}
+.incident-card.bd-bloquant{border-left-color:var(--red);background:linear-gradient(to right, rgba(220,38,38,0.04), transparent 30%);}
+[data-theme="dark"] .incident-card.bd-bloquant,[data-theme="navy"] .incident-card.bd-bloquant{background:linear-gradient(to right, rgba(248,113,113,0.08), transparent 30%);}
+.ic-head{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;}
+.ic-title{font-size:14px;font-weight:500;flex:1;min-width:180px;line-height:1.4;}
+.ic-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:11px;color:var(--muted);margin-top:6px;}
+.ic-meta b{color:var(--text);font-weight:500;}
+.ic-badges{display:flex;gap:5px;flex-wrap:wrap;align-items:center;}
+.ic-markers{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;}
+.ic-marker-tag{display:inline-flex;align-items:center;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:500;background:var(--bg);color:var(--muted);border:1px solid var(--border);}
+
+/* ── Drawer ── */
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:300;opacity:0;pointer-events:none;transition:opacity .2s;}
+.drawer-overlay.open{opacity:1;pointer-events:all;}
+.drawer{position:fixed;top:0;right:0;width:min(540px,100vw);height:100vh;background:var(--surface);border-left:1px solid var(--border);z-index:301;transform:translateX(100%);transition:transform .25s;display:flex;flex-direction:column;overflow:hidden;}
+.drawer.open{transform:translateX(0);}
+.drawer-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;}
+.drawer-title{font-size:15px;font-weight:500;flex:1;line-height:1.4;}
+.drawer-close{width:28px;height:28px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0;cursor:pointer;background:none;border:none;font-size:16px;}
+.drawer-close:hover{background:var(--border);}
+.drawer-body{flex:1;overflow-y:auto;padding:16px;padding-bottom:env(safe-area-inset-bottom,24px);-webkit-overflow-scrolling:touch;}
+.drawer-section{margin-bottom:18px;}
+.drawer-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px;}
+.drawer-section-content{font-size:13px;line-height:1.55;white-space:pre-wrap;}
+.drawer-section-empty{font-size:13px;color:var(--muted);font-style:italic;}
+.drawer-history-item{padding:6px 10px;background:var(--bg);border-radius:var(--radius);margin-bottom:5px;font-size:12px;}
+.drawer-history-meta{color:var(--muted);font-size:11px;margin-bottom:2px;}
+
+/* ── Empty state ── */
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty-state .icon{font-size:32px;margin-bottom:12px;}
+.empty-state p{font-size:14px;line-height:1.6;}
+
+/* ── Stats / KPI bar (Dashboard) ── */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:10px;margin-bottom:18px;}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;}
+.kpi-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:500;}
+.kpi-value{font-size:24px;font-weight:600;letter-spacing:-.02em;margin-top:4px;}
+.kpi-card.danger .kpi-value{color:var(--red);}
+.kpi-card.warn .kpi-value{color:var(--amber);}
+.kpi-card.ok .kpi-value{color:var(--green);}
+.kpi-card.info .kpi-value{color:var(--blue);}
+
+/* ── Settings: marker management ── */
+.settings-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:16px;}
+.settings-block-title{font-size:13px;font-weight:600;margin-bottom:8px;}
+.settings-block-desc{font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5;}
+.markers-edit-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.markers-edit-row .marker-edit-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 8px 4px 10px;border-radius:14px;font-size:12px;border:1px solid var(--border);background:var(--bg);}
+.markers-edit-row .marker-edit-chip .x{cursor:pointer;color:var(--muted);font-size:12px;}
+.markers-edit-row .marker-edit-chip .x:hover{color:var(--red);}
+.add-marker-row{display:flex;gap:6px;}
+.add-marker-row input{flex:1;font-size:12px;padding:5px 9px;}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--text);color:var(--bg);padding:8px 16px;border-radius:20px;font-size:13px;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999;display:flex;align-items:center;gap:10px;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:all;}
+#toast-undo{font-size:12px;font-weight:600;text-decoration:underline;cursor:pointer;opacity:.85;background:none;border:none;color:inherit;font-family:inherit;padding:0;}
+
+/* ── Mobile tweaks ── */
+@media(max-width:600px){
+  .editor-actions{justify-content:stretch;}
+  .editor-actions .btn{flex:1;min-width:120px;}
+  .meta-field{min-width:120px;}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <span class="app-title">Incident Tracker</span>
+    <span class="sync-dot" id="sync-dot">⚫ Local</span>
+  </div>
+  <div class="header-right">
+    <button class="icon-btn" title="Google Drive" onclick="handleDriveBtn()">☁</button>
+    <button class="icon-btn" id="theme-btn" onclick="toggleTheme()">☀︎</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" id="tb-editor"   onclick="showTab('editor')">Éditeur</div>
+  <div class="tab"        id="tb-list"     onclick="showTab('list')">Incidents</div>
+  <div class="tab"        id="tb-dashboard" onclick="showTab('dashboard')">Tableau</div>
+  <div class="tab"        id="tb-projets"  onclick="showTab('projets')">Projets</div>
+  <div class="tab"        id="tb-equipe"   onclick="showTab('equipe')">Équipe</div>
+  <div class="tab"        id="tb-taches"   onclick="showTab('taches')">Tâches</div>
+  <div class="tab"        id="tb-settings" onclick="showTab('settings')">Réglages</div>
+</div>
+
+<div class="page">
+
+<!-- ═══ ÉDITEUR ═══ -->
+<div id="tab-editor" class="section active">
+  <div class="editor-meta-bar">
+    <div class="meta-field wide">
+      <span class="meta-label">Titre de l'incident</span>
+      <input class="meta-input title" id="ed-title" placeholder="Ex : Panne API auth en prod" oninput="onEditField()">
+    </div>
+    <div class="meta-field">
+      <span class="meta-label">Projet</span>
+      <select class="meta-select" id="ed-projet" onchange="onEditField()">
+        <option value="">— Projet —</option>
+      </select>
+    </div>
+    <div class="meta-field">
+      <span class="meta-label">Sévérité</span>
+      <select class="meta-select" id="ed-severity" onchange="onEditField()">
+        <option value="mineur">Mineur</option>
+        <option value="majeur" selected>Majeur</option>
+        <option value="critique">Critique</option>
+        <option value="bloquant">Bloquant</option>
+      </select>
+    </div>
+    <div class="meta-field">
+      <span class="meta-label">Statut</span>
+      <select class="meta-select" id="ed-status" onchange="onEditField()">
+        <option value="ouvert" selected>Ouvert</option>
+        <option value="encours">En cours</option>
+        <option value="resolu">Résolu</option>
+        <option value="cloture">Clôturé</option>
+        <option value="archive">Archivé</option>
+      </select>
+    </div>
+    <div class="meta-field">
+      <span class="meta-label">Déclarant</span>
+      <select class="meta-select" id="ed-declarant" onchange="onEditField()">
+        <option value="">— Auto —</option>
+      </select>
+    </div>
+    <div class="meta-field">
+      <span class="meta-label">Assigné</span>
+      <select class="meta-select" id="ed-assignee" onchange="onEditField()">
+        <option value="">— Personne —</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="editor-pane">
+    <!-- Marqueurs Type -->
+    <div class="field-block">
+      <div class="field-block-label">Marqueurs · Type</div>
+      <div class="selected-markers" id="sel-types"></div>
+      <div class="markers-row" id="chips-types"></div>
+    </div>
+
+    <!-- Marqueurs Impact -->
+    <div class="field-block">
+      <div class="field-block-label">Marqueurs · Impact</div>
+      <div class="selected-markers" id="sel-impacts"></div>
+      <div class="markers-row" id="chips-impacts"></div>
+    </div>
+
+    <!-- Description -->
+    <div class="field-block long">
+      <div class="field-block-label">Description du problème</div>
+      <textarea id="ed-description" placeholder="Que s'est-il passé ? Contexte, symptômes…" oninput="onEditField()"></textarea>
+    </div>
+
+    <!-- Impact détaillé -->
+    <div class="field-block short">
+      <div class="field-block-label">Impact constaté</div>
+      <textarea id="ed-impact" placeholder="Combien d'utilisateurs touchés, durée, périmètre…" oninput="onEditField()"></textarea>
+    </div>
+
+    <!-- Actions menées + chips actions -->
+    <div class="field-block">
+      <div class="field-block-label">
+        Actions menées
+        <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted);font-size:11px;">(clic sur une action pour l'ajouter avec horodatage)</span>
+      </div>
+      <textarea id="ed-actions" placeholder="Étapes de résolution, qui a fait quoi…" oninput="onEditField()" style="min-height:80px;"></textarea>
+      <div class="markers-row" id="chips-actions" style="margin-top:8px;"></div>
+    </div>
+
+    <!-- Résolution -->
+    <div class="field-block short">
+      <div class="field-block-label">Résolution finale</div>
+      <textarea id="ed-resolution" placeholder="Comment l'incident a été résolu" oninput="onEditField()"></textarea>
+    </div>
+
+    <!-- Root cause -->
+    <div class="field-block short">
+      <div class="field-block-label">Cause racine (root cause)</div>
+      <textarea id="ed-rootcause" placeholder="Cause profonde identifiée a posteriori" oninput="onEditField()"></textarea>
+    </div>
+
+    <div class="editor-actions">
+      <button class="btn sm" onclick="resetEditor()">+ Nouveau</button>
+      <button class="btn sm action-resolve" onclick="markResolved()">✓ Résolu</button>
+      <button class="btn sm action-close" onclick="markClosed()">⬜ Clôturer</button>
+      <button class="btn sm action-save" onclick="saveIncident()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ INCIDENTS LIST ═══ -->
+<div id="tab-list" class="section">
+  <div class="drive-bar">
+    <span class="drive-status" id="drive-status-label">Non connecté à Drive</span>
+    <button class="btn sm" id="drive-action-btn" onclick="handleDriveBtn()">Connecter</button>
+    <button class="btn sm" id="pull-btn" onclick="pullFromDrive()" style="display:none">Load from Drive</button>
+    <button class="btn sm" onclick="loadSharedProjects()" id="shared-btn" style="display:none">↻ Projets</button>
+    <button class="btn sm" onclick="archiveAllClosed()" style="color:var(--blue);border-color:var(--blue);margin-left:auto">⬜ Archiver clôturés</button>
+  </div>
+  <div class="search-bar">
+    <input class="search-input" id="inc-search" placeholder="🔍 Rechercher un incident…" type="search">
+  </div>
+  <div class="filter-row">
+    <span class="lbl">Statut :</span>
+    <div class="pill active" data-fs="all" onclick="setFs('all',this)">Tous</div>
+    <div class="pill" data-fs="actifs" onclick="setFs('actifs',this)">Actifs</div>
+    <div class="pill" data-fs="ouvert" onclick="setFs('ouvert',this)">Ouvert</div>
+    <div class="pill" data-fs="encours" onclick="setFs('encours',this)">En cours</div>
+    <div class="pill" data-fs="resolu" onclick="setFs('resolu',this)">Résolu</div>
+    <div class="pill" data-fs="cloture" onclick="setFs('cloture',this)">Clôturé</div>
+    <div class="pill" data-fs="archive" onclick="setFs('archive',this)">Archivé</div>
+  </div>
+  <div class="filter-row">
+    <span class="lbl">Sévérité :</span>
+    <div class="pill active" data-fsev="all" onclick="setFsev('all',this)">Toutes</div>
+    <div class="pill" data-fsev="mineur" onclick="setFsev('mineur',this)">Mineur</div>
+    <div class="pill" data-fsev="majeur" onclick="setFsev('majeur',this)">Majeur</div>
+    <div class="pill" data-fsev="critique" onclick="setFsev('critique',this)">Critique</div>
+    <div class="pill" data-fsev="bloquant" onclick="setFsev('bloquant',this)">Bloquant</div>
+  </div>
+  <div class="filter-row" id="proj-filters">
+    <span class="lbl">Projet :</span>
+    <div class="pill active" data-fp="all" onclick="setFp('all',this)">Tous</div>
+  </div>
+  <div id="incident-list-container"></div>
+</div>
+
+<!-- ═══ DASHBOARD ═══ -->
+<div id="tab-dashboard" class="section">
+  <div class="kpi-row" id="kpi-row"></div>
+  <div class="settings-block">
+    <div class="settings-block-title">Incidents par projet</div>
+    <div id="dash-by-projet"></div>
+  </div>
+  <div class="settings-block">
+    <div class="settings-block-title">Critiques & bloquants ouverts</div>
+    <div id="dash-critical"></div>
+  </div>
+</div>
+
+<!-- ═══ PROJETS ═══ -->
+<div id="tab-projets" class="section">
+  <div class="drive-bar">
+    <span class="drive-status" id="proj-status-label" style="flex:1;">Connectez-vous à Drive pour charger les projets.</span>
+    <button class="btn sm" onclick="loadSharedProjects()">↻ Rafraîchir</button>
+  </div>
+  <div style="padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;font-size:13px;color:var(--muted);">
+    Les projets sont gérés dans l'app <b>Projects</b>.
+  </div>
+  <div id="projets-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+</div>
+
+<!-- ═══ ÉQUIPE ═══ -->
+<div id="tab-equipe" class="section">
+  <div class="drive-bar">
+    <span class="drive-status" id="equipe-status-label" style="flex:1;">Connectez-vous à Drive pour charger l'équipe.</span>
+    <button class="btn sm" onclick="loadSharedProjects()">↻ Rafraîchir</button>
+  </div>
+  <div style="padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;font-size:13px;color:var(--muted);">
+    L'équipe est gérée dans l'app <b>Projects</b>.
+  </div>
+  <div id="equipe-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+</div>
+
+<!-- ═══ TÂCHES ═══ -->
+<div id="tab-taches" class="section">
+  <div class="drive-bar">
+    <span class="drive-status" id="taches-status" style="flex:1;">Connectez Drive pour charger les tâches.</span>
+    <button class="btn sm" onclick="loadTaches()">↻ Actualiser</button>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+    <input type="text" id="tache-input" placeholder="Nouvelle tâche…" style="flex:1;font-size:13px;padding:7px 10px;outline:none;" onkeydown="if(event.key==='Enter')addTache()">
+    <select id="tache-pri" style="font-family:var(--mono);font-size:12px;padding:6px 8px;">
+      <option value="p2" selected>P2</option>
+      <option value="p1">P1</option>
+      <option value="p3">P3</option>
+    </select>
+    <button class="btn sm primary" onclick="addTache()">+ Ajouter</button>
+  </div>
+  <div id="taches-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+</div>
+
+<!-- ═══ RÉGLAGES (marqueurs) ═══ -->
+<div id="tab-settings" class="section">
+  <div class="settings-block">
+    <div class="settings-block-title">Marqueurs · Type</div>
+    <div class="settings-block-desc">Catégories rapides à coller sur un incident (ex : Bug, Sécurité, Infra). Cliquez × pour supprimer.</div>
+    <div class="markers-edit-row" id="edit-types"></div>
+    <div class="add-marker-row">
+      <input type="text" id="add-type-input" placeholder="Ex : 🐛 Bug" onkeydown="if(event.key==='Enter')addMarker('type')">
+      <button class="btn sm primary" onclick="addMarker('type')">+ Ajouter</button>
+    </div>
+  </div>
+
+  <div class="settings-block">
+    <div class="settings-block-title">Marqueurs · Impact</div>
+    <div class="settings-block-desc">Décrivent l'effet sur les utilisateurs ou le service.</div>
+    <div class="markers-edit-row" id="edit-impacts"></div>
+    <div class="add-marker-row">
+      <input type="text" id="add-impact-input" placeholder="Ex : Service dégradé" onkeydown="if(event.key==='Enter')addMarker('impact')">
+      <button class="btn sm primary" onclick="addMarker('impact')">+ Ajouter</button>
+    </div>
+  </div>
+
+  <div class="settings-block">
+    <div class="settings-block-title">Marqueurs · Actions</div>
+    <div class="settings-block-desc">Templates de phrases insérées automatiquement (avec horodatage) dans le champ "Actions menées".</div>
+    <div class="markers-edit-row" id="edit-actions"></div>
+    <div class="add-marker-row">
+      <input type="text" id="add-action-input" placeholder="Ex : Rollback effectué" onkeydown="if(event.key==='Enter')addMarker('action')">
+      <button class="btn sm primary" onclick="addMarker('action')">+ Ajouter</button>
+    </div>
+  </div>
+
+  <div class="settings-block">
+    <div class="settings-block-title">Réinitialiser les marqueurs</div>
+    <div class="settings-block-desc">Restaure les marqueurs par défaut (vos ajouts personnels seront perdus).</div>
+    <button class="btn sm danger" onclick="resetMarkers()">Restaurer par défaut</button>
+  </div>
+</div>
+
+</div><!-- /page -->
+
+<!-- ═══ DRAWER ═══ -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div style="flex:1;">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:4px;" id="dr-breadcrumb"></div>
+      <div class="drawer-title" id="dr-title"></div>
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;" id="dr-badges"></div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body" id="dr-body"></div>
+</div>
+
+<div id="toast"><span></span></div>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+// ── Constants ─────────────────────────────────────────────────────────────
+var APP        = 'incident-tracker';
+var SK         = 'td_v4_' + APP;
+var TK         = 'td_theme_' + APP;
+var TOK        = 'td_tok_' + APP;
+var CLIENT_ID  = '962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com';
+var SCOPE      = 'https://www.googleapis.com/auth/drive';
+var THEMES     = ['light','sand','navy','dark'];
+var ICONS      = {light:'☀︎',sand:'○',navy:'◑',dark:'☾'};
+var DRIVE_FILE = 'incident-tracker.json';
+var SHARED_FILE= 'shared.json';
+var APP_PROJECT_NAME = 'Incident'; // pour matching dans shared projects (Tâches)
+
+var SEV_LABELS = {mineur:'Mineur', majeur:'Majeur', critique:'Critique', bloquant:'Bloquant'};
+var SEV_CLASS  = {mineur:'sev-mineur', majeur:'sev-majeur', critique:'sev-critique', bloquant:'sev-bloquant'};
+var ST_LABELS  = {ouvert:'Ouvert', encours:'En cours', resolu:'Résolu ✓', cloture:'Clôturé', archive:'Archivé'};
+var ST_CLASS   = {ouvert:'st-ouvert', encours:'st-encours', resolu:'st-resolu', cloture:'st-cloture', archive:'st-archive'};
+
+// Marqueurs par défaut
+var DEFAULT_MARKERS = {
+  types:   ['🐛 Bug','⚡ Performance','🔒 Sécurité','📡 Infrastructure','👤 RH','📋 Process','🔌 Intégration','📝 Documentation'],
+  impacts: ['Utilisateur bloqué','Perte de données','Service dégradé','Cosmétique','Régression','Faille sécurité','SLA dépassé'],
+  actions: ['Rollback effectué','Hotfix déployé','Contournement appliqué','En attente fournisseur','Escaladé','Documenté dans wiki','Communication client envoyée','Post-mortem planifié']
+};
+
+// ── State ─────────────────────────────────────────────────────────────────
+var S = {incidents:[], markers:null};
+var sharedTeam = [];
+var sharedProjects = [];
+var driveFileId = null;
+var sharedFileId = null;
+var tokenClient = null;
+var accessToken = sessionStorage.getItem(TOK) || null;
+var saveTimer = null;
+var undoStack = [];
+var undoTimer = null;
+
+// Editor state
+var editingId = null;
+var curMarkers = {types:[], impacts:[]}; // markers selected for current incident
+
+// Filter state
+var fs = 'all', fsev = 'all', fp = 'all';
+
+// Drawer state
+var drawerId = null;
+
+// ── ensureState ────────────────────────────────────────────────────────────
+function ensureState(){
+  if (!Array.isArray(S.incidents)) S.incidents = [];
+  if (!Array.isArray(sharedTeam)) sharedTeam = [];
+  if (!Array.isArray(sharedProjects)) sharedProjects = [];
+  if (!S.markers || typeof S.markers !== 'object') S.markers = JSON.parse(JSON.stringify(DEFAULT_MARKERS));
+  ['types','impacts','actions'].forEach(function(k){
+    if (!Array.isArray(S.markers[k])) S.markers[k] = DEFAULT_MARKERS[k].slice();
+  });
+  S.incidents.forEach(function(it){
+    if (!it.id) it.id = 'inc_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+    if (!it.status) it.status = 'ouvert';
+    if (!it.severity) it.severity = 'majeur';
+    if (it.projet === undefined) it.projet = '';
+    if (!it.title) it.title = '(sans titre)';
+    if (!it.description) it.description = '';
+    if (!it.impact) it.impact = '';
+    if (!it.actions) it.actions = '';
+    if (!it.resolution) it.resolution = '';
+    if (!it.rootcause) it.rootcause = '';
+    if (!Array.isArray(it.markers_types)) it.markers_types = [];
+    if (!Array.isArray(it.markers_impacts)) it.markers_impacts = [];
+    if (!Array.isArray(it.history)) it.history = [];
+    if (!it.declarantId) it.declarantId = '';
+    if (!it.assigneeId) it.assigneeId = '';
+    if (!it.created) it.created = Date.now();
+    if (!it.updated) it.updated = it.created;
+  });
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────
+function load(){
+  try { var r = localStorage.getItem(SK); if (r) S = JSON.parse(r); } catch(e){}
+  ensureState();
+  // shared cache for offline
+  try {
+    var c = JSON.parse(localStorage.getItem(SK+'_shared') || '{}');
+    if (Array.isArray(c.projects) && c.projects.length) sharedProjects = c.projects;
+    if (Array.isArray(c.team)     && c.team.length)     sharedTeam     = c.team;
+  } catch(e){}
+  // restore current edit draft
+  try {
+    var draft = JSON.parse(localStorage.getItem(SK+'_draft') || '{}');
+    if (draft && draft.editingId) editingId = draft.editingId;
+    if (draft && draft.curMarkers) curMarkers = draft.curMarkers;
+  } catch(e){}
+  renderAll();
+  loadEditorFromState();
+  initDrive();
+}
+
+function renderAll(){
+  renderProjFilters();
+  renderProjets();
+  renderEquipe();
+  renderEditorMeta();
+  renderMarkerChips();
+  renderSelectedMarkers();
+  renderActionChips();
+  renderIncidentList();
+  renderDashboard();
+  renderSettingsMarkers();
+  // status when offline cached
+  var cached = sharedProjects.length || sharedTeam.length;
+  if (cached && !accessToken){
+    var lbl = document.getElementById('proj-status-label');
+    if (lbl) lbl.textContent = sharedProjects.length+' projets · '+sharedTeam.length+' membres (cache local)';
+    var elbl = document.getElementById('equipe-status-label');
+    if (elbl) elbl.textContent = sharedTeam.length+' membres (cache local)';
+  }
+}
+
+// ── Theme ─────────────────────────────────────────────────────────────────
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme', t==='light'?'':t);
+  document.getElementById('theme-btn').textContent = ICONS[t]||'☀︎';
+  localStorage.setItem(TK, t);
+}
+function toggleTheme(){
+  var cur = localStorage.getItem(TK)||'light';
+  applyTheme(THEMES[(THEMES.indexOf(cur)+1)%THEMES.length]);
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────
+function showTab(tab){
+  ['editor','list','dashboard','projets','equipe','taches','settings'].forEach(function(t){
+    var tb = document.getElementById('tb-'+t);
+    var sc = document.getElementById('tab-'+t);
+    if (tb) tb.classList.toggle('active', t===tab);
+    if (sc) sc.classList.toggle('active', t===tab);
+  });
+  if (tab==='taches') renderTaches();
+  if (tab==='dashboard') renderDashboard();
+  if (tab==='settings') renderSettingsMarkers();
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtDate(ts){
+  if (!ts) return '';
+  var d = new Date(ts);
+  return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit'})+' '+
+         d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+}
+function fmtDateShort(ts){
+  if (!ts) return '';
+  var d = new Date(ts);
+  return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit'});
+}
+function fmtTime(ts){
+  if (!ts) return '';
+  var d = new Date(ts);
+  return d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+}
+function getAdminId(){ var m=(sharedTeam||[]).find(function(m){return m.appRole==='Admin';}); return m?m.id:null; }
+function memberById(id){ return (sharedTeam||[]).find(function(m){return m.id===id;}); }
+function projectById(id){ return (sharedProjects||[]).find(function(p){return p.id===id;}); }
+function projectByName(name){ if(!name) return null; return (sharedProjects||[]).find(function(p){return (p.name||'')===name;}); }
+
+// ── Editor ────────────────────────────────────────────────────────────────
+function renderEditorMeta(){
+  // Projets dropdown
+  var sel = document.getElementById('ed-projet');
+  var cur = sel.value;
+  sel.innerHTML = '<option value="">— Projet —</option>' +
+    sharedProjects.map(function(p){ return '<option value="'+esc(p.name)+'">'+esc(p.name)+'</option>'; }).join('');
+  if (cur && Array.from(sel.options).some(function(o){return o.value===cur;})) sel.value = cur;
+
+  // Déclarant + Assigné dropdowns
+  ['ed-declarant','ed-assignee'].forEach(function(elId){
+    var s = document.getElementById(elId);
+    var v = s.value;
+    s.innerHTML = (elId==='ed-declarant'?'<option value="">— Déclarant —</option>':'<option value="">— Personne —</option>') +
+      sharedTeam.map(function(m){ return '<option value="'+m.id+'">'+esc(m.nom)+'</option>'; }).join('');
+    if (v && sharedTeam.some(function(m){return m.id===v;})) s.value = v;
+  });
+}
+
+function renderMarkerChips(){
+  // Type
+  var ct = document.getElementById('chips-types');
+  ct.innerHTML = (S.markers.types||[]).map(function(m){
+    var on = curMarkers.types.indexOf(m) >= 0;
+    return '<span class="marker-chip'+(on?' active':'')+'" onclick="toggleMarker(\'types\',\''+escAttr(m)+'\')">'+esc(m)+'</span>';
+  }).join('');
+  // Impact
+  var ci = document.getElementById('chips-impacts');
+  ci.innerHTML = (S.markers.impacts||[]).map(function(m){
+    var on = curMarkers.impacts.indexOf(m) >= 0;
+    return '<span class="marker-chip'+(on?' active':'')+'" onclick="toggleMarker(\'impacts\',\''+escAttr(m)+'\')">'+esc(m)+'</span>';
+  }).join('');
+}
+function renderActionChips(){
+  var ca = document.getElementById('chips-actions');
+  ca.innerHTML = '<span class="marker-section-label">Insérer →</span>' +
+    (S.markers.actions||[]).map(function(m){
+      return '<span class="marker-chip action-marker-chip" onclick="insertActionTemplate(\''+escAttr(m)+'\')">'+esc(m)+'</span>';
+    }).join('');
+}
+function renderSelectedMarkers(){
+  var st = document.getElementById('sel-types');
+  st.innerHTML = curMarkers.types.length
+    ? curMarkers.types.map(function(m){ return '<span class="sel-marker">'+esc(m)+'<span class="x" onclick="toggleMarker(\'types\',\''+escAttr(m)+'\')">×</span></span>'; }).join('')
+    : '<span style="font-size:11px;color:var(--muted);">Aucun marqueur sélectionné</span>';
+  var si = document.getElementById('sel-impacts');
+  si.innerHTML = curMarkers.impacts.length
+    ? curMarkers.impacts.map(function(m){ return '<span class="sel-marker">'+esc(m)+'<span class="x" onclick="toggleMarker(\'impacts\',\''+escAttr(m)+'\')">×</span></span>'; }).join('')
+    : '<span style="font-size:11px;color:var(--muted);">Aucun marqueur sélectionné</span>';
+}
+function escAttr(s){ return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+function toggleMarker(kind, value){
+  var arr = curMarkers[kind];
+  var idx = arr.indexOf(value);
+  if (idx >= 0) arr.splice(idx, 1);
+  else arr.push(value);
+  renderMarkerChips();
+  renderSelectedMarkers();
+  saveDraft();
+  setSyncDot('pending'); clearTimeout(saveTimer); saveTimer = setTimeout(autoSave, 2000);
+}
+
+function insertActionTemplate(text){
+  var ta = document.getElementById('ed-actions');
+  var stamp = '['+fmtDateShort(Date.now())+' '+fmtTime(Date.now())+'] ';
+  var line = stamp + text;
+  if (ta.value && !ta.value.endsWith('\n')) ta.value += '\n';
+  ta.value += line + '\n';
+  ta.focus();
+  ta.scrollTop = ta.scrollHeight;
+  onEditField();
+  toast('+ '+text);
+}
+
+function loadEditorFromState(){
+  // try to find the editing entry, otherwise blank
+  if (editingId){
+    var e = S.incidents.find(function(x){return x.id===editingId;});
+    if (e){
+      document.getElementById('ed-title').value = e.title || '';
+      document.getElementById('ed-projet').value = e.projet || '';
+      document.getElementById('ed-severity').value = e.severity || 'majeur';
+      document.getElementById('ed-status').value = e.status || 'ouvert';
+      document.getElementById('ed-declarant').value = e.declarantId || '';
+      document.getElementById('ed-assignee').value = e.assigneeId || '';
+      document.getElementById('ed-description').value = e.description || '';
+      document.getElementById('ed-impact').value = e.impact || '';
+      document.getElementById('ed-actions').value = e.actions || '';
+      document.getElementById('ed-resolution').value = e.resolution || '';
+      document.getElementById('ed-rootcause').value = e.rootcause || '';
+      curMarkers.types = (e.markers_types||[]).slice();
+      curMarkers.impacts = (e.markers_impacts||[]).slice();
+    }
+  } else {
+    // blank editor
+    document.getElementById('ed-title').value = '';
+    document.getElementById('ed-severity').value = 'majeur';
+    document.getElementById('ed-status').value = 'ouvert';
+    document.getElementById('ed-declarant').value = getAdminId() || '';
+    document.getElementById('ed-assignee').value = '';
+    document.getElementById('ed-description').value = '';
+    document.getElementById('ed-impact').value = '';
+    document.getElementById('ed-actions').value = '';
+    document.getElementById('ed-resolution').value = '';
+    document.getElementById('ed-rootcause').value = '';
+    curMarkers = {types:[], impacts:[]};
+  }
+  renderMarkerChips();
+  renderSelectedMarkers();
+}
+
+function onEditField(){
+  saveDraft();
+  setSyncDot('pending'); clearTimeout(saveTimer); saveTimer = setTimeout(autoSave, 2000);
+}
+function saveDraft(){
+  // persist current editing state in localStorage
+  try {
+    localStorage.setItem(SK+'_draft', JSON.stringify({
+      editingId: editingId,
+      curMarkers: curMarkers,
+      title: document.getElementById('ed-title').value,
+      description: document.getElementById('ed-description').value,
+      impact: document.getElementById('ed-impact').value,
+      actions: document.getElementById('ed-actions').value,
+      resolution: document.getElementById('ed-resolution').value,
+      rootcause: document.getElementById('ed-rootcause').value
+    }));
+  } catch(e){}
+}
+
+function getEditorPayload(){
+  return {
+    title: document.getElementById('ed-title').value.trim(),
+    projet: document.getElementById('ed-projet').value,
+    severity: document.getElementById('ed-severity').value,
+    status: document.getElementById('ed-status').value,
+    declarantId: document.getElementById('ed-declarant').value,
+    assigneeId: document.getElementById('ed-assignee').value,
+    description: document.getElementById('ed-description').value.trim(),
+    impact: document.getElementById('ed-impact').value.trim(),
+    actions: document.getElementById('ed-actions').value.trim(),
+    resolution: document.getElementById('ed-resolution').value.trim(),
+    rootcause: document.getElementById('ed-rootcause').value.trim(),
+    markers_types: curMarkers.types.slice(),
+    markers_impacts: curMarkers.impacts.slice()
+  };
+}
+
+function logChange(it, field, from, to){
+  if (from === to) return;
+  it.history = it.history || [];
+  var admin = getAdminId();
+  var m = admin ? memberById(admin) : null;
+  it.history.unshift({
+    ts: Date.now(),
+    authorId: admin || '',
+    authorName: m ? m.nom : '?',
+    field: field,
+    from: String(from||'—'),
+    to: String(to||'—')
+  });
+  if (it.history.length > 80) it.history.length = 80;
+}
+
+function diffAndLog(old, neu){
+  ['title','projet','severity','status','description','impact','actions','resolution','rootcause'].forEach(function(k){
+    if ((old[k]||'') !== (neu[k]||'')) logChange(old, k, old[k]||'', neu[k]||'');
+  });
+  // assigneeId / declarantId log par nom
+  ['declarantId','assigneeId'].forEach(function(k){
+    if ((old[k]||'') !== (neu[k]||'')) {
+      var fromM = old[k] ? memberById(old[k]) : null;
+      var toM   = neu[k] ? memberById(neu[k]) : null;
+      logChange(old, k.replace('Id',''), fromM?fromM.nom:'—', toM?toM.nom:'—');
+    }
+  });
+  // markers
+  ['markers_types','markers_impacts'].forEach(function(k){
+    var a = (old[k]||[]).join(','); var b = (neu[k]||[]).join(',');
+    if (a !== b) logChange(old, k.replace('markers_','marqueurs '), a||'—', b||'—');
+  });
+}
+
+function saveIncident(){
+  var p = getEditorPayload();
+  if (!p.title){ toast('Titre requis'); return; }
+  if (editingId){
+    var e = S.incidents.find(function(x){return x.id===editingId;});
+    if (e){
+      diffAndLog(e, p);
+      // apply
+      Object.keys(p).forEach(function(k){ e[k] = p[k]; });
+      e.updated = Date.now();
+      toast('✓ Incident mis à jour');
+    }
+  } else {
+    var id = 'inc_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+    var n = Object.assign({id:id, created:Date.now(), updated:Date.now(), history:[]}, p);
+    if (!n.declarantId) n.declarantId = getAdminId() || '';
+    n.history.unshift({ts:Date.now(), authorId:getAdminId()||'', authorName:(getAdminId()?(memberById(getAdminId())||{}).nom:'?'), field:'créé', from:'—', to:n.title});
+    S.incidents.unshift(n);
+    editingId = n.id;
+    toast('✓ Incident créé');
+  }
+  persist();
+  renderIncidentList();
+  renderDashboard();
+}
+
+function resetEditor(){
+  if (document.getElementById('ed-title').value.trim() && !confirm('Démarrer un nouvel incident ? Vos modifications seront perdues si non enregistrées.')) return;
+  editingId = null;
+  curMarkers = {types:[], impacts:[]};
+  loadEditorFromState();
+  saveDraft();
+}
+
+function markResolved(){
+  document.getElementById('ed-status').value = 'resolu';
+  saveIncident();
+}
+function markClosed(){
+  document.getElementById('ed-status').value = 'cloture';
+  saveIncident();
+}
+
+function persist(){
+  ensureState();
+  try { localStorage.setItem(SK, JSON.stringify(S)); } catch(e){}
+  setSyncDot('pending'); clearTimeout(saveTimer); saveTimer = setTimeout(autoSave, 2000);
+}
+
+// ── Filters ───────────────────────────────────────────────────────────────
+function setFs(v, el){ fs=v; document.querySelectorAll('[data-fs]').forEach(function(p){p.classList.toggle('active',p.dataset.fs===v);}); renderIncidentList(); }
+function setFsev(v, el){ fsev=v; document.querySelectorAll('[data-fsev]').forEach(function(p){p.classList.toggle('active',p.dataset.fsev===v);}); renderIncidentList(); }
+function setFp(v, el){ fp=v; document.querySelectorAll('[data-fp]').forEach(function(p){p.classList.toggle('active',p.dataset.fp===v);}); renderIncidentList(); }
+
+function renderProjFilters(){
+  var el = document.getElementById('proj-filters');
+  if (!el) return;
+  var names = Array.from(new Set(S.incidents.map(function(it){return it.projet||'';}).filter(Boolean)));
+  // also include shared projects
+  sharedProjects.forEach(function(p){ if (names.indexOf(p.name)<0) names.push(p.name); });
+  names.sort();
+  var pills = '<span class="lbl">Projet :</span>'+
+    '<div class="pill'+(fp==='all'?' active':'')+'" data-fp="all" onclick="setFp(\'all\',this)">Tous</div>' +
+    '<div class="pill'+(fp==='_none_'?' active':'')+'" data-fp="_none_" onclick="setFp(\'_none_\',this)">Sans projet</div>' +
+    names.map(function(n){
+      return '<div class="pill'+(fp===n?' active':'')+'" data-fp="'+esc(n)+'" onclick="setFp(\''+escAttr(n)+'\',this)">'+esc(n)+'</div>';
+    }).join('');
+  el.innerHTML = pills;
+}
+
+// ── Incident list ─────────────────────────────────────────────────────────
+function applyFilters(items){
+  var q = (document.getElementById('inc-search').value||'').trim().toLowerCase();
+  return items.filter(function(it){
+    if (fs === 'actifs' && (it.status==='cloture' || it.status==='archive')) return false;
+    if (fs !== 'all' && fs !== 'actifs' && it.status !== fs) return false;
+    if (fsev !== 'all' && it.severity !== fsev) return false;
+    if (fp === '_none_' && it.projet) return false;
+    if (fp !== 'all' && fp !== '_none_' && it.projet !== fp) return false;
+    if (q){
+      var hay = (it.title+' '+it.description+' '+it.impact+' '+it.actions+' '+it.resolution+' '+it.rootcause+' '+(it.markers_types||[]).join(' ')+' '+(it.markers_impacts||[]).join(' ')).toLowerCase();
+      if (hay.indexOf(q) < 0) return false;
+    }
+    return true;
+  });
+}
+function highlight(text, q){
+  if (!q) return esc(text);
+  var safe = esc(text);
+  var re = new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');
+  return safe.replace(re, '<span class="search-mark">$1</span>');
+}
+function renderIncidentList(){
+  renderProjFilters();
+  var items = applyFilters(S.incidents.slice().sort(function(a,b){
+    // Open & critical first; then by updated desc
+    var aActive = (a.status==='ouvert'||a.status==='encours')?1:0;
+    var bActive = (b.status==='ouvert'||b.status==='encours')?1:0;
+    if (aActive !== bActive) return bActive - aActive;
+    var sevOrder = {bloquant:0, critique:1, majeur:2, mineur:3};
+    if (aActive===1 && bActive===1){
+      var as = sevOrder[a.severity]||9, bs = sevOrder[b.severity]||9;
+      if (as !== bs) return as - bs;
+    }
+    return (b.updated||0) - (a.updated||0);
+  }));
+  var el = document.getElementById('incident-list-container');
+  if (!items.length){
+    el.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>Aucun incident.<br>Utilisez l\'onglet Éditeur pour en créer un.</p></div>';
+    return;
+  }
+  var q = (document.getElementById('inc-search').value||'').trim().toLowerCase();
+  el.innerHTML = '<div class="incident-list">' + items.map(function(it){
+    var assignee = it.assigneeId ? memberById(it.assigneeId) : null;
+    var declarant = it.declarantId ? memberById(it.declarantId) : null;
+    var allMarkers = (it.markers_types||[]).concat(it.markers_impacts||[]);
+    return '<div class="incident-card bd-'+it.severity+'" onclick="openDrawer(\''+it.id+'\')">' +
+      '<div class="ic-head">' +
+        '<div class="ic-title">'+highlight(it.title, q)+'</div>' +
+        '<div class="ic-badges">' +
+          '<span class="sev-badge '+SEV_CLASS[it.severity]+'">'+SEV_LABELS[it.severity]+'</span>' +
+          '<span class="st-badge '+ST_CLASS[it.status]+'">'+ST_LABELS[it.status]+'</span>' +
+        '</div>' +
+      '</div>' +
+      (allMarkers.length ? '<div class="ic-markers">'+allMarkers.map(function(m){return '<span class="ic-marker-tag">'+esc(m)+'</span>';}).join('')+'</div>' : '') +
+      '<div class="ic-meta">' +
+        (it.projet ? '<span><b>'+esc(it.projet)+'</b></span>' : '') +
+        (declarant ? '<span>par '+esc(declarant.nom)+'</span>' : '') +
+        (assignee ? '<span>→ <b>'+esc(assignee.nom)+'</b></span>' : '<span style="color:var(--muted);">non assigné</span>') +
+        '<span style="margin-left:auto;">'+fmtDate(it.updated)+'</span>' +
+      '</div>' +
+    '</div>';
+  }).join('') + '</div>';
+}
+
+// ── Drawer ────────────────────────────────────────────────────────────────
+function openDrawer(id){
+  drawerId = id;
+  refreshDrawer();
+  document.getElementById('drawer-overlay').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+}
+function closeDrawer(){
+  document.getElementById('drawer-overlay').classList.remove('open');
+  document.getElementById('drawer').classList.remove('open');
+  drawerId = null;
+}
+function refreshDrawer(){
+  var it = S.incidents.find(function(x){return x.id===drawerId;}); if (!it) return;
+  var bc = (it.projet ? esc(it.projet)+' · ' : '') + (it.severity?SEV_LABELS[it.severity]:'');
+  document.getElementById('dr-breadcrumb').textContent = bc;
+  document.getElementById('dr-title').textContent = it.title || '(sans titre)';
+  document.getElementById('dr-badges').innerHTML =
+    '<span class="sev-badge '+SEV_CLASS[it.severity]+'">'+SEV_LABELS[it.severity]+'</span>' +
+    '<span class="st-badge '+ST_CLASS[it.status]+'">'+ST_LABELS[it.status]+'</span>';
+  var allMarkers = (it.markers_types||[]).concat(it.markers_impacts||[]);
+  var declarant = it.declarantId ? memberById(it.declarantId) : null;
+  var assignee  = it.assigneeId  ? memberById(it.assigneeId)  : null;
+
+  var body = '';
+  // Marqueurs
+  if (allMarkers.length){
+    body += '<div class="drawer-section">' +
+      '<div class="drawer-section-title">Marqueurs</div>' +
+      '<div style="display:flex;gap:5px;flex-wrap:wrap;">'+allMarkers.map(function(m){return '<span class="ic-marker-tag">'+esc(m)+'</span>';}).join('')+'</div>' +
+    '</div>';
+  }
+  // Description
+  body += '<div class="drawer-section"><div class="drawer-section-title">Description</div>' +
+    '<div class="'+(it.description?'drawer-section-content':'drawer-section-empty')+'">'+(it.description?esc(it.description):'—')+'</div></div>';
+  if (it.impact) body += '<div class="drawer-section"><div class="drawer-section-title">Impact</div><div class="drawer-section-content">'+esc(it.impact)+'</div></div>';
+  if (it.actions) body += '<div class="drawer-section"><div class="drawer-section-title">Actions menées</div><div class="drawer-section-content">'+esc(it.actions)+'</div></div>';
+  if (it.resolution) body += '<div class="drawer-section"><div class="drawer-section-title">Résolution</div><div class="drawer-section-content">'+esc(it.resolution)+'</div></div>';
+  if (it.rootcause) body += '<div class="drawer-section"><div class="drawer-section-title">Cause racine</div><div class="drawer-section-content">'+esc(it.rootcause)+'</div></div>';
+
+  // Méta
+  body += '<div class="drawer-section">' +
+    '<div class="drawer-section-title">Détails</div>' +
+    '<div style="font-size:12px;line-height:1.7;">' +
+      (it.projet ? '<div><b>Projet :</b> '+esc(it.projet)+'</div>' : '') +
+      '<div><b>Déclarant :</b> '+(declarant?esc(declarant.nom):'—')+'</div>' +
+      '<div><b>Assigné :</b> '+(assignee?esc(assignee.nom):'—')+'</div>' +
+      '<div><b>Créé :</b> '+fmtDate(it.created)+'</div>' +
+      '<div><b>Mis à jour :</b> '+fmtDate(it.updated)+'</div>' +
+    '</div>' +
+  '</div>';
+
+  // Historique
+  if (it.history && it.history.length){
+    body += '<div class="drawer-section"><div class="drawer-section-title">Historique</div>';
+    body += it.history.slice(0, 20).map(function(h){
+      return '<div class="drawer-history-item">' +
+        '<div class="drawer-history-meta">'+fmtDate(h.ts)+' · <b>'+esc(h.authorName||'?')+'</b> · '+esc(h.field)+'</div>' +
+        '<div style="font-size:12px;color:var(--muted);">'+esc(h.from||'—')+' → <span style="color:var(--text);">'+esc(h.to||'—')+'</span></div>' +
+      '</div>';
+    }).join('');
+    body += '</div>';
+  }
+
+  // Boutons d'action
+  body += '<div class="drawer-section" style="display:flex;gap:8px;flex-wrap:wrap;padding-bottom:32px;">' +
+    '<button class="btn sm" onclick="editFromDrawer()">✎ Éditer</button>' +
+    '<button class="btn sm" style="color:var(--green);border-color:var(--green);" onclick="quickStatusFromDrawer(\'resolu\')">✓ Résoudre</button>' +
+    '<button class="btn sm" style="color:var(--blue);border-color:var(--blue);" onclick="quickStatusFromDrawer(\'cloture\')">⬜ Clôturer</button>' +
+    '<button class="btn sm" style="color:var(--muted);border-color:var(--muted);" onclick="quickStatusFromDrawer(\'archive\')">Archiver</button>' +
+    '<button class="btn sm danger" onclick="deleteFromDrawer()">Supprimer</button>' +
+  '</div>';
+
+  document.getElementById('dr-body').innerHTML = body;
+}
+function editFromDrawer(){
+  if (!drawerId) return;
+  editingId = drawerId;
+  closeDrawer();
+  loadEditorFromState();
+  showTab('editor');
+  saveDraft();
+}
+function quickStatusFromDrawer(newStatus){
+  var it = S.incidents.find(function(x){return x.id===drawerId;}); if (!it) return;
+  var prev = it.status;
+  if (prev === newStatus) return;
+  logChange(it, 'status', ST_LABELS[prev]||prev, ST_LABELS[newStatus]||newStatus);
+  it.status = newStatus;
+  it.updated = Date.now();
+  persist();
+  refreshDrawer();
+  renderIncidentList();
+  renderDashboard();
+  toast('Statut → '+ST_LABELS[newStatus]);
+}
+function deleteFromDrawer(){
+  if (!confirm('Supprimer cet incident définitivement ?')) return;
+  S.incidents = S.incidents.filter(function(x){return x.id!==drawerId;});
+  if (editingId === drawerId){ editingId = null; loadEditorFromState(); }
+  closeDrawer();
+  persist();
+  renderIncidentList();
+  renderDashboard();
+  toast('Supprimé');
+}
+function archiveAllClosed(){
+  var n = 0;
+  S.incidents.forEach(function(it){
+    if (it.status === 'cloture'){
+      logChange(it, 'status', 'Clôturé', 'Archivé');
+      it.status = 'archive';
+      it.updated = Date.now();
+      n++;
+    }
+  });
+  if (n){ persist(); renderIncidentList(); renderDashboard(); toast('✓ '+n+' archivé(s)'); }
+  else toast('Aucun incident clôturé à archiver');
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────
+function renderDashboard(){
+  var inc = S.incidents || [];
+  var act = inc.filter(function(it){return it.status==='ouvert'||it.status==='encours';});
+  var blk = act.filter(function(it){return it.severity==='bloquant';});
+  var crit = act.filter(function(it){return it.severity==='critique';});
+  var resolus = inc.filter(function(it){return it.status==='resolu';});
+  // Avg resolve time
+  var resolved = inc.filter(function(it){return it.status==='resolu'||it.status==='cloture'||it.status==='archive';});
+  var avg = '—';
+  if (resolved.length){
+    var sum = 0, n=0;
+    resolved.forEach(function(it){
+      if (it.created && it.updated && it.updated>it.created){ sum += (it.updated-it.created); n++; }
+    });
+    if (n){
+      var hours = sum/n/3600000;
+      if (hours < 24) avg = hours.toFixed(1)+' h';
+      else avg = (hours/24).toFixed(1)+' j';
+    }
+  }
+  document.getElementById('kpi-row').innerHTML =
+    '<div class="kpi-card danger"><div class="kpi-label">Bloquants</div><div class="kpi-value">'+blk.length+'</div></div>' +
+    '<div class="kpi-card warn"><div class="kpi-label">Critiques</div><div class="kpi-value">'+crit.length+'</div></div>' +
+    '<div class="kpi-card"><div class="kpi-label">Actifs</div><div class="kpi-value">'+act.length+'</div></div>' +
+    '<div class="kpi-card ok"><div class="kpi-label">Résolus</div><div class="kpi-value">'+resolus.length+'</div></div>' +
+    '<div class="kpi-card info"><div class="kpi-label">Délai moyen</div><div class="kpi-value">'+avg+'</div></div>' +
+    '<div class="kpi-card"><div class="kpi-label">Total</div><div class="kpi-value">'+inc.length+'</div></div>';
+
+  // By project
+  var byProj = {};
+  inc.forEach(function(it){ var k = it.projet||'(sans projet)'; if(!byProj[k])byProj[k]={total:0,active:0,critical:0}; byProj[k].total++; if(it.status==='ouvert'||it.status==='encours'){byProj[k].active++; if(it.severity==='critique'||it.severity==='bloquant')byProj[k].critical++;} });
+  var keys = Object.keys(byProj).sort(function(a,b){return byProj[b].active - byProj[a].active;});
+  var dp = document.getElementById('dash-by-projet');
+  if (!keys.length){ dp.innerHTML = '<div style="font-size:13px;color:var(--muted);">Aucun incident.</div>'; }
+  else {
+    dp.innerHTML = '<div style="display:flex;flex-direction:column;gap:6px;">'+keys.map(function(k){
+      var d = byProj[k];
+      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg);border-radius:var(--radius);font-size:13px;">' +
+        '<span style="flex:1;font-weight:500;">'+esc(k)+'</span>' +
+        '<span style="color:var(--muted);">'+d.total+' total</span>' +
+        '<span style="color:'+(d.active?'var(--amber)':'var(--muted)')+';">'+d.active+' actifs</span>' +
+        (d.critical?'<span style="color:var(--red);font-weight:600;">'+d.critical+' critique'+(d.critical>1?'s':'')+'</span>':'') +
+      '</div>';
+    }).join('')+'</div>';
+  }
+
+  // Critical & blocking
+  var dc = document.getElementById('dash-critical');
+  var critList = act.filter(function(it){return it.severity==='critique'||it.severity==='bloquant';})
+                    .sort(function(a,b){ return (a.severity==='bloquant'?0:1) - (b.severity==='bloquant'?0:1); });
+  if (!critList.length){ dc.innerHTML = '<div style="font-size:13px;color:var(--green);">✓ Aucun incident critique ouvert</div>'; }
+  else {
+    dc.innerHTML = '<div style="display:flex;flex-direction:column;gap:6px;">'+critList.map(function(it){
+      return '<div onclick="openDrawer(\''+it.id+'\')" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg);border-radius:var(--radius);font-size:13px;border-left:3px solid var(--red);">' +
+        '<span class="sev-badge '+SEV_CLASS[it.severity]+'">'+SEV_LABELS[it.severity]+'</span>' +
+        '<span style="flex:1;">'+esc(it.title)+'</span>' +
+        (it.projet?'<span style="color:var(--muted);font-size:11px;">'+esc(it.projet)+'</span>':'') +
+      '</div>';
+    }).join('')+'</div>';
+  }
+}
+
+// ── Settings (markers CRUD) ──────────────────────────────────────────────
+function renderSettingsMarkers(){
+  ['types','impacts','actions'].forEach(function(kind){
+    var el = document.getElementById('edit-'+kind);
+    if (!el) return;
+    el.innerHTML = (S.markers[kind]||[]).map(function(m, idx){
+      return '<span class="marker-edit-chip">'+esc(m)+'<span class="x" onclick="removeMarker(\''+kind+'\','+idx+')">×</span></span>';
+    }).join('');
+    if (!(S.markers[kind]||[]).length) el.innerHTML = '<span style="font-size:12px;color:var(--muted);">Aucun marqueur.</span>';
+  });
+}
+function addMarker(kindKey){
+  var kind = kindKey==='type'?'types':(kindKey==='impact'?'impacts':'actions');
+  var inputId = 'add-'+kindKey+'-input';
+  var inp = document.getElementById(inputId);
+  var v = (inp.value||'').trim();
+  if (!v) return;
+  S.markers[kind] = S.markers[kind] || [];
+  if (S.markers[kind].indexOf(v) >= 0){ toast('Existe déjà'); return; }
+  S.markers[kind].push(v);
+  inp.value = '';
+  persist();
+  renderSettingsMarkers();
+  renderMarkerChips();
+  renderActionChips();
+}
+function removeMarker(kind, idx){
+  if (!confirm('Supprimer ce marqueur ?')) return;
+  S.markers[kind].splice(idx, 1);
+  persist();
+  renderSettingsMarkers();
+  renderMarkerChips();
+  renderActionChips();
+}
+function resetMarkers(){
+  if (!confirm('Restaurer les marqueurs par défaut ? Vos marqueurs personnalisés seront perdus.')) return;
+  S.markers = JSON.parse(JSON.stringify(DEFAULT_MARKERS));
+  persist();
+  renderSettingsMarkers();
+  renderMarkerChips();
+  renderActionChips();
+}
+
+// ── Search ────────────────────────────────────────────────────────────────
+document.getElementById('inc-search').addEventListener('input', function(){ renderIncidentList(); });
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+function toast(msg){
+  clearTimeout(undoTimer);
+  var el = document.getElementById('toast');
+  el.innerHTML = '<span>'+msg+'</span>';
+  el.classList.add('show');
+  setTimeout(function(){ el.classList.remove('show'); }, 2400);
+}
+
+// ── Sync dot ──────────────────────────────────────────────────────────────
+function setSyncDot(state){
+  var l = {local:'⚫ Local', pending:'🟡 En attente', ok:'🟢 Sync ✓', error:'🔴 Erreur'};
+  document.getElementById('sync-dot').textContent = l[state] || '⚫ Local';
+}
+
+// ── Drive ─────────────────────────────────────────────────────────────────
+function initDrive(){
+  if (!window.google){ setTimeout(initDrive, 500); return; }
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID, scope: SCOPE, prompt: '',
+    callback: function(resp){
+      if (resp.error){ setSyncDot('error'); return; }
+      accessToken = resp.access_token;
+      sessionStorage.setItem(TOK, accessToken);
+      sessionStorage.setItem(TOK+'_exp', Date.now()+3500000);
+      updateDriveUI(true);
+      pushToDrive();
+      loadSharedProjects();
+      loadTaches();
+    }
+  });
+  if (accessToken){ updateDriveUI(true); loadSharedProjects(); loadTaches(); }
+}
+function handleDriveBtn(){
+  if (!tokenClient){ toast('Drive non initialisé'); return; }
+  if (accessToken){ pushToDrive(); toast('Send to Drive…'); }
+  else tokenClient.requestAccessToken();
+}
+function updateDriveUI(c){
+  var lbl = document.getElementById('drive-status-label');
+  if (lbl) lbl.textContent = c ? 'Connecté à Google Drive' : 'Non connecté à Drive';
+  var btn = document.getElementById('drive-action-btn');
+  if (btn) btn.textContent = c ? 'Send to Drive' : 'Connecter';
+  var pb = document.getElementById('pull-btn'); if (pb) pb.style.display = c ? '' : 'none';
+  var sb = document.getElementById('shared-btn'); if (sb) sb.style.display = c ? '' : 'none';
+}
+function refreshTokenIfNeeded(cb){
+  var exp = parseInt(sessionStorage.getItem(TOK+'_exp')||'0', 10);
+  if (!accessToken || Date.now() > exp - 60000){
+    accessToken = '';
+    if (tokenClient){
+      var origCb = tokenClient.callback;
+      tokenClient.callback = function(resp){
+        if (!resp.error) cb();
+        if (origCb) origCb(resp);
+      };
+      tokenClient.requestAccessToken({prompt:''});
+    }
+  } else cb();
+}
+function findDriveFile(){
+  var q = encodeURIComponent("name='"+DRIVE_FILE+"' and trashed=false");
+  return fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id)&orderBy=modifiedTime+desc',
+    {headers:{Authorization:'Bearer '+accessToken}})
+    .then(function(r){return r.json();})
+    .then(function(d){return d.files && d.files[0] ? d.files[0].id : null;});
+}
+function pushToDrive(){
+  if (!accessToken){ return; }
+  setSyncDot('pending');
+  var body = JSON.stringify(S);
+  findDriveFile().then(function(fid){
+    driveFileId = fid;
+    if (fid){
+      return fetch('https://www.googleapis.com/upload/drive/v3/files/'+fid+'?uploadType=media',
+        {method:'PATCH', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'}, body:body});
+    }
+    return fetch('https://www.googleapis.com/drive/v3/files',
+      {method:'POST', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
+       body:JSON.stringify({name:DRIVE_FILE, mimeType:'application/json'})})
+      .then(function(r){return r.json();})
+      .then(function(m){
+        driveFileId = m.id;
+        return fetch('https://www.googleapis.com/upload/drive/v3/files/'+m.id+'?uploadType=media',
+          {method:'PATCH', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'}, body:body});
+      });
+  }).then(function(r){
+    if (r && (r.status===401||r.status===403)){
+      accessToken=''; sessionStorage.removeItem(TOK);
+      setSyncDot('error'); toast('⚠ Session expirée — reconnectez Drive');
+      return;
+    }
+    setSyncDot('ok');
+  }).catch(function(){ setSyncDot('error'); });
+}
+function pullFromDrive(){
+  if (!accessToken) return;
+  findDriveFile().then(function(fid){
+    if (!fid){ toast('Aucun fichier Drive'); return; }
+    driveFileId = fid;
+    return fetch('https://www.googleapis.com/drive/v3/files/'+fid+'?alt=media',
+      {headers:{Authorization:'Bearer '+accessToken}}).then(function(r){return r.json();});
+  }).then(function(data){
+    if (!data) return;
+    S = data;
+    ensureState();
+    try { localStorage.setItem(SK, JSON.stringify(S)); } catch(e){}
+    renderAll();
+    loadEditorFromState();
+    setSyncDot('ok');
+    toast('Load from Drive OK');
+  }).catch(function(){ setSyncDot('error'); toast('Erreur Drive'); });
+}
+function autoSave(){
+  if (accessToken) pushToDrive();
+  else setSyncDot('local');
+}
+
+// ── Shared (projects + team) ──────────────────────────────────────────────
+function findSharedFile(){
+  var q = encodeURIComponent("name='"+SHARED_FILE+"' and trashed=false");
+  return fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id)&orderBy=modifiedTime+desc',
+    {headers:{Authorization:'Bearer '+accessToken}})
+    .then(function(r){return r.json();})
+    .then(function(d){return d.files && d.files[0] ? d.files[0].id : null;});
+}
+function loadSharedProjects(){
+  if (!accessToken){ toast('Connectez-vous à Drive d\'abord'); return; }
+  findSharedFile().then(function(id){
+    if (!id){ toast('shared.json introuvable — créez des projets dans Projects'); return; }
+    sharedFileId = id;
+    return fetch('https://www.googleapis.com/drive/v3/files/'+id+'?alt=media',
+      {headers:{Authorization:'Bearer '+accessToken}}).then(function(r){return r.json();});
+  }).then(function(data){
+    if (!data) return;
+    if (Array.isArray(data.projects)) sharedProjects = data.projects;
+    if (Array.isArray(data.team))     sharedTeam     = data.team;
+    try { localStorage.setItem(SK+'_shared', JSON.stringify({projects:sharedProjects, team:sharedTeam, ts:Date.now()})); } catch(e){}
+    renderEditorMeta();
+    renderProjFilters();
+    renderProjets();
+    renderEquipe();
+    renderIncidentList();
+    renderDashboard();
+    var pl = document.getElementById('proj-status-label');
+    if (pl) pl.textContent = sharedProjects.length+' projets · '+sharedTeam.length+' membres chargés';
+    var el = document.getElementById('equipe-status-label');
+    if (el) el.textContent = sharedTeam.length+' membres chargés depuis Projects';
+
+    // Auto-set declarant default = Admin if empty in editor and not editing
+    if (!editingId){
+      var sel = document.getElementById('ed-declarant');
+      if (sel && !sel.value){ var aid = getAdminId(); if (aid) sel.value = aid; }
+    }
+    toast('✓ '+sharedProjects.length+' projets · '+sharedTeam.length+' membres chargés');
+  }).catch(function(){ toast('Erreur chargement projets'); });
+}
+
+function renderProjets(){
+  var el = document.getElementById('projets-list'); if (!el) return;
+  if (!sharedProjects.length){ el.innerHTML = '<div class="empty-state"><p>Aucun projet chargé.</p></div>'; return; }
+  el.innerHTML = sharedProjects.map(function(p){
+    var openCount = S.incidents.filter(function(it){return it.projet===p.name && (it.status==='ouvert'||it.status==='encours');}).length;
+    var totalCount = S.incidents.filter(function(it){return it.projet===p.name;}).length;
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:center;gap:12px;">' +
+      '<div style="flex:1;"><div style="font-size:14px;font-weight:500;">'+esc(p.name)+'</div>' +
+      '<div style="font-size:12px;color:var(--muted);margin-top:2px;">'+totalCount+' incident'+(totalCount>1?'s':'')+(openCount?' · <span style="color:var(--red);font-weight:600;">'+openCount+' ouvert'+(openCount>1?'s':'')+'</span>':'')+'</div></div>' +
+      '<button class="btn sm" onclick="filterByProject(\''+escAttr(p.name)+'\')">Voir</button>' +
+    '</div>';
+  }).join('');
+}
+function filterByProject(name){
+  fp = name;
+  showTab('list');
+  renderIncidentList();
+}
+
+function renderEquipe(){
+  var el = document.getElementById('equipe-list'); if (!el) return;
+  if (!sharedTeam.length){ el.innerHTML = '<div class="empty-state"><p>Aucun membre chargé.</p></div>'; return; }
+  el.innerHTML = sharedTeam.map(function(m){
+    var roleLabels = (m.roles||[]).map(function(r){return r==='redacteur'?'Rédacteur':'Valideur';}).join(' + ') || (m.role||'');
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:center;gap:12px;">' +
+      '<div style="width:36px;height:36px;border-radius:50%;background:'+m.color+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0;">'+esc(m.initiales||'?')+'</div>' +
+      '<div style="flex:1;"><div style="font-size:14px;font-weight:500;">'+esc(m.nom||'')+'</div>' +
+      '<div style="font-size:12px;color:var(--muted);margin-top:2px;">'+esc(roleLabels)+(m.appRole?' · '+m.appRole:'')+'</div></div>' +
+    '</div>';
+  }).join('');
+}
+
+// ── Tâches (write to projet001.json) ─────────────────────────────────────
+var todoFileId = null;
+var todoFullData = null;
+var appProjId = null;
+
+function getAppProjId(){
+  var name = APP_PROJECT_NAME.toLowerCase();
+  var p = sharedProjects.find(function(p){ return (p.name||'').toLowerCase().indexOf(name) >= 0; });
+  return p ? p.id : null;
+}
+
+function loadTaches(){
+  if (!accessToken){ document.getElementById('taches-status').textContent = 'Connectez Drive pour charger les tâches.'; return; }
+  document.getElementById('taches-status').textContent = 'Chargement…';
+  var q = encodeURIComponent("name='projet001.json' and trashed=false");
+  fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id)&orderBy=modifiedTime+desc',
+    {headers:{Authorization:'Bearer '+accessToken}})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      todoFileId = d.files && d.files[0] ? d.files[0].id : null;
+      if (!todoFileId){ document.getElementById('taches-status').textContent = 'projet001.json introuvable.'; return; }
+      return fetch('https://www.googleapis.com/drive/v3/files/'+todoFileId+'?alt=media',
+        {headers:{Authorization:'Bearer '+accessToken}});
+    }).then(function(r){ return r ? r.json() : null; })
+    .then(function(data){
+      if (!data) return;
+      todoFullData = data;
+      appProjId = getAppProjId();
+      var count = (todoFullData.backlog||[]).filter(function(t){return t.projId===appProjId;}).length;
+      document.getElementById('taches-status').textContent = appProjId
+        ? count+' tâche'+(count>1?'s':'')+' pour ' + APP_PROJECT_NAME
+        : 'Projet "'+APP_PROJECT_NAME+'" introuvable dans Projects';
+      renderTaches();
+    }).catch(function(e){ document.getElementById('taches-status').textContent = 'Erreur : '+e.message; });
+}
+function renderTaches(){
+  var el = document.getElementById('taches-list'); if (!el) return;
+  if (!todoFullData || !appProjId){ el.innerHTML = '<div class="empty-state"><p>Actualisez pour charger les tâches.</p></div>'; return; }
+  var tasks = (todoFullData.backlog||[]).filter(function(t){return t.projId===appProjId;});
+  var active = tasks.filter(function(t){return !t.done;});
+  var done   = tasks.filter(function(t){return !!t.done;});
+  var sorted = active.concat(done);
+  if (!sorted.length){ el.innerHTML = '<div class="empty-state"><p>Aucune tâche.</p></div>'; return; }
+  var priColor = {p1:'var(--red)', p2:'var(--amber)', p3:'var(--muted)'};
+  el.innerHTML = sorted.map(function(t){
+    return '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);'+(t.done?'opacity:.55':'')+'">' +
+      '<input type="checkbox" '+(t.done?'checked':'')+' onchange="toggleTache(\''+t.id+'\')" style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);">' +
+      '<span style="flex:1;font-size:13px;'+(t.done?'text-decoration:line-through;color:var(--muted)':'')+'">'+esc(t.text||'')+'</span>' +
+      (t.pri?'<span style="font-size:11px;font-weight:600;color:'+(priColor[t.pri]||'var(--muted)')+'">'+t.pri.toUpperCase()+'</span>':'') +
+      '<button onclick="deleteTache(\''+t.id+'\')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;">✕</button>' +
+    '</div>';
+  }).join('');
+}
+function addTache(){
+  var text = document.getElementById('tache-input').value.trim(); if (!text) return;
+  var pri  = document.getElementById('tache-pri').value;
+  if (!todoFullData){ toast('Actualisez d\'abord'); return; }
+  if (!appProjId){ toast('Projet "'+APP_PROJECT_NAME+'" introuvable'); return; }
+  var adminId = getAdminId();
+  var newTask = {
+    id: 'inc'+Date.now().toString(36),
+    text: text,
+    projId: appProjId,
+    pri: pri,
+    done: false,
+    status: 'valide',
+    ts: Date.now(),
+    assigneeIds: adminId ? [adminId] : []
+  };
+  todoFullData.backlog = todoFullData.backlog || [];
+  todoFullData.backlog.unshift(newTask);
+  document.getElementById('tache-input').value = '';
+  renderTaches();
+  writeTodoFile();
+}
+function toggleTache(id){
+  if (!todoFullData) return;
+  var t = todoFullData.backlog.find(function(x){return x.id===id;}); if (!t) return;
+  t.done = !t.done;
+  renderTaches();
+  writeTodoFile();
+}
+function deleteTache(id){
+  if (!todoFullData) return;
+  if (!confirm('Supprimer cette tâche ?')) return;
+  todoFullData.backlog = todoFullData.backlog.filter(function(x){return x.id!==id;});
+  renderTaches();
+  writeTodoFile();
+}
+function writeTodoFile(){
+  if (!accessToken || !todoFullData || !todoFileId) return;
+  fetch('https://www.googleapis.com/upload/drive/v3/files/'+todoFileId+'?uploadType=media',
+    {method:'PATCH', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
+     body: JSON.stringify(todoFullData)})
+    .then(function(r){
+      if (!r.ok) throw new Error('HTTP '+r.status);
+      toast('✓ Sauvegardé');
+    }).catch(function(e){ toast('❌ '+e.message); });
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────
+applyTheme(localStorage.getItem(TK)||'light');
+load();
+</script>
+</body>
+</html>
