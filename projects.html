@@ -886,6 +886,7 @@ async function loadSuiviData() {
           suiviData.sharedTeam = Array.isArray(data.team) ? data.team : [];
         } else if (f.key === 'incidents') {
           suiviData.incidents = Array.isArray(data.incidents) ? data.incidents : [];
+          suiviData.incidentsFullData = data;
         } else {
           suiviData[f.key] = data.history || data.entries || [];
           suiviData[f.key+'FullData'] = data;
@@ -2363,113 +2364,317 @@ function renderGlobal() {
   setTimeout(attachAutocomplete, 0);
 }
 
-// ── Incident drawer (Vue Globale) ────────────────────────────────────────
+// ── Incident drawer — éditeur complet (Vue Globale) ──────────────────────
+const INC_SEV_LABELS = {mineur:'Mineur', majeur:'Majeur', critique:'Critique', bloquant:'Bloquant'};
+const INC_SEV_COLOR  = {mineur:'var(--muted)', majeur:'var(--amber)', critique:'var(--red)', bloquant:'var(--red)'};
+const INC_ST_LABELS  = {ouvert:'Ouvert', encours:'En cours', resolu:'Résolu ✓', cloture:'Clôturé', archive:'Archivé'};
+const INC_ST_COLOR   = {ouvert:'var(--red)', encours:'var(--amber)', resolu:'var(--green)', cloture:'var(--blue)', archive:'var(--muted)'};
+
+let _incDrawerId = null; // currently open incident id
+
+function _incTeam() { return suiviData.sharedTeam || S.team || []; }
+function _incMbyId(id) { return _incTeam().find(m=>m.id===id); }
+function _incAdminId() { const a=_incTeam().find(m=>m.appRole==='Admin'); return a?a.id:(_incTeam()[0]?.id||null); }
+function _incFmt(ts) { return ts?new Date(ts).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'' ; }
+function _incLog(it, field, from, to) {
+  if(String(from||'—')===String(to||'—')) return;
+  it.history = it.history||[];
+  const aid = _incAdminId(); const m = aid?_incMbyId(aid):null;
+  it.history.unshift({ts:Date.now(), authorId:aid||'', authorName:m?m.nom:'?', field, from:String(from||'—'), to:String(to||'—')});
+  if(it.history.length>80) it.history.length=80;
+}
+
 function openIncidentDrawer(id) {
-  const all = suiviData.incidents || [];
-  const it = all.find(x => x.id === id); if (!it) return;
+  const it = (suiviData.incidents||[]).find(x=>x.id===id); if(!it) return;
+  _incDrawerId = id;
+  _renderIncidentDrawer(it);
+  document.getElementById('doc-overlay').style.opacity='1';
+  document.getElementById('doc-overlay').style.pointerEvents='all';
+  document.getElementById('doc-drawer').classList.add('open');
+}
 
-  const SEV_LABEL = {mineur:'Mineur', majeur:'Majeur', critique:'Critique', bloquant:'Bloquant'};
-  const SEV_COLOR = {mineur:'var(--muted)', majeur:'var(--amber)', critique:'var(--red)', bloquant:'var(--red)'};
-  const ST_LABEL  = {ouvert:'Ouvert', encours:'En cours', resolu:'Résolu ✓', cloture:'Clôturé', archive:'Archivé'};
-  const ST_COLOR  = {ouvert:'var(--red)', encours:'var(--amber)', resolu:'var(--green)', cloture:'var(--blue)', archive:'var(--muted)'};
+function _renderIncidentDrawer(it) {
+  const SEL = 'font-family:var(--sans);font-size:13px;padding:6px 9px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none;';
+  const TA  = 'width:100%;box-sizing:border-box;font-family:var(--sans);font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);resize:vertical;outline:none;line-height:1.5;';
+  const team = _incTeam();
+  const memberOpts = '<option value="">— Personne —</option>'+team.map(m=>`<option value="${m.id}"${it[arguments[0]]===m.id?' selected':''}>${esc(m.nom)}</option>`).join('');
 
-  const sevColor = SEV_COLOR[it.severity]||'var(--muted)';
-  const stColor  = ST_COLOR[it.status]||'var(--muted)';
-  const team = suiviData.sharedTeam || S.team || [];
-  function mByid(mid) { return team.find(m=>m.id===mid); }
+  // Breadcrumb + title area
+  document.getElementById('doc-breadcrumb').textContent = (it.projet||'') + (it.projet?' · ':'') + (INC_SEV_LABELS[it.severity]||'');
+  document.getElementById('doc-drawer-title').innerHTML = '';
+  document.getElementById('doc-drawer-badges').innerHTML =
+    `<span class="td-status-badge" style="color:${INC_SEV_COLOR[it.severity]};border-color:${INC_SEV_COLOR[it.severity]};">${INC_SEV_LABELS[it.severity]||''}</span>`+
+    `<span class="td-status-badge" style="color:${INC_ST_COLOR[it.status]};border-color:${INC_ST_COLOR[it.status]};">${INC_ST_LABELS[it.status]||''}</span>`;
 
-  // Reuse TD drawer
-  const ta = document.getElementById('td-title');
-  ta.value = it.title||''; tdAutoResize(ta);
-  ta.onblur = null; // read-only in this context
+  // All markers from incident-tracker state
+  const incFullData = suiviData.incidentsFullData;
+  const allTypeMarkers   = incFullData?.markers?.types   || [];
+  const allImpactMarkers = incFullData?.markers?.impacts || [];
 
-  document.getElementById('td-badges').innerHTML =
-    `<span class="td-status-badge" style="color:${sevColor};border-color:${sevColor};">${SEV_LABEL[it.severity]||''}</span>` +
-    `<span class="td-status-badge" style="color:${stColor};border-color:${stColor};">${ST_LABEL[it.status]||''}</span>`;
+  let h = '';
 
-  // Params section (read-only)
-  const parSec = document.getElementById('td-sec-params');
-  if (parSec) {
-    const priSel = document.getElementById('td-pri');
-    const projSel = document.getElementById('td-proj');
-    const dueIn = document.getElementById('td-duedate');
-    if (priSel) { priSel.value = ''; priSel.disabled = true; }
-    if (projSel) { projSel.innerHTML = `<option>${esc(it.projet||'—')}</option>`; projSel.disabled = true; }
-    if (dueIn) { dueIn.value = it.dueDate||''; dueIn.disabled = true; }
-  }
-
-  // Team
-  const teamEl = document.getElementById('td-team');
-  const members = [it.declarantId, it.assigneeId].filter(Boolean);
-  if (!members.length) {
-    teamEl.innerHTML = '<span style="font-size:13px;color:var(--muted)">Non assigné</span>';
-  } else {
-    teamEl.innerHTML = members.map(mid => {
-      const m = mByid(mid); if (!m) return '';
-      const role = mid===it.declarantId ? 'Déclarant' : 'Assigné';
-      return `<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:600;margin:0 4px 4px 0;background:${m.color};color:#fff;border:1px solid ${m.color};">
-        <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.25);color:#fff;font-size:9px;font-weight:700;">${m.initiales}</span>
-        ${m.nom.split(' ')[0]} <span style="opacity:.7;font-size:10px;">${role}</span></span>`;
-    }).join('');
-  }
-
-  // Build body : champs structurés + marqueurs + commentaires + historique
-  let body = '';
-  const allMark = (it.markers_types||[]).concat(it.markers_impacts||[]);
-  if (allMark.length) {
-    body += `<div class="td-drawer-section"><div class="td-drawer-section-title">Marqueurs</div><div style="display:flex;gap:5px;flex-wrap:wrap;">` +
-      allMark.map(m=>`<span style="font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid var(--border);color:var(--muted);">${esc(m)}</span>`).join('') +
-    `</div></div>`;
-  }
-  const fields = [
-    {label:'Description', val:it.description},
-    {label:'Impact',      val:it.impact},
-    {label:'Actions menées', val:it.actions},
-    {label:'Résolution',  val:it.resolution},
-    {label:'Cause racine',val:it.rootcause}
-  ];
-  fields.filter(f=>f.val).forEach(f=>{
-    body += `<div class="td-drawer-section"><div class="td-drawer-section-title">${f.label}</div><div style="font-size:13px;line-height:1.55;white-space:pre-wrap;">${esc(f.val)}</div></div>`;
-  });
-
-  // Commentaires (lecture seule ici)
-  const comments = it.comments||[];
-  body += `<div class="td-drawer-section"><div class="td-drawer-section-title">💬 Commentaires (${comments.length})</div>`;
-  if (!comments.length) {
-    body += `<span style="font-size:13px;color:var(--muted);">Aucun commentaire.</span>`;
-  } else {
-    comments.forEach(c => {
-      const m = mByid(c.authorId);
-      body += `<div style="padding:7px 10px;background:var(--bg);border-radius:var(--radius);margin-bottom:6px;">` +
-        (m ? `<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;"><span style="width:20px;height:20px;border-radius:50%;background:${m.color};display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;">${m.initiales}</span><b style="font-size:12px;">${esc(m.nom)}</b></div>` : '') +
-        `<div style="font-size:13px;line-height:1.5;">${esc(c.text)}</div>` +
-        `<div style="font-size:11px;color:var(--muted);margin-top:3px;">${c.ts ? new Date(c.ts).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : ''}</div>` +
-      `</div>`;
-    });
-  }
-  body += `</div>`;
-
-  // Historique
-  const hist = (it.history||[]).slice(0,15);
-  if (hist.length) {
-    body += `<div class="td-drawer-section"><div class="td-drawer-section-title">📋 Historique</div>`;
-    hist.forEach(h => {
-      body += `<div class="td-history-item"><div class="td-history-meta">${h.ts?new Date(h.ts).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}):''} · <b>${esc(h.authorName||'?')}</b></div><div class="td-history-change"><span class="td-hist-tag">~ ${esc(h.field)}</span> <span style="color:var(--muted)">${esc(h.from||'—')}</span> → <span>${esc(h.to||'—')}</span></div></div>`;
-    });
-    body += `</div>`;
-  }
-
-  body += `<div class="td-drawer-section" style="padding-bottom:32px;">
-    <span style="font-size:12px;color:var(--muted);">Gérer cet incident dans <b>Incident Tracker</b>.</span>
+  // ── Titre ──
+  h += `<div class="doc-drawer-section">
+    <div class="doc-drawer-section-title">Titre</div>
+    <input id="idr-title" value="${esc(it.title||'')}" style="${SEL}width:100%;box-sizing:border-box;font-size:14px;font-weight:500;" oninput="incAutoSave()">
   </div>`;
 
-  document.getElementById('td-comments').innerHTML = '';
-  document.getElementById('td-history').innerHTML = body;
-  document.getElementById('td-comment-input').style.display = 'none';
-  document.getElementById('td-comment-input').nextElementSibling.style.display = 'none';
+  // ── Méta (sévérité, statut, déclarant, assigné) ──
+  h += `<div class="doc-drawer-section">
+    <div class="doc-drawer-section-title">Paramètres</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <div style="display:flex;flex-direction:column;gap:3px;">
+        <span style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;">Sévérité</span>
+        <select id="idr-severity" style="${SEL}" onchange="incAutoSave()">
+          ${['mineur','majeur','critique','bloquant'].map(v=>`<option value="${v}"${it.severity===v?' selected':''}>${INC_SEV_LABELS[v]}</option>`).join('')}
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:3px;">
+        <span style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;">Statut</span>
+        <select id="idr-status" style="${SEL}" onchange="incAutoSave()">
+          ${['ouvert','encours','resolu','cloture','archive'].map(v=>`<option value="${v}"${it.status===v?' selected':''}>${INC_ST_LABELS[v]}</option>`).join('')}
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:3px;">
+        <span style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;">Déclarant</span>
+        <select id="idr-declarant" style="${SEL}" onchange="incAutoSave()">
+          <option value="">— Personne —</option>
+          ${team.map(m=>`<option value="${m.id}"${it.declarantId===m.id?' selected':''}>${esc(m.nom)}</option>`).join('')}
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:3px;">
+        <span style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;">Assigné</span>
+        <select id="idr-assignee" style="${SEL}" onchange="incAutoSave()">
+          <option value="">— Personne —</option>
+          ${team.map(m=>`<option value="${m.id}"${it.assigneeId===m.id?' selected':''}>${esc(m.nom)}</option>`).join('')}
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:3px;">
+        <span style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;">Projet</span>
+        <input id="idr-projet" value="${esc(it.projet||'')}" style="${SEL}width:140px;" oninput="incAutoSave()" placeholder="Nom du projet">
+      </div>
+    </div>
+  </div>`;
 
-  // Disable param selects (re-enable when opening a real task)
-  openTDDrawer();
+  // ── Marqueurs types ──
+  if (allTypeMarkers.length) {
+    h += `<div class="doc-drawer-section">
+      <div class="doc-drawer-section-title">Marqueurs · Type</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;">
+        ${allTypeMarkers.map(m=>{
+          const on=(it.markers_types||[]).includes(m);
+          return `<span onclick="incToggleMarker('types','${m.replace(/'/g,"\\'")}',this)" style="cursor:pointer;font-size:11px;font-weight:500;padding:3px 9px;border-radius:14px;border:1px solid ${on?'var(--accent)':'var(--border)'};background:${on?'var(--accent)':'transparent'};color:${on?'var(--bg)':'var(--text)'};">${esc(m)}</span>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+  // ── Marqueurs impacts ──
+  if (allImpactMarkers.length) {
+    h += `<div class="doc-drawer-section">
+      <div class="doc-drawer-section-title">Marqueurs · Impact</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;">
+        ${allImpactMarkers.map(m=>{
+          const on=(it.markers_impacts||[]).includes(m);
+          return `<span onclick="incToggleMarker('impacts','${m.replace(/'/g,"\\'")}',this)" style="cursor:pointer;font-size:11px;font-weight:500;padding:3px 9px;border-radius:14px;border:1px solid ${on?'var(--accent)':'var(--border)'};background:${on?'var(--accent)':'transparent'};color:${on?'var(--bg)':'var(--text)'};">${esc(m)}</span>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+
+  // ── Champs texte ──
+  const textFields = [
+    {id:'idr-description', label:'Description',    val:it.description, rows:4},
+    {id:'idr-impact',      label:'Impact',          val:it.impact,      rows:2},
+    {id:'idr-actions',     label:'Actions menées',  val:it.actions,     rows:4},
+    {id:'idr-resolution',  label:'Résolution',      val:it.resolution,  rows:2},
+    {id:'idr-rootcause',   label:'Cause racine',    val:it.rootcause,   rows:2},
+  ];
+  textFields.forEach(f=>{
+    h += `<div class="doc-drawer-section">
+      <div class="doc-drawer-section-title">${f.label}</div>
+      <textarea id="${f.id}" rows="${f.rows}" style="${TA}min-height:${f.rows*22}px;" oninput="incAutoSave()">${esc(f.val||'')}</textarea>
+    </div>`;
+  });
+
+  // ── Commentaires ──
+  const comments = it.comments||[];
+  h += `<div class="doc-drawer-section">
+    <div class="doc-drawer-section-title">💬 Commentaires (${comments.length})</div>`;
+  if (!comments.length) {
+    h += `<div style="font-size:13px;color:var(--muted);margin-bottom:8px;">Aucun commentaire.</div>`;
+  } else {
+    comments.forEach((c,i)=>{
+      const m=_incMbyId(c.authorId);
+      h += `<div class="doc-comment-item">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            ${m?`<span class="doc-avatar" style="background:${m.color}">${m.initiales}</span><b style="font-size:12px;">${esc(m.nom)}</b>`:'<span style="font-size:12px;color:var(--muted)">Anonyme</span>'}
+          </div>
+          <button onclick="incDeleteComment(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;" title="Supprimer">✕</button>
+        </div>
+        <div class="doc-comment-text">${esc(c.text)}</div>
+        <div class="doc-comment-meta">${_incFmt(c.ts)}</div>
+      </div>`;
+    });
+  }
+  // Formulaire ajout commentaire
+  h += `<div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
+    <textarea id="idr-comment-input" rows="2" placeholder="Ajouter un commentaire…" style="${TA}" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();incAddComment();}"></textarea>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <select id="idr-comment-author" style="${SEL}flex:1;">
+        <option value="">— Auteur —</option>
+        ${team.map(m=>`<option value="${m.id}">${esc(m.nom)}</option>`).join('')}
+      </select>
+      <button class="btn sm primary" onclick="incAddComment()">Envoyer</button>
+    </div>
+  </div></div>`;
+
+  // ── Historique ──
+  const hist = (it.history||[]).slice(0,20);
+  h += `<div class="doc-drawer-section">
+    <div class="doc-drawer-section-title">📋 Historique</div>`;
+  if (!hist.length) {
+    h += `<span style="font-size:13px;color:var(--muted);">Aucune modification.</span>`;
+  } else {
+    hist.forEach(hh=>{
+      h += `<div class="td-history-item">
+        <div class="td-history-meta">${_incFmt(hh.ts)} · <b>${esc(hh.authorName||'?')}</b></div>
+        <div class="td-history-change"><span class="td-hist-tag">~ ${esc(hh.field)}</span> <span style="color:var(--muted)">${esc(hh.from||'—')}</span> → <span>${esc(hh.to||'—')}</span></div>
+      </div>`;
+    });
+  }
+  h += `</div>`;
+
+  // ── Boutons d'action rapide ──
+  h += `<div class="doc-drawer-section" style="display:flex;gap:8px;flex-wrap:wrap;padding-bottom:32px;">
+    <button class="btn sm" style="color:var(--green);border-color:var(--green);" onclick="incQuickStatus('resolu')">✓ Résoudre</button>
+    <button class="btn sm" style="color:var(--blue);border-color:var(--blue);"  onclick="incQuickStatus('cloture')">⬜ Clôturer</button>
+    <button class="btn sm" style="color:var(--muted);border-color:var(--muted);" onclick="incQuickStatus('archive')">Archiver</button>
+  </div>`;
+
+  document.getElementById('doc-drawer-body').innerHTML = h;
+
+  // Pré-sélectionner l'admin dans commentaires
+  const authSel = document.getElementById('idr-comment-author');
+  if (authSel) { const aid=_incAdminId(); if(aid) authSel.value=aid; }
+}
+
+// ── Auto-save (debounced 1.5s) ──
+let _incSaveTimer = null;
+function incAutoSave() {
+  clearTimeout(_incSaveTimer);
+  _incSaveTimer = setTimeout(_incCommitSave, 1500);
+}
+function _incCommitSave() {
+  const it = (suiviData.incidents||[]).find(x=>x.id===_incDrawerId); if(!it) return;
+  const get = id => { const el=document.getElementById(id); return el?el.value.trim():''; };
+
+  const fields = [
+    ['title',       get('idr-title')],
+    ['severity',    get('idr-severity')],
+    ['status',      get('idr-status')],
+    ['declarantId', get('idr-declarant')],
+    ['assigneeId',  get('idr-assignee')],
+    ['projet',      get('idr-projet')],
+    ['description', get('idr-description')],
+    ['impact',      get('idr-impact')],
+    ['actions',     get('idr-actions')],
+    ['resolution',  get('idr-resolution')],
+    ['rootcause',   get('idr-rootcause')],
+  ];
+  fields.forEach(([k,v])=>{
+    const old = it[k]||'';
+    if(String(old)!==String(v)){
+      // Use human-readable label for members
+      let from=old, to=v;
+      if(k==='declarantId'||k==='assigneeId'){
+        from=old?(_incMbyId(old)||{}).nom||old:'—';
+        to  =v  ?(_incMbyId(v)  ||{}).nom||v  :'—';
+      } else if(k==='severity') { from=INC_SEV_LABELS[old]||old; to=INC_SEV_LABELS[v]||v; }
+      else if(k==='status')    { from=INC_ST_LABELS[old]||old;   to=INC_ST_LABELS[v]||v;  }
+      _incLog(it, k, from, to);
+      it[k] = v;
+    }
+  });
+  it.updated = Date.now();
+  // Refresh badges in header
+  document.getElementById('doc-drawer-badges').innerHTML =
+    `<span class="td-status-badge" style="color:${INC_SEV_COLOR[it.severity]};border-color:${INC_SEV_COLOR[it.severity]};">${INC_SEV_LABELS[it.severity]||''}</span>`+
+    `<span class="td-status-badge" style="color:${INC_ST_COLOR[it.status]};border-color:${INC_ST_COLOR[it.status]};">${INC_ST_LABELS[it.status]||''}</span>`;
+  writeIncidentTracker();
+}
+
+function incToggleMarker(kind, value, el) {
+  const it = (suiviData.incidents||[]).find(x=>x.id===_incDrawerId); if(!it) return;
+  const arr = it['markers_'+kind] = it['markers_'+kind]||[];
+  const idx = arr.indexOf(value);
+  if(idx>=0) arr.splice(idx,1); else arr.push(value);
+  // Toggle visual
+  const on = idx<0;
+  el.style.background = on?'var(--accent)':'transparent';
+  el.style.color = on?'var(--bg)':'var(--text)';
+  el.style.borderColor = on?'var(--accent)':'var(--border)';
+  _incLog(it, 'marqueur '+kind, idx>=0?value:'—', idx<0?value:'—');
+  it.updated = Date.now();
+  writeIncidentTracker();
+}
+
+function incAddComment() {
+  const it = (suiviData.incidents||[]).find(x=>x.id===_incDrawerId); if(!it) return;
+  const inp = document.getElementById('idr-comment-input');
+  const text = inp?inp.value.trim():''; if(!text) return;
+  const authorId = document.getElementById('idr-comment-author')?.value || _incAdminId() || '';
+  it.comments = it.comments||[];
+  it.comments.push({ts:Date.now(), authorId, text});
+  it.updated = Date.now();
+  writeIncidentTracker();
+  _renderIncidentDrawer(it);
+  // Re-select admin
+  const authSel = document.getElementById('idr-comment-author');
+  if(authSel){ const aid=_incAdminId(); if(aid) authSel.value=aid; }
+}
+
+function incDeleteComment(idx) {
+  const it = (suiviData.incidents||[]).find(x=>x.id===_incDrawerId); if(!it) return;
+  if(!confirm('Supprimer ce commentaire ?')) return;
+  (it.comments||[]).splice(idx,1);
+  it.updated = Date.now();
+  writeIncidentTracker();
+  _renderIncidentDrawer(it);
+}
+
+function incQuickStatus(newStatus) {
+  const it = (suiviData.incidents||[]).find(x=>x.id===_incDrawerId); if(!it) return;
+  _incLog(it, 'status', INC_ST_LABELS[it.status]||it.status, INC_ST_LABELS[newStatus]||newStatus);
+  it.status = newStatus;
+  it.updated = Date.now();
+  writeIncidentTracker();
+  _renderIncidentDrawer(it);
+  renderGlobal();
+}
+
+// ── Write incident-tracker.json to Drive ──
+let _incFileId = null;
+async function writeIncidentTracker() {
+  if(!accessToken){ toast('⚠ Connectez Drive'); return; }
+  const data = suiviData.incidentsFullData; if(!data) return;
+  data.incidents = suiviData.incidents; // sync back
+  try {
+    if(!_incFileId){
+      const q = encodeURIComponent("name='incident-tracker.json' and trashed=false");
+      const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)&orderBy=modifiedTime+desc`,
+        {headers:{Authorization:'Bearer '+accessToken}});
+      const d = await res.json();
+      _incFileId = d.files&&d.files[0]?d.files[0].id:null;
+    }
+    if(!_incFileId){ toast('incident-tracker.json introuvable'); return; }
+    const body = JSON.stringify(data);
+    const r = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${_incFileId}?uploadType=media`,
+      {method:'PATCH', headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'}, body});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    renderGlobal();
+    toast('✓ Incident sauvegardé');
+  } catch(e){ toast('❌ '+e.message); }
 }
 
 function openTDDrawer() {
@@ -2489,6 +2694,7 @@ function restoreTDComments() {
   if (projSel) projSel.disabled = false;
   if (dueIn) dueIn.disabled = false;
 }
+
 
 function debugSuivi() {
   var lines = [];
