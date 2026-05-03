@@ -65,6 +65,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 
 /* ── PAGE ── */
 .page{max-width:860px;margin:0 auto;padding:20px 16px 80px;}
+@media(max-width:640px){.page{padding:12px 10px 80px;}}
 .section{display:none;}
 .section.active{display:block;}
 
@@ -158,9 +159,14 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
 
 /* ── RESPONSIVE ── */
-@media(max-width:600px){
+@media(max-width:640px){
   .field-row{flex-direction:column;}
   .kpi-grid{grid-template-columns:1fr 1fr;}
+  .kpi-box{padding:10px 12px!important;}
+  .kpi-n{font-size:20px!important;}
+  /* Vue Globale rows : titre sur ligne 1, badges sur ligne 2 */
+  .suivi-row{flex-wrap:wrap;gap:3px 6px;padding:9px 10px;align-items:flex-start;}
+  .suivi-row-title{width:100%;flex:none;white-space:normal;font-size:13px;line-height:1.4;margin-bottom:3px;}
 }
 input,select,textarea{background:var(--bg);color:var(--text);}
 [data-theme="dark"] input,[data-theme="dark"] select,[data-theme="dark"] textarea{color-scheme:dark;}
