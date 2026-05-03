@@ -1987,7 +1987,8 @@ async function loadGlobalData() {
   st.textContent = 'Chargement…';
   const files = [
     {key:'us',name:'us-generator.json'},{key:'mo',name:'mo-generator.json'},
-    {key:'cr',name:'cr-generator.json'},{key:'todos',name:'projet001.json'},{key:'shared',name:'shared.json'}
+    {key:'cr',name:'cr-generator.json'},{key:'todos',name:'projet001.json'},{key:'shared',name:'shared.json'},
+    {key:'incidents',name:'incident-tracker.json'}
   ];
   for (const f of files) {
     try {
@@ -1997,14 +1998,15 @@ async function loadGlobalData() {
       if (d.files && d.files[0]) {
         const r = await fetch(`https://www.googleapis.com/drive/v3/files/${d.files[0].id}?alt=media`,{headers:{Authorization:'Bearer '+accessToken}});
         const data = await r.json();
-        if (f.key==='todos') { suiviData.backlog=Array.isArray(data.backlog)?data.backlog:[]; projet001FullData=data; }
+        if (f.key==='todos') { suiviData.backlog=Array.isArray(data.backlog)?data.backlog:[]; projet001FullData=data; projet001FileId=d.files[0].id; }
         else if (f.key==='shared') { suiviData.sharedProjects=Array.isArray(data.projects)?data.projects:[]; suiviData.sharedTeam=Array.isArray(data.team)?data.team:[]; }
+        else if (f.key==='incidents') { suiviData.incidents=Array.isArray(data.incidents)?data.incidents:[]; suiviData.incidentsFullData=data; _incFileId=d.files[0].id; }
         else { suiviData[f.key]=data.history||data.entries||[]; suiviData[f.key+'FullData']=data; suiviData[f.key+'FileId']=d.files[0].id; }
       }
     } catch(e) { console.warn('global load', f.name, e); }
   }
   renderGlobal();
-  st.textContent = `${(suiviData.cr||[]).length} CR · ${(suiviData.mo||[]).length} MO · ${(suiviData.us||[]).length} US · ${(suiviData.backlog||[]).length} tâches`;
+  st.textContent = `${(suiviData.cr||[]).length} CR · ${(suiviData.mo||[]).length} MO · ${(suiviData.us||[]).length} US · ${(suiviData.backlog||[]).length} tâches · ${(suiviData.incidents||[]).length} incidents`;
 }
 
 function toggleGlobalDone() {
