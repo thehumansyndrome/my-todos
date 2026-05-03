@@ -289,6 +289,10 @@ input[type="search"]{-webkit-appearance:none;appearance:none;}
 
 <!-- ═══ ÉDITEUR ═══ -->
 <div id="tab-editor" class="section active">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+    <span style="font-size:12px;color:var(--muted);" id="ed-mode-label">Nouvel incident</span>
+    <button class="btn sm" onclick="resetEditor()">+ Nouveau</button>
+  </div>
   <div class="editor-meta-bar">
     <div class="meta-field wide">
       <span class="meta-label">Titre de l'incident</span>
@@ -383,7 +387,6 @@ input[type="search"]{-webkit-appearance:none;appearance:none;}
     </div>
 
     <div class="editor-actions">
-      <button class="btn sm" onclick="resetEditor()">+ Nouveau</button>
       <button class="btn sm action-resolve" onclick="markResolved()">✓ Résolu</button>
       <button class="btn sm action-close" onclick="markClosed()">⬜ Clôturer</button>
       <button class="btn sm action-save" onclick="saveIncident()">Enregistrer</button>
@@ -822,6 +825,15 @@ function loadEditorFromState(){
   }
   renderMarkerChips();
   renderSelectedMarkers();
+  var lbl = document.getElementById('ed-mode-label');
+  if (lbl){
+    if (editingId){
+      var _e = S.incidents.find(function(x){return x.id===editingId;});
+      lbl.textContent = _e ? ('Édition : '+(_e.title||'incident')) : 'Nouvel incident';
+    } else {
+      lbl.textContent = 'Nouvel incident';
+    }
+  }
 }
 
 function onEditField(){
