@@ -260,6 +260,15 @@ input[type="search"]{-webkit-appearance:none;appearance:none;}
 }
 .due-pill.overdue{color:var(--red);border-color:var(--red);}
 
+
+/* ── Item images ── */
+.item-imgs{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 3px;}
+.item-thumb{max-width:80px;max-height:64px;border-radius:4px;border:1px solid var(--border);object-fit:cover;cursor:pointer;transition:opacity .15s;}
+.item-thumb:hover{opacity:.82;}
+.item-img-del{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.55);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:10px;cursor:pointer;line-height:1;padding:0;display:none;}
+div:hover>.item-img-del{display:flex;align-items:center;justify-content:center;}
+.img-pick-btn{background:none;border:none;cursor:pointer;font-size:14px;padding:2px 4px;opacity:.5;line-height:1;color:var(--text);}
+.img-pick-btn:hover{opacity:1;}
 </style>
 </head>
 <body>
@@ -386,6 +395,17 @@ input[type="search"]{-webkit-appearance:none;appearance:none;}
       <textarea id="ed-rootcause" placeholder="Cause profonde identifiée a posteriori" oninput="onEditField()"></textarea>
     </div>
 
+    <!-- Images de l'incident -->
+    <div class="editor-pane" style="margin-bottom:0;">
+      <div class="field-block">
+        <div class="field-block-label">
+          Images
+          <label class="img-pick-btn" style="cursor:pointer;font-weight:400;text-transform:none;letter-spacing:0;">📷 Caméra<input type="file" accept="image/*" capture="environment" style="display:none" onchange="incImgPickFile(this,editingId)"></label>
+          <label class="img-pick-btn" style="cursor:pointer;font-weight:400;text-transform:none;letter-spacing:0;">🖼 Galerie<input type="file" accept="image/*" style="display:none" onchange="incImgPickFile(this,editingId)"></label>
+        </div>
+        <div id="ed-imgs-container"></div>
+      </div>
+    </div>
     <div class="editor-actions">
       <button class="btn sm action-resolve" onclick="markResolved()">✓ Résolu</button>
       <button class="btn sm action-close" onclick="markClosed()">⬜ Clôturer</button>
@@ -615,6 +635,7 @@ function ensureState(){
     if (!Array.isArray(it.markers_impacts)) it.markers_impacts = [];
     if (!Array.isArray(it.history)) it.history = [];
     if (!Array.isArray(it.comments)) it.comments = [];
+    if (!Array.isArray(it.images)) it.images = [];
     if (!it.declarantId) it.declarantId = '';
     if (!it.assigneeId) it.assigneeId = '';
     if (!it.created) it.created = Date.now();
@@ -1134,6 +1155,12 @@ function refreshDrawer(){
   '</div>';
   body += commentsHtml;
 
+  // Images
+  if (it.images && it.images.length){
+    body += '<div class="drawer-section"><div class="drawer-section-title">Images</div>' +
+      _itemImgsHtml(it.images,'incident',it.id) +
+    '</div>';
+  }
   // Historique
   if (it.history && it.history.length){
     body += '<div class="drawer-section"><div class="drawer-section-title">Historique</div>';
@@ -1996,6 +2023,88 @@ document.addEventListener('click', function(e){
   if (!e.target.closest('#itm-autocomplete') && !e.target.closest('input')) ITM_hide();
 });
 // ── END INLINE TASK MODULE ───────────────────────────────────────────────
+
+
+
+// ── Image utilities (shared) ─────────────────────────────────────────────
+const _IMG_MAX_PX = 1200, _IMG_QUALITY = 0.82;
+function _compressImage(file){
+  return new Promise(function(res,rej){
+    if(file.type==='image/gif'||file.type==='image/svg+xml'){
+      var r=new FileReader();r.onload=function(e){res(e.target.result);};r.onerror=rej;r.readAsDataURL(file);return;
+    }
+    var img=new Image();var url=URL.createObjectURL(file);
+    img.onload=function(){
+      URL.revokeObjectURL(url);
+      var w=img.width,h=img.height;
+      var ratio=Math.min(_IMG_MAX_PX/w,_IMG_MAX_PX/h,1);
+      w=Math.round(w*ratio);h=Math.round(h*ratio);
+      var canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      res(canvas.toDataURL('image/jpeg',_IMG_QUALITY));
+    };
+    img.onerror=rej;img.src=url;
+  });
+}
+function _itemImgsHtml(images, ns, id){
+  if(!images||!images.length)return'';
+  return'<div class="item-imgs">'+images.map(function(img,i){
+    var src=img?(img.src||img):'';if(!src)return'';
+    return'<div style="position:relative;display:inline-block;">'
+      +'<img src="'+src+'" class="item-thumb" onclick="event.stopPropagation();_openImgViewer(\''+ns+'\',\''+id+'\','+i+')">'
+      +'<button class="item-img-del" onclick="event.stopPropagation();_delImg(\''+ns+'\',\''+id+'\','+i+')">🗑</button>'
+      +'</div>';
+  }).join('')+'</div>';
+}
+var _imgViewers={};
+function _openImgViewer(ns, id, startIdx){
+  var getter=_imgViewers[ns];if(!getter)return;
+  var imgs=getter(id);if(!imgs||!imgs.length)return;
+  var cur=startIdx;
+  var ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  var render=function(){
+    var src=imgs[cur]?(imgs[cur].src||imgs[cur]):'';
+    ov.innerHTML='<img src="'+src+'" style="max-width:92vw;max-height:88vh;border-radius:6px;object-fit:contain;">'
+      +(imgs.length>1?'<button onclick="event.stopPropagation();_ivNav(-1)" style="position:fixed;left:16px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:#fff;font-size:22px;width:40px;height:40px;border-radius:50%;cursor:pointer;">‹</button>'
+        +'<button onclick="event.stopPropagation();_ivNav(1)" style="position:fixed;right:16px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:#fff;font-size:22px;width:40px;height:40px;border-radius:50%;cursor:pointer;">›</button>'
+        +'<div style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.6);font-size:12px;">'+(cur+1)+' / '+imgs.length+'</div>':'')
+      +'<button onclick="_ivClose()" style="position:fixed;top:14px;right:16px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:18px;width:34px;height:34px;border-radius:50%;cursor:pointer;">×</button>';
+  };
+  window._ivNav=function(d){cur=(cur+d+imgs.length)%imgs.length;render();};
+  window._ivClose=function(){document.body.removeChild(ov);document.removeEventListener('keydown',_ivKey);};
+  var _ivKey=function(e){if(e.key==='Escape')_ivClose();else if(e.key==='ArrowLeft')_ivNav(-1);else if(e.key==='ArrowRight')_ivNav(1);};
+  document.addEventListener('keydown',_ivKey);
+  ov.addEventListener('click',_ivClose);
+  render();document.body.appendChild(ov);
+}
+// ── END Image utilities ───────────────────────────────────────────────────
+
+// ── Incident image support ────────────────────────────────────────────────
+_imgViewers['incident'] = function(id){
+  var it=(S.incidents||[]).find(function(x){return x.id===id;});
+  return it?(it.images||[]):[];
+};
+async function incImgPickFile(input, id){
+  var file=input.files&&input.files[0];if(!file)return;input.value='';
+  var it=(S.incidents||[]).find(function(x){return x.id===id;});
+  if(!it){
+    // editing new incident — use editingId or current editor
+    it=(S.incidents||[]).find(function(x){return x.id===editingId;});
+  }
+  if(!it){toast('Enregistrez d\'abord l\'incident');return;}
+  if(!it.images)it.images=[];
+  var b64=await _compressImage(file);
+  it.images.push({type:'base64',src:b64});
+  persist();
+  renderIncidentList();
+  if(drawerId===it.id)refreshDrawer();
+  // refresh editor images
+  var el=document.getElementById('ed-imgs-container');
+  if(el)el.innerHTML=_itemImgsHtml(it.images,'incident',it.id);
+  toast('📷 Image ajoutée');
+}
+// ── END Incident image support ────────────────────────────────────────────
 
 </script>
 </body>
