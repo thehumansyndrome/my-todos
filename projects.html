@@ -2473,8 +2473,7 @@ function openIncidentDrawer(id) {
 }
 
 function openTDDrawer() {
-  document.getElementById('td-overlay').style.opacity = '1';
-  document.getElementById('td-overlay').style.pointerEvents = 'all';
+  document.getElementById('td-overlay').classList.add('open');
   document.getElementById('td-drawer').classList.add('open');
 }
 
