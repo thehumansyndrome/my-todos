@@ -93,8 +93,8 @@
   --text2:    #A0A0A8;
   --muted:    #8E8E93;
   --text3:    #636366;
-  --accent:   #A78BFA;
-  --accent2:  #1A1030;
+  --accent:   #F9FAFB;
+  --accent2:  #1C1C1E;
   --blue:     #60A5FA;   --blue-bg:   #0D1A2E;
   --green:    #34D399;   --green-bg:  #0A1A0E;
   --red:      #F87171;   --red-bg:    #260D0D;
@@ -190,6 +190,14 @@ body{
 .hbtn:hover{background:var(--border);color:var(--text);}
 .hbtn.orange{background:var(--accent);color:var(--surface);border-color:var(--accent);}
 .hbtn.orange:hover{opacity:.88;}
+[data-theme="dark"] .hbtn.orange,
+[data-theme="dark"] .fb.on,
+[data-theme="dark"] .wnbtn.now,
+[data-theme="dark"] .day-pick-btn.on,
+[data-theme="dark"] .hcard-day-btn.on,
+[data-theme="dark"] .lbtn.primary,
+[data-theme="dark"] .add-btn,
+[data-theme="dark"] .ud-status-valide { color: #111113 !important; }
 .hbtn.green{background:transparent;color:var(--green);border-color:var(--green);}
 .hbtn.green:hover{background:var(--green);color:#fff;}
 .item-imgs{display:flex;flex-wrap:wrap;gap:5px;margin:5px 0 3px 0;}
