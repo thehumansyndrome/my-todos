@@ -3201,23 +3201,46 @@ document.getElementById("us-search").addEventListener("input",renderHistory);
 
 // ── INLINE TASK PARSER + AUTOCOMPLETE MODULE ────────────────────────────
 // Adapté de projects.html. Reads from sharedTeam / sharedProjects (already in app).
+// Falls back to S.projets, S.projects, projet001FullData when needed.
+// Project name field tolerated as 'name' or 'nom'.
 // Exposes: ITM_parseTaskText(), ITM_resolveProjectSlug(), ITM_resolveAlias(),
 //          ITM_attach(inputEl, onSubmit), ITM_formatDuePill(due)
+
+function ITM_getProjects(){
+  // Try every common source in order — first non-empty wins
+  if (typeof sharedProjects !== 'undefined' && Array.isArray(sharedProjects) && sharedProjects.length) return sharedProjects;
+  if (typeof S !== 'undefined' && S){
+    if (Array.isArray(S.projects) && S.projects.length) return S.projects;
+    if (Array.isArray(S.projets) && S.projets.length) return S.projets;
+  }
+  if (typeof sharedProjects !== 'undefined' && Array.isArray(sharedProjects)) return sharedProjects;
+  return [];
+}
+function ITM_projName(p){ return (p && (p.name || p.nom)) || ''; }
+function ITM_getTeam(){
+  if (typeof sharedTeam !== 'undefined' && Array.isArray(sharedTeam) && sharedTeam.length) return sharedTeam;
+  if (typeof S !== 'undefined' && S){
+    if (Array.isArray(S.team) && S.team.length) return S.team;
+    if (Array.isArray(S.equipe) && S.equipe.length) return S.equipe;
+  }
+  if (typeof sharedTeam !== 'undefined' && Array.isArray(sharedTeam)) return sharedTeam;
+  return [];
+}
 
 function ITM_slugForMatch(s){
   return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
 }
 function ITM_resolveProjectSlug(slug){
-  var projects = (typeof sharedProjects !== 'undefined' && sharedProjects) || [];
-  var p = projects.find(function(p){ return ITM_slugForMatch(p.name)===slug; });
+  var projects = ITM_getProjects();
+  var p = projects.find(function(p){ return ITM_slugForMatch(ITM_projName(p))===slug; });
   if (p) return p;
-  p = projects.find(function(p){ return ITM_slugForMatch(p.name).indexOf(slug)===0; });
+  p = projects.find(function(p){ return ITM_slugForMatch(ITM_projName(p)).indexOf(slug)===0; });
   if (p) return p;
-  return projects.find(function(p){ return ITM_slugForMatch(p.name).indexOf(slug)>=0; }) || null;
+  return projects.find(function(p){ return ITM_slugForMatch(ITM_projName(p)).indexOf(slug)>=0; }) || null;
 }
 function ITM_resolveAlias(mention){
   var key = (mention||'').replace(/^@/,'').toLowerCase();
-  var team = (typeof sharedTeam !== 'undefined' && sharedTeam) || [];
+  var team = ITM_getTeam();
   return team.find(function(m){
     var al = (m.alias||m.initiales||'').toLowerCase();
     return al === key;
@@ -3291,16 +3314,17 @@ function ITM_show(input, trigger, query){
   ITM_state.selectedIndex = 0;
   var items = [];
   if (trigger==='@'){
-    var team = (typeof sharedTeam !== 'undefined' && sharedTeam) || [];
+    var team = ITM_getTeam();
     items = team.map(function(m){
       return {type:'member', id:m.id, label:m.nom||'', tag:'@'+(m.alias||m.initiales||'').toLowerCase(), color:m.color||'#888', initiales:m.initiales||'?'};
     }).filter(function(i){
       return i.label.toLowerCase().indexOf(ITM_state.query)>=0 || i.tag.indexOf(ITM_state.query)>=0;
     });
   } else if (trigger==='#'){
-    var projects = (typeof sharedProjects !== 'undefined' && sharedProjects) || [];
+    var projects = ITM_getProjects();
     items = projects.map(function(p){
-      return {type:'project', id:p.id, label:p.name, tag:'#'+ITM_slugForMatch(p.name), color:p.color||'#888'};
+      var nm = ITM_projName(p);
+      return {type:'project', id:p.id, label:nm, tag:'#'+ITM_slugForMatch(nm), color:p.color||'#888'};
     }).filter(function(i){
       return i.label.toLowerCase().indexOf(ITM_state.query)>=0 || i.tag.indexOf(ITM_state.query)>=0;
     });
@@ -3405,13 +3429,20 @@ function ITM_onInput(e){
 }
 function ITM_onKeydown(e){
   if (ITM_state.visible){
-    if (e.key==='ArrowDown'){ e.preventDefault(); ITM_move(1); }
-    else if (e.key==='ArrowUp'){ e.preventDefault(); ITM_move(-1); }
-    else if (e.key==='Enter' || e.key==='Tab'){ e.preventDefault(); ITM_select(ITM_state.selectedIndex); }
-    else if (e.key==='Escape'){ ITM_hide(); }
+    if (e.key==='ArrowDown'){ e.preventDefault(); e.stopPropagation(); ITM_move(1); }
+    else if (e.key==='ArrowUp'){ e.preventDefault(); e.stopPropagation(); ITM_move(-1); }
+    else if (e.key==='Enter' || e.key==='Tab'){
+      e.preventDefault(); e.stopPropagation();
+      ITM_select(ITM_state.selectedIndex);
+      // Block any submission for a short window after selection
+      ITM_state.lastSelectTs = Date.now();
+    }
+    else if (e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); ITM_hide(); }
   } else {
     if (e.key==='Enter'){
       e.preventDefault();
+      // Skip if Enter follows immediately after an autocomplete selection
+      if (ITM_state.lastSelectTs && Date.now() - ITM_state.lastSelectTs < 200) return;
       if (typeof ITM_state.onSubmit === 'function') ITM_state.onSubmit();
     }
   }
