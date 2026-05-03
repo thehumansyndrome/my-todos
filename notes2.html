@@ -264,7 +264,29 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 
-/* ── Word count ── */
+/* ── Custom templates modal ── */
+.ctmpl-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:none;align-items:center;justify-content:center;}
+.ctmpl-overlay.open{display:flex;}
+.ctmpl-modal{background:var(--surface);border:1px solid var(--border);border-radius:10px;width:min(620px,96vw);max-height:88vh;display:flex;flex-direction:column;overflow:hidden;}
+.ctmpl-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.ctmpl-header h2{font-size:14px;font-weight:600;}
+.ctmpl-body{display:flex;flex:1;overflow:hidden;}
+.ctmpl-list{width:200px;flex-shrink:0;border-right:1px solid var(--border);overflow-y:auto;padding:6px 0;}
+.ctmpl-list-item{padding:8px 14px;cursor:pointer;font-size:13px;transition:background .12s;display:flex;align-items:center;justify-content:space-between;gap:6px;}
+.ctmpl-list-item:hover{background:var(--bg);}
+.ctmpl-list-item.active{background:var(--bg);font-weight:500;}
+.ctmpl-list-item .ctmpl-del{opacity:0;font-size:11px;color:var(--red);background:none;border:none;cursor:pointer;padding:0;}
+.ctmpl-list-item:hover .ctmpl-del{opacity:1;}
+.ctmpl-add-btn{padding:8px 14px;font-size:12px;color:var(--blue);cursor:pointer;background:none;border:none;border-top:1px solid var(--border);width:100%;text-align:left;transition:background .12s;}
+.ctmpl-add-btn:hover{background:var(--bg);}
+.ctmpl-editor{flex:1;display:flex;flex-direction:column;padding:14px 16px;gap:10px;overflow-y:auto;}
+.ctmpl-editor input,.ctmpl-editor textarea{width:100%;font-family:var(--sans);font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none;box-sizing:border-box;}
+.ctmpl-editor input:focus,.ctmpl-editor textarea:focus{border-color:var(--accent);}
+.ctmpl-editor textarea{font-family:var(--mono);resize:vertical;min-height:160px;line-height:1.6;}
+.ctmpl-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:3px;}
+.ctmpl-empty{padding:30px;text-align:center;color:var(--muted);font-size:13px;}
+.ctmpl-footer{padding:10px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+
 .wc-bar{font-size:11px;color:var(--muted);font-family:var(--mono);padding:0 0 0 16px;display:flex;align-items:center;gap:10px;}
 
 /* ── Trash sidebar section ── */
@@ -430,6 +452,28 @@ textarea,input{font-family:inherit;background:var(--bg);color:var(--text);color-
     </div>
   </div>
 </div>
+</div>
+
+<div class="ctmpl-overlay" id="ctmpl-overlay" onclick="if(event.target===this)closeCtmpl()">
+  <div class="ctmpl-modal">
+    <div class="ctmpl-header">
+      <h2>Mes templates</h2>
+      <button class="icon-btn" onclick="closeCtmpl()" style="width:28px;height:28px;font-size:16px;">✕</button>
+    </div>
+    <div class="ctmpl-body">
+      <div style="display:flex;flex-direction:column;width:200px;flex-shrink:0;border-right:1px solid var(--border);">
+        <div class="ctmpl-list" id="ctmpl-list"></div>
+        <button class="ctmpl-add-btn" onclick="ctmplNew()">＋ Nouveau template</button>
+      </div>
+      <div class="ctmpl-editor" id="ctmpl-editor">
+        <div class="ctmpl-empty">Sélectionne ou crée un template</div>
+      </div>
+    </div>
+    <div class="ctmpl-footer">
+      <button class="btn sm" onclick="closeCtmpl()">Fermer</button>
+      <button class="btn sm primary" onclick="ctmplSave()">Enregistrer</button>
+    </div>
+  </div>
 </div>
 
 <div id="toast"></div>
@@ -2056,7 +2100,145 @@ document.addEventListener('keydown',function(e){
   if(mod&&e.shiftKey&&e.key==='Y'){e.preventDefault();toggleYamlFold();}
 });
 
-// ── Keyboard hint in placeholder ──────────────────────────────────────────
+// ── Custom templates ──────────────────────────────────────────────────────
+var CTMPL_KEY = 'td_ctmpls_notes2';
+var _ctmpls = [];
+var _ctmplEditId = null;
+
+function loadCtmpls(){
+  try{var r=localStorage.getItem(CTMPL_KEY);if(r)_ctmpls=JSON.parse(r);}catch(e){}
+  if(!Array.isArray(_ctmpls))_ctmpls=[];
+}
+function saveCtmpls(){
+  try{localStorage.setItem(CTMPL_KEY,JSON.stringify(_ctmpls));}catch(e){}
+  buildTmplMenu(); // refresh the Appliquer dropdown
+}
+function openCtmpl(){
+  loadCtmpls();
+  renderCtmplList();
+  _ctmplEditId=null;
+  document.getElementById('ctmpl-editor').innerHTML='<div class="ctmpl-empty">Sélectionne ou crée un template</div>';
+  document.getElementById('ctmpl-overlay').classList.add('open');
+}
+function closeCtmpl(){
+  document.getElementById('ctmpl-overlay').classList.remove('open');
+}
+function renderCtmplList(){
+  var el=document.getElementById('ctmpl-list');
+  if(!_ctmpls.length){
+    el.innerHTML='<div style="padding:12px 14px;font-size:12px;color:var(--muted);">Aucun template</div>';
+    return;
+  }
+  el.innerHTML=_ctmpls.map(function(t){
+    return '<div class="ctmpl-list-item'+(t.id===_ctmplEditId?' active':'')+'" onclick="ctmplSelect(\''+t.id+'\')">'
+      +'<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(t.name||'Sans nom')+'</span>'
+      +'<button class="ctmpl-del" onclick="event.stopPropagation();ctmplDelete(\''+t.id+'\')" title="Supprimer">✕</button>'
+      +'</div>';
+  }).join('');
+}
+function ctmplSelect(id){
+  var t=_ctmpls.find(function(x){return x.id===id;});if(!t)return;
+  _ctmplEditId=id;
+  renderCtmplList();
+  document.getElementById('ctmpl-editor').innerHTML=
+    '<div><div class="ctmpl-label">Nom</div><input id="ctmpl-in-name" value="'+esc(t.name||'')+'" placeholder="Ex: Réunion client"></div>'
+    +'<div><div class="ctmpl-label">Description courte</div><input id="ctmpl-in-desc" value="'+esc(t.desc||'')+'" placeholder="Ex: CR commercial"></div>'
+    +'<div style="flex:1;display:flex;flex-direction:column;"><div class="ctmpl-label">Contenu de départ</div><textarea id="ctmpl-in-body" style="flex:1;min-height:200px;">'+esc(t.body||'')+'</textarea></div>';
+}
+function ctmplNew(){
+  var id='ct_'+Date.now().toString(36);
+  _ctmpls.push({id:id,name:'',desc:'',body:''});
+  _ctmplEditId=id;
+  renderCtmplList();
+  ctmplSelect(id);
+  setTimeout(function(){var el=document.getElementById('ctmpl-in-name');if(el)el.focus();},50);
+}
+function ctmplSave(){
+  if(!_ctmplEditId){closeCtmpl();return;}
+  var t=_ctmpls.find(function(x){return x.id===_ctmplEditId;});if(!t)return;
+  var name=document.getElementById('ctmpl-in-name');
+  var desc=document.getElementById('ctmpl-in-desc');
+  var body=document.getElementById('ctmpl-in-body');
+  if(!name||!name.value.trim()){toast('Donne un nom au template');return;}
+  t.name=name.value.trim();
+  t.desc=desc?desc.value.trim():'';
+  t.body=body?body.value:'';
+  saveCtmpls();
+  renderCtmplList();
+  toast('✓ Template "'+t.name+'" enregistré');
+}
+function ctmplDelete(id){
+  var t=_ctmpls.find(function(x){return x.id===id;});
+  if(!t||!confirm('Supprimer le template "'+t.name+'" ?'))return;
+  _ctmpls=_ctmpls.filter(function(x){return x.id!==id;});
+  if(_ctmplEditId===id){
+    _ctmplEditId=null;
+    document.getElementById('ctmpl-editor').innerHTML='<div class="ctmpl-empty">Sélectionne ou crée un template</div>';
+  }
+  saveCtmpls();
+  renderCtmplList();
+  toast('Template supprimé');
+}
+
+// ── Patch buildTmplMenu to include custom templates ───────────────────────
+var _origBuildTmplMenu=buildTmplMenu;
+buildTmplMenu=function(){
+  loadCtmpls();
+  var menu=document.getElementById('tmpl-menu');
+  // Built-in templates
+  var html=TMPLS.map(function(t,i){
+    return (i>0?'<div class="tmpl-sep"></div>':'')
+      +'<div class="tmpl-item" onclick="applyTmpl(\''+t.id+'\')">'
+      +'<span class="tmpl-item-name">'+esc(t.name)+'</span>'
+      +'<span class="tmpl-item-desc">'+esc(t.desc)+'</span>'
+      +'</div>';
+  }).join('');
+  // Custom templates
+  if(_ctmpls.length){
+    html+='<div class="tmpl-sep"></div>';
+    html+='<div style="padding:5px 14px 3px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);">Mes templates</div>';
+    html+=_ctmpls.map(function(t){
+      return '<div class="tmpl-item" onclick="applyCustomTmpl(\''+t.id+'\')">'
+        +'<span class="tmpl-item-name">'+esc(t.name)+'</span>'
+        +(t.desc?'<span class="tmpl-item-desc">'+esc(t.desc)+'</span>':'')
+        +'</div>';
+    }).join('');
+  }
+  // Manage link
+  html+='<div class="tmpl-sep"></div>'
+    +'<div class="tmpl-item" onclick="toggleTmplMenu();openCtmpl();" style="color:var(--blue);">'
+    +'<span class="tmpl-item-name">⚙ Gérer mes templates…</span>'
+    +'</div>';
+  menu.innerHTML=html;
+};
+
+function applyCustomTmpl(id){
+  document.getElementById('tmpl-menu').style.display='none';
+  document.getElementById('tmpl-btn').classList.remove('open');
+  loadCtmpls();
+  var t=_ctmpls.find(function(x){return x.id===id;});if(!t)return;
+  var n=S.notes.find(function(x){return x.id===curId;});
+  if(!n){
+    // create new note with this template
+    var nn={id:uid(),body:t.body||'',template:'custom_'+id,favorite:false,images:{},created:Date.now(),updated:Date.now()};
+    S.notes.unshift(nn);autoSave();openNote(nn.id);
+    if(window.innerWidth<=680)showEditor();
+    return;
+  }
+  if(n.body.trim()&&!confirm('Remplacer le contenu par "'+t.name+'" ?'))return;
+  n.body=t.body||'';
+  n.template='custom_'+id;
+  n.updated=Date.now();
+  document.getElementById('note-ta').value=n.body;
+  autoSave();updatePreview();updateExportBar();
+  if(curView==='raw')setView('split');
+  toast('Template : '+t.name);
+}
+
+// Init: load custom templates on boot
+loadCtmpls();
+buildTmplMenu();
+// ── END Custom templates ──────────────────────────────────────────────────
 var _noteTaKb=document.getElementById('note-ta');
 if(_noteTaKb){
   _noteTaKb.setAttribute('placeholder',
