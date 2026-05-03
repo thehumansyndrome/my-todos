@@ -276,6 +276,61 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
 .td-comment-meta{font-size:11px;color:var(--muted);margin-top:3px;}
 
 
+/* ── Inline task autocomplete ── */
+.autocomplete-dropdown{
+  position:fixed;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:0 4px 12px rgba(0,0,0,.1);
+  max-height:220px;
+  overflow-y:auto;
+  z-index:1000;
+  display:none;
+  min-width:220px;
+}
+.autocomplete-dropdown.show{display:block;}
+.autocomplete-item{
+  padding:8px 12px;
+  cursor:pointer;
+  font-size:13px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  transition:background .12s;
+}
+.autocomplete-item:hover,.autocomplete-item.selected{
+  background:var(--bg);
+}
+.autocomplete-item .ac-avatar{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  font-size:9px;
+  font-weight:700;
+  color:#fff;
+  flex-shrink:0;
+}
+.autocomplete-item .ac-label{
+  flex:1;
+  font-family:var(--sans, 'Geist', sans-serif);
+}
+.autocomplete-item .ac-tag{
+  font-family:var(--mono);
+  font-size:10px;
+  color:var(--muted);
+}
+.due-pill{
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:10px;font-weight:500;color:var(--blue);
+  border:1px solid var(--blue);padding:1px 6px;border-radius:10px;
+  font-family:var(--mono);
+}
+.due-pill.overdue{color:var(--red);border-color:var(--red);}
+
 </style>
 </head>
 <body>
@@ -420,7 +475,7 @@ textarea,input,select{font-family:inherit;background:var(--bg);color:var(--text)
       <button class="btn sm" onclick="loadTaches()">↻ Actualiser</button>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
-      <input type="text" id="tache-input" placeholder="Nouvelle tâche…"
+      <input type="text" id="tache-input" placeholder="Nouvelle tâche @alias #projet !p1 26-04-2026"
         style="flex:1;font-family:var(--sans);font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none;"
         onkeydown="if(event.key==='Enter')addTache()">
       <select id="tache-pri" style="font-family:var(--mono);font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);outline:none;">
@@ -1847,7 +1902,7 @@ function renderTaches() {
       <input type="checkbox" ${t.done?'checked':''} data-action="toggleTache" data-id="${t.id}"
         style="width:16px;height:16px;cursor:pointer;accent-color:var(--green);flex-shrink:0;">
       <span style="flex:1;font-size:13px;${t.done?'text-decoration:line-through;color:var(--muted)':''}">${esc(t.text)}</span>
-      ${t.pri?`<span style="font-size:11px;font-weight:600;color:${priColor[t.pri]||'var(--muted)'}">${t.pri.toUpperCase()}</span>`:''}
+      ${t.dueDate?ITM_formatDuePill(t.dueDate):''}${t.pri?`<span style="font-size:11px;font-weight:600;color:${priColor[t.pri]||'var(--muted)'}">${t.pri.toUpperCase()}</span>`:''}
       <span style="display:inline-flex;gap:3px;">${assigneeBadgesHtml(t.assigneeIds,t.id)}</span>
       ${(t.status||'brouillon')==='valide'?'<span style="font-size:10px;font-weight:600;color:var(--green);border:1px solid var(--green);padding:1px 5px;border-radius:10px;">Validé ✓</span>':''}
       <button onclick="event.stopPropagation();renderTacheTeamPicker('${t.id}')" title="Affecter" style="background:none;border:none;cursor:pointer;font-size:12px;padding:0 2px;color:var(--muted);">👥</button>
@@ -1900,18 +1955,62 @@ function renderTacheTeamPicker(itemId){
   }).join('');
   row.insertAdjacentElement('afterend',picker);
 }
-async function addTache() {
-  const inp = document.getElementById('tache-input');
-  const text = inp.value.trim(); if (!text) return;
-  const pri  = document.getElementById('tache-pri').value;
-  if (!todoFullData) { toast('Actualisez d\'abord les tâches'); return; }
-  if (!appProjId) { toast('Projet introuvable'); return; }
-  const newTask = {id:'mo'+Date.now().toString(36), text, projId:appProjId, pri, done:false, status:'valide', ts:Date.now(), assigneeIds:defaultAssignees()};
+function addTache() {
+  var raw = document.getElementById('tache-input').value.trim();
+  var priSel = document.getElementById('tache-pri');
+  if (!raw) return;
+  if (!todoFullData) { toast('Actualisez d\'abord'); return; }
+
+  var parsed = ITM_parseTaskText(raw);
+  if (!parsed.text) { toast('Texte de tâche vide'); return; }
+
+  // Resolve project: #projet override, else app default (appProjId)
+  var projId = null;
+  if (parsed.projSlugs && parsed.projSlugs.length) {
+    for (var i = 0; i < parsed.projSlugs.length; i++) {
+      var pp = ITM_resolveProjectSlug(parsed.projSlugs[i]);
+      if (pp) { projId = pp.id; break; }
+    }
+  }
+  if (!projId) projId = appProjId;
+  if (!projId) { toast('Projet introuvable'); return; }
+
+  // Resolve assignees (multi-assign)
+  var assigneeIds = [];
+  if (parsed.assignees && parsed.assignees.length) {
+    parsed.assignees.forEach(function(al){
+      var m = ITM_resolveAlias(al);
+      if (m && assigneeIds.indexOf(m.id) < 0) assigneeIds.push(m.id);
+    });
+  }
+  if (!assigneeIds.length) {
+    var aid = (typeof getAdminId === 'function') ? getAdminId() : null;
+    if (aid) assigneeIds.push(aid);
+  }
+
+  // Priority: parsed wins, fallback to selector
+  var pri = parsed.pri || (priSel ? priSel.value : 'p2');
+
+  // Due date (YYYY-MM-DD)
+  var dueDate = ITM_normalizeDue(parsed.due);
+
+  var newTask = {
+    id: 'inc' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
+    text: parsed.text,
+    projId: projId,
+    pri: pri,
+    done: false,
+    status: 'valide',
+    ts: Date.now(),
+    assigneeIds: assigneeIds
+  };
+  if (dueDate) newTask.dueDate = dueDate;
+
   todoFullData.backlog = todoFullData.backlog || [];
   todoFullData.backlog.unshift(newTask);
-  inp.value = '';
+  document.getElementById('tache-input').value = '';
   renderTaches();
-  await writeTodoFile();
+  writeTodoFile();
 }
 
 async function toggleTache(id) {
@@ -2044,6 +2143,252 @@ function tdRenderHistory(t){
 function tdSave(){writeTodoFile();renderTaches();refreshTD();}
 
 document.getElementById("mo-search").addEventListener("input",renderHistory);
+
+// ── INLINE TASK PARSER + AUTOCOMPLETE MODULE ────────────────────────────
+// Adapté de projects.html. Reads from sharedTeam / sharedProjects (already in app).
+// Exposes: ITM_parseTaskText(), ITM_resolveProjectSlug(), ITM_resolveAlias(),
+//          ITM_attach(inputEl, onSubmit), ITM_formatDuePill(due)
+
+function ITM_slugForMatch(s){
+  return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+}
+function ITM_resolveProjectSlug(slug){
+  var projects = (typeof sharedProjects !== 'undefined' && sharedProjects) || [];
+  var p = projects.find(function(p){ return ITM_slugForMatch(p.name)===slug; });
+  if (p) return p;
+  p = projects.find(function(p){ return ITM_slugForMatch(p.name).indexOf(slug)===0; });
+  if (p) return p;
+  return projects.find(function(p){ return ITM_slugForMatch(p.name).indexOf(slug)>=0; }) || null;
+}
+function ITM_resolveAlias(mention){
+  var key = (mention||'').replace(/^@/,'').toLowerCase();
+  var team = (typeof sharedTeam !== 'undefined' && sharedTeam) || [];
+  return team.find(function(m){
+    var al = (m.alias||m.initiales||'').toLowerCase();
+    return al === key;
+  }) || null;
+}
+function ITM_parseTaskText(text){
+  var projSlugs=[], assignees=[], pri='p2', due='', cleanText=text;
+  var projMatches = cleanText.match(/#([\w-]+)/g);
+  if (projMatches){
+    projSlugs = projMatches.map(function(p){return p.slice(1);});
+    projMatches.forEach(function(p){ cleanText = cleanText.replace(p,''); });
+  }
+  var aliasMatches = cleanText.match(/@([\w-]+)/g);
+  if (aliasMatches){
+    assignees = aliasMatches.map(function(a){return a.slice(1);});
+    aliasMatches.forEach(function(a){ cleanText = cleanText.replace(a,''); });
+  }
+  var priMatch = cleanText.match(/!(p[123])/i);
+  if (priMatch){
+    pri = priMatch[1].toLowerCase();
+    cleanText = cleanText.replace(priMatch[0],'');
+  }
+  var dateMatch = cleanText.match(/(\d{2}[-\/]\d{2}[-\/]\d{4}|\d{4}[-\/]\d{2}[-\/]\d{2})/);
+  if (dateMatch){
+    due = dateMatch[1].replace(/\//g,'-');
+    cleanText = cleanText.replace(dateMatch[0],'').replace('📅','').trim();
+  }
+  cleanText = cleanText.replace(/\s+/g,' ').trim();
+  return {text:cleanText, projSlugs:projSlugs, assignees:assignees, pri:pri, due:due};
+}
+function ITM_normalizeDue(due){
+  if (!due) return null;
+  if (/^\d{2}-\d{2}-\d{4}$/.test(due)){
+    var parts = due.split('-');
+    return parts[2]+'-'+parts[1]+'-'+parts[0];
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(due)) return due;
+  return null;
+}
+function ITM_formatDuePill(dueDate){
+  if (!dueDate) return '';
+  // dueDate is YYYY-MM-DD; show as DD/MM
+  var m = dueDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return '';
+  var label = m[3]+'/'+m[2];
+  var today = new Date(); today.setHours(0,0,0,0);
+  var d = new Date(parseInt(m[1]), parseInt(m[2])-1, parseInt(m[3]));
+  var overdue = d < today;
+  return '<span class="due-pill'+(overdue?' overdue':'')+'" title="Échéance '+m[3]+'/'+m[2]+'/'+m[1]+'">📅 '+label+'</span>';
+}
+
+// Autocomplete UI
+var ITM_state = {visible:false, input:null, trigger:null, query:'', selectedIndex:0, items:[], onSubmit:null};
+
+function ITM_createDropdown(){
+  var dd = document.getElementById('itm-autocomplete');
+  if (!dd){
+    dd = document.createElement('div');
+    dd.id = 'itm-autocomplete';
+    dd.className = 'autocomplete-dropdown';
+    document.body.appendChild(dd);
+  }
+  return dd;
+}
+function ITM_esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function ITM_show(input, trigger, query){
+  var dd = ITM_createDropdown();
+  ITM_state.input = input;
+  ITM_state.trigger = trigger;
+  ITM_state.query = query.toLowerCase();
+  ITM_state.selectedIndex = 0;
+  var items = [];
+  if (trigger==='@'){
+    var team = (typeof sharedTeam !== 'undefined' && sharedTeam) || [];
+    items = team.map(function(m){
+      return {type:'member', id:m.id, label:m.nom||'', tag:'@'+(m.alias||m.initiales||'').toLowerCase(), color:m.color||'#888', initiales:m.initiales||'?'};
+    }).filter(function(i){
+      return i.label.toLowerCase().indexOf(ITM_state.query)>=0 || i.tag.indexOf(ITM_state.query)>=0;
+    });
+  } else if (trigger==='#'){
+    var projects = (typeof sharedProjects !== 'undefined' && sharedProjects) || [];
+    items = projects.map(function(p){
+      return {type:'project', id:p.id, label:p.name, tag:'#'+ITM_slugForMatch(p.name), color:p.color||'#888'};
+    }).filter(function(i){
+      return i.label.toLowerCase().indexOf(ITM_state.query)>=0 || i.tag.indexOf(ITM_state.query)>=0;
+    });
+  } else if (trigger==='!'){
+    items = [
+      {type:'priority', id:'p1', label:'Priorité P1', tag:'!p1', color:'#DC2626'},
+      {type:'priority', id:'p2', label:'Priorité P2', tag:'!p2', color:'#D97706'},
+      {type:'priority', id:'p3', label:'Priorité P3', tag:'!p3', color:'#16A34A'}
+    ].filter(function(i){ return i.tag.indexOf(ITM_state.query)>=0; });
+  } else if (trigger==='%'){
+    var today = new Date();
+    var dayNames = ['dim','lun','mar','mer','jeu','ven','sam'];
+    var monthNames = ['jan','fév','mar','avr','mai','juin','juil','août','sep','oct','nov','déc'];
+    items = [];
+    for (var i=0; i<7; i++){
+      var d = new Date(today); d.setDate(today.getDate()+i);
+      var dd2 = String(d.getDate()).padStart(2,'0');
+      var mm = String(d.getMonth()+1).padStart(2,'0');
+      var yyyy = d.getFullYear();
+      var dateStr = dd2+'-'+mm+'-'+yyyy;
+      var dn = dayNames[d.getDay()];
+      var label = (i===0?"Aujourd'hui":i===1?'Demain':dn.charAt(0).toUpperCase()+dn.slice(1))+' '+d.getDate()+' '+monthNames[d.getMonth()];
+      items.push({type:'date', id:dateStr, label:label, tag:dateStr, color:'#2563EB'});
+    }
+  }
+  ITM_state.items = items;
+  if (!items.length){ ITM_hide(); return; }
+  dd.innerHTML = items.map(function(item, idx){
+    var avatar = '';
+    if (item.type==='member'){
+      avatar = '<span class="ac-avatar" style="background:'+item.color+'">'+ITM_esc(item.initiales)+'</span>';
+    } else if (item.type==='project'){
+      avatar = '<span class="ac-avatar" style="background:'+item.color+';border-radius:4px;">📁</span>';
+    } else if (item.type==='priority'){
+      avatar = '<span class="ac-avatar" style="background:'+item.color+';border-radius:4px;">⚡</span>';
+    } else if (item.type==='date'){
+      avatar = '<span class="ac-avatar" style="background:'+item.color+';border-radius:4px;">📅</span>';
+    }
+    return '<div class="autocomplete-item'+(idx===0?' selected':'')+'" data-index="'+idx+'">'+
+      avatar+'<span class="ac-label">'+ITM_esc(item.label)+'</span><span class="ac-tag">'+ITM_esc(item.tag)+'</span></div>';
+  }).join('');
+  var rect = input.getBoundingClientRect();
+  dd.style.left = rect.left+'px';
+  dd.style.top = (rect.top+input.offsetHeight+4)+'px';
+  dd.classList.add('show');
+  ITM_state.visible = true;
+  dd.querySelectorAll('.autocomplete-item').forEach(function(el, idx){
+    el.onclick = function(){ ITM_select(idx); };
+  });
+}
+function ITM_hide(){
+  var dd = document.getElementById('itm-autocomplete');
+  if (dd) dd.classList.remove('show');
+  ITM_state.visible = false;
+}
+function ITM_select(index){
+  if (!ITM_state.visible || !ITM_state.items.length) return;
+  var item = ITM_state.items[index]; if (!item) return;
+  var input = ITM_state.input;
+  var text = input.value;
+  var cursorPos = input.selectionStart;
+  var start = cursorPos - 1;
+  while (start>0 && text[start]!==ITM_state.trigger) start--;
+  var before = text.substring(0, start);
+  var after = text.substring(cursorPos);
+  input.value = before + item.tag + ' ' + after;
+  var newPos = before.length + item.tag.length + 1;
+  input.selectionStart = input.selectionEnd = newPos;
+  ITM_hide();
+  input.focus();
+}
+function ITM_move(dir){
+  if (!ITM_state.visible) return;
+  var items = ITM_state.items; if (!items.length) return;
+  ITM_state.selectedIndex += dir;
+  if (ITM_state.selectedIndex<0) ITM_state.selectedIndex = items.length-1;
+  if (ITM_state.selectedIndex>=items.length) ITM_state.selectedIndex = 0;
+  var dd = document.getElementById('itm-autocomplete'); if (!dd) return;
+  dd.querySelectorAll('.autocomplete-item').forEach(function(el, idx){
+    if (idx===ITM_state.selectedIndex) el.classList.add('selected');
+    else el.classList.remove('selected');
+  });
+}
+function ITM_onInput(e){
+  var input = e.target;
+  var text = input.value;
+  var cursorPos = input.selectionStart;
+  var triggerPos = -1, trigger = null;
+  for (var i = cursorPos-1; i >= 0; i--){
+    var ch = text[i];
+    if (ch===' ' || ch==='\n') break;
+    if (ch==='@' || ch==='#' || ch==='!' || ch==='%'){
+      trigger = ch; triggerPos = i; break;
+    }
+  }
+  if (trigger && triggerPos >= 0){
+    var query = text.substring(triggerPos+1, cursorPos);
+    ITM_show(input, trigger, query);
+  } else {
+    ITM_hide();
+  }
+}
+function ITM_onKeydown(e){
+  if (ITM_state.visible){
+    if (e.key==='ArrowDown'){ e.preventDefault(); ITM_move(1); }
+    else if (e.key==='ArrowUp'){ e.preventDefault(); ITM_move(-1); }
+    else if (e.key==='Enter' || e.key==='Tab'){ e.preventDefault(); ITM_select(ITM_state.selectedIndex); }
+    else if (e.key==='Escape'){ ITM_hide(); }
+  } else {
+    if (e.key==='Enter'){
+      e.preventDefault();
+      if (typeof ITM_state.onSubmit === 'function') ITM_state.onSubmit();
+    }
+  }
+}
+function ITM_attach(input, onSubmit){
+  if (!input) return;
+  ITM_state.onSubmit = onSubmit;
+  if (input.dataset.itmAttached) return;
+  input.dataset.itmAttached = 'true';
+  input.addEventListener('input', ITM_onInput);
+  input.addEventListener('keydown', ITM_onKeydown);
+}
+// Auto-attach to #tache-input as soon as it appears in the DOM and refresh
+// the onSubmit binding when the input is re-rendered.
+function ITM_autoAttach(){
+  var input = document.getElementById('tache-input');
+  if (!input) return;
+  ITM_attach(input, function(){ if (typeof addTache === 'function') addTache(); });
+}
+document.addEventListener('DOMContentLoaded', ITM_autoAttach);
+// poll for the first 5s in case the input is rendered after DOMContentLoaded
+var ITM_attachAttempts = 0;
+var ITM_attachInterval = setInterval(function(){
+  ITM_autoAttach();
+  ITM_attachAttempts++;
+  if (ITM_attachAttempts > 50) clearInterval(ITM_attachInterval);
+}, 100);
+document.addEventListener('click', function(e){
+  if (!e.target.closest('#itm-autocomplete') && !e.target.closest('input')) ITM_hide();
+});
+// ── END INLINE TASK MODULE ───────────────────────────────────────────────
+
 </script>
 
 <!-- Task Detail Drawer -->
