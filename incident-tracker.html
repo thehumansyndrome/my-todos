@@ -156,6 +156,16 @@ input[type="search"]{-webkit-appearance:none;appearance:none;}
 .drawer-section-empty{font-size:13px;color:var(--muted);font-style:italic;}
 .drawer-history-item{padding:6px 10px;background:var(--bg);border-radius:var(--radius);margin-bottom:5px;font-size:12px;}
 .drawer-history-meta{color:var(--muted);font-size:11px;margin-bottom:2px;}
+.drawer-comment-item{padding:8px 10px;background:var(--bg);border-radius:var(--radius);margin-bottom:6px;}
+.drawer-comment-text{font-size:13px;line-height:1.5;}
+.drawer-comment-meta{font-size:11px;color:var(--muted);margin-top:3px;display:flex;align-items:center;justify-content:space-between;}
+.drawer-comment-author{display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:4px;}
+.drawer-comment-avatar{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;}
+.drawer-comment-add{margin-top:8px;display:flex;flex-direction:column;gap:6px;}
+.drawer-comment-add textarea{width:100%;font-family:var(--sans);font-size:13px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);resize:none;outline:none;min-height:60px;box-sizing:border-box;}
+.drawer-comment-add textarea:focus{border-color:var(--accent);}
+.drawer-comment-add .row{display:flex;gap:6px;align-items:center;}
+.drawer-comment-add select{font-family:var(--sans);font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);flex:1;outline:none;}
 
 /* ── Empty state ── */
 .empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
@@ -601,6 +611,7 @@ function ensureState(){
     if (!Array.isArray(it.markers_types)) it.markers_types = [];
     if (!Array.isArray(it.markers_impacts)) it.markers_impacts = [];
     if (!Array.isArray(it.history)) it.history = [];
+    if (!Array.isArray(it.comments)) it.comments = [];
     if (!it.declarantId) it.declarantId = '';
     if (!it.assigneeId) it.assigneeId = '';
     if (!it.created) it.created = Date.now();
@@ -1069,6 +1080,39 @@ function refreshDrawer(){
     '</div>' +
   '</div>';
 
+  // Commentaires
+  var commentsHtml = '<div class="drawer-section" id="dr-comments-section"><div class="drawer-section-title">💬 Commentaires</div>';
+  var comments = it.comments || [];
+  if (!comments.length){
+    commentsHtml += '<div class="drawer-section-empty" style="margin-bottom:8px;">Aucun commentaire.</div>';
+  } else {
+    commentsHtml += comments.map(function(c, i){
+      var m = c.authorId ? memberById(c.authorId) : null;
+      var avatarHtml = m
+        ? '<span class="drawer-comment-avatar" style="background:'+m.color+';">'+esc(m.initiales)+'</span><b style="font-size:12px;">'+esc(m.nom)+'</b>'
+        : '<span style="font-size:12px;color:var(--muted);">Anonyme</span>';
+      return '<div class="drawer-comment-item">' +
+        '<div class="drawer-comment-author">'+avatarHtml+'</div>' +
+        '<div class="drawer-comment-text">'+esc(c.text)+'</div>' +
+        '<div class="drawer-comment-meta"><span>'+fmtDate(c.ts)+'</span>' +
+        '<button onclick="deleteComment(\''+drawerId+'\','+i+')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:0 2px;" title="Supprimer">✕</button></div>' +
+      '</div>';
+    }).join('');
+  }
+  // Formulaire d'ajout — auteur + textarea + bouton
+  var authorOpts = '<option value="">— Auteur —</option>' +
+    sharedTeam.map(function(m){ return '<option value="'+m.id+'">'+esc(m.nom)+'</option>'; }).join('');
+  // Pré-sélectionner l'admin
+  commentsHtml += '<div class="drawer-comment-add">' +
+    '<textarea id="dr-comment-input" placeholder="Ajouter un commentaire…" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();addIncidentComment();}"></textarea>' +
+    '<div class="row">' +
+      '<select id="dr-comment-author">'+authorOpts+'</select>' +
+      '<button class="btn sm primary" onclick="addIncidentComment()">Envoyer</button>' +
+    '</div>' +
+  '</div>' +
+  '</div>';
+  body += commentsHtml;
+
   // Historique
   if (it.history && it.history.length){
     body += '<div class="drawer-section"><div class="drawer-section-title">Historique</div>';
@@ -1091,7 +1135,33 @@ function refreshDrawer(){
   '</div>';
 
   document.getElementById('dr-body').innerHTML = body;
+  // Pré-sélectionner l'admin dans le select auteur
+  var authorSel = document.getElementById('dr-comment-author');
+  if (authorSel){ var aid = getAdminId(); if (aid) authorSel.value = aid; }
 }
+
+function addIncidentComment(){
+  var it = S.incidents.find(function(x){return x.id===drawerId;}); if (!it) return;
+  var inp = document.getElementById('dr-comment-input');
+  var text = (inp ? inp.value.trim() : ''); if (!text) return;
+  var authorSel = document.getElementById('dr-comment-author');
+  var authorId = authorSel ? authorSel.value : (getAdminId()||'');
+  it.comments = it.comments || [];
+  it.comments.push({ts: Date.now(), authorId: authorId, text: text});
+  it.updated = Date.now();
+  persist();
+  refreshDrawer();
+}
+
+function deleteComment(incidentId, idx){
+  var it = S.incidents.find(function(x){return x.id===incidentId;}); if (!it) return;
+  if (!confirm('Supprimer ce commentaire ?')) return;
+  (it.comments||[]).splice(idx, 1);
+  it.updated = Date.now();
+  persist();
+  refreshDrawer();
+}
+
 function editFromDrawer(){
   if (!drawerId) return;
   editingId = drawerId;
