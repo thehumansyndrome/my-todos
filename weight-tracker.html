@@ -106,7 +106,7 @@ canvas{width:100%!important;display:block;}
     <span class="sync-dot" id="sync-dot">⚫ Local</span>
   </div>
   <div style="display:flex;gap:6px;">
-    <button class="icon-btn" onclick="handleDriveBtn()" title="Google Drive">☁</button>
+    <button class="icon-btn" onclick="handleDriveBtn()" title="Synchroniser depuis Drive">☁</button>
     <button class="icon-btn" id="theme-btn" onclick="toggleTheme()">☀︎</button>
   </div>
 </div>
@@ -475,17 +475,25 @@ function initDrive(){
     sessionStorage.setItem(TOK,accessToken);
     sessionStorage.setItem(TOK+'_exp',Date.now()+3500000);
     pushToDrive();
+    startPoll();
   }});
-  if(accessToken)pushToDrive();
+  if(accessToken){pushToDrive();startPoll();}
 }
 function handleDriveBtn(){
   if(!tokenClient){toast('Drive non initialisé');return;}
-  if(accessToken)pushToDrive();else tokenClient.requestAccessToken();
+  if(accessToken){pullFromDrive();toast('Chargement depuis Drive…');}
+  else tokenClient.requestAccessToken();
 }
 function findDriveFile(){
   const q=encodeURIComponent(`name='${DRIVE_FILE}' and trashed=false`);
-  return fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id)&orderBy=modifiedTime+desc`,{headers:{Authorization:'Bearer '+accessToken}})
-    .then(r=>r.json()).then(d=>d.files&&d.files[0]?d.files[0].id:null);
+  return fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,modifiedTime)&orderBy=modifiedTime+desc`,{headers:{Authorization:'Bearer '+accessToken}})
+    .then(r=>r.json()).then(d=>{
+      if(d.files&&d.files[0]){
+        if(!_lastModTime)_lastModTime=d.files[0].modifiedTime;
+        return d.files[0].id;
+      }
+      return null;
+    });
 }
 function pushToDrive(){
   if(!accessToken)return;
@@ -496,7 +504,49 @@ function pushToDrive(){
     if(fid){return fetch(`https://www.googleapis.com/upload/drive/v3/files/${fid}?uploadType=media`,{method:'PATCH',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body});}
     return fetch('https://www.googleapis.com/drive/v3/files',{method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify({name:DRIVE_FILE,mimeType:'application/json'})})
       .then(r=>r.json()).then(m=>{driveFileId=m.id;return fetch(`https://www.googleapis.com/upload/drive/v3/files/${m.id}?uploadType=media`,{method:'PATCH',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body});});
-  }).then(r=>{if(!r||r.status>=400){setSyncDot('error');return;}setSyncDot('ok');}).catch(()=>setSyncDot('error'));
+  }).then(r=>{
+    if(!r||r.status>=400){setSyncDot('error');return;}
+    setSyncDot('ok');
+    // Update last mod time after push
+    if(driveFileId)fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?fields=modifiedTime`,{headers:{Authorization:'Bearer '+accessToken}})
+      .then(r=>r.json()).then(d=>{if(d.modifiedTime)_lastModTime=d.modifiedTime;}).catch(()=>{});
+  }).catch(()=>setSyncDot('error'));
+}
+function pullFromDrive(){
+  if(!accessToken)return;
+  findDriveFile().then(fid=>{
+    if(!fid){toast('Aucun fichier Drive trouvé');return;}
+    driveFileId=fid;
+    return fetch(`https://www.googleapis.com/drive/v3/files/${fid}?alt=media`,{headers:{Authorization:'Bearer '+accessToken}});
+  }).then(r=>r?r.json():null).then(data=>{
+    if(!data)return;
+    S=data;ensureState();
+    persist();
+    if(S.goalWeight)document.getElementById('in-goal-weight').value=S.goalWeight;
+    if(S.goalDate)document.getElementById('in-goal-date').value=S.goalDate;
+    renderAll();setSyncDot('ok');
+    toast('↻ Synchronisé depuis Drive');
+  }).catch(()=>{setSyncDot('error');toast('Erreur Drive');});
+}
+
+// ── Polling ────────────────────────────────────────────────────────────────
+let _lastModTime=null, _pollInterval=null;
+function startPoll(){
+  if(_pollInterval)return;
+  _pollInterval=setInterval(pollOnce,20000); // every 20s
+}
+function pollOnce(){
+  if(!accessToken||!driveFileId)return;
+  fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?fields=modifiedTime`,{headers:{Authorization:'Bearer '+accessToken}})
+    .then(r=>r.json()).then(d=>{
+      if(!d.modifiedTime)return;
+      if(_lastModTime&&d.modifiedTime!==_lastModTime){
+        _lastModTime=d.modifiedTime;
+        pullFromDrive();
+      } else {
+        _lastModTime=d.modifiedTime;
+      }
+    }).catch(()=>{});
 }
 
 // ── Toast ──────────────────────────────────────────────────────────────────
