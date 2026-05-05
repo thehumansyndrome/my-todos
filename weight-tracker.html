@@ -85,6 +85,12 @@ canvas{width:100%!important;display:block;}
 .log-del{opacity:0;font-size:11px;color:var(--muted);transition:opacity .15s;background:none;border:none;cursor:pointer;padding:0 4px;}
 .log-item:hover .log-del{opacity:1;}
 .log-del:hover{color:var(--red);}
+.log-item{flex-wrap:wrap;}
+.log-comment{width:100%;padding:3px 0 2px 22px;font-size:12px;color:var(--muted);font-style:italic;cursor:pointer;line-height:1.4;}
+.log-comment:hover{color:var(--text);}
+.log-comment-add{width:100%;padding:3px 0 2px 22px;font-size:12px;color:var(--border);cursor:pointer;transition:color .15s;}
+.log-comment-add:hover{color:var(--muted);}
+.log-comment-input{width:calc(100% - 22px);margin-left:22px;margin-top:4px;margin-bottom:4px;font-family:var(--sans);font-size:12px;padding:5px 9px;border:1px solid var(--accent);border-radius:6px;background:var(--bg);color:var(--text);outline:none;resize:none;}
 .log-empty{padding:30px;text-align:center;color:var(--muted);font-size:13px;}
 
 /* Toast */
@@ -208,7 +214,7 @@ function ensureState(){
   S.entries.forEach(e=>{
     if(!e.id)e.id='w'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
     if(!e.ts)e.ts=Date.now();
-    e.weight=parseFloat(e.weight)||0;
+    if(!e.comment)e.comment='';
   });
   // Sort newest first for display, oldest first for chart
   S.entries.sort((a,b)=>b.ts-a.ts);
@@ -266,6 +272,32 @@ function addEntry(){
 }
 
 // ── Delete entry ───────────────────────────────────────────────────────────
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function editComment(id){
+  const item=document.getElementById('log-item-'+id);if(!item)return;
+  const e=S.entries.find(x=>x.id===id);if(!e)return;
+  // Replace the comment line with an input
+  const existing=item.querySelector('.log-comment,.log-comment-add');
+  if(!existing)return;
+  const inp=document.createElement('textarea');
+  inp.className='log-comment-input';
+  inp.rows=2;inp.value=e.comment||'';
+  inp.placeholder='Ajouter un commentaire…';
+  inp.style.display='block';
+  existing.replaceWith(inp);
+  inp.focus();inp.selectionStart=inp.selectionEnd=inp.value.length;
+  const save=()=>{
+    e.comment=inp.value.trim();
+    autoSave();renderLog();
+  };
+  inp.addEventListener('blur',save);
+  inp.addEventListener('keydown',ev=>{
+    if(ev.key==='Enter'&&!ev.shiftKey){ev.preventDefault();inp.blur();}
+    if(ev.key==='Escape'){inp.value=e.comment||'';inp.blur();}
+  });
+}
+
 function delEntry(id){
   S.entries=S.entries.filter(e=>e.id!==id);
   autoSave();renderAll();toast('Supprimé');
@@ -442,12 +474,16 @@ function renderLog(){
     const dotColor=delta===null?'var(--muted)':losing?'var(--green)':'var(--red)';
     const deltaStr=delta===null?'':(delta>=0?'+':'')+delta.toFixed(1)+' kg';
     const deltaColor=losing?'var(--green)':gaining?'var(--red)':'var(--muted)';
-    return `<div class="log-item">
+    const commentHtml=e.comment
+      ? `<div class="log-comment" onclick="editComment('${e.id}')" title="Cliquer pour modifier">💬 ${esc(e.comment)}</div>`
+      : `<div class="log-comment-add" onclick="editComment('${e.id}')" title="Ajouter un commentaire">+ Ajouter un commentaire…</div>`;
+    return `<div class="log-item" id="log-item-${e.id}">
       <span class="log-dot" style="background:${dotColor};"></span>
       <span class="log-weight">${e.weight.toFixed(1)} kg</span>
       <span class="log-date">${fmtDate(e.ts)}</span>
       <span class="log-delta" style="color:${deltaColor};">${deltaStr}</span>
       <button class="log-del" onclick="delEntry('${e.id}')" title="Supprimer">✕</button>
+      ${commentHtml}
     </div>`;
   }).join('');
 }
