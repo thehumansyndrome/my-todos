@@ -58,6 +58,19 @@ input,select{font-family:inherit;background:var(--bg);color:var(--text);border:1
 .goal-summary b{color:var(--text);}
 .prog-bar{height:6px;border-radius:3px;background:var(--border);margin-top:10px;overflow:hidden;}
 .prog-fill{height:100%;border-radius:3px;transition:width .4s;}
+/* Milestones */
+.milestone-list{display:flex;flex-direction:column;gap:6px;margin-top:12px;}
+.milestone-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);font-size:13px;}
+.milestone-item.reached{border-color:var(--green);background:var(--green-bg);}
+.milestone-badge{font-family:var(--mono);font-size:13px;font-weight:600;min-width:60px;}
+.milestone-label{flex:1;color:var(--muted);font-size:12px;}
+.milestone-date{font-size:11px;color:var(--muted);font-family:var(--mono);}
+.milestone-del{opacity:0;font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer;padding:0 2px;transition:opacity .15s;}
+.milestone-item:hover .milestone-del{opacity:1;}
+.milestone-del:hover{color:var(--red);}
+.milestone-reached-badge{font-size:10px;background:var(--green);color:#fff;padding:1px 7px;border-radius:10px;font-weight:600;}
+.add-milestone-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:flex-end;}
+.ms-toggle{font-size:12px;color:var(--blue);cursor:pointer;background:none;border:none;padding:4px 0;display:flex;align-items:center;gap:4px;margin-top:8px;}
 
 /* Chart */
 .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:20px;}
@@ -150,6 +163,29 @@ canvas{width:100%!important;display:block;}
     </div>
     <div class="goal-summary" id="goal-summary"></div>
     <div class="prog-bar" id="prog-bar" style="display:none;"><div class="prog-fill" id="prog-fill"></div></div>
+
+    <!-- Objectifs intermédiaires -->
+    <button class="ms-toggle" onclick="toggleMilestones()">
+      <span id="ms-chevron">▸</span> <span id="ms-toggle-label">Objectifs intermédiaires</span>
+    </button>
+    <div id="ms-panel" style="display:none;">
+      <div class="milestone-list" id="ms-list"></div>
+      <div class="add-milestone-row">
+        <div class="field" style="flex:0 0 110px;">
+          <label>Poids (kg)</label>
+          <input type="number" id="ms-in-weight" step="0.1" min="30" max="300" placeholder="73" onkeydown="if(event.key==='Enter')addMilestone()">
+        </div>
+        <div class="field" style="flex:0 0 150px;">
+          <label>Date cible</label>
+          <input type="date" id="ms-in-date">
+        </div>
+        <div class="field" style="flex:1;min-width:120px;">
+          <label>Label (optionnel)</label>
+          <input type="text" id="ms-in-label" placeholder="Ex: Avant les vacances" onkeydown="if(event.key==='Enter')addMilestone()">
+        </div>
+        <button class="btn-add" onclick="addMilestone()" style="height:38px;padding:0 14px;font-size:12px;">+ Ajouter</button>
+      </div>
+    </div>
   </div>
 
   <!-- Stats -->
@@ -211,6 +247,7 @@ function ensureState(){
   if(!Array.isArray(S.entries))S.entries=[];
   if(S.goalWeight===undefined)S.goalWeight=null;
   if(S.goalDate===undefined)S.goalDate=null;
+  if(!Array.isArray(S.milestones))S.milestones=[];
   S.entries.forEach(e=>{
     if(!e.id)e.id='w'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
     if(!e.ts)e.ts=Date.now();
@@ -235,6 +272,7 @@ function load(){
 
 function renderAll(){
   renderGoal();
+  renderMilestones();
   renderStats();
   renderChart();
   renderLog();
@@ -308,6 +346,67 @@ function updateGoal(){
   S.goalWeight=parseFloat(document.getElementById('in-goal-weight').value)||null;
   S.goalDate=document.getElementById('in-goal-date').value||null;
   autoSave();renderGoal();renderChart();
+}
+
+// ── Milestones ────────────────────────────────────────────────────────────
+function toggleMilestones(){
+  const panel=document.getElementById('ms-panel');
+  const chev=document.getElementById('ms-chevron');
+  const open=panel.style.display==='none';
+  panel.style.display=open?'':'none';
+  chev.textContent=open?'▾':'▸';
+  if(open)renderMilestones();
+}
+
+function addMilestone(){
+  const w=parseFloat(document.getElementById('ms-in-weight').value);
+  const d=document.getElementById('ms-in-date').value;
+  const label=document.getElementById('ms-in-label').value.trim();
+  if(!w||isNaN(w)){toast('Entre un poids cible');return;}
+  S.milestones=S.milestones||[];
+  S.milestones.push({id:'ms'+Date.now().toString(36),weight:w,date:d||null,label:label||null});
+  S.milestones.sort((a,b)=>b.weight-a.weight); // heaviest first (milestones go down)
+  document.getElementById('ms-in-weight').value='';
+  document.getElementById('ms-in-date').value='';
+  document.getElementById('ms-in-label').value='';
+  autoSave();renderMilestones();renderChart();
+  toast('✓ Objectif intermédiaire ajouté');
+}
+
+function delMilestone(id){
+  S.milestones=S.milestones.filter(m=>m.id!==id);
+  autoSave();renderMilestones();renderChart();
+}
+
+function renderMilestones(){
+  const el=document.getElementById('ms-list');if(!el)return;
+  const sorted=[...S.entries].sort((a,b)=>b.ts-a.ts);
+  const current=sorted[0]?.weight;
+  if(!S.milestones||!S.milestones.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--muted);padding:4px 0;">Aucun objectif intermédiaire.</div>';
+    // Update toggle label
+    const lbl=document.getElementById('ms-toggle-label');
+    if(lbl)lbl.textContent='Objectifs intermédiaires';
+    return;
+  }
+  const reached=S.milestones.filter(m=>current!==undefined&&current<=m.weight).length;
+  const lbl=document.getElementById('ms-toggle-label');
+  if(lbl)lbl.textContent=`Objectifs intermédiaires (${reached}/${S.milestones.length} atteints)`;
+
+  el.innerHTML=S.milestones.map(m=>{
+    const isReached=current!==undefined&&current<=m.weight;
+    const diff=current!==undefined?(current-m.weight).toFixed(1):null;
+    const daysStr=m.date?`<span class="milestone-date">${formatGoalDate(m.date)}</span>`:'';
+    const reachedBadge=isReached?'<span class="milestone-reached-badge">✓ Atteint</span>':'';
+    const diffStr=diff!==null&&!isReached?`<span style="font-size:11px;color:var(--red);font-family:var(--mono);">+${diff} kg</span>`:'';
+    return `<div class="milestone-item${isReached?' reached':''}" id="ms-item-${m.id}">
+      <span style="font-size:14px;">${isReached?'✅':'🎯'}</span>
+      <span class="milestone-badge" style="color:${isReached?'var(--green)':'var(--text)'};">${m.weight} kg</span>
+      <span class="milestone-label">${m.label?esc(m.label):''}</span>
+      ${daysStr}${reachedBadge}${diffStr}
+      <button class="milestone-del" onclick="delMilestone('${m.id}')" title="Supprimer">✕</button>
+    </div>`;
+  }).join('');
 }
 
 function renderGoal(){
@@ -404,6 +503,7 @@ function renderChart(){
   const weights=pts.map(p=>p.weight);
   let minW=Math.min(...weights), maxW=Math.max(...weights);
   if(S.goalWeight){minW=Math.min(minW,S.goalWeight);maxW=Math.max(maxW,S.goalWeight);}
+  if(S.milestones&&S.milestones.length){S.milestones.forEach(m=>{minW=Math.min(minW,m.weight);maxW=Math.max(maxW,m.weight);});}
   const range=maxW-minW||1;
   minW-=range*0.1; maxW+=range*0.1;
   const cW=W-PAD.l-PAD.r, cH=H-PAD.t-PAD.b;
@@ -434,6 +534,20 @@ function renderChart(){
     ctx.beginPath();ctx.moveTo(PAD.l,gy);ctx.lineTo(W-PAD.r,gy);ctx.stroke();
     ctx.setLineDash([]);ctx.fillStyle='rgba(22,163,74,0.8)';ctx.font='11px '+getComputedStyle(document.documentElement).getPropertyValue('--sans');
     ctx.textAlign='left';ctx.fillText('objectif '+S.goalWeight+' kg',PAD.l+4,gy-4);
+  }
+
+  // Milestone lines
+  if(S.milestones&&S.milestones.length){
+    S.milestones.forEach(m=>{
+      if(m.weight<minW||m.weight>maxW)return;
+      const my=yOf(m.weight);
+      ctx.strokeStyle='rgba(37,99,235,0.4)';ctx.lineWidth=1;ctx.setLineDash([4,5]);
+      ctx.beginPath();ctx.moveTo(PAD.l,my);ctx.lineTo(W-PAD.r,my);ctx.stroke();
+      ctx.setLineDash([]);ctx.fillStyle='rgba(37,99,235,0.7)';
+      ctx.font='10px '+getComputedStyle(document.documentElement).getPropertyValue('--sans');
+      ctx.textAlign='right';
+      ctx.fillText((m.label||m.weight+' kg'),W-PAD.r-4,my-3);
+    });
   }
 
   // Colored segments
