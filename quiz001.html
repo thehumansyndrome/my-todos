@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root {
   --bg: #F7F6F3;
@@ -185,6 +186,7 @@ select { background: var(--card); color: var(--text); border: 0.5px solid var(--
     <div class="header-sub" id="hdr-sub">Aucun deck chargé</div>
   </div>
   <div class="header-actions">
+    <button class="icon-btn" onclick="driveConnect()" id="drive-btn" title="Google Drive">⚫</button>
     <button class="icon-btn" onclick="toggleTheme()" id="theme-btn" title="Thème">☀︎</button>
   </div>
 </div>
@@ -335,12 +337,21 @@ select { background: var(--card); color: var(--text); border: 0.5px solid var(--
 <div class="toast" id="toast"></div>
 
 <script>
-const APP = 'quiz001';
-const SK = `td_${APP}`;
-const TK = `td_theme_${APP}`;
+const APP   = 'quiz001';
+const SK    = `td_${APP}`;
+const TK    = `td_theme_${APP}`;
+const GFILE = 'quiz001.json';
+const CLIENT_ID = '962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com';
+const SCOPE = 'https://www.googleapis.com/auth/drive.file';
+const TOK_KEY = `td_tok_${APP}`;
 
 let S = { questions:[], errors:{}, history:[] };
 let Q = { list:[], idx:0, mode:'free', score:0, wrong:[], timer:null, answered:false };
+let gisClient = null;
+let driveFileId = null;
+let saveTimer = null;
+let pollTimer = null;
+let syncStatus = 'local'; // local | pending | synced | error
 
 function ensureState() {
   if (!S.questions) S.questions = [];
@@ -348,11 +359,137 @@ function ensureState() {
   if (!S.history) S.history = [];
 }
 
-function save() { localStorage.setItem(SK, JSON.stringify(S)); }
+// ── LocalStorage ──────────────────────────────────────────────────────────────
+function save() {
+  localStorage.setItem(SK, JSON.stringify(S));
+  autoSave();
+}
 
 function load() {
   try { const d = localStorage.getItem(SK); if (d) S = JSON.parse(d); } catch(e){}
   ensureState();
+}
+
+// ── Sync status indicator ─────────────────────────────────────────────────────
+function setSync(status) {
+  syncStatus = status;
+  const btn = document.getElementById('drive-btn');
+  const icons = { local:'⚫', pending:'🟡', synced:'🟢', error:'🔴', connected:'🔵' };
+  if (btn) btn.textContent = icons[status] || '⚫';
+}
+
+// ── Google Drive OAuth ────────────────────────────────────────────────────────
+function driveConnect() {
+  const tok = sessionStorage.getItem(TOK_KEY);
+  if (tok) { drivePull(); return; }
+  if (!gisClient) {
+    gisClient = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPE,
+      callback: (resp) => {
+        if (resp.error) { setSync('error'); toast('Auth Drive échouée'); return; }
+        sessionStorage.setItem(TOK_KEY, resp.access_token);
+        setSync('connected');
+        toast('Drive connecté — chargement...');
+        drivePull();
+        startPolling();
+      }
+    });
+  }
+  gisClient.requestAccessToken();
+}
+
+function getToken() { return sessionStorage.getItem(TOK_KEY); }
+
+// ── Drive helpers ─────────────────────────────────────────────────────────────
+async function findFile() {
+  const tok = getToken(); if (!tok) return null;
+  const r = await fetch(
+    `https://www.googleapis.com/drive/v3/files?q=name='${GFILE}'+and+trashed=false&fields=files(id,modifiedTime)`,
+    { headers: { Authorization: `Bearer ${tok}` } }
+  );
+  if (!r.ok) { if (r.status===401) sessionStorage.removeItem(TOK_KEY); return null; }
+  const d = await r.json();
+  return d.files && d.files[0] ? d.files[0] : null;
+}
+
+async function drivePull() {
+  const tok = getToken(); if (!tok) return;
+  setSync('pending');
+  try {
+    const file = await findFile();
+    if (!file) { setSync('connected'); drivePush(); return; }
+    driveFileId = file.id;
+    const r = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`,
+      { headers: { Authorization: `Bearer ${tok}` } }
+    );
+    if (!r.ok) throw new Error('pull failed');
+    const remote = await r.json();
+    // Merge: keep remote questions if local has none, else keep local questions + merge errors/history
+    if (remote.questions && remote.questions.length > 0 && S.questions.length === 0) {
+      S = remote;
+    } else if (remote.errors || remote.history) {
+      // Merge errors (max) and history (union)
+      if (remote.errors) Object.keys(remote.errors).forEach(k => {
+        S.errors[k] = Math.max(S.errors[k]||0, remote.errors[k]||0);
+      });
+      if (remote.history) {
+        const existing = new Set(S.history.map(h=>h.date+'_'+h.pct+'_'+h.total));
+        remote.history.forEach(h => { if (!existing.has(h.date+'_'+h.pct+'_'+h.total)) S.history.push(h); });
+        S.history.sort((a,b) => b.date > a.date ? 1 : -1);
+        if (S.history.length > 50) S.history = S.history.slice(0,50);
+      }
+    }
+    ensureState();
+    localStorage.setItem(SK, JSON.stringify(S));
+    setSync('synced');
+    updateHomeStats();
+    if (S.questions.length > 0) showImportResult();
+    toast('Drive synchronisé ✓');
+  } catch(e) { setSync('error'); toast('Erreur sync Drive'); }
+}
+
+async function drivePush() {
+  const tok = getToken(); if (!tok) return;
+  setSync('pending');
+  try {
+    const body = JSON.stringify(S);
+    const blob = new Blob([body], {type:'application/json'});
+    let r;
+    if (driveFileId) {
+      r = await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`,
+        { method:'PATCH', headers:{ Authorization:`Bearer ${tok}`, 'Content-Type':'application/json' }, body }
+      );
+    } else {
+      const meta = JSON.stringify({name: GFILE});
+      const fd = new FormData();
+      fd.append('metadata', new Blob([meta],{type:'application/json'}));
+      fd.append('file', blob);
+      r = await fetch(
+        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
+        { method:'POST', headers:{ Authorization:`Bearer ${tok}` }, body:fd }
+      );
+      if (r.ok) { const d = await r.json(); driveFileId = d.id; }
+    }
+    setSync(r.ok ? 'synced' : 'error');
+  } catch(e) { setSync('error'); }
+}
+
+function autoSave() {
+  setSync('pending');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => { if (getToken()) drivePush(); }, 2000);
+}
+
+function startPolling() {
+  clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    const tok = getToken(); if (!tok) return;
+    const file = await findFile();
+    if (file && file.id !== driveFileId) { driveFileId = file.id; }
+  }, 60000);
 }
 
 // THEME
@@ -673,6 +810,10 @@ load();
 applyTheme(localStorage.getItem(TK) || 'light');
 updateHomeStats();
 if (S.questions.length > 0) showImportResult();
+// Auto-reconnect Drive if token exists from previous session
+window.addEventListener('load', () => {
+  if (sessionStorage.getItem(TOK_KEY)) { setSync('connected'); startPolling(); drivePull(); }
+});
 </script>
 </body>
 </html>
