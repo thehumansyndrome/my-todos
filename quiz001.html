@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Quiz Certif — Régis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --bg: #F7F6F3;
+  --card: #ffffff;
+  --text: #1a1a1a;
+  --muted: #6b6b6b;
+  --border: #e0ddd8;
+  --accent: #1a1a1a;
+  --green: #2d7a3a;
+  --green-bg: #eaf3de;
+  --red: #a32d2d;
+  --red-bg: #fcebeb;
+  --blue: #185fa5;
+  --blue-bg: #e6f1fb;
+  --amber: #854f0b;
+  --amber-bg: #faeeda;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+[data-theme="dark"] {
+  --bg: #111113;
+  --card: #1c1c1f;
+  --text: #f0ede8;
+  --muted: #888780;
+  --border: #2a2a2e;
+  --accent: #f0ede8;
+  --green: #6fcf80;
+  --green-bg: #173404;
+  --red: #f09595;
+  --red-bg: #501313;
+  --blue: #85b7eb;
+  --blue-bg: #042c53;
+  --amber: #fac775;
+  --amber-bg: #412402;
+}
+[data-theme="navy"] {
+  --bg: #161925;
+  --card: #1e2235;
+  --text: #e8eaf0;
+  --muted: #8891b0;
+  --border: #2a2f4a;
+  --accent: #e8eaf0;
+  --green: #5dcaa5;
+  --green-bg: #04342c;
+  --red: #f09595;
+  --red-bg: #501313;
+  --blue: #85b7eb;
+  --blue-bg: #042c53;
+  --amber: #fac775;
+  --amber-bg: #412402;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: 'Geist', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 15px; }
+
+.app { max-width: 480px; margin: 0 auto; padding-bottom: 80px; }
+
+/* HEADER */
+.header { position: sticky; top: 0; z-index: 100; background: var(--bg); border-bottom: 0.5px solid var(--border); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
+.header-title { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
+.header-sub { font-size: 11px; color: var(--muted); margin-top: 1px; font-family: 'Geist Mono', monospace; }
+.header-actions { display: flex; gap: 8px; }
+.icon-btn { background: none; border: 0.5px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: background 0.15s; }
+.icon-btn:hover { background: var(--border); }
+
+/* TABS */
+.tabs { position: sticky; top: 57px; z-index: 99; background: var(--bg); display: flex; padding: 8px 16px; gap: 6px; border-bottom: 0.5px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { flex-shrink: 0; padding: 6px 14px; border-radius: 20px; border: 0.5px solid var(--border); background: none; color: var(--muted); font-size: 13px; font-family: 'Geist', sans-serif; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.tab.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+/* SECTIONS */
+.section { display: none; padding: 16px; }
+.section.active { display: block; }
+
+/* CARDS */
+.card { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; }
+.card-title { font-size: 13px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+
+/* STATS GRID */
+.stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+.stat-card { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 14px; text-align: center; }
+.stat-num { font-size: 28px; font-weight: 600; font-family: 'Geist Mono', monospace; }
+.stat-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* BTN */
+.btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px; border-radius: var(--radius); font-size: 15px; font-weight: 500; font-family: 'Geist', sans-serif; cursor: pointer; transition: all 0.15s; border: none; }
+.btn-primary { background: var(--text); color: var(--bg); }
+.btn-primary:hover { opacity: 0.85; }
+.btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-outline { background: none; border: 0.5px solid var(--border); color: var(--text); }
+.btn-outline:hover { background: var(--border); }
+.btn-sm { padding: 9px 16px; font-size: 13px; width: auto; border-radius: var(--radius-sm); }
+.btn-danger { background: var(--red-bg); color: var(--red); border: 0.5px solid var(--red); }
+
+/* QUIZ CARD */
+.quiz-wrap { min-height: calc(100vh - 180px); display: flex; flex-direction: column; }
+.progress-bar { height: 3px; background: var(--border); border-radius: 2px; margin-bottom: 16px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--text); border-radius: 2px; transition: width 0.4s ease; }
+.q-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.q-num { font-size: 12px; font-family: 'Geist Mono', monospace; color: var(--muted); }
+.q-cat { font-size: 11px; padding: 3px 10px; border-radius: 12px; background: var(--blue-bg); color: var(--blue); border: 0.5px solid var(--blue); }
+.q-timer { font-size: 13px; font-family: 'Geist Mono', monospace; font-weight: 500; }
+.q-timer.warn { color: var(--red); }
+.question-text { font-size: 16px; line-height: 1.55; font-weight: 500; margin-bottom: 20px; flex: 1; }
+.choices { display: flex; flex-direction: column; gap: 10px; }
+.choice-btn { display: flex; align-items: flex-start; gap: 12px; padding: 14px; border-radius: var(--radius); border: 0.5px solid var(--border); background: var(--card); color: var(--text); font-family: 'Geist', sans-serif; font-size: 14px; line-height: 1.5; cursor: pointer; text-align: left; transition: all 0.2s; width: 100%; }
+.choice-btn:hover:not(:disabled) { border-color: var(--text); background: var(--bg); }
+.choice-letter { font-family: 'Geist Mono', monospace; font-size: 12px; font-weight: 500; min-width: 22px; height: 22px; border-radius: 6px; background: var(--bg); display: flex; align-items: center; justify-content: center; border: 0.5px solid var(--border); margin-top: 1px; }
+.choice-btn.correct { background: var(--green-bg); border-color: var(--green); }
+.choice-btn.correct .choice-letter { background: var(--green); color: var(--bg); border-color: var(--green); }
+.choice-btn.wrong { background: var(--red-bg); border-color: var(--red); }
+.choice-btn.wrong .choice-letter { background: var(--red); color: var(--bg); border-color: var(--red); }
+.choice-btn.selected-correct { background: var(--green-bg); border-color: var(--green); }
+.choice-btn.selected-wrong { background: var(--red-bg); border-color: var(--red); }
+.choice-btn:disabled { cursor: default; }
+
+/* EXPLANATION */
+.explanation { margin-top: 16px; padding: 14px; border-radius: var(--radius-sm); background: var(--amber-bg); border: 0.5px solid var(--amber); font-size: 13px; line-height: 1.6; color: var(--amber); display: none; }
+.explanation.visible { display: block; }
+
+/* RESULT */
+.result-score { text-align: center; padding: 32px 16px; }
+.result-pct { font-size: 72px; font-weight: 600; font-family: 'Geist Mono', monospace; line-height: 1; }
+.result-label { font-size: 14px; color: var(--muted); margin-top: 8px; }
+.result-grade { font-size: 24px; margin-top: 16px; }
+
+/* IMPORT */
+.drop-zone { border: 1.5px dashed var(--border); border-radius: var(--radius); padding: 32px 16px; text-align: center; cursor: pointer; transition: all 0.2s; }
+.drop-zone:hover, .drop-zone.drag-over { border-color: var(--text); background: var(--card); }
+.drop-icon { font-size: 32px; margin-bottom: 8px; }
+.drop-text { font-size: 14px; color: var(--muted); }
+.drop-text strong { color: var(--text); }
+
+/* TABLE */
+.q-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.q-table th { text-align: left; padding: 8px 10px; color: var(--muted); font-weight: 500; border-bottom: 0.5px solid var(--border); }
+.q-table td { padding: 8px 10px; border-bottom: 0.5px solid var(--border); }
+.q-table tr:last-child td { border-bottom: none; }
+.badge { display: inline-flex; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+.badge-ok { background: var(--green-bg); color: var(--green); }
+.badge-ko { background: var(--red-bg); color: var(--red); }
+
+/* MODE SELECT */
+.mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.mode-card { border: 1.5px solid var(--border); border-radius: var(--radius); padding: 16px 12px; cursor: pointer; text-align: center; transition: all 0.2s; background: var(--card); }
+.mode-card:hover, .mode-card.selected { border-color: var(--text); background: var(--bg); }
+.mode-icon { font-size: 24px; margin-bottom: 6px; }
+.mode-name { font-size: 13px; font-weight: 500; }
+.mode-desc { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+/* HISTORY */
+.hist-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 0.5px solid var(--border); }
+.hist-item:last-child { border-bottom: none; }
+.hist-date { font-size: 12px; font-family: 'Geist Mono', monospace; color: var(--muted); }
+.hist-score { font-size: 18px; font-weight: 600; font-family: 'Geist Mono', monospace; }
+
+/* NEXT BTN ZONE */
+.quiz-actions { margin-top: 16px; display: flex; gap: 8px; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 500; z-index: 999; opacity: 0; transition: opacity 0.25s; pointer-events: none; white-space: nowrap; }
+.toast.show { opacity: 1; }
+
+input[type="file"] { display: none; }
+select { background: var(--card); color: var(--text); border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 9px 12px; font-family: 'Geist', sans-serif; font-size: 14px; width: 100%; margin-bottom: 12px; }
+.label { font-size: 12px; color: var(--muted); margin-bottom: 6px; display: block; }
+.row { display: flex; gap: 8px; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="header">
+  <div>
+    <div class="header-title">Quiz Certif</div>
+    <div class="header-sub" id="hdr-sub">Aucun deck chargé</div>
+  </div>
+  <div class="header-actions">
+    <button class="icon-btn" onclick="toggleTheme()" id="theme-btn" title="Thème">☀︎</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('home')">Accueil</button>
+  <button class="tab" onclick="showTab('train')">Entraînement</button>
+  <button class="tab" onclick="showTab('errors')">Erreurs</button>
+  <button class="tab" onclick="showTab('import')">Import</button>
+  <button class="tab" onclick="showTab('history')">Historique</button>
+</div>
+
+<!-- HOME -->
+<div id="tab-home" class="section active">
+  <div class="stats-grid" id="home-stats">
+    <div class="stat-card"><div class="stat-num" id="s-total">0</div><div class="stat-lbl">Questions</div></div>
+    <div class="stat-card"><div class="stat-num" id="s-cats">0</div><div class="stat-lbl">Catégories</div></div>
+    <div class="stat-card"><div class="stat-num" id="s-done">0</div><div class="stat-lbl">Sessions</div></div>
+    <div class="stat-card"><div class="stat-num" id="s-best">—</div><div class="stat-lbl">Meilleur score</div></div>
+  </div>
+
+  <div class="card" id="mode-selector">
+    <div class="card-title">Mode</div>
+    <div class="mode-grid">
+      <div class="mode-card selected" data-mode="free" onclick="selectMode(this,'free')">
+        <div class="mode-icon">🎯</div>
+        <div class="mode-name">Libre</div>
+        <div class="mode-desc">Sans limite de temps</div>
+      </div>
+      <div class="mode-card" data-mode="timed" onclick="selectMode(this,'timed')">
+        <div class="mode-icon">⏱</div>
+        <div class="mode-name">Minuté</div>
+        <div class="mode-desc">30s par question</div>
+      </div>
+      <div class="mode-card" data-mode="errors" onclick="selectMode(this,'errors')">
+        <div class="mode-icon">🔁</div>
+        <div class="mode-name">Erreurs</div>
+        <div class="mode-desc">Réviser les ratés</div>
+      </div>
+      <div class="mode-card" data-mode="cat" onclick="selectMode(this,'cat')">
+        <div class="mode-icon">📂</div>
+        <div class="mode-name">Catégorie</div>
+        <div class="mode-desc">Focus thématique</div>
+      </div>
+    </div>
+
+    <div id="cat-select-wrap" style="display:none;">
+      <label class="label">Catégorie</label>
+      <select id="cat-select"></select>
+    </div>
+
+    <div class="row">
+      <div style="flex:1;">
+        <label class="label">Nb de questions</label>
+        <select id="q-count">
+          <option value="10">10</option>
+          <option value="20" selected>20</option>
+          <option value="30">30</option>
+          <option value="50">50</option>
+          <option value="0">Toutes</option>
+        </select>
+      </div>
+      <div style="flex:1;">
+        <label class="label">Ordre</label>
+        <select id="q-order">
+          <option value="random">Aléatoire</option>
+          <option value="seq">Séquentiel</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="startQuiz()" id="start-btn" disabled>Démarrer le quiz →</button>
+  </div>
+
+  <div id="no-deck-msg" class="card" style="text-align:center; color:var(--muted); padding:24px;">
+    <div style="font-size:32px; margin-bottom:8px;">📋</div>
+    <div style="font-size:14px;">Importe un fichier Excel pour commencer</div>
+    <button class="btn btn-outline btn-sm" style="margin-top:12px; width:auto; display:inline-flex;" onclick="showTab('import')">Aller à l'import →</button>
+  </div>
+</div>
+
+<!-- TRAINING -->
+<div id="tab-train" class="section">
+  <div class="quiz-wrap" id="quiz-wrap">
+    <div style="text-align:center; color:var(--muted); padding:48px 0; font-size:14px;">Lance un quiz depuis l'accueil</div>
+  </div>
+</div>
+
+<!-- ERRORS -->
+<div id="tab-errors" class="section">
+  <div class="card">
+    <div class="card-title">Questions ratées</div>
+    <div id="errors-list"><div style="color:var(--muted); font-size:13px; text-align:center; padding:16px 0;">Pas encore d'erreurs enregistrées</div></div>
+  </div>
+</div>
+
+<!-- IMPORT -->
+<div id="tab-import" class="section">
+  <div class="card">
+    <div class="card-title">Format Excel attendu</div>
+    <div style="font-size:12px; color:var(--muted); line-height:1.7; font-family:'Geist Mono',monospace; background:var(--bg); padding:10px; border-radius:var(--radius-sm); margin-bottom:12px;">
+      Col A: Question<br>
+      Col B: Choix A<br>
+      Col C: Choix B<br>
+      Col D: Choix C<br>
+      Col E: Choix D<br>
+      Col F: Answer (ex: B ou A,C)<br>
+      Col G: Explanation<br>
+      Col H: Category (optionnel)
+    </div>
+    <div style="font-size:12px; color:var(--muted);">Ligne 1 = en-têtes. Supports: .xlsx .xls .csv</div>
+  </div>
+
+  <div class="drop-zone" onclick="document.getElementById('file-input').click()" id="drop-zone">
+    <div class="drop-icon">📂</div>
+    <div class="drop-text"><strong>Cliquer ou déposer</strong> un fichier Excel ici</div>
+    <input type="file" id="file-input" accept=".xlsx,.xls,.csv" onchange="handleFile(this.files[0])">
+  </div>
+
+  <div id="import-result" style="display:none; margin-top:12px;">
+    <div class="card">
+      <div class="card-title">Questions importées</div>
+      <div id="import-preview"></div>
+    </div>
+    <button class="btn btn-danger btn-sm" style="margin-top:8px; width:auto;" onclick="clearDeck()">🗑 Supprimer le deck</button>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <div class="card-title">Exemple — générer depuis PDF</div>
+    <div style="font-size:13px; color:var(--muted); line-height:1.65;">
+      Pour extraire les questions d'un PDF de certification, demande à Claude :<br><br>
+      <em>"Lis ce PDF et génère un tableau Excel avec colonnes Question/A/B/C/D/Answer/Explanation/Category"</em>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div id="tab-history" class="section">
+  <div class="card">
+    <div class="card-title">Sessions récentes</div>
+    <div id="history-list"><div style="color:var(--muted); font-size:13px; text-align:center; padding:16px 0;">Pas encore de sessions</div></div>
+  </div>
+  <button class="btn btn-outline" onclick="clearHistory()" style="margin-top:8px;">Effacer l'historique</button>
+</div>
+
+</div><!-- end .app -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+const APP = 'quiz001';
+const SK = `td_${APP}`;
+const TK = `td_theme_${APP}`;
+
+let S = { questions:[], errors:{}, history:[] };
+let Q = { list:[], idx:0, mode:'free', score:0, wrong:[], timer:null, answered:false };
+
+function ensureState() {
+  if (!S.questions) S.questions = [];
+  if (!S.errors) S.errors = {};
+  if (!S.history) S.history = [];
+}
+
+function save() { localStorage.setItem(SK, JSON.stringify(S)); }
+
+function load() {
+  try { const d = localStorage.getItem(SK); if (d) S = JSON.parse(d); } catch(e){}
+  ensureState();
+}
+
+// THEME
+const THEMES = ['light','navy','dark'];
+const TICONS = {light:'☀︎', navy:'◑', dark:'☾'};
+function toggleTheme() {
+  const cur = localStorage.getItem(TK) || 'light';
+  const next = THEMES[(THEMES.indexOf(cur)+1) % THEMES.length];
+  applyTheme(next);
+}
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t==='light' ? '' : t);
+  document.getElementById('theme-btn').textContent = TICONS[t] || '☀︎';
+  localStorage.setItem(TK, t);
+}
+
+// TABS
+function showTab(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => { if (t.textContent.toLowerCase().includes(id==='home'?'accueil':id==='train'?'entraîn':id==='errors'?'erreur':id==='import'?'import':'histor')) t.classList.add('active'); });
+  if (id === 'errors') renderErrors();
+  if (id === 'history') renderHistory();
+  if (id === 'home') updateHomeStats();
+}
+
+// MODE SELECT
+let currentMode = 'free';
+function selectMode(el, mode) {
+  document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  currentMode = mode;
+  document.getElementById('cat-select-wrap').style.display = mode === 'cat' ? 'block' : 'none';
+  if (mode === 'errors') {
+    const errCount = Object.keys(S.errors).filter(k => S.errors[k] > 0).length;
+    document.getElementById('start-btn').disabled = errCount === 0;
+  } else {
+    document.getElementById('start-btn').disabled = S.questions.length === 0;
+  }
+}
+
+// HOME STATS
+function updateHomeStats() {
+  const q = S.questions;
+  document.getElementById('s-total').textContent = q.length;
+  const cats = new Set(q.map(x=>x.category).filter(Boolean));
+  document.getElementById('s-cats').textContent = cats.size || (q.length > 0 ? 1 : 0);
+  document.getElementById('s-done').textContent = S.history.length;
+  const best = S.history.length ? Math.max(...S.history.map(h=>h.pct)) : null;
+  document.getElementById('s-best').textContent = best !== null ? best+'%' : '—';
+  document.getElementById('no-deck-msg').style.display = q.length === 0 ? 'block' : 'none';
+  document.getElementById('mode-selector').style.display = q.length === 0 ? 'none' : 'block';
+  document.getElementById('start-btn').disabled = q.length === 0;
+  // Populate category select
+  const sel = document.getElementById('cat-select');
+  sel.innerHTML = '';
+  cats.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o); });
+  // Populate header sub
+  document.getElementById('hdr-sub').textContent = q.length > 0 ? `${q.length} questions chargées` : 'Aucun deck chargé';
+}
+
+// IMPORT
+function handleFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      const questions = [];
+      for (let i = 1; i < rows.length; i++) {
+        const r = rows[i];
+        if (!r[0]) continue;
+        const ansRaw = String(r[5]||'').trim().toUpperCase();
+        const answers = ansRaw.split(',').map(a=>a.trim()).filter(Boolean);
+        questions.push({
+          id: i,
+          text: String(r[0]||'').trim(),
+          choices: [r[1],r[2],r[3],r[4]].map(c=>String(c||'').trim()).filter(Boolean),
+          answers,
+          explanation: String(r[6]||'').trim(),
+          category: String(r[7]||'').trim() || 'Général'
+        });
+      }
+      if (questions.length === 0) { toast('Aucune question trouvée — vérifie le format'); return; }
+      S.questions = questions;
+      save();
+      showImportResult();
+      updateHomeStats();
+      toast(`✓ ${questions.length} questions importées`);
+    } catch(err) { toast('Erreur de lecture — vérifie le fichier'); console.error(err); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function showImportResult() {
+  const el = document.getElementById('import-result');
+  const prev = document.getElementById('import-preview');
+  el.style.display = 'block';
+  const q = S.questions;
+  const cats = {};
+  q.forEach(x => { cats[x.category] = (cats[x.category]||0)+1; });
+  let html = `<div style="font-size:13px; color:var(--muted); margin-bottom:10px;">${q.length} questions · ${Object.keys(cats).length} catégories</div>`;
+  html += '<table class="q-table"><thead><tr><th>Catégorie</th><th>Nb</th></tr></thead><tbody>';
+  Object.entries(cats).forEach(([cat,n]) => {
+    html += `<tr><td>${cat}</td><td style="font-family:'Geist Mono',monospace;">${n}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  prev.innerHTML = html;
+}
+
+function clearDeck() {
+  if (!confirm('Supprimer toutes les questions ?')) return;
+  S.questions = []; S.errors = {};
+  save(); updateHomeStats();
+  document.getElementById('import-result').style.display = 'none';
+  toast('Deck supprimé');
+}
+
+// DRAG DROP
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+
+// QUIZ ENGINE
+function startQuiz() {
+  let pool = [...S.questions];
+  if (currentMode === 'errors') {
+    pool = pool.filter(q => S.errors[q.id] && S.errors[q.id] > 0);
+    if (pool.length === 0) { toast('Pas d\'erreurs à réviser !'); return; }
+  }
+  if (currentMode === 'cat') {
+    const cat = document.getElementById('cat-select').value;
+    pool = pool.filter(q => q.category === cat);
+  }
+  const n = parseInt(document.getElementById('q-count').value) || pool.length;
+  const order = document.getElementById('q-order').value;
+  if (order === 'random') pool = shuffle(pool);
+  Q.list = pool.slice(0, n > 0 ? n : pool.length);
+  Q.idx = 0; Q.score = 0; Q.wrong = []; Q.mode = currentMode;
+  showTab('train');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const wrap = document.getElementById('quiz-wrap');
+  if (Q.idx >= Q.list.length) { renderResult(); return; }
+  const q = Q.list[Q.idx];
+  const pct = Math.round((Q.idx / Q.list.length) * 100);
+  Q.answered = false;
+  if (Q.timer) clearInterval(Q.timer);
+  let timeLeft = 30;
+  let timerHTML = Q.mode === 'timed' ? `<span class="q-timer" id="q-timer">⏱ ${timeLeft}s</span>` : '';
+
+  let choicesHTML = '';
+  const letters = ['A','B','C','D','E'];
+  q.choices.forEach((c, i) => {
+    if (!c) return;
+    choicesHTML += `<button class="choice-btn" onclick="selectAnswer(this,'${letters[i]}')" data-letter="${letters[i]}">
+      <span class="choice-letter">${letters[i]}</span>
+      <span>${c}</span>
+    </button>`;
+  });
+
+  wrap.innerHTML = `
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div class="q-meta">
+      <span class="q-num">${Q.idx+1} / ${Q.list.length}</span>
+      ${q.category ? `<span class="q-cat">${q.category}</span>` : ''}
+      ${timerHTML}
+    </div>
+    <div class="question-text">${q.text}</div>
+    <div class="choices">${choicesHTML}</div>
+    <div class="explanation ${q.explanation ? '' : 'no-expl'}" id="explanation">${q.explanation || ''}</div>
+    <div class="quiz-actions" id="quiz-actions" style="display:none;">
+      <button class="btn btn-primary" onclick="nextQuestion()">Suivant →</button>
+    </div>
+  `;
+
+  if (Q.mode === 'timed') {
+    Q.timer = setInterval(() => {
+      timeLeft--;
+      const tel = document.getElementById('q-timer');
+      if (tel) { tel.textContent = `⏱ ${timeLeft}s`; if (timeLeft <= 10) tel.classList.add('warn'); }
+      if (timeLeft <= 0) { clearInterval(Q.timer); autoTimeout(); }
+    }, 1000);
+  }
+}
+
+function selectAnswer(btn, letter) {
+  if (Q.answered) return;
+  Q.answered = true;
+  if (Q.timer) clearInterval(Q.timer);
+  const q = Q.list[Q.idx];
+  const isCorrect = q.answers.includes(letter);
+  btn.classList.add(isCorrect ? 'selected-correct' : 'selected-wrong');
+  document.querySelectorAll('.choice-btn').forEach(b => {
+    b.disabled = true;
+    if (q.answers.includes(b.dataset.letter)) b.classList.add('correct');
+  });
+  if (!isCorrect) {
+    btn.classList.add('wrong');
+    Q.wrong.push(q);
+    S.errors[q.id] = (S.errors[q.id] || 0) + 1;
+  } else {
+    Q.score++;
+    if (S.errors[q.id] && S.errors[q.id] > 0) S.errors[q.id]--;
+  }
+  save();
+  if (q.explanation) document.getElementById('explanation').classList.add('visible');
+  document.getElementById('quiz-actions').style.display = 'flex';
+}
+
+function autoTimeout() {
+  if (Q.answered) return;
+  Q.answered = true;
+  const q = Q.list[Q.idx];
+  Q.wrong.push(q);
+  S.errors[q.id] = (S.errors[q.id] || 0) + 1;
+  save();
+  document.querySelectorAll('.choice-btn').forEach(b => {
+    b.disabled = true;
+    if (q.answers.includes(b.dataset.letter)) b.classList.add('correct');
+  });
+  if (q.explanation) document.getElementById('explanation').classList.add('visible');
+  document.getElementById('quiz-actions').style.display = 'flex';
+  toast('⏱ Temps écoulé !');
+}
+
+function nextQuestion() { Q.idx++; renderQuestion(); }
+
+function renderResult() {
+  const pct = Math.round((Q.score / Q.list.length) * 100);
+  let grade = pct >= 85 ? '🏆 Excellent !' : pct >= 70 ? '✅ Réussi' : pct >= 50 ? '⚠️ Passable' : '❌ À retravailler';
+  S.history.unshift({ date: new Date().toLocaleDateString('fr-FR'), pct, score: Q.score, total: Q.list.length, mode: Q.mode });
+  if (S.history.length > 50) S.history = S.history.slice(0,50);
+  save();
+  document.getElementById('quiz-wrap').innerHTML = `
+    <div class="result-score">
+      <div class="result-pct">${pct}%</div>
+      <div class="result-label">${Q.score} / ${Q.list.length} bonnes réponses</div>
+      <div class="result-grade">${grade}</div>
+    </div>
+    <button class="btn btn-primary" onclick="startQuiz()">Rejouer →</button>
+    <button class="btn btn-outline" style="margin-top:8px;" onclick="showTab('home')">Retour accueil</button>
+    ${Q.wrong.length > 0 ? `<button class="btn btn-outline" style="margin-top:8px;" onclick="reviewWrong()">Réviser les ${Q.wrong.length} erreur(s) →</button>` : ''}
+  `;
+  updateHomeStats();
+}
+
+function reviewWrong() {
+  Q.list = shuffle([...Q.wrong]);
+  Q.idx = 0; Q.score = 0; Q.wrong = []; Q.mode = 'errors';
+  renderQuestion();
+}
+
+// ERRORS TAB
+function renderErrors() {
+  const el = document.getElementById('errors-list');
+  const errs = S.questions.filter(q => S.errors[q.id] && S.errors[q.id] > 0);
+  if (errs.length === 0) { el.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding:16px 0;">Pas encore d\'erreurs 🎉</div>'; return; }
+  errs.sort((a,b) => (S.errors[b.id]||0) - (S.errors[a.id]||0));
+  el.innerHTML = '<table class="q-table"><thead><tr><th>Question</th><th>Erreurs</th></tr></thead><tbody>' +
+    errs.slice(0,20).map(q => `<tr><td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${q.text}</td><td style="font-family:'Geist Mono',monospace; color:var(--red);">${S.errors[q.id]}</td></tr>`).join('') +
+    '</tbody></table>';
+}
+
+// HISTORY TAB
+function renderHistory() {
+  const el = document.getElementById('history-list');
+  if (S.history.length === 0) { el.innerHTML = '<div style="color:var(--muted); font-size:13px; text-align:center; padding:16px 0;">Pas encore de sessions</div>'; return; }
+  el.innerHTML = S.history.slice(0,20).map(h => `
+    <div class="hist-item">
+      <div><div style="font-size:13px; font-weight:500;">${h.score}/${h.total} · ${h.mode}</div><div class="hist-date">${h.date}</div></div>
+      <div class="hist-score" style="color:${h.pct>=70?'var(--green)':'var(--red)'}">${h.pct}%</div>
+    </div>`).join('');
+}
+
+function clearHistory() {
+  if (!confirm('Effacer tout l\'historique ?')) return;
+  S.history = []; save(); renderHistory(); updateHomeStats(); toast('Historique effacé');
+}
+
+// UTILS
+function shuffle(arr) { for (let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr; }
+
+function toast(msg, ms=2200) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), ms);
+}
+
+// INIT
+load();
+applyTheme(localStorage.getItem(TK) || 'light');
+updateHomeStats();
+if (S.questions.length > 0) showImportResult();
+</script>
+</body>
+</html>
