@@ -426,18 +426,37 @@ function handleFile(file) {
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
       const questions = [];
+      // Auto-detect column positions from header row
+      const hdr = rows[0].map(h => String(h||'').trim().toLowerCase());
+      const colIdx = {
+        question: hdr.findIndex(h => h === 'question') ?? 0,
+        a: hdr.findIndex(h => h === 'a'),
+        b: hdr.findIndex(h => h === 'b'),
+        c: hdr.findIndex(h => h === 'c'),
+        d: hdr.findIndex(h => h === 'd'),
+        e: hdr.findIndex(h => h === 'e'),
+        answer: hdr.findIndex(h => h === 'answer' || h === 'réponse' || h === 'reponse'),
+        explanation: hdr.findIndex(h => h.startsWith('expl') || h === 'rationale' || h === 'justification'),
+        category: hdr.findIndex(h => h === 'category' || h === 'catégorie' || h === 'categorie' || h === 'section')
+      };
+      // Fallback to positional if header not found
+      if (colIdx.answer < 0) colIdx.answer = 5;
+      if (colIdx.explanation < 0) colIdx.explanation = colIdx.answer + 1;
+      if (colIdx.category < 0) colIdx.category = colIdx.answer + 2;
+
       for (let i = 1; i < rows.length; i++) {
         const r = rows[i];
         if (!r[0]) continue;
-        const ansRaw = String(r[5]||'').trim().toUpperCase();
+        const ansRaw = String(r[colIdx.answer]||'').trim().toUpperCase();
         const answers = ansRaw.split(',').map(a=>a.trim()).filter(Boolean);
+        const choiceCols = [colIdx.a,colIdx.b,colIdx.c,colIdx.d,colIdx.e].filter(x=>x>=0);
         questions.push({
           id: i,
-          text: String(r[0]||'').trim(),
-          choices: [r[1],r[2],r[3],r[4]].map(c=>String(c||'').trim()).filter(Boolean),
+          text: String(r[colIdx.question]||'').trim(),
+          choices: choiceCols.map(ci=>String(r[ci]||'').trim()).filter(Boolean),
           answers,
-          explanation: String(r[6]||'').trim(),
-          category: String(r[7]||'').trim() || 'Général'
+          explanation: String(r[colIdx.explanation]||'').trim(),
+          category: String(r[colIdx.category]||'').trim() || 'Général'
         });
       }
       if (questions.length === 0) { toast('Aucune question trouvée — vérifie le format'); return; }
