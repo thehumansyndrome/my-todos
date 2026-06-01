@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#F7F6F3">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Quiz Certif">
 <title>Quiz Certif — Régis</title>
+<link rel="manifest" href="./manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -810,6 +815,29 @@ load();
 applyTheme(localStorage.getItem(TK) || 'light');
 updateHomeStats();
 if (S.questions.length > 0) showImportResult();
+
+// Service Worker registration (offline support)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => {
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing;
+          nw.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              toast('Mise à jour disponible — recharge la page');
+            }
+          });
+        });
+      })
+      .catch(() => {}); // SW not critical, fail silently
+  });
+}
+
+// Online/offline banner
+window.addEventListener('online',  () => { toast('Connexion rétablie — sync Drive...'); if (getToken()) drivePush(); });
+window.addEventListener('offline', () => { toast('Mode hors-ligne — données locales uniquement'); });
+
 // Auto-reconnect Drive if token exists from previous session
 window.addEventListener('load', () => {
   if (sessionStorage.getItem(TOK_KEY)) { setSync('connected'); startPolling(); drivePull(); }
