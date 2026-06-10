@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Repartie — Entraînement</title>
+<style>
+:root{
+  --bg:#F7F6F3; --card:#FFFFFF; --card-fade:#FFFFFF; --text:#1A1815; --muted:#6B6660;
+  --line:#E7E3DC; --accent:#C2410C; --accent-soft:#FBEAE0;
+  --green:#3F7D52; --green-soft:#E6F0E8; --red:#B4452F; --red-soft:#F8E7E2;
+  --amber:#B5790E; --amber-soft:#F7EBCE; --chip:#F1EEE8;
+}
+[data-theme="sand"]{
+  --bg:#F8F7FF; --card:#FFFFFF; --card-fade:#FFFFFF; --text:#1B1A24; --muted:#6A6780;
+  --line:#E6E4F2; --accent:#6D28D9; --accent-soft:#EDE6FB; --chip:#EFEDF8;
+  --green-soft:#E7F0E9; --red-soft:#F6E6E2; --amber-soft:#F5EBD2;
+}
+[data-theme="navy"]{
+  --bg:#161925; --card:#1E2230; --card-fade:#1E2230; --text:#E8EAF0; --muted:#9AA0B4;
+  --line:#2C3142; --accent:#F59E0B; --accent-soft:#3A2E10; --chip:#262B3A;
+  --green:#6FCF97; --green-soft:#1E3326; --red:#E57373; --red-soft:#3A2120;
+  --amber:#F5C451; --amber-soft:#3A2E10;
+}
+[data-theme="dark"]{
+  --bg:#111113; --card:#1A1A1D; --card-fade:#1A1A1D; --text:#ECEAE6; --muted:#8E8A84;
+  --line:#2A2A2E; --accent:#F97316; --accent-soft:#3A1E0C; --chip:#222226;
+  --green:#5FB37A; --green-soft:#16291C; --red:#E57373; --red-soft:#33201C;
+  --amber:#E0A93B; --amber-soft:#332710;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+  font-family:'Geist',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  font-size:16px;line-height:1.5;-webkit-text-size-adjust:100%;}
+.mono{font-family:'Geist Mono',ui-monospace,'SF Mono',Menlo,monospace;}
+.page{max-width:680px;margin:0 auto;padding:0 16px 96px;}
+.header{position:sticky;top:0;z-index:100;background:var(--bg);
+  display:flex;align-items:center;gap:10px;padding:14px 16px 10px;max-width:680px;margin:0 auto;
+  border-bottom:1px solid var(--line);}
+.header h1{font-size:17px;font-weight:600;margin:0;letter-spacing:-.01em;flex:1;}
+.header h1 .dot{color:var(--accent);}
+.iconbtn{background:none;border:1px solid var(--line);color:var(--text);width:38px;height:38px;
+  border-radius:9px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.iconbtn:active{background:var(--chip);}
+.tabs{position:sticky;top:53px;z-index:99;background:var(--bg);display:flex;gap:4px;
+  max-width:680px;margin:0 auto;padding:8px 12px;overflow-x:auto;border-bottom:1px solid var(--line);
+  scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex:0 0 auto;background:none;border:none;color:var(--muted);font-size:14px;font-weight:500;
+  padding:8px 12px;border-radius:8px;cursor:pointer;white-space:nowrap;min-height:40px;}
+.tab.active{background:var(--accent-soft);color:var(--accent);}
+.section{display:none;padding-top:16px;}
+.section.active{display:block;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px;}
+.muted{color:var(--muted);}
+.small{font-size:13px;}
+.chip{display:inline-block;background:var(--chip);color:var(--muted);font-size:11.5px;font-weight:500;
+  padding:3px 9px;border-radius:999px;margin:0 5px 5px 0;}
+.tech-chip{display:inline-block;background:transparent;border:1px solid var(--accent);color:var(--accent);
+  font-size:11px;font-weight:500;padding:2px 8px;border-radius:999px;margin:0 5px 6px 0;}
+button.btn{font-family:inherit;font-size:15px;font-weight:500;border-radius:10px;cursor:pointer;
+  padding:11px 16px;min-height:46px;border:1px solid var(--line);background:var(--card);color:var(--text);}
+button.btn:active{transform:scale(.985);}
+button.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+[data-theme="navy"] button.btn.primary,[data-theme="dark"] button.btn.primary{color:#1a1208;}
+.row{display:flex;gap:8px;flex-wrap:wrap;}
+.row.full button{flex:1;}
+textarea,input,select{font-family:inherit;font-size:15px;background:var(--bg);color:var(--text);
+  border:1px solid var(--line);border-radius:10px;padding:11px 12px;width:100%;color-scheme:light;}
+[data-theme="navy"] textarea,[data-theme="navy"] input,[data-theme="navy"] select,
+[data-theme="dark"] textarea,[data-theme="dark"] input,[data-theme="dark"] select{color-scheme:dark;}
+textarea{resize:none;line-height:1.5;}
+.label{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.vanne{font-size:20px;font-weight:500;line-height:1.4;letter-spacing:-.01em;margin:6px 0 4px;}
+.vanne::before{content:'« ';color:var(--muted);}
+.vanne::after{content:' »';color:var(--muted);}
+.reply{border-left:3px solid var(--line);padding:8px 0 8px 12px;margin:10px 0;}
+.reply.r{border-color:var(--accent);}
+.reply-txt{font-size:15.5px;line-height:1.45;}
+.statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;}
+.stat .n{font-size:24px;font-weight:600;letter-spacing:-.02em;}
+.stat .l{font-size:11.5px;color:var(--muted);margin-top:2px;}
+.rate-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.rate{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:11px;
+  padding:12px 6px;font-size:14px;font-weight:500;cursor:pointer;min-height:52px;}
+.rate.x{background:var(--red-soft);}.rate.x{color:var(--red);border-color:transparent;}
+.rate.ok{background:var(--amber-soft);color:var(--amber);border-color:transparent;}
+.rate.top{background:var(--green-soft);color:var(--green);border-color:transparent;}
+.fade-in{animation:fi .25s ease;}
+@keyframes fi{from{opacity:0;transform:translateY(4px);}to{opacity:1;}}
+.timer-bar{height:6px;background:var(--chip);border-radius:999px;overflow:hidden;margin:14px 0;}
+.timer-fill{height:100%;background:var(--accent);width:100%;}
+.acc{cursor:pointer;}
+.acc .body{display:none;margin-top:10px;}
+.acc.open .body{display:block;}
+.acc .arr{transition:transform .15s;float:right;color:var(--muted);}
+.acc.open .arr{transform:rotate(90deg);}
+.fav{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px;}
+.fav.on{color:var(--accent);}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);
+  padding:10px 18px;border-radius:999px;font-size:14px;z-index:300;opacity:0;pointer-events:none;transition:opacity .2s;}
+.toast.show{opacity:1;}
+.hint{font-size:13px;color:var(--muted);margin-top:4px;}
+.divider{height:1px;background:var(--line);margin:14px 0;}
+.big-cd{font-size:54px;font-weight:600;text-align:center;letter-spacing:-.03em;font-variant-numeric:tabular-nums;}
+h3.t{font-size:15px;font-weight:600;margin:0 0 8px;}
+.flex-between{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.ctx-pill{cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--muted);
+  font-size:13px;padding:7px 12px;border-radius:999px;min-height:38px;}
+.ctx-pill.on{background:var(--accent-soft);color:var(--accent);border-color:transparent;}
+.foot{text-align:center;color:var(--muted);font-size:12px;margin-top:24px;}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Repartie<span class="dot">.</span></h1>
+  <button class="iconbtn" id="theme-btn" onclick="toggleTheme()" title="Thème">☀︎</button>
+</div>
+<div class="tabs">
+  <button class="tab active" data-tab="drill" onclick="go('drill')">Entraînement</button>
+  <button class="tab" data-tab="flash" onclick="go('flash')">Flash ⏱</button>
+  <button class="tab" data-tab="tech" onclick="go('tech')">Techniques</button>
+  <button class="tab" data-tab="mind" onclick="go('mind')">Principes</button>
+  <button class="tab" data-tab="prof" onclick="go('prof')">Profil</button>
+</div>
+<div class="page">
+
+  <!-- ENTRAINEMENT -->
+  <div id="tab-drill" class="section active">
+    <div style="overflow-x:auto;white-space:nowrap;margin:0 -16px 12px;padding:0 16px;">
+      <div id="ctx-pills" style="display:inline-flex;gap:6px;"></div>
+    </div>
+    <div id="drill-area"></div>
+  </div>
+
+  <!-- FLASH -->
+  <div id="tab-flash" class="section">
+    <div id="flash-intro" class="card">
+      <h3 class="t">Mode Flash — réflexe & vitesse</h3>
+      <p class="muted small" style="margin-top:0;">Une vanne s'affiche, le chrono tourne. Tu réponds <b>à voix haute ou dans ta tête</b> avant la fin, puis tu révèles. La repartie, c'est 80% de timing.</p>
+      <div class="label">Temps par vanne</div>
+      <div class="row" style="margin-bottom:14px;">
+        <button class="btn fs-opt" data-s="3" onclick="setFlash(3)">3 s</button>
+        <button class="btn fs-opt" data-s="5" onclick="setFlash(5)">5 s</button>
+        <button class="btn fs-opt" data-s="8" onclick="setFlash(8)">8 s</button>
+      </div>
+      <button class="btn primary" style="width:100%;" onclick="startFlash()">Lancer une session de 10</button>
+    </div>
+    <div id="flash-area"></div>
+  </div>
+
+  <!-- TECHNIQUES -->
+  <div id="tab-tech" class="section">
+    <p class="muted small" style="margin-top:0;">Les 12 « coups » de base. La repartie n'est pas un don : c'est un répertoire de schémas qu'on reconnaît et qu'on déclenche vite.</p>
+    <div id="tech-list"></div>
+  </div>
+
+  <!-- PRINCIPES -->
+  <div id="tab-mind" class="section">
+    <p class="muted small" style="margin-top:0;">L'état d'esprit compte plus que la phrase. Relis-les avant un dîner tendu.</p>
+    <div id="mind-list"></div>
+  </div>
+
+  <!-- PROFIL -->
+  <div id="tab-prof" class="section">
+    <div class="statgrid" style="margin-bottom:14px;">
+      <div class="stat"><div class="n" id="s-done">0</div><div class="l">vannes jouées</div></div>
+      <div class="stat"><div class="n" id="s-rate">—</div><div class="l">taux de réussite</div></div>
+      <div class="stat"><div class="n" id="s-streak">0</div><div class="l">jours de suite</div></div>
+    </div>
+    <div class="card">
+      <h3 class="t">Mes favoris (<span id="fav-count">0</span>)</h3>
+      <div id="fav-list"><p class="muted small">Touche ☆ sur une vanne pour la garder ici.</p></div>
+    </div>
+    <div class="card">
+      <h3 class="t">Affichage</h3>
+      <div class="flex-between">
+        <span class="muted small">Taille du texte</span>
+        <div class="row">
+          <button class="iconbtn" onclick="fs(-1)">A−</button>
+          <button class="iconbtn" style="width:auto;padding:0 12px;" id="fs-lbl" onclick="fs(0)">100%</button>
+          <button class="iconbtn" onclick="fs(1)">A+</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3 class="t">Sauvegarde (hors-ligne)</h3>
+      <p class="muted small" style="margin-top:0;">Ta progression est gardée dans ce navigateur. Pour la transférer ou la sécuriser :</p>
+      <div class="row full">
+        <button class="btn" onclick="exportData()">Exporter</button>
+        <button class="btn" onclick="document.getElementById('imp').click()">Importer</button>
+      </div>
+      <input type="file" id="imp" accept="application/json" style="display:none" onchange="importData(event)">
+      <div class="divider"></div>
+      <button class="btn" style="color:var(--red);border-color:var(--red);width:100%;" onclick="resetAll()">Réinitialiser la progression</button>
+    </div>
+    <p class="foot">100% hors-ligne · aucune donnée envoyée · repartie001</p>
+  </div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============== DONNÉES ============== */
+const TECH = [
+  {id:'amp', nom:'L\'amplification', sub:'Surenchère',
+   p:'Tu valides la vanne et tu en rajoutes jusqu\'à l\'absurde. L\'autre voulait te voir vexé ; tu fais l\'inverse, tu sur-confirmes. Plus rien à attaquer.',
+   v:'T\'es vraiment nul en sport.', r:'Nul ? Je suis une catastrophe naturelle. On évacue le gymnase quand j\'arrive.'},
+  {id:'ret', nom:'Le retournement', sub:'Renvoyer l\'envoi',
+   p:'Tu renvoies la pique à l\'expéditeur, souvent en réutilisant ses propres mots.',
+   v:'T\'as mis trois heures à comprendre.', r:'Heureusement que t\'étais là pour les compter, ça t\'a occupé.'},
+  {id:'que', nom:'La question innocente', sub:'Fais porter le poids',
+   p:'Tu réponds par une question candide qui oblige l\'autre à assumer sa méchanceté à voix haute.',
+   v:'Jolie chemise… enfin si on aime ça.', r:'C\'est censé me vexer, ou c\'est juste un bulletin météo ?'},
+  {id:'fle', nom:'Le flegme', sub:'Deadpan',
+   p:'Zéro émotion, ton parfaitement plat. La sécheresse fait tout le travail.',
+   v:'T\'es en retard, comme d\'habitude.', r:'C\'est mon côté mystérieux.'},
+  {id:'aut', nom:'L\'auto-dérision', sub:'Coupe l\'herbe sous le pied',
+   p:'Tu te vannes toi-même, mieux et avant l\'autre. Il n\'a plus rien à dire.',
+   v:'Belle coupe de cheveux…', r:'Je sais. Mon coiffeur me déteste, c\'est réciproque.'},
+  {id:'rec', nom:'Le recadrage', sub:'Le défaut devient qualité',
+   p:'Tu retournes le reproche en force, ou tu changes complètement le cadre.',
+   v:'Tu parles trop.', r:'J\'appelle ça remplir les silences gênants que les autres laissent. De rien.'},
+  {id:'abs', nom:'L\'absurde', sub:'Non-sequitur',
+   p:'Une réponse totalement décalée qui casse la logique de l\'attaque. L\'autre ne sait plus sur quel pied danser.',
+   v:'T\'as encore grossi.', r:'Oui, je me prépare pour l\'hibernation. C\'est un mode de vie.'},
+  {id:'com', nom:'La fausse compassion', sub:'Gentillesse condescendante',
+   p:'Tu réponds avec une douceur exagérée, comme si c\'était l\'autre qui avait un problème.',
+   v:'T\'as rien capté à la réunion.', r:'C\'est mignon que tu t\'inquiètes pour moi.'},
+  {id:'chi', nom:'Le chiffre précis', sub:'Faux sérieux bureaucratique',
+   p:'Tu réponds avec une précision absurde et administrative. Le décalage de registre fait rire.',
+   v:'T\'es toujours de mauvaise humeur.', r:'73% du temps. Les statistiques sont formelles.'},
+  {id:'mer', nom:'Le « merci »', sub:'Accepter comme un compliment',
+   p:'Tu prends la vanne pour un éloge, très sincèrement. Désarmant.',
+   v:'T\'es bizarre.', r:'Merci, j\'y travaille dur.'},
+  {id:'piv', nom:'Le pivot bienveillant', sub:'« Et toi, ça va ? »',
+   p:'Tu montres que ça ne t\'atteint pas et tu renvoies l\'autre à lui-même, presque inquiet pour lui.',
+   v:'T\'as pris dix ans.', r:'Et toi t\'as pris quoi ? T\'es agressif là, tout va bien à la maison ?'},
+  {id:'sil', nom:'Le silence', sub:'Non-verbal',
+   p:'La meilleure repartie est parfois un sourcil levé, un demi-sourire, deux secondes de silence — puis tu changes de sujet. Tu refuses le match.',
+   v:'(une vanne lourde)', r:'…(regard amusé)… « Bref. On en était où ? »'}
+];
+const TIDX = Object.fromEntries(TECH.map(t=>[t.id,t]));
+
+const MIND = [
+  {t:'La vanne cherche une réaction', d:'Vexé, énervé, gêné : c\'est ce qu\'elle vient chasser. Rester calme et amusé, c\'est déjà avoir gagné, même sans répondre.'},
+  {t:'Le timing bat le contenu', d:'Une réplique moyenne dite en 1 seconde écrase une réplique géniale qui arrive 30 secondes trop tard. Entraîne la vitesse, pas la perfection.'},
+  {t:'Tu n\'es pas obligé de gagner', d:'Sourire, dire « ah ah, pas mal » et passer à autre chose est une option forte. Refuser le duel, c\'est aussi une repartie.'},
+  {t:'Vise le trait, pas la personne', d:'Repartie ≠ méchanceté. Le but est de désamorcer et de faire rire, pas d\'humilier. Une pique trop cruelle te fait perdre la salle.'},
+  {t:'Le ton fait 80%', d:'Détendu, presque content qu\'on t\'ait lancé la balle. Si tu as l\'air touché, le mot le plus drôle tombe à plat.'},
+  {t:'La règle du « oui, et… »', d:'Empruntée à l\'impro : accepte la prémisse de l\'autre, puis rebondis dessus au lieu de la nier. C\'est la base de l\'amplification.'},
+  {t:'Prépare des passe-partout', d:'2-3 répliques génériques prêtes à dégainer (« C\'est tout ? », « Note-le, ça t\'arrive rarement d\'avoir raison ») te font gagner le temps de trouver mieux.'},
+  {t:'Connais tes points sensibles', d:'Les vannes qui te touchent vraiment ? Prépare-leur une réponse à froid, une fois pour toutes. Le jour J, tu ne réfléchis plus, tu sors la phrase.'}
+];
+
+const CTX = ['Tous','Travail','Amis','Famille','Look','Soirée','Esprit'];
+const DRILLS = [
+  {id:1,c:'Travail',v:'On t\'a confié ça à toi ? Courageux, le chef.',
+   reps:[{t:'fle',x:'« Il aime le risque. »'},{t:'amp',x:'« Oui, c\'est sa phase audacieuse. La semaine prochaine il me laisse conduire le budget. »'}]},
+  {id:2,c:'Travail',v:'T\'as encore rien compris à la présentation.',
+   reps:[{t:'com',x:'« C\'est gentil de t\'inquiéter pour mon développement personnel. »'},{t:'que',x:'« Tu proposes de m\'expliquer, ou juste de le souligner ? »'}]},
+  {id:3,c:'Travail',v:'Toi, manager ? J\'aurai tout vu.',
+   reps:[{t:'mer',x:'« Merci, je prends ça comme un vote de confiance. »'},{t:'ret',x:'« Inquiète-toi plutôt de qui sera ton manager. »'}]},
+  {id:4,c:'Travail',v:'T\'es toujours le dernier à finir.',
+   reps:[{t:'rec',x:'« Je préfère bien finir que finir vite. Mais je note ta vitesse, c\'est noté. »'},{t:'chi',x:'« Statistiquement, le dernier ferme la lumière. Quelqu\'un doit le faire. »'}]},
+  {id:5,c:'Travail',v:'Belle idée… pour un stagiaire.',
+   reps:[{t:'amp',x:'« Attends de voir ma prochaine, niveau lycée. Je remonte dans le temps. »'},{t:'fle',x:'« Les stagiaires ont parfois meilleur goût, oui. »'}]},
+  {id:6,c:'Travail',v:'T\'as l\'air crevé, t\'as fait quoi cette nuit ?',
+   reps:[{t:'abs',x:'« J\'ai compté tes heures de retard sur le projet, ça occupe. »'},{t:'fle',x:'« J\'ai veillé sur la qualité du dossier. Toi ? »'}]},
+  {id:7,c:'Amis',v:'Toi en couple ? La pauvre.',
+   reps:[{t:'mer',x:'« Je sais, je suis un projet humanitaire ambulant. Elle est très fière. »'},{t:'ret',x:'« Au moins quelqu\'un a tenté. Et toi, ça donne quoi ? »'}]},
+  {id:8,c:'Amis',v:'T\'es vraiment radin.',
+   reps:[{t:'rec',x:'« J\'appelle ça de la planification financière. Toi tu appelles ça « ta tournée », apparemment. »'},{t:'amp',x:'« Radin ? Je facture l\'oxygène que tu respires à côté de moi. »'}]},
+  {id:9,c:'Amis',v:'T\'arrives toujours en retard.',
+   reps:[{t:'amp',x:'« Je fais durer le plaisir de l\'attente. Vous m\'aimez plus quand j\'arrive. »'},{t:'fle',x:'« Et pourtant vous m\'attendez. Curieux, non ? »'}]},
+  {id:10,c:'Amis',v:'Ta blague était nulle.',
+   reps:[{t:'aut',x:'« Je sais, je teste mes pires sur mes meilleurs amis. Tu as réussi le test. »'},{t:'chi',x:'« 1 sur 10. La moyenne remonte, merci de suivre. »'}]},
+  {id:11,c:'Amis',v:'Tu danses comme un robot en panne.',
+   reps:[{t:'mer',x:'« Merci, c\'est un style. Ça s\'appelle l\'avant-garde. »'},{t:'amp',x:'« Attends la deuxième partie, je débloque le mode essoreuse. »'}]},
+  {id:12,c:'Amis',v:'Encore en train de raconter n\'importe quoi.',
+   reps:[{t:'rec',x:'« On appelle ça de la conversation. Essaie, c\'est gratuit. »'},{t:'fle',x:'« C\'est mon talent. Tout le monde n\'en a pas. »'}]},
+  {id:13,c:'Famille',v:'Toujours pas marié ? À ton âge…',
+   reps:[{t:'piv',x:'« Et toi, toujours aussi pressé de marier les autres ? Tout va bien chez toi ? »'},{t:'fle',x:'« J\'attends quelqu\'un d\'aussi insistant que toi. La barre est haute. »'}]},
+  {id:14,c:'Famille',v:'Tu ne fais jamais rien comme tout le monde.',
+   reps:[{t:'mer',x:'« Merci. « Comme tout le monde », c\'est mon cauchemar. »'},{t:'rec',x:'« C\'est l\'idée, oui. Sinon il y aurait deux de toi, et là c\'est non. »'}]},
+  {id:15,c:'Famille',v:'De mon temps, on travaillait, nous.',
+   reps:[{t:'que',x:'« Et c\'était mieux ? Raconte, je prends des notes pour éviter. »'},{t:'fle',x:'« De ton temps il n\'y avait pas Internet non plus. On évolue. »'}]},
+  {id:16,c:'Famille',v:'Tu as encore changé de projet ?',
+   reps:[{t:'rec',x:'« On appelle ça explorer. Toi tu appelles ça « se poser », depuis 30 ans, sur le même canapé. »'},{t:'amp',x:'« Oui, et j\'en ai trois autres en réserve. Je vis à fond. »'}]},
+  {id:17,c:'Look',v:'C\'est… un choix, cette tenue.',
+   reps:[{t:'mer',x:'« Merci d\'avoir remarqué. C\'est exactement l\'effet recherché. »'},{t:'que',x:'« Oui. Et toi, c\'en est un aussi ? On dirait pas, mais bon. »'}]},
+  {id:18,c:'Look',v:'T\'as pris quelques kilos non ?',
+   reps:[{t:'abs',x:'« Oui, je stocke pour l\'hiver. Stratégie d\'ours, très efficace. »'},{t:'piv',x:'« Et toi, t\'as pris quelques remarques de trop, ça va sinon ? »'}]},
+  {id:19,c:'Look',v:'Jolie coupe… qui t\'a fait ça ?',
+   reps:[{t:'aut',x:'« Mon ennemi juré. On s\'est réconciliés trop tard. »'},{t:'fle',x:'« Quelqu\'un de très talentueux que tu n\'as pas les moyens de t\'offrir. »'}]},
+  {id:20,c:'Look',v:'Tu fais plus vieux que ton âge.',
+   reps:[{t:'rec',x:'« On dit « mature ». J\'ai sauté l\'étape « insupportable », contrairement à certains. »'},{t:'chi',x:'« De 4 ans précisément. C\'est l\'effet sagesse. »'}]},
+  {id:21,c:'Soirée',v:'T\'es bien silencieux toi, t\'as rien à dire ?',
+   reps:[{t:'fle',x:'« J\'écoute. C\'est rare, profitez-en. »'},{t:'mer',x:'« J\'observe. C\'est fou ce qu\'on apprend sur les gens. Toi par exemple. »'}]},
+  {id:22,c:'Soirée',v:'Personne t\'a invité je crois ?',
+   reps:[{t:'fle',x:'« Et pourtant me voilà. La vie est pleine de surprises. »'},{t:'amp',x:'« Si, mais j\'ai oublié qui. C\'est l\'intention qui compte. »'}]},
+  {id:23,c:'Soirée',v:'Tu ne sais vraiment pas draguer.',
+   reps:[{t:'aut',x:'« C\'est vrai. Heureusement, mon charme fait tout le boulot tout seul. »'},{t:'mer',x:'« Merci de l\'analyse détaillée. Tu m\'observes depuis longtemps ? »'}]},
+  {id:24,c:'Soirée',v:'T\'as bu combien là ?',
+   reps:[{t:'chi',x:'« Deux de moins que toi, à en juger par la question. »'},{t:'fle',x:'« Assez pour te trouver intéressant. C\'est dire. »'}]},
+  {id:25,c:'Soirée',v:'C\'est toi qui as choisi la musique ? Pitié…',
+   reps:[{t:'mer',x:'« Oui. Tu peux danser pour me remercier. »'},{t:'amp',x:'« Attends la suite, ça empire. C\'est un voyage. »'}]},
+  {id:26,c:'Esprit',v:'T\'es pas très malin toi.',
+   reps:[{t:'mer',x:'« Merci, ça m\'enlève une pression énorme. »'},{t:'ret',x:'« Et toi t\'es très observateur. Il t\'a fallu combien de temps ? »'}]},
+  {id:27,c:'Esprit',v:'Même un enfant comprendrait.',
+   reps:[{t:'rec',x:'« Alors explique comme à un enfant. Tu devrais y arriver, on est au même niveau. »'},{t:'fle',x:'« Vas-y, fais l\'enfant. On t\'écoute. »'}]},
+  {id:28,c:'Esprit',v:'Tu réfléchis avant de parler, parfois ?',
+   reps:[{t:'fle',x:'« Oui. C\'est pour ça que je parle peu quand t\'es là. »'},{t:'chi',x:'« 80% du temps. Les 20% restants, c\'est pour te répondre. »'}]},
+  {id:29,c:'Esprit',v:'T\'as toujours une réponse à tout, c\'est insupportable.',
+   reps:[{t:'mer',x:'« Merci. C\'est un travail de tous les jours, je suis touché que ça se voie. »'},{t:'fle',x:'« Pas à tout. Là par exemple, je n\'ai rien. … C\'était une blague. »'}]},
+  {id:30,c:'Esprit',v:'C\'est la pire idée que j\'aie entendue.',
+   reps:[{t:'amp',x:'« Attends mardi. J\'en ai une encore pire en préparation, tu vas adorer. »'},{t:'que',x:'« De la journée, ou de ta vie ? Parce que ça change le compliment. »'}]},
+  {id:31,c:'Travail',v:'On voit que c\'est pas toi qui as bossé.',
+   reps:[{t:'ret',x:'« On voit surtout qui passe son temps à regarder ce que font les autres. »'},{t:'fle',x:'« Le résultat est là. Le reste, c\'est de la mise en scène. »'}]},
+  {id:32,c:'Amis',v:'Toi, faire du sport ? Mytho.',
+   reps:[{t:'aut',x:'« C\'est vrai, mon canapé porte plainte pour usure. »'},{t:'amp',x:'« Si, je soulève. Des excuses, surtout. C\'est un muscle aussi. »'}]},
+  {id:33,c:'Famille',v:'Tu gagnes vraiment ta vie avec ça ?',
+   reps:[{t:'fle',x:'« Oui. Surprenant, le monde moderne. »'},{t:'rec',x:'« Mieux que je ne croyais, et sans avoir à le justifier au dîner. »'}]},
+  {id:34,c:'Look',v:'T\'as dormi habillé ou quoi ?',
+   reps:[{t:'amp',x:'« Mieux : je dors en costume depuis 2019. Gain de temps colossal. »'},{t:'mer',x:'« Merci d\'avoir remarqué mon style « effort minimal assumé ». »'}]},
+  {id:35,c:'Soirée',v:'Tu connais personne ici, c\'est gênant pour toi.',
+   reps:[{t:'fle',x:'« Pas vraiment. Toi tu connais tout le monde, et pourtant tu me parles à moi. »'},{t:'piv',x:'« Ça a l\'air de te déranger plus que moi. Ça va ? »'}]},
+  {id:36,c:'Esprit',v:'Laisse parler les adultes.',
+   reps:[{t:'fle',x:'« Vas-y, je t\'écoute. … J\'attends toujours. »'},{t:'ret',x:'« Avec plaisir. Préviens-moi quand l\'un d\'eux arrive. »'}]}
+];
+
+/* ============== ÉTAT ============== */
+const LS_OK = (()=>{try{localStorage.setItem('__t','1');localStorage.removeItem('__t');return true;}catch(e){return false;}})();
+const K='rep001_v1';
+let MEM={};
+function lsGet(){if(!LS_OK)return MEM[K]||null;try{return localStorage.getItem(K);}catch(e){return null;}}
+function lsSet(v){if(!LS_OK){MEM[K]=v;return;}try{localStorage.setItem(K,v);}catch(e){MEM[K]=v;}}
+let S={};
+function ensureState(){
+  S=S||{};
+  if(typeof S!=='object')S={};
+  if(!S.progress||typeof S.progress!=='object')S.progress={};
+  if(!Array.isArray(S.favs))S.favs=[];
+  if(!S.stats||typeof S.stats!=='object')S.stats={};
+  if(typeof S.stats.done!=='number')S.stats.done=0;
+  if(typeof S.stats.x!=='number')S.stats.x=0;
+  if(typeof S.stats.ok!=='number')S.stats.ok=0;
+  if(typeof S.stats.top!=='number')S.stats.top=0;
+  if(typeof S.stats.streak!=='number')S.stats.streak=0;
+  if(typeof S.stats.lastDay!=='string')S.stats.lastDay='';
+  if(typeof S.flashSec!=='number')S.flashSec=5;
+  if(typeof S.fsIdx!=='number')S.fsIdx=2;
+  if(typeof S.theme!=='string')S.theme='light';
+}
+function load(){
+  try{S=JSON.parse(lsGet())||{};}catch(e){S={};}
+  ensureState();
+}
+function save(){ensureState();lsSet(JSON.stringify(S));}
+
+/* ============== NAV / THÈME / FONT ============== */
+function go(tab){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  window.scrollTo(0,0);
+  if(tab==='prof')renderProfile();
+}
+const THEMES=['light','sand','navy','dark'];
+const TI={light:'☀︎',sand:'○',navy:'◑',dark:'☾'};
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t==='light'?'':t);
+  document.getElementById('theme-btn').textContent=TI[t]||'☀︎';
+  S.theme=t;save();
+}
+function toggleTheme(){applyTheme(THEMES[(THEMES.indexOf(S.theme)+1)%THEMES.length]);}
+const FS=[0.85,0.92,1.0,1.1,1.22,1.35];
+function applyFs(){
+  const sc=FS[S.fsIdx]||1;const p=document.querySelector('.page');
+  if(CSS.supports&&CSS.supports('zoom','1'))p.style.zoom=sc;
+  else{p.style.transformOrigin='top center';p.style.transform='scale('+sc+')';}
+  document.getElementById('fs-lbl').textContent=Math.round(sc*100)+'%';
+}
+function fs(d){if(d===0)S.fsIdx=2;else S.fsIdx=Math.max(0,Math.min(FS.length-1,S.fsIdx+d));applyFs();save();}
+
+/* ============== ENTRAINEMENT ============== */
+let curCtx='Tous',curDrill=null,revealed=false;
+function renderCtx(){
+  const c=document.getElementById('ctx-pills');
+  c.innerHTML=CTX.map(x=>`<button class="ctx-pill ${x===curCtx?'on':''}" onclick="setCtx('${x}')">${x}</button>`).join('');
+}
+function setCtx(x){curCtx=x;renderCtx();nextDrill();}
+function pool(){return curCtx==='Tous'?DRILLS:DRILLS.filter(d=>d.c===curCtx);}
+function nextDrill(){
+  const p=pool();if(!p.length){document.getElementById('drill-area').innerHTML='<div class="card muted">Rien ici.</div>';return;}
+  curDrill=p[Math.floor(Math.random()*p.length)];revealed=false;
+  renderDrill();
+}
+function isFav(id){return S.favs.includes(id);}
+function toggleFav(id){
+  if(isFav(id))S.favs=S.favs.filter(x=>x!==id);else S.favs.push(id);
+  save();renderDrill();toast(isFav(id)?'Ajouté aux favoris':'Retiré');
+}
+function renderDrill(){
+  const d=curDrill;
+  let html=`<div class="card fade-in">
+    <div class="flex-between"><span class="chip">${d.c}</span>
+      <button class="fav ${isFav(d.id)?'on':''}" onclick="toggleFav(${d.id})">${isFav(d.id)?'★':'☆'}</button></div>
+    <div class="vanne">${d.v}</div>
+    <div class="hint">À ton tour. Formule ta repartie (à voix haute ou écris-la), puis révèle.</div>
+    <textarea id="my-reply" rows="2" placeholder="Ta repartie…" style="margin-top:10px;"
+      oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>`;
+  if(!revealed){
+    html+=`<div class="row full" style="margin-top:12px;">
+      <button class="btn primary" onclick="reveal()">Révéler les exemples</button>
+      <button class="btn" onclick="nextDrill()">Passer →</button></div>`;
+  }else{
+    html+=`<div class="divider"></div><div class="label">Exemples par technique</div>`;
+    d.reps.forEach(rp=>{const t=TIDX[rp.t];
+      html+=`<div class="reply r"><span class="tech-chip">${t.nom}</span>
+        <div class="reply-txt">${rp.x}</div></div>`;});
+    html+=`<div class="divider"></div><div class="label">Comment t'es-tu débrouillé ?</div>
+      <div class="rate-row">
+        <button class="rate x" onclick="rate('x')">Séché</button>
+        <button class="rate ok" onclick="rate('ok')">Correct</button>
+        <button class="rate top" onclick="rate('top')">Excellent</button>
+      </div>`;
+  }
+  html+=`</div>`;
+  document.getElementById('drill-area').innerHTML=html;
+}
+function reveal(){revealed=true;renderDrill();}
+function rate(r){
+  S.stats.done++;S.stats[r]++;
+  S.progress[curDrill.id]=r;
+  bumpStreak();save();
+  toast(r==='top'?'Excellent 🔥':r==='ok'?'Solide.':'On y retravaille.');
+  nextDrill();
+}
+function bumpStreak(){
+  const today=new Date().toISOString().slice(0,10);
+  if(S.stats.lastDay===today)return;
+  const y=new Date(Date.now()-86400000).toISOString().slice(0,10);
+  S.stats.streak=(S.stats.lastDay===y)?S.stats.streak+1:1;
+  S.stats.lastDay=today;
+}
+
+/* ============== FLASH ============== */
+let flashQueue=[],flashTimer=null;
+function setFlash(s){S.flashSec=s;save();renderFlashOpts();}
+function renderFlashOpts(){
+  document.querySelectorAll('.fs-opt').forEach(b=>{
+    b.classList.toggle('primary',+b.dataset.s===S.flashSec);});
+}
+function startFlash(){
+  flashQueue=[...DRILLS].sort(()=>Math.random()-0.5).slice(0,10);
+  document.getElementById('flash-intro').style.display='none';
+  flashStep();
+}
+function flashStep(){
+  clearInterval(flashTimer);
+  if(!flashQueue.length){endFlash();return;}
+  const d=flashQueue.shift();const total=S.flashSec;let left=total;
+  const area=document.getElementById('flash-area');
+  area.innerHTML=`<div class="card fade-in">
+    <div class="flex-between"><span class="chip">${d.c}</span><span class="muted small mono">${10-flashQueue.length}/10</span></div>
+    <div class="vanne">${d.v}</div>
+    <div class="big-cd mono" id="cd">${left}</div>
+    <div class="timer-bar"><div class="timer-fill" id="tf"></div></div>
+    <div id="fl-reveal"></div></div>`;
+  flashTimer=setInterval(()=>{
+    left--;
+    const cd=document.getElementById('cd');if(cd)cd.textContent=Math.max(0,left);
+    const tf=document.getElementById('tf');if(tf)tf.style.width=(Math.max(0,left)/total*100)+'%';
+    if(left<=0){clearInterval(flashTimer);flashReveal(d);}
+  },1000);
+}
+function flashReveal(d){
+  const cd=document.getElementById('cd');if(cd)cd.textContent='!';
+  let h=`<div class="divider"></div><div class="label">Exemples</div>`;
+  d.reps.forEach(rp=>{const t=TIDX[rp.t];
+    h+=`<div class="reply r"><span class="tech-chip">${t.nom}</span><div class="reply-txt">${rp.x}</div></div>`;});
+  h+=`<div class="row full" style="margin-top:12px;">
+      <button class="btn primary" onclick="flashStep()">${flashQueue.length?'Suivante →':'Terminer'}</button></div>`;
+  const r=document.getElementById('fl-reveal');if(r)r.innerHTML=h;
+  S.stats.done++;bumpStreak();save();
+}
+function endFlash(){
+  clearInterval(flashTimer);
+  document.getElementById('flash-area').innerHTML=`<div class="card fade-in" style="text-align:center;">
+    <div style="font-size:34px;">🎯</div>
+    <h3 class="t">Session terminée</h3>
+    <p class="muted small">10 réflexes travaillés. La vitesse vient avec la répétition — refais-en une.</p>
+    <button class="btn primary" style="width:100%;" onclick="resetFlash()">Nouvelle session</button></div>`;
+}
+function resetFlash(){
+  document.getElementById('flash-area').innerHTML='';
+  document.getElementById('flash-intro').style.display='';
+  renderFlashOpts();
+}
+
+/* ============== TECHNIQUES / PRINCIPES ============== */
+function renderTech(){
+  document.getElementById('tech-list').innerHTML=TECH.map((t,i)=>`
+    <div class="card acc" onclick="this.classList.toggle('open')">
+      <span class="arr">›</span>
+      <h3 class="t" style="margin:0;">${i+1}. ${t.nom} <span class="muted small">· ${t.sub}</span></h3>
+      <div class="body">
+        <p class="small" style="margin:0 0 10px;">${t.p}</p>
+        <div class="reply"><div class="muted small">Vanne</div><div class="reply-txt">« ${t.v} »</div></div>
+        <div class="reply r"><div class="muted small">Repartie</div><div class="reply-txt">${t.r}</div></div>
+      </div>
+    </div>`).join('');
+}
+function renderMind(){
+  document.getElementById('mind-list').innerHTML=MIND.map((m,i)=>`
+    <div class="card">
+      <h3 class="t" style="margin:0 0 4px;"><span style="color:var(--accent);">${String(i+1).padStart(2,'0')}</span> · ${m.t}</h3>
+      <p class="small muted" style="margin:0;">${m.d}</p>
+    </div>`).join('');
+}
+
+/* ============== PROFIL ============== */
+function renderProfile(){
+  ensureState();
+  document.getElementById('s-done').textContent=S.stats.done;
+  const tot=S.stats.ok+S.stats.top+S.stats.x;
+  document.getElementById('s-rate').textContent=tot?Math.round((S.stats.ok+S.stats.top)/tot*100)+'%':'—';
+  document.getElementById('s-streak').textContent=S.stats.streak;
+  const favs=S.favs.map(id=>DRILLS.find(d=>d.id===id)).filter(Boolean);
+  document.getElementById('fav-count').textContent=favs.length;
+  document.getElementById('fav-list').innerHTML=favs.length
+    ? favs.map(d=>`<div class="reply"><div class="flex-between"><span class="chip">${d.c}</span>
+        <button class="fav on" onclick="toggleFav(${d.id});renderProfile();">★</button></div>
+        <div class="reply-txt">« ${d.v} »</div>
+        <div class="muted small" style="margin-top:6px;">${d.reps[0]?TIDX[d.reps[0].t].nom+' — ':''}${d.reps[0]?d.reps[0].x:''}</div></div>`).join('')
+    : '<p class="muted small">Touche ☆ sur une vanne pour la garder ici.</p>';
+}
+function exportData(){
+  ensureState();
+  const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='repartie001-sauvegarde.json';a.click();toast('Exporté');
+}
+function importData(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{S=JSON.parse(r.result);ensureState();save();
+    applyTheme(S.theme);applyFs();renderProfile();renderCtx();nextDrill();toast('Importé ✓');}
+    catch(err){toast('Fichier illisible');}};
+  r.readAsText(f);e.target.value='';
+}
+function resetAll(){
+  if(!confirm('Effacer toute la progression (stats + favoris) ?'))return;
+  S={};ensureState();save();renderProfile();nextDrill();toast('Réinitialisé');
+}
+
+/* ============== TOAST ============== */
+let tT=null;
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');
+  clearTimeout(tT);tT=setTimeout(()=>t.classList.remove('show'),1500);}
+
+/* ============== INIT ============== */
+load();
+applyTheme(S.theme);
+applyFs();
+renderCtx();nextDrill();
+renderTech();renderMind();renderFlashOpts();
+if(!LS_OK)setTimeout(()=>toast('Mode aperçu : progression non sauvée ici'),600);
+</script>
+</body>
+</html>
