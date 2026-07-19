@@ -90,7 +90,7 @@ textarea.auto{ width:100%; resize:none; overflow:hidden; line-height:1.45; min-h
 
 <div class="tabs">
   <button class="tab active" data-tab="today" onclick="showTab('today')">Aujourd'hui</button>
-  <button class="tab" data-tab="ship" onclick="showTab('ship')">Ship</button>
+  <button class="tab" data-tab="ship" onclick="showTab('ship')">Objectif</button>
   <button class="tab" data-tab="backlog" onclick="showTab('backlog')">Backlog</button>
   <button class="tab" data-tab="review" onclick="showTab('review')">Revue</button>
   <button class="tab" data-tab="settings" onclick="showTab('settings')">⚙︎</button>
@@ -127,7 +127,7 @@ textarea.auto{ width:100%; resize:none; overflow:hidden; line-height:1.45; min-h
   <!-- ══════════ SHIP ══════════ -->
   <div id="tab-ship" class="section">
     <div class="card">
-      <h2>Ship de la semaine <span id="ship-deadline" class="mono"></span></h2>
+      <h2>Objectif de la semaine <span id="ship-deadline" class="mono"></span></h2>
       <label class="fl">Quoi ?</label>
       <textarea class="auto" id="ship-title" rows="1" placeholder="Ex : envoyer la démo à X"
         oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';shipEdited()"></textarea>
@@ -135,11 +135,11 @@ textarea.auto{ width:100%; resize:none; overflow:hidden; line-height:1.45; min-h
       <textarea class="auto" id="ship-note" rows="1" placeholder="Version minimale shippable"
         oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';shipEdited()"></textarea>
       <div class="row" style="margin-top:12px;">
-        <button class="btn grow" onclick="markShipped()">Shippé ✓</button>
+        <button class="btn grow" onclick="markShipped()">Réalisé ✓</button>
       </div>
     </div>
     <div class="card" id="ship-history-card" style="display:none;">
-      <h2>Historique</h2>
+      <h2>Historique des réalisations</h2>
       <div id="ship-history"></div>
     </div>
   </div>
@@ -362,7 +362,7 @@ function markShipped(){
   S.ships.unshift({id:uid(),title:t,note:S.shipPlan.note||'',shippedAt:today()});
   S.shipPlan={title:'',note:''};
   autoSave(); renderAll();
-  toast('🚀 Shippé — partage-le à une vraie personne');
+  toast('✅ Réalisé — bien joué');
 }
 function delShip(id){
   const idx=S.ships.findIndex(x=>x.id===id); if(idx<0)return;
@@ -446,7 +446,7 @@ function renderToday(){
   const n=weekNums(), d=today();
   const stats=document.getElementById('today-stats');
   stats.innerHTML=`
-    <div class="stat"><div class="n">${n.ships}</div><div class="l">Ships</div></div>
+    <div class="stat"><div class="n">${n.ships}</div><div class="l">Réalisés</div></div>
     <div class="stat"><div class="n">${n.blocks}/5</div><div class="l">Blocs sem.</div></div>
     <div class="stat"><div class="n">${streak()}</div><div class="l">Série jours</div></div>`;
   stats.style.display='';
@@ -484,7 +484,7 @@ function renderShip(){
   card.style.display='';
   h.innerHTML=S.ships.map(s=>`
     <div class="item">
-      <div class="t">🚀 ${esc(s.title)}${s.note?`<div class="small">${esc(s.note)}</div>`:''}
+      <div class="t">✅ ${esc(s.title)}${s.note?`<div class="small">${esc(s.note)}</div>`:''}
         <div class="meta">${s.shippedAt} · ${weekKey(s.shippedAt)}</div></div>
       <button class="icon-btn" onclick="delShip('${s.id}')">✕</button>
     </div>`).join('');
@@ -510,7 +510,7 @@ function renderBacklog(){
 function renderReview(){
   const n=weekNums();
   document.getElementById('review-nums').innerHTML=`
-    <div class="stat"><div class="n">${n.ships}</div><div class="l">Ships ≥1</div></div>
+    <div class="stat"><div class="n">${n.ships}</div><div class="l">Réalisés ≥1</div></div>
     <div class="stat"><div class="n">${n.blocks}/5</div><div class="l">Blocs</div></div>
     <div class="stat"><div class="n">${n.impl}/${n.coll}</div><div class="l">Impl/Coll</div></div>`;
   const card=document.getElementById('review-history-card'), h=document.getElementById('review-history');
