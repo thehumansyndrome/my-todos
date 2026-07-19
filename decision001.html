@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>decision001 — Journal de décisions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root{
+  --bg:#F7F6F3; --card:#FFFFFF; --card-fade:#FFFFFF; --text:#1a1a1a; --muted:#6b6b6b;
+  --border:#e4e2dc; --accent:#B4552D; --green:#2e7d32; --red:#c62828; --amber:#b26a00;
+  --pill:#efede8;
+}
+[data-theme="sand"]{ --bg:#F8F7FF; --card:#FFFFFF; --card-fade:#FFFFFF; --border:#e6e3f2; --pill:#efedfa; }
+[data-theme="navy"]{ --bg:#161925; --card:#1f2333; --card-fade:#1f2333; --text:#e8e9ef; --muted:#9aa0b5;
+  --border:#2c3147; --accent:#e0946b; --green:#66bb6a; --red:#e57373; --amber:#ffb74d; --pill:#262b40; }
+[data-theme="dark"]{ --bg:#111113; --card:#1a1a1e; --card-fade:#1a1a1e; --text:#ececec; --muted:#9a9a9a;
+  --border:#2a2a2f; --accent:#e0946b; --green:#66bb6a; --red:#e57373; --amber:#ffb74d; --pill:#232327; }
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; padding:0;}
+body{ background:var(--bg); color:var(--text); font-family:'Geist',system-ui,sans-serif; font-weight:400; font-size:15px; line-height:1.5;}
+.mono{font-family:'Geist Mono',monospace;}
+.header{ position:sticky; top:0; z-index:100; background:var(--bg); border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:8px; padding:10px 14px; }
+.header h1{ font-size:15px; font-weight:500; margin:0; flex:1; font-family:'Geist Mono',monospace; }
+.hbtn{ background:transparent; border:1px solid var(--border); color:var(--text); border-radius:8px;
+  min-width:36px; height:36px; cursor:pointer; font-size:15px; }
+#sync-dot{ font-size:11px; color:var(--muted); }
+.tabs{ position:sticky; top:57px; z-index:99; display:flex; gap:6px; padding:8px 14px; background:var(--bg);
+  border-bottom:1px solid var(--border); overflow-x:auto; }
+.tab{ border:1px solid var(--border); background:transparent; color:var(--muted); border-radius:999px;
+  padding:7px 14px; font-size:13px; cursor:pointer; white-space:nowrap; font-family:inherit; }
+.tab.active{ background:var(--text); color:var(--bg); border-color:var(--text); }
+.page{ max-width:720px; margin:0 auto; padding:16px 14px 90px; }
+.section{ display:none; } .section.active{ display:block; }
+.card{ background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:12px; }
+.card h3{ margin:0 0 4px; font-size:14px; font-weight:500; }
+.hint{ font-size:12.5px; color:var(--muted); margin:0 0 10px; }
+label.q{ display:block; font-size:13px; font-weight:500; margin:12px 0 4px; }
+label.q small{ display:block; font-weight:400; color:var(--muted); font-size:12px; }
+input[type="text"], input[type="date"], textarea, select{
+  width:100%; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:8px;
+  padding:9px 10px; font-family:inherit; font-size:14px; color-scheme:light; }
+[data-theme="dark"] input,[data-theme="dark"] textarea,[data-theme="dark"] select,
+[data-theme="navy"] input,[data-theme="navy"] textarea,[data-theme="navy"] select{ color-scheme:dark; }
+textarea{ resize:none; overflow:hidden; line-height:1.45; min-height:44px; }
+.seg{ display:flex; gap:6px; flex-wrap:wrap; }
+.seg button{ flex:1; min-height:44px; border:1px solid var(--border); background:transparent; color:var(--muted);
+  border-radius:8px; cursor:pointer; font-family:inherit; font-size:13px; padding:6px 8px; }
+.seg button.sel{ border-color:var(--accent); color:var(--accent); font-weight:500; }
+.steps{ display:flex; gap:4px; margin-bottom:14px; }
+.steps span{ flex:1; height:4px; border-radius:2px; background:var(--pill); }
+.steps span.done{ background:var(--accent); }
+.navrow{ display:flex; gap:8px; margin-top:14px; }
+.btn{ min-height:44px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text);
+  cursor:pointer; font-family:inherit; font-size:14px; padding:0 18px; }
+.btn.primary{ background:var(--accent); border-color:var(--accent); color:#fff; }
+.btn.ghost{ color:var(--muted); }
+.stop{ border-left:3px solid var(--green); padding:10px 12px; background:var(--pill); border-radius:8px;
+  font-size:13.5px; margin-top:10px; }
+.pills{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+.pill{ border:1px solid var(--border); background:transparent; color:var(--muted); border-radius:999px;
+  padding:6px 12px; font-size:12.5px; cursor:pointer; font-family:inherit; }
+.pill.active{ border-color:var(--accent); color:var(--accent); }
+.badge{ display:inline-block; border:1px solid; border-radius:6px; padding:1px 7px; font-size:11.5px;
+  background:transparent; margin-right:6px; }
+.dcard{ max-height:400px; overflow:hidden; position:relative; }
+.dcard:not(.expanded)::after{ content:''; position:absolute; bottom:0; left:0; right:0; height:48px;
+  background:linear-gradient(transparent, var(--card-fade)); pointer-events:none; }
+.dcard.expanded{ max-height:none; overflow:visible; }
+.dcard .title{ font-size:14.5px; font-weight:500; margin:6px 0; cursor:pointer; }
+.meta{ font-size:12px; color:var(--muted); font-family:'Geist Mono',monospace; }
+.field{ margin:8px 0; font-size:13.5px; }
+.field b{ font-weight:500; font-size:12px; color:var(--muted); display:block; }
+.due{ color:var(--amber); font-weight:500; }
+.stats{ display:none; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+.stat{ background:var(--card); border:1px solid var(--border); border-radius:10px; padding:8px 12px; font-size:12.5px; flex:1; min-width:90px; text-align:center; }
+.stat b{ display:block; font-size:18px; font-weight:500; font-family:'Geist Mono',monospace; }
+.toast{ position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:var(--text); color:var(--bg);
+  border-radius:8px; padding:10px 16px; font-size:13.5px; z-index:200; display:none; }
+.rowbtns{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+.lbtn{ min-height:40px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text);
+  cursor:pointer; font-family:inherit; font-size:13px; padding:0 12px; }
+.lbtn.success{ color:var(--green); border-color:var(--green); }
+.lbtn.danger{ color:var(--red); border-color:var(--red); }
+@media (max-width:420px){ .navrow{flex-wrap:wrap;} .navrow .btn{flex:1;} }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>decision001</h1>
+  <span id="sync-dot">⚫ Local</span>
+  <button class="hbtn" id="drive-btn" onclick="driveConnect()" title="Google Drive">◍</button>
+  <button class="hbtn" id="theme-btn" onclick="toggleTheme()">☀︎</button>
+</div>
+<div class="tabs">
+  <button class="tab active" data-tab="new" onclick="showTab('new')">Nouvelle décision</button>
+  <button class="tab" data-tab="journal" onclick="showTab('journal')">Journal</button>
+  <button class="tab" data-tab="settings" onclick="showTab('settings')">Réglages</button>
+</div>
+
+<div class="page">
+
+<!-- ===== NOUVELLE DÉCISION (wizard) ===== -->
+<div id="tab-new" class="section active">
+  <div class="steps" id="steps-bar"></div>
+
+  <div class="card" id="step-0">
+    <h3>1 · Cadrage</h3>
+    <p class="hint">Reformule la vraie décision, pas le symptôme.</p>
+    <label class="q">Quelle est la décision, en une phrase ?</label>
+    <textarea id="f-title" rows="2" oninput="autoGrow(this)"></textarea>
+    <label class="q">Réversible ou irréversible ?<small>Two-way door : si réversible et peu coûteuse, décide vite.</small></label>
+    <div class="seg" id="f-rev">
+      <button onclick="segSel('f-rev',0)">↩︎ Réversible</button>
+      <button onclick="segSel('f-rev',1)">⚠︎ Irréversible</button>
+    </div>
+    <div class="stop" id="rev-stop" style="display:none">Décision réversible : le coût de l'erreur est faible. Le vrai risque est de sur-analyser. Tu peux passer directement à la prédiction (étape 4) si les options sont claires.</div>
+    <label class="q">Environnement kind ou wicked ?<small>Kind = feedback fiable, patterns stables → intuition OK. Wicked → raisonne explicitement.</small></label>
+    <div class="seg" id="f-env">
+      <button onclick="segSel('f-env',0)">Kind</button>
+      <button onclick="segSel('f-env',1)">Wicked</button>
+    </div>
+  </div>
+
+  <div class="card" id="step-1" style="display:none">
+    <h3>2 · Options</h3>
+    <p class="hint">Une décision binaire est souvent un cadrage raté. Vise 3 options réelles, dont « ne rien faire ».</p>
+    <label class="q">Option A</label><textarea id="f-optA" rows="1" oninput="autoGrow(this)"></textarea>
+    <label class="q">Option B</label><textarea id="f-optB" rows="1" oninput="autoGrow(this)"></textarea>
+    <label class="q">Option C (ou « statu quo »)</label><textarea id="f-optC" rows="1" oninput="autoGrow(this)"></textarea>
+    <label class="q">Que ferait quelqu'un que tu admires à ta place ?</label>
+    <textarea id="f-role" rows="2" oninput="autoGrow(this)"></textarea>
+  </div>
+
+  <div class="card" id="step-2" style="display:none">
+    <h3>3 · Information &amp; biais</h3>
+    <label class="q">Qu'est-ce qui te ferait changer d'avis ?<small>Si la réponse est « rien » : biais de confirmation probable.</small></label>
+    <textarea id="f-falsify" rows="2" oninput="autoGrow(this)"></textarea>
+    <label class="q">Quel est le coût d'attendre encore ?</label>
+    <textarea id="f-delay" rows="2" oninput="autoGrow(this)"></textarea>
+  </div>
+
+  <div class="card" id="step-3" style="display:none">
+    <h3>4 · Robustesse</h3>
+    <label class="q">Pré-mortem : dans 1 an, c'est un échec. Pourquoi ?</label>
+    <textarea id="f-premortem" rows="3" oninput="autoGrow(this)"></textarea>
+    <label class="q">Test 10/10/10 : ton regard dans 10 min / 10 mois / 10 ans ?</label>
+    <textarea id="f-101010" rows="2" oninput="autoGrow(this)"></textarea>
+    <label class="q">Que conseillerais-tu à un ami dans cette situation ?</label>
+    <textarea id="f-friend" rows="2" oninput="autoGrow(this)"></textarea>
+  </div>
+
+  <div class="card" id="step-4" style="display:none">
+    <h3>5 · Décision &amp; prédiction</h3>
+    <label class="q">Option choisie</label>
+    <textarea id="f-choice" rows="2" oninput="autoGrow(this)"></textarea>
+    <label class="q">Pourquoi (3 lignes max)</label>
+    <textarea id="f-why" rows="3" oninput="autoGrow(this)"></textarea>
+    <label class="q">Ta prédiction concrète<small>Ce que tu penses qu'il va se passer — vérifiable à la relecture.</small></label>
+    <textarea id="f-predict" rows="2" oninput="autoGrow(this)"></textarea>
+    <label class="q">Confiance dans cette prédiction</label>
+    <div class="seg" id="f-conf">
+      <button onclick="segSel('f-conf',0)">50%</button>
+      <button onclick="segSel('f-conf',1)">60%</button>
+      <button onclick="segSel('f-conf',2)">70%</button>
+      <button onclick="segSel('f-conf',3)">80%</button>
+      <button onclick="segSel('f-conf',4)">90%+</button>
+    </div>
+    <label class="q">Date de relecture</label>
+    <input type="date" id="f-review">
+  </div>
+
+  <div class="navrow">
+    <button class="btn ghost" id="btn-prev" onclick="wizPrev()" style="display:none">← Retour</button>
+    <button class="btn primary" id="btn-next" onclick="wizNext()">Suivant →</button>
+  </div>
+</div>
+
+<!-- ===== JOURNAL ===== -->
+<div id="tab-journal" class="section">
+  <div class="stats" id="stats"></div>
+  <div class="pills">
+    <button class="pill active" data-f="all" onclick="setFilter('all')">Toutes</button>
+    <button class="pill" data-f="due" onclick="setFilter('due')">À relire</button>
+    <button class="pill" data-f="open" onclick="setFilter('open')">En cours</button>
+    <button class="pill" data-f="reviewed" onclick="setFilter('reviewed')">Relues</button>
+  </div>
+  <div id="dlist"></div>
+</div>
+
+<!-- ===== RÉGLAGES ===== -->
+<div id="tab-settings" class="section">
+  <div class="card">
+    <h3>Taille du texte</h3>
+    <div class="rowbtns">
+      <button class="lbtn" onclick="fontStep(-1)">A−</button>
+      <button class="lbtn mono" id="font-size-label" onclick="fontReset()">100%</button>
+      <button class="lbtn" onclick="fontStep(1)">A+</button>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Données</h3>
+    <div class="rowbtns">
+      <button class="lbtn" onclick="exportJSON()">Exporter JSON</button>
+      <button class="lbtn" onclick="document.getElementById('imp').click()">Importer JSON</button>
+      <input type="file" id="imp" accept=".json" style="display:none" onchange="importJSON(this)">
+      <button class="lbtn danger" onclick="clearAll()">Tout effacer</button>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Google Drive</h3>
+    <p class="hint">Fichier <span class="mono">decision001.json</span> à la racine du Drive. Connecte-toi via ◍ dans l'en-tête. Renseigne le Client ID (le même que projet001, projet <span class="mono">todo-490915</span>).</p>
+    <label class="q">OAuth Client ID</label>
+    <input type="text" id="f-cid" placeholder="xxxxxxxx.apps.googleusercontent.com" onchange="saveCID(this.value)">
+  </div>
+</div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== State ===== */
+const APP='decision001';
+const SK='td_v4_'+APP, TK='td_theme_'+APP, FS_KEY='td_fs_'+APP, TOKK='td_tok_'+APP, CIDK='td_cid_'+APP;
+let S={};
+function ensureState(){
+  if(!S||typeof S!=='object') S={};
+  if(!Array.isArray(S.decisions)) S.decisions=[];
+  S.decisions.forEach(d=>{
+    if(!d.id) d.id='d'+Math.random().toString(36).slice(2,9);
+    if(!d.status) d.status='open';
+  });
+}
+function load(){ try{ S=JSON.parse(localStorage.getItem(SK))||{}; }catch(e){ S={}; } ensureState(); }
+function persistLocal(){ localStorage.setItem(SK, JSON.stringify(S)); }
+let saveT=null;
+function autoSave(){ persistLocal(); setDot('🟡 Pending'); clearTimeout(saveT); saveT=setTimeout(drivePush,2000); }
+function save(){ persistLocal(); drivePush(); }
+function setDot(t){ document.getElementById('sync-dot').textContent=t; }
+
+/* ===== Themes ===== */
+const THEMES=['light','sand','navy','dark'];
+const THEME_ICONS={light:'☀︎',sand:'○',navy:'◑',dark:'☾'};
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme', t==='light'?'':t);
+  document.getElementById('theme-btn').textContent=THEME_ICONS[t]||'☀︎';
+  localStorage.setItem(TK,t);
+}
+function toggleTheme(){
+  const cur=localStorage.getItem(TK)||'light';
+  applyTheme(THEMES[(THEMES.indexOf(cur)+1)%THEMES.length]);
+  renderAll();
+}
+
+/* ===== Font size ===== */
+const FS_STEPS=[0.8,0.9,1.0,1.1,1.2,1.35,1.5];
+function applyFontSize(idx){
+  idx=Math.max(0,Math.min(FS_STEPS.length-1,idx));
+  const scale=FS_STEPS[idx], page=document.querySelector('.page');
+  if(CSS.supports('zoom','1')) page.style.zoom=scale;
+  else{ page.style.transformOrigin='top center'; page.style.transform='scale('+scale+')'; }
+  localStorage.setItem(FS_KEY,idx);
+  document.getElementById('font-size-label').textContent=Math.round(scale*100)+'%';
+}
+function fontStep(d){ applyFontSize((+localStorage.getItem(FS_KEY)||2)+d); }
+function fontReset(){ applyFontSize(2); }
+
+/* ===== Tabs ===== */
+function showTab(t){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  if(t==='journal') renderJournal();
+}
+
+/* ===== Wizard ===== */
+let wiz=0; const WIZ_N=5;
+function renderSteps(){
+  const bar=document.getElementById('steps-bar');
+  bar.innerHTML=Array.from({length:WIZ_N},(_,i)=>'<span class="'+(i<=wiz?'done':'')+'"></span>').join('');
+  for(let i=0;i<WIZ_N;i++) document.getElementById('step-'+i).style.display=(i===wiz?'':'none');
+  document.getElementById('btn-prev').style.display=wiz>0?'':'none';
+  document.getElementById('btn-next').textContent=wiz===WIZ_N-1?'Enregistrer ✓':'Suivant →';
+}
+function wizPrev(){ if(wiz>0){wiz--; renderSteps(); window.scrollTo(0,0);} }
+function wizNext(){
+  if(wiz===0 && !val('f-title').trim()){ toast('Formule d\u2019abord la décision.'); return; }
+  if(wiz<WIZ_N-1){ wiz++; renderSteps(); window.scrollTo(0,0); }
+  else saveDecision();
+}
+function segSel(id,idx){
+  const btns=document.querySelectorAll('#'+id+' button');
+  btns.forEach((b,i)=>b.classList.toggle('sel',i===idx));
+  if(id==='f-rev') document.getElementById('rev-stop').style.display=idx===0?'':'none';
+}
+function segVal(id){
+  const b=document.querySelector('#'+id+' button.sel');
+  return b?b.textContent.trim():'';
+}
+function val(id){ return document.getElementById(id).value; }
+function autoGrow(el){ el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
+function defaultReview(){
+  const d=new Date(); d.setMonth(d.getMonth()+3);
+  return d.toISOString().slice(0,10);
+}
+function saveDecision(){
+  const d={
+    id:'d'+Date.now().toString(36), created:new Date().toISOString().slice(0,10), status:'open',
+    title:val('f-title').trim(), rev:segVal('f-rev'), env:segVal('f-env'),
+    options:[val('f-optA'),val('f-optB'),val('f-optC')].map(x=>x.trim()).filter(Boolean),
+    role:val('f-role').trim(), falsify:val('f-falsify').trim(), delay:val('f-delay').trim(),
+    premortem:val('f-premortem').trim(), t101010:val('f-101010').trim(), friend:val('f-friend').trim(),
+    choice:val('f-choice').trim(), why:val('f-why').trim(), predict:val('f-predict').trim(),
+    conf:segVal('f-conf'), review:val('f-review')||defaultReview()
+  };
+  S.decisions.unshift(d); ensureState(); autoSave();
+  resetWizard(); toast('Décision enregistrée · relecture le '+fmtDate(d.review));
+  showTab('journal');
+}
+function resetWizard(){
+  document.querySelectorAll('#tab-new textarea, #tab-new input[type=date]').forEach(e=>{e.value=''; if(e.tagName==='TEXTAREA') e.style.height='auto';});
+  document.querySelectorAll('#tab-new .seg button').forEach(b=>b.classList.remove('sel'));
+  document.getElementById('rev-stop').style.display='none';
+  wiz=0; renderSteps();
+}
+
+/* ===== Journal ===== */
+let filter='all';
+function setFilter(f){ filter=f;
+  document.querySelectorAll('.pill').forEach(p=>p.classList.toggle('active',p.dataset.f===f));
+  renderJournal();
+}
+function fmtDate(s){ if(!s) return '—'; const [y,m,d]=s.split('-'); return d+'/'+m+'/'+y; }
+function isDue(d){ return d.status==='open' && d.review && d.review<=new Date().toISOString().slice(0,10); }
+function renderStats(){
+  const st=document.getElementById('stats');
+  const n=S.decisions.length;
+  if(!n){ st.innerHTML=''; st.style.display='none'; return; }
+  const due=S.decisions.filter(isDue).length;
+  const rev=S.decisions.filter(d=>d.status==='reviewed');
+  const goodP=rev.filter(d=>d.processOk).length;
+  st.innerHTML='<div class="stat"><b>'+n+'</b>décisions</div>'
+    +'<div class="stat"><b>'+due+'</b>à relire</div>'
+    +'<div class="stat"><b>'+rev.length+'</b>relues</div>'
+    +'<div class="stat"><b>'+(rev.length?Math.round(100*goodP/rev.length)+'%':'—')+'</b>bon process</div>';
+  st.style.display='flex';
+}
+function badge(txt,light,dark){
+  const isDark=['dark','navy'].includes(document.documentElement.getAttribute('data-theme'));
+  const c=isDark?dark:light;
+  return '<span class="badge" style="color:'+c+';border-color:'+c+'">'+txt+'</span>';
+}
+function renderJournal(){
+  renderStats();
+  const list=document.getElementById('dlist');
+  let ds=S.decisions.slice();
+  if(filter==='due') ds=ds.filter(isDue);
+  if(filter==='open') ds=ds.filter(d=>d.status==='open');
+  if(filter==='reviewed') ds=ds.filter(d=>d.status==='reviewed');
+  if(!ds.length){ list.innerHTML='<p class="hint">Rien ici pour l\u2019instant.</p>'; return; }
+  list.innerHTML=ds.map(d=>{
+    let b='';
+    if(d.rev) b+=badge(d.rev.replace(/^[↩︎⚠︎ ]+/,''), d.rev.includes('Irr')?'#c62828':'#2e7d32', d.rev.includes('Irr')?'#e57373':'#66bb6a');
+    if(d.env) b+=badge(d.env,'#6D28D9','#A78BFA');
+    if(d.conf) b+=badge('conf '+d.conf,'#2563EB','#60A5FA');
+    if(d.status==='reviewed') b+=badge(d.processOk?'process ✓':'process ✗', d.processOk?'#2e7d32':'#c62828', d.processOk?'#66bb6a':'#e57373')
+      +badge(d.outcomeOk?'résultat ✓':'résultat ✗', d.outcomeOk?'#2e7d32':'#b26a00', d.outcomeOk?'#66bb6a':'#ffb74d');
+    const dueTxt=d.status==='open' ? (isDue(d)?'<span class="due">relecture due · '+fmtDate(d.review)+'</span>':'relecture '+fmtDate(d.review)) : 'relue le '+fmtDate(d.reviewedOn);
+    const fields=[['Choix',d.choice],['Pourquoi',d.why],['Prédiction',d.predict],['Options',d.options&&d.options.join(' · ')],['Pré-mortem',d.premortem],['Falsifiable si',d.falsify],['Bilan',d.reviewNotes]]
+      .filter(([,v])=>v).map(([k,v])=>'<div class="field"><b>'+k+'</b>'+esc(v)+'</div>').join('');
+    const btns=d.status==='open'
+      ? '<button class="lbtn success" onclick="openReview(\''+d.id+'\')">Relire maintenant</button>'
+      : '';
+    return '<div class="card dcard" id="c-'+d.id+'">'
+      +'<div class="meta">'+fmtDate(d.created)+' · '+dueTxt+'</div>'
+      +'<div class="title" onclick="document.getElementById(\'c-'+d.id+'\').classList.toggle(\'expanded\')">'+esc(d.title)+'</div>'
+      +b+fields
+      +'<div class="rowbtns">'+btns
+      +'<button class="lbtn danger" onclick="delDecision(\''+d.id+'\')">Supprimer</button></div>'
+      +'<div id="rv-'+d.id+'"></div></div>';
+  }).join('');
+}
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>'); }
+function openReview(id){
+  const box=document.getElementById('rv-'+id);
+  if(box.innerHTML){ box.innerHTML=''; return; }
+  box.innerHTML='<div class="stop" style="border-left-color:var(--amber)">'
+    +'<label class="q">Le processus était-il bon, indépendamment du résultat ?</label>'
+    +'<div class="seg" id="rv-p-'+id+'"><button onclick="segSel(\'rv-p-'+id+'\',0)">Oui</button><button onclick="segSel(\'rv-p-'+id+'\',1)">Non</button></div>'
+    +'<label class="q">Le résultat était-il bon ?</label>'
+    +'<div class="seg" id="rv-o-'+id+'"><button onclick="segSel(\'rv-o-'+id+'\',0)">Oui</button><button onclick="segSel(\'rv-o-'+id+'\',1)">Non</button></div>'
+    +'<label class="q">Ce que tu retiens (calibration, biais repérés…)</label>'
+    +'<textarea id="rv-n-'+id+'" rows="2" oninput="autoGrow(this)"></textarea>'
+    +'<div class="rowbtns"><button class="lbtn success" onclick="saveReview(\''+id+'\')">Valider la relecture</button></div></div>';
+  document.getElementById('c-'+id).classList.add('expanded');
+}
+function saveReview(id){
+  const d=S.decisions.find(x=>x.id===id); if(!d) return;
+  d.status='reviewed'; d.reviewedOn=new Date().toISOString().slice(0,10);
+  d.processOk=segVal('rv-p-'+id)==='Oui';
+  d.outcomeOk=segVal('rv-o-'+id)==='Oui';
+  d.reviewNotes=val('rv-n-'+id).trim();
+  autoSave(); renderJournal(); toast('Relecture enregistrée ✓');
+}
+let undoBuf=null, undoT=null;
+function delDecision(id){
+  const i=S.decisions.findIndex(x=>x.id===id); if(i<0) return;
+  undoBuf=S.decisions.splice(i,1)[0]; autoSave(); renderJournal();
+  toast('Supprimée — <u style="cursor:pointer" onclick="undoDel()">annuler</u>',6000);
+}
+function undoDel(){ if(undoBuf){ S.decisions.unshift(undoBuf); undoBuf=null; autoSave(); renderJournal(); toast('Restaurée ✓'); } }
+function toast(html,ms){ const t=document.getElementById('toast'); t.innerHTML=html; t.style.display='block';
+  clearTimeout(undoT); undoT=setTimeout(()=>t.style.display='none', ms||2500); }
+
+/* ===== Export / import ===== */
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='decision001.json'; a.click();
+}
+function importJSON(inp){
+  const f=inp.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{ S=JSON.parse(r.result); }catch(e){ toast('JSON invalide'); return; }
+    ensureState(); save(); renderAll(); toast('Import réussi ✓'); };
+  r.readAsText(f); inp.value='';
+}
+function clearAll(){ if(confirm('Tout effacer ?')){ S={}; ensureState(); save(); renderAll(); } }
+
+/* ===== Google Drive sync ===== */
+let CLIENT_ID=localStorage.getItem(CIDK)||'';
+function saveCID(v){ CLIENT_ID=v.trim(); localStorage.setItem(CIDK,CLIENT_ID); toast('Client ID enregistré'); }
+const SCOPE='https://www.googleapis.com/auth/drive.file';
+const DRIVE_FILE='decision001.json';
+let token=sessionStorage.getItem(TOKK)||null, fileId=null, tokClient=null;
+function driveConnect(){ /* user gesture only */
+  if(!CLIENT_ID){ toast('Renseigne le Client ID dans Réglages'); showTab('settings'); return; }
+  if(!window.google||!google.accounts){ toast('Librairie Google non chargée'); return; }
+  tokClient=tokClient||google.accounts.oauth2.initTokenClient({
+    client_id:CLIENT_ID, scope:SCOPE,
+    callback:(r)=>{ if(r.access_token){ token=r.access_token; sessionStorage.setItem(TOKK,token);
+      setDot('🟢 Sync ✓'); drivePull(); startPoll(); } }
+  });
+  tokClient.requestAccessToken();
+}
+async function driveFindFile(){
+  const q=encodeURIComponent("name='"+DRIVE_FILE+"' and trashed=false");
+  const r=await fetch('https://www.googleapis.com/drive/v3/files?q='+q,{headers:{Authorization:'Bearer '+token}});
+  if(!r.ok) throw r;
+  const j=await r.json(); return j.files&&j.files[0]?j.files[0].id:null;
+}
+async function drivePush(){
+  if(!token){ setDot('⚫ Local'); return; }
+  try{
+    fileId=fileId||await driveFindFile();
+    const body=JSON.stringify(S);
+    if(fileId){
+      await fetch('https://www.googleapis.com/upload/drive/v3/files/'+fileId+'?uploadType=media',
+        {method:'PATCH',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body});
+    }else{
+      const meta={name:DRIVE_FILE,mimeType:'application/json'};
+      const b='--b\r\nContent-Type: application/json\r\n\r\n'+JSON.stringify(meta)
+        +'\r\n--b\r\nContent-Type: application/json\r\n\r\n'+body+'\r\n--b--';
+      const r=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+        {method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'multipart/related; boundary=b'},body:b});
+      const j=await r.json(); fileId=j.id;
+    }
+    setDot('🟢 Sync ✓');
+  }catch(e){ setDot('🔴 Erreur'); token=null; sessionStorage.removeItem(TOKK); }
+}
+async function drivePull(){
+  if(!token) return;
+  try{
+    fileId=fileId||await driveFindFile(); if(!fileId) return;
+    const r=await fetch('https://www.googleapis.com/drive/v3/files/'+fileId+'?alt=media',{headers:{Authorization:'Bearer '+token}});
+    if(!r.ok) throw r;
+    S=await r.json(); ensureState(); persistLocal(); renderAll(); setDot('🟢 Sync ✓');
+  }catch(e){ setDot('🔴 Erreur'); }
+}
+let pollT=null;
+function startPoll(){ clearTimeout(pollT); pollT=setTimeout(async()=>{ await drivePull(); startPoll(); }, 60000); }
+
+/* ===== Init ===== */
+function renderAll(){ renderSteps(); renderJournal(); }
+load();
+applyTheme(localStorage.getItem(TK)||'light');
+applyFontSize(+localStorage.getItem(FS_KEY)||2);
+document.getElementById('f-cid').value=CLIENT_ID;
+if(token) setDot('🟢 Sync ✓');
+renderAll();
+</script>
+</body>
+</html>
