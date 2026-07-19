@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>action001</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root{
+  --bg:#F7F6F3; --card:#FFFFFF; --card-fade:#FFFFFF; --text:#1A1A1A; --muted:#8A8578;
+  --border:#E5E2DA; --accent:#B4552D; --green:#3D7A46; --red:#B03A3A; --amber:#B07E2A;
+}
+[data-theme="sand"]{ --bg:#F8F7FF; --card:#FFFFFF; --card-fade:#FFFFFF; --text:#1E1B2E; --muted:#8B87A0; --border:#E4E1F0; --accent:#6D5BD0; }
+[data-theme="navy"]{ --bg:#161925; --card:#1E2230; --card-fade:#1E2230; --text:#E8E9F0; --muted:#8890A8; --border:#2A3045; --accent:#E0A458; --green:#5FAF6C; --red:#E57373; --amber:#E0B15E; }
+[data-theme="dark"]{ --bg:#111113; --card:#1A1A1D; --card-fade:#1A1A1D; --text:#EDEDED; --muted:#8A8A90; --border:#2A2A2E; --accent:#D97748; --green:#5FAF6C; --red:#E57373; --amber:#D9A94E; }
+
+*{box-sizing:border-box; margin:0; padding:0;}
+html{-webkit-text-size-adjust:100%;}
+body{ font-family:'Geist',system-ui,sans-serif; background:var(--bg); color:var(--text); font-size:15px; line-height:1.5; }
+input,textarea,select{ font-family:inherit; font-size:inherit; background:var(--bg); color:var(--text); color-scheme:light; border:1px solid var(--border); border-radius:8px; padding:10px 12px; }
+[data-theme="dark"] input,[data-theme="dark"] textarea,[data-theme="dark"] select,
+[data-theme="navy"] input,[data-theme="navy"] textarea,[data-theme="navy"] select{ color-scheme:dark; }
+input:focus,textarea:focus,select:focus{ outline:none; border-color:var(--accent); }
+button{ font-family:inherit; cursor:pointer; }
+
+.header{ position:sticky; top:0; z-index:100; background:var(--bg); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; padding:10px 16px; height:52px; }
+.header h1{ font-size:16px; font-weight:500; letter-spacing:-0.01em; }
+.header .mono{ font-family:'Geist Mono',monospace; color:var(--muted); font-size:12px; }
+.hspace{ flex:1; }
+.hbtn{ background:transparent; border:1px solid var(--border); color:var(--text); border-radius:8px; min-width:36px; height:36px; font-size:15px; }
+#sync-dot{ font-size:11px; color:var(--muted); font-family:'Geist Mono',monospace; }
+
+.tabs{ position:sticky; top:52px; z-index:99; background:var(--bg); display:flex; gap:4px; padding:8px 12px; border-bottom:1px solid var(--border); overflow-x:auto; }
+.tab{ background:transparent; border:none; color:var(--muted); padding:8px 12px; border-radius:8px; font-size:14px; white-space:nowrap; min-height:36px; }
+.tab.active{ background:var(--card); color:var(--text); font-weight:500; border:1px solid var(--border); }
+
+.page{ max-width:640px; margin:0 auto; padding:16px 16px 80px; }
+.section{ display:none; } .section.active{ display:block; }
+.card{ background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:12px; }
+.card h2{ font-size:13px; font-weight:500; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin-bottom:12px; }
+.row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.grow{ flex:1; min-width:120px; }
+
+.btn{ background:var(--accent); color:#fff; border:none; border-radius:8px; padding:10px 16px; font-size:14px; font-weight:500; min-height:44px; }
+.lbtn{ background:transparent; border:1px solid var(--border); color:var(--text); border-radius:8px; padding:8px 12px; font-size:13px; min-height:36px; }
+.lbtn.success{ color:var(--green); border-color:var(--green); }
+.lbtn.danger{ color:var(--red); border-color:var(--red); }
+[data-theme="dark"] .lbtn.success,[data-theme="navy"] .lbtn.success{ background:transparent; color:#34a853; border-color:#34a853; }
+[data-theme="dark"] .lbtn.danger,[data-theme="navy"] .lbtn.danger{ background:transparent; color:#e57373; border-color:#e57373; }
+
+.stats{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+.stat{ background:var(--card); border:1px solid var(--border); border-radius:10px; padding:10px 14px; flex:1; min-width:90px; text-align:center; }
+.stat .n{ font-family:'Geist Mono',monospace; font-size:20px; font-weight:500; }
+.stat .l{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; }
+
+#timer-display{ font-family:'Geist Mono',monospace; font-size:52px; font-weight:400; text-align:center; letter-spacing:0.02em; margin:8px 0; }
+.timer-row{ display:flex; gap:8px; justify-content:center; }
+.warn{ border-left:3px solid var(--amber); padding:10px 12px; background:var(--card); border-radius:0 8px 8px 0; font-size:13.5px; margin-bottom:12px; }
+.warn.red{ border-left-color:var(--red); }
+
+.badge{ display:inline-block; font-size:11px; font-family:'Geist Mono',monospace; padding:2px 8px; border-radius:999px; background:transparent; border:1px solid; }
+.item{ display:flex; align-items:flex-start; gap:8px; padding:12px 0; border-bottom:1px solid var(--border); }
+.item:last-child{ border-bottom:none; }
+.item .t{ flex:1; word-break:break-word; }
+.item .meta{ font-size:12px; color:var(--muted); font-family:'Geist Mono',monospace; }
+.icon-btn{ background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:8px; width:36px; height:36px; font-size:14px; flex-shrink:0; }
+.done-line{ text-decoration:line-through; color:var(--muted); }
+
+.check{ display:flex; gap:10px; align-items:center; padding:6px 0; font-size:14px; }
+.check input{ width:18px; height:18px; }
+
+.toast{ position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--text); color:var(--bg); padding:10px 16px; border-radius:10px; font-size:14px; display:none; z-index:200; max-width:90vw; }
+.toast.show{ display:flex; gap:12px; align-items:center; }
+.toast button{ background:transparent; border:none; color:inherit; font-weight:500; text-decoration:underline; }
+.small{ font-size:12.5px; color:var(--muted); }
+label.fl{ font-size:12px; color:var(--muted); display:block; margin:10px 0 4px; }
+textarea.auto{ width:100%; resize:none; overflow:hidden; line-height:1.45; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>action001</h1><span class="mono" id="h-week"></span>
+  <div class="hspace"></div>
+  <span id="sync-dot">⚫ Local</span>
+  <button class="hbtn" id="theme-btn" onclick="toggleTheme()">☀︎</button>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="today" onclick="showTab('today')">Aujourd'hui</button>
+  <button class="tab" data-tab="ship" onclick="showTab('ship')">Ship</button>
+  <button class="tab" data-tab="backlog" onclick="showTab('backlog')">Backlog</button>
+  <button class="tab" data-tab="review" onclick="showTab('review')">Revue</button>
+  <button class="tab" data-tab="settings" onclick="showTab('settings')">⚙︎</button>
+</div>
+
+<div class="page">
+
+  <!-- ══════════ AUJOURD'HUI ══════════ -->
+  <div id="tab-today" class="section active">
+    <div id="miss-warn"></div>
+    <div class="stats" id="today-stats"></div>
+
+    <div class="card">
+      <h2>Bloc d'action — 25 min</h2>
+      <div id="timer-display">25:00</div>
+      <div class="timer-row">
+        <button class="btn" id="timer-btn" onclick="timerToggle()">Démarrer</button>
+        <button class="lbtn" onclick="timerReset()">Réinit.</button>
+        <button class="lbtn success" onclick="logBlock()" id="block-done-btn">Bloc fait ✓</button>
+      </div>
+      <p class="small" style="text-align:center;margin-top:10px;">Règle : implémenter avant de consommer.</p>
+    </div>
+
+    <div class="card">
+      <h2>1-in-1-out (cette semaine)</h2>
+      <div class="row">
+        <button class="lbtn success grow" onclick="addCounter('impl')">+1 Implémenté</button>
+        <button class="lbtn grow" onclick="addCounter('coll')">+1 Collecté</button>
+      </div>
+      <p class="small" id="ratio-line" style="margin-top:10px;"></p>
+    </div>
+  </div>
+
+  <!-- ══════════ SHIP ══════════ -->
+  <div id="tab-ship" class="section">
+    <div class="card">
+      <h2>Ship de la semaine <span id="ship-deadline" class="mono"></span></h2>
+      <label class="fl">Quoi ?</label>
+      <textarea class="auto" id="ship-title" rows="1" placeholder="Ex : envoyer la démo à X"
+        oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';shipEdited()"></textarea>
+      <label class="fl">Version coupée à l'os (si retard : couper le scope, pas la deadline)</label>
+      <textarea class="auto" id="ship-note" rows="1" placeholder="Version minimale shippable"
+        oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';shipEdited()"></textarea>
+      <div class="row" style="margin-top:12px;">
+        <button class="btn grow" onclick="markShipped()">Shippé ✓</button>
+      </div>
+    </div>
+    <div class="card" id="ship-history-card" style="display:none;">
+      <h2>Historique</h2>
+      <div id="ship-history"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ BACKLOG ══════════ -->
+  <div id="tab-backlog" class="section">
+    <div class="card">
+      <h2>Ajouter une idée</h2>
+      <div class="row">
+        <input class="grow" id="idea-in" placeholder="Nouvelle idée…" onkeydown="if(event.key==='Enter')addIdea()">
+        <button class="btn" onclick="addIdea()">+</button>
+      </div>
+      <p class="small" style="margin-top:8px;">Limite : 1 actif · 2 en file · le reste en archive froide.</p>
+    </div>
+    <div class="card"><h2>🎯 Actif (max 1)</h2><div id="list-active"></div></div>
+    <div class="card"><h2>⏳ En file (max 2)</h2><div id="list-queue"></div></div>
+    <div class="card"><h2>🧊 Archive froide</h2><div id="list-archive"></div></div>
+  </div>
+
+  <!-- ══════════ REVUE ══════════ -->
+  <div id="tab-review" class="section">
+    <div class="card">
+      <h2>Revue du vendredi — 15 min</h2>
+      <div class="stats" id="review-nums"></div>
+      <label class="fl">1. Qu'ai-je appris du ship que la planification ne m'aurait pas dit ?</label>
+      <textarea class="auto" id="rev-q1" rows="2" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+      <label class="fl">2. Ship de la semaine prochaine + version coupée à l'os ?</label>
+      <textarea class="auto" id="rev-q2" rows="2" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+      <label class="fl">Drapeaux rouges</label>
+      <div class="check"><input type="checkbox" id="rev-f1"><span>J'ai bricolé le système au lieu d'exécuter</span></div>
+      <div class="check"><input type="checkbox" id="rev-f2"><span>J'ai demandé validation avant d'agir</span></div>
+      <div class="check"><input type="checkbox" id="rev-f3"><span>J'ai raté deux jours de suite</span></div>
+      <div class="row" style="margin-top:12px;"><button class="btn grow" onclick="saveReview()">Enregistrer la revue</button></div>
+    </div>
+    <div class="card" id="review-history-card" style="display:none;">
+      <h2>Revues passées</h2>
+      <div id="review-history"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ RÉGLAGES ══════════ -->
+  <div id="tab-settings" class="section">
+    <div class="card">
+      <h2>Taille du texte</h2>
+      <div class="row">
+        <button class="lbtn" onclick="fsStep(-1)">A−</button>
+        <span class="mono" id="font-size-label">100%</span>
+        <button class="lbtn" onclick="fsStep(1)">A+</button>
+        <button class="lbtn" onclick="fsSet(2)">Réinit.</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Google Drive</h2>
+      <div class="row">
+        <button class="lbtn grow" id="drive-btn" onclick="driveConnect()">Connecter Drive</button>
+        <button class="lbtn" onclick="drivePull()">Pull</button>
+        <button class="lbtn" onclick="drivePush()">Push</button>
+      </div>
+      <p class="small" style="margin-top:8px;">Client ID partagé (projet001 · todo-490915) · fichier <span class="mono">action001.json</span> · polling 45s. À héberger sur la même origine autorisée que tes autres apps (GitHub Pages).</p>
+    </div>
+    <div class="card">
+      <h2>Données</h2>
+      <div class="row">
+        <button class="lbtn grow" onclick="exportJSON()">Exporter JSON</button>
+        <button class="lbtn grow" onclick="document.getElementById('import-file').click()">Importer JSON</button>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(this)">
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <button class="lbtn danger grow" onclick="resetAll()">Tout effacer</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"><span id="toast-msg"></span><button id="toast-undo" style="display:none" onclick="undo()">Annuler</button></div>
+
+<script>
+/* ═══════════ CONFIG ═══════════ */
+const APP='action001';
+const CLIENT_ID='829835809425-2iggf29s2d4e73pjhhvb8o6r9g55s32i.apps.googleusercontent.com'; // partagé — projet001 / todo-490915
+const SCOPES='https://www.googleapis.com/auth/drive.file';
+const DRIVE_FILE='action001.json';
+const POLL_MS=45000;
+const SK='td_v4_'+APP, TK='td_theme_'+APP, FS_KEY='td_fs_'+APP, TOKK='td_tok_'+APP, UK='td_undo_'+APP, PK='td_poll_'+APP;
+
+/* ═══════════ STATE ═══════════ */
+let S={};
+function ensureState(){
+  if(typeof S!=='object'||S===null) S={};
+  if(!Array.isArray(S.blocks)) S.blocks=[];          // dates "YYYY-MM-DD"
+  if(!Array.isArray(S.counters)) S.counters=[];      // {d,type:'impl'|'coll'}
+  if(!Array.isArray(S.ships)) S.ships=[];            // {id,title,note,shippedAt}
+  if(typeof S.shipPlan!=='object'||S.shipPlan===null) S.shipPlan={title:'',note:''};
+  if(typeof S.shipPlan.title!=='string') S.shipPlan.title='';
+  if(typeof S.shipPlan.note!=='string') S.shipPlan.note='';
+  if(!Array.isArray(S.ideas)) S.ideas=[];            // {id,t,st}
+  S.ideas=S.ideas.filter(i=>i&&typeof i.t==='string');
+  S.ideas.forEach(i=>{ if(!['active','queue','archive'].includes(i.st)) i.st='archive'; if(!i.id) i.id=uid(); });
+  if(!Array.isArray(S.reviews)) S.reviews=[];
+}
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function today(){ const d=new Date(); return d.toISOString().slice(0,10); }
+function dateKey(d){ return d.toISOString().slice(0,10); }
+function weekKey(dstr){ // ISO week "2026-W29"
+  const d=new Date(dstr+'T12:00:00');
+  const t=new Date(d); t.setDate(t.getDate()+3-((t.getDay()+6)%7));
+  const w1=new Date(t.getFullYear(),0,4);
+  const w=1+Math.round(((t-w1)/86400000-3+((w1.getDay()+6)%7))/7);
+  return t.getFullYear()+'-W'+String(w).padStart(2,'0');
+}
+const thisWeek=()=>weekKey(today());
+
+/* ═══════════ PERSISTENCE ═══════════ */
+let saveTimer=null;
+function autoSave(){
+  localStorage.setItem(SK,JSON.stringify(S));
+  setSync('pending');
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{ drivePush(true); },2000);
+}
+function save(){ localStorage.setItem(SK,JSON.stringify(S)); renderAll(); }
+function load(){
+  try{ S=JSON.parse(localStorage.getItem(SK)||'{}'); }catch(e){ S={}; }
+  ensureState();
+}
+function setSync(st){
+  const el=document.getElementById('sync-dot');
+  if(st==='pending') el.textContent='🟡 Pending';
+  else if(st==='ok') el.textContent='🟢 Sync ✓';
+  else if(st==='err') el.textContent='🔴 Erreur';
+  else el.textContent='⚫ Local';
+}
+
+/* ═══════════ THEMES ═══════════ */
+const THEMES=['light','sand','navy','dark'];
+const THEME_ICONS={ light:'☀︎', sand:'○', navy:'◑', dark:'☾' };
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme', t==='light'?'':t);
+  document.getElementById('theme-btn').textContent=THEME_ICONS[t]||'☀︎';
+  localStorage.setItem(TK,t);
+}
+function toggleTheme(){
+  const cur=localStorage.getItem(TK)||'light';
+  applyTheme(THEMES[(THEMES.indexOf(cur)+1)%THEMES.length]);
+  renderAll();
+}
+
+/* ═══════════ FONT SIZE ═══════════ */
+const FS_STEPS=[0.8,0.9,1.0,1.1,1.2,1.35,1.5];
+function applyFontSize(idx){
+  idx=Math.max(0,Math.min(FS_STEPS.length-1,idx));
+  const scale=FS_STEPS[idx], page=document.querySelector('.page');
+  if(CSS.supports('zoom','1')) page.style.zoom=scale;
+  else{ page.style.transformOrigin='top center'; page.style.transform=`scale(${scale})`; }
+  localStorage.setItem(FS_KEY,idx);
+  document.getElementById('font-size-label').textContent=Math.round(scale*100)+'%';
+}
+function fsStep(d){ applyFontSize((parseInt(localStorage.getItem(FS_KEY))||2)+d); }
+function fsSet(i){ applyFontSize(i); }
+
+/* ═══════════ TABS ═══════════ */
+function showTab(name){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.querySelector('.tab[data-tab="'+name+'"]').classList.add('active');
+}
+
+/* ═══════════ TIMER ═══════════ */
+let tRemain=25*60, tInt=null;
+function timerRender(){
+  const m=String(Math.floor(tRemain/60)).padStart(2,'0'), s=String(tRemain%60).padStart(2,'0');
+  document.getElementById('timer-display').textContent=m+':'+s;
+}
+function timerToggle(){
+  const btn=document.getElementById('timer-btn');
+  if(tInt){ clearInterval(tInt); tInt=null; btn.textContent='Reprendre'; return; }
+  btn.textContent='Pause';
+  tInt=setInterval(()=>{
+    tRemain--;
+    if(tRemain<=0){
+      clearInterval(tInt); tInt=null; tRemain=0; timerRender();
+      logBlock(); timerReset();
+      return;
+    }
+    timerRender();
+  },1000);
+}
+function timerReset(){
+  clearInterval(tInt); tInt=null; tRemain=25*60;
+  document.getElementById('timer-btn').textContent='Démarrer';
+  timerRender();
+}
+function logBlock(){
+  const d=today();
+  if(!S.blocks.includes(d)){ S.blocks.push(d); autoSave(); toast('Bloc du jour enregistré ✓'); }
+  else toast('Bloc déjà fait aujourd\u2019hui ✓');
+  renderAll();
+}
+
+/* ═══════════ COUNTERS 1-in-1-out ═══════════ */
+function addCounter(type){
+  S.counters.push({d:today(),type});
+  autoSave(); renderAll();
+  toast(type==='impl'?'+1 implémenté':'+1 collecté');
+}
+
+/* ═══════════ SHIP ═══════════ */
+let shipEditTimer=null;
+function shipEdited(){
+  S.shipPlan.title=document.getElementById('ship-title').value;
+  S.shipPlan.note=document.getElementById('ship-note').value;
+  clearTimeout(shipEditTimer);
+  shipEditTimer=setTimeout(autoSave,600);
+}
+function markShipped(){
+  const t=(S.shipPlan.title||'').trim();
+  if(!t){ toast('Décris d\u2019abord le ship'); return; }
+  S.ships.unshift({id:uid(),title:t,note:S.shipPlan.note||'',shippedAt:today()});
+  S.shipPlan={title:'',note:''};
+  autoSave(); renderAll();
+  toast('🚀 Shippé — partage-le à une vraie personne');
+}
+function delShip(id){
+  const idx=S.ships.findIndex(x=>x.id===id); if(idx<0)return;
+  setUndo({kind:'ship',item:S.ships[idx],idx});
+  S.ships.splice(idx,1); autoSave(); renderAll();
+  toast('Ship supprimé',true);
+}
+
+/* ═══════════ BACKLOG ═══════════ */
+function addIdea(){
+  const el=document.getElementById('idea-in'), t=el.value.trim();
+  if(!t) return;
+  const week=thisWeek();
+  const impl=S.counters.filter(c=>c.type==='impl'&&weekKey(c.d)===week).length;
+  const coll=S.counters.filter(c=>c.type==='coll'&&weekKey(c.d)===week).length;
+  S.ideas.push({id:uid(),t,st:'archive'});
+  if(coll>=impl) toast('Idée archivée — rappel : 1-in-1-out');
+  else toast('Idée ajoutée à l\u2019archive froide');
+  el.value=''; autoSave(); renderAll();
+}
+function moveIdea(id,st){
+  const i=S.ideas.find(x=>x.id===id); if(!i)return;
+  if(st==='active'&&S.ideas.filter(x=>x.st==='active').length>=1){ toast('⚠️ Déjà 1 projet actif — libère-le d\u2019abord'); return; }
+  if(st==='queue'&&S.ideas.filter(x=>x.st==='queue').length>=2){ toast('⚠️ File pleine (2 max)'); return; }
+  i.st=st; autoSave(); renderAll();
+}
+function delIdea(id){
+  const idx=S.ideas.findIndex(x=>x.id===id); if(idx<0)return;
+  setUndo({kind:'idea',item:S.ideas[idx],idx});
+  S.ideas.splice(idx,1); autoSave(); renderAll();
+  toast('Idée supprimée',true);
+}
+
+/* ═══════════ REVIEW ═══════════ */
+function weekNums(){
+  const week=thisWeek();
+  return {
+    ships: S.ships.filter(s=>weekKey(s.shippedAt)===week).length,
+    blocks: S.blocks.filter(d=>weekKey(d)===week).length,
+    impl: S.counters.filter(c=>c.type==='impl'&&weekKey(c.d)===week).length,
+    coll: S.counters.filter(c=>c.type==='coll'&&weekKey(c.d)===week).length
+  };
+}
+function saveReview(){
+  const n=weekNums();
+  S.reviews.unshift({
+    id:uid(), date:today(), week:thisWeek(), nums:n,
+    q1:document.getElementById('rev-q1').value.trim(),
+    q2:document.getElementById('rev-q2').value.trim(),
+    flags:[document.getElementById('rev-f1').checked,document.getElementById('rev-f2').checked,document.getElementById('rev-f3').checked]
+  });
+  ['rev-q1','rev-q2'].forEach(i=>document.getElementById(i).value='');
+  ['rev-f1','rev-f2','rev-f3'].forEach(i=>document.getElementById(i).checked=false);
+  autoSave(); renderAll();
+  toast('Revue enregistrée ✓');
+}
+
+/* ═══════════ UNDO & TOAST ═══════════ */
+let undoBuf=null, toastTimer=null;
+function setUndo(u){ undoBuf=u; }
+function undo(){
+  if(!undoBuf) return;
+  if(undoBuf.kind==='idea') S.ideas.splice(Math.min(undoBuf.idx,S.ideas.length),0,undoBuf.item);
+  if(undoBuf.kind==='ship') S.ships.splice(Math.min(undoBuf.idx,S.ships.length),0,undoBuf.item);
+  undoBuf=null; autoSave(); renderAll(); hideToast();
+}
+function toast(msg,showUndo){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').textContent=msg;
+  document.getElementById('toast-undo').style.display=showUndo?'':'none';
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(hideToast,3500);
+}
+function hideToast(){ document.getElementById('toast').classList.remove('show'); }
+
+/* ═══════════ RENDER ═══════════ */
+function esc(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function renderToday(){
+  const n=weekNums(), d=today();
+  const stats=document.getElementById('today-stats');
+  stats.innerHTML=`
+    <div class="stat"><div class="n">${n.ships}</div><div class="l">Ships</div></div>
+    <div class="stat"><div class="n">${n.blocks}/5</div><div class="l">Blocs sem.</div></div>
+    <div class="stat"><div class="n">${streak()}</div><div class="l">Série jours</div></div>`;
+  stats.style.display='';
+  const btn=document.getElementById('block-done-btn');
+  btn.textContent=S.blocks.includes(d)?'Fait aujourd\u2019hui ✓':'Bloc fait ✓';
+  // never-miss-twice warning
+  const y=new Date(); y.setDate(y.getDate()-1);
+  const yk=dateKey(y), yesterdayDone=S.blocks.includes(yk), todayDone=S.blocks.includes(d);
+  const w=document.getElementById('miss-warn');
+  if(!yesterdayDone && !todayDone && S.blocks.length>0)
+    w.innerHTML=`<div class="warn red"><b>Ne jamais rater deux fois.</b> Hier : raté. Un bloc de 5 minutes compte.</div>`;
+  else w.innerHTML='';
+  const wk=weekNums();
+  const r=document.getElementById('ratio-line');
+  r.textContent=`Cette semaine : ${wk.impl} implémenté(s) / ${wk.coll} collecté(s)`+(wk.coll>wk.impl?' — ⚠️ tu accumules':' ✓');
+}
+function streak(){
+  let s=0, d=new Date();
+  if(!S.blocks.includes(dateKey(d))) d.setDate(d.getDate()-1); // today not yet done doesn't break streak
+  while(S.blocks.includes(dateKey(d))){ s++; d.setDate(d.getDate()-1); }
+  return s;
+}
+function nextFriday(){
+  const d=new Date(), day=d.getDay(), add=(5-day+7)%7;
+  d.setDate(d.getDate()+add);
+  return d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+}
+function renderShip(){
+  document.getElementById('ship-deadline').textContent='· deadline ven. '+nextFriday()+' 18:00';
+  const t=document.getElementById('ship-title'), no=document.getElementById('ship-note');
+  if(document.activeElement!==t) { t.value=S.shipPlan.title; t.style.height='auto'; t.style.height=t.scrollHeight+'px'; }
+  if(document.activeElement!==no){ no.value=S.shipPlan.note; no.style.height='auto'; no.style.height=no.scrollHeight+'px'; }
+  const card=document.getElementById('ship-history-card'), h=document.getElementById('ship-history');
+  if(S.ships.length===0){ card.style.display='none'; h.innerHTML=''; return; }
+  card.style.display='';
+  h.innerHTML=S.ships.map(s=>`
+    <div class="item">
+      <div class="t">🚀 ${esc(s.title)}${s.note?`<div class="small">${esc(s.note)}</div>`:''}
+        <div class="meta">${s.shippedAt} · ${weekKey(s.shippedAt)}</div></div>
+      <button class="icon-btn" onclick="delShip('${s.id}')">✕</button>
+    </div>`).join('');
+}
+function renderBacklog(){
+  const isDark=['dark','navy'].includes(document.documentElement.getAttribute('data-theme'));
+  const colors={ active: isDark?'#5FAF6C':'#3D7A46', queue: isDark?'#D9A94E':'#B07E2A', archive:'var(--muted)' };
+  const render=(st,el,actions)=>{
+    const list=S.ideas.filter(i=>i.st===st);
+    document.getElementById(el).innerHTML = list.length===0
+      ? `<p class="small">—</p>`
+      : list.map(i=>`
+        <div class="item">
+          <div class="t" style="border-left:3px solid ${colors[st]};padding-left:10px;">${esc(i.t)}</div>
+          ${actions.map(a=>`<button class="icon-btn" title="${a.l}" onclick="moveIdea('${i.id}','${a.st}')">${a.ic}</button>`).join('')}
+          <button class="icon-btn" onclick="delIdea('${i.id}')">✕</button>
+        </div>`).join('');
+  };
+  render('active','list-active',[{st:'queue',ic:'⏳',l:'En file'},{st:'archive',ic:'🧊',l:'Archiver'}]);
+  render('queue','list-queue',[{st:'active',ic:'🎯',l:'Activer'},{st:'archive',ic:'🧊',l:'Archiver'}]);
+  render('archive','list-archive',[{st:'active',ic:'🎯',l:'Activer'},{st:'queue',ic:'⏳',l:'En file'}]);
+}
+function renderReview(){
+  const n=weekNums();
+  document.getElementById('review-nums').innerHTML=`
+    <div class="stat"><div class="n">${n.ships}</div><div class="l">Ships ≥1</div></div>
+    <div class="stat"><div class="n">${n.blocks}/5</div><div class="l">Blocs</div></div>
+    <div class="stat"><div class="n">${n.impl}/${n.coll}</div><div class="l">Impl/Coll</div></div>`;
+  const card=document.getElementById('review-history-card'), h=document.getElementById('review-history');
+  if(S.reviews.length===0){ card.style.display='none'; h.innerHTML=''; return; }
+  card.style.display='';
+  h.innerHTML=S.reviews.map(r=>{
+    const flagged=(r.flags||[]).some(Boolean);
+    return `<div class="item"><div class="t">
+      <b>${r.week}</b> <span class="meta">${r.date}</span>
+      <div class="small">Ships ${r.nums.ships} · Blocs ${r.nums.blocks} · ${r.nums.impl}/${r.nums.coll}${flagged?' · <span style="color:var(--red)">⚑ drapeau</span>':''}</div>
+      ${r.q1?`<div class="small">📖 ${esc(r.q1)}</div>`:''}
+      ${r.q2?`<div class="small">→ ${esc(r.q2)}</div>`:''}
+    </div></div>`;
+  }).join('');
+}
+function renderAll(){
+  ensureState();
+  document.getElementById('h-week').textContent=thisWeek();
+  renderToday(); renderShip(); renderBacklog(); renderReview();
+}
+
+/* ═══════════ EXPORT / IMPORT / RESET ═══════════ */
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=DRIVE_FILE; a.click();
+  URL.revokeObjectURL(a.href);
+}
+function importJSON(input){
+  const f=input.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{ try{ S=JSON.parse(r.result); }catch(e){ toast('JSON invalide'); return; }
+    ensureState(); save(); toast('Import OK ✓'); };
+  r.readAsText(f); input.value='';
+}
+function resetAll(){
+  if(!confirm('Tout effacer (local) ?')) return;
+  S={}; ensureState(); save(); toast('Réinitialisé');
+}
+
+/* ═══════════ GOOGLE DRIVE SYNC ═══════════ */
+let tokenClient=null, accessToken=sessionStorage.getItem(TOKK)||null, driveFileId=null, pollInt=null, lastRemoteMod=localStorage.getItem(PK)||'';
+function driveBtnState(){
+  const b=document.getElementById('drive-btn');
+  if(b) b.textContent=accessToken?'Drive connecté ✓':'Connecter Drive';
+}
+function driveConnect(){
+  if(!window.google||!google.accounts){ toast('Librairie Google non chargée — réessaie'); return; }
+  if(!tokenClient){
+    tokenClient=google.accounts.oauth2.initTokenClient({
+      client_id:CLIENT_ID,
+      scope:SCOPES,
+      callback:(resp)=>{
+        if(resp.error){ setSync('err'); toast('Erreur OAuth : '+resp.error); return; }
+        if(resp.access_token){
+          accessToken=resp.access_token;
+          sessionStorage.setItem(TOKK,accessToken);
+          setSync('ok'); driveBtnState();
+          toast('Drive connecté ✓');
+          drivePull(true).then(()=>startPolling());
+        }
+      }
+    });
+  }
+  tokenClient.requestAccessToken(); // user gesture only (click handler)
+}
+function startPolling(){
+  clearInterval(pollInt);
+  pollInt=setInterval(pollRemote,POLL_MS);
+}
+async function pollRemote(){
+  if(!accessToken||document.hidden) return;
+  try{
+    if(!driveFileId){ await driveFind(); if(!driveFileId) return; }
+    const r=await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?fields=modifiedTime`,{headers:{Authorization:'Bearer '+accessToken}});
+    if(r.status===401){ accessToken=null; sessionStorage.removeItem(TOKK); setSync('local'); driveBtnState(); clearInterval(pollInt); return; }
+    if(!r.ok) return;
+    const j=await r.json();
+    if(j.modifiedTime && j.modifiedTime!==lastRemoteMod){
+      lastRemoteMod=j.modifiedTime; localStorage.setItem(PK,lastRemoteMod);
+      await drivePull(true);
+    }
+  }catch(e){/* silencieux */}
+}
+async function driveFind(){
+  const q=encodeURIComponent(`name='${DRIVE_FILE}' and trashed=false`);
+  const r=await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)`,{headers:{Authorization:'Bearer '+accessToken}});
+  if(!r.ok) throw new Error('find');
+  const j=await r.json();
+  driveFileId=(j.files&&j.files[0])?j.files[0].id:null;
+  return driveFileId;
+}
+async function drivePush(silent){
+  if(!accessToken){ if(!silent){ toast('Connecte Drive d\u2019abord'); } return; }
+  try{
+    await driveFind();
+    const meta={name:DRIVE_FILE,mimeType:'application/json'};
+    const body='--b\r\nContent-Type: application/json\r\n\r\n'+JSON.stringify(meta)+
+      '\r\n--b\r\nContent-Type: application/json\r\n\r\n'+JSON.stringify(S)+'\r\n--b--';
+    const url=driveFileId
+      ? `https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`
+      : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+    const r=await fetch(url+'&fields=id,modifiedTime',{method:driveFileId?'PATCH':'POST',
+      headers:{Authorization:'Bearer '+accessToken,'Content-Type':'multipart/related; boundary=b'},body});
+    if(r.status===401){ accessToken=null; sessionStorage.removeItem(TOKK); setSync('local'); driveBtnState(); if(!silent) toast('Session expirée — reconnecte Drive'); return; }
+    if(!r.ok) throw new Error('push');
+    const j=await r.json();
+    if(j.id) driveFileId=j.id;
+    if(j.modifiedTime){ lastRemoteMod=j.modifiedTime; localStorage.setItem(PK,lastRemoteMod); }
+    setSync('ok'); if(!silent) toast('Push Drive ✓');
+  }catch(e){ setSync('err'); if(!silent) toast('Erreur Drive'); }
+}
+async function drivePull(silent){
+  if(!accessToken){ if(!silent) toast('Connecte Drive d\u2019abord'); return; }
+  try{
+    await driveFind();
+    if(!driveFileId){ if(!silent) toast('Aucun fichier Drive — fais un Push d\u2019abord'); return; }
+    const r=await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`,{headers:{Authorization:'Bearer '+accessToken}});
+    if(r.status===401){ accessToken=null; sessionStorage.removeItem(TOKK); setSync('local'); driveBtnState(); if(!silent) toast('Session expirée — reconnecte Drive'); return; }
+    if(!r.ok) throw new Error('pull');
+    S=await r.json();
+    ensureState(); save(); setSync('ok'); if(!silent) toast('Pull Drive ✓');
+  }catch(e){ setSync('err'); if(!silent) toast('Erreur Drive'); }
+}
+
+/* ═══════════ INIT ═══════════ */
+load();
+applyTheme(localStorage.getItem(TK)||'light');
+applyFontSize(parseInt(localStorage.getItem(FS_KEY))||2);
+timerRender();
+renderAll();
+driveBtnState();
+if(accessToken){ setSync('ok'); startPolling(); pollRemote(); }
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden&&accessToken) pollRemote(); });
+</script>
+</body>
+</html>
