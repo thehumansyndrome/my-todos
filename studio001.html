@@ -668,7 +668,7 @@ const TOPICS=[
  todo:`<p>Dans Live, un <b>Drum Rack</b> assigné à un contrôleur à pads (ou aux touches du clavier) pour retrouver la logique du sampler à pads. Enregistre en jouant en direct sur la boucle plutôt qu\'en dessinant les notes. Applique ensuite un groove du dossier <b>MPC</b> dans le <b>Groove Pool</b>, dosé avec <b>Timing</b> plutôt qu\'à 100 %.</p>`}
 ];
 
-const OVERVIEW={id:'home',tab:'Vue d\'ensemble'}, REVIEW={id:'rev',tab:'↻ Révision'}, GLOSSTAB={id:'gloss',tab:'Glossaire'}, STYLESTAB={id:'styles',tab:'Styles'}, ERASTAB={id:'eras',tab:'Époques'}, SWINGTAB={id:'swing',tab:'Swing'}, PRACTAB={id:'prac',tab:'Pratiques'}, MKTTAB={id:'mkt',tab:'Diffusion'}, OWNSTYLETAB={id:'ownstyle',tab:'Ton style'}, AITAB={id:'ai',tab:'IA'};
+const OVERVIEW={id:'home',tab:'Vue d\'ensemble'}, REVIEW={id:'rev',tab:'↻ Révision'}, GLOSSTAB={id:'gloss',tab:'Glossaire'}, STYLESTAB={id:'styles',tab:'Styles'}, ERASTAB={id:'eras',tab:'Époques'}, SWINGTAB={id:'swing',tab:'Swing'}, PRACTAB={id:'prac',tab:'Pratiques'}, MKTTAB={id:'mkt',tab:'Diffusion'}, OWNSTYLETAB={id:'ownstyle',tab:'Ton style'}, AITAB={id:'ai',tab:'IA'}, HOOKSTAB={id:'hooks',tab:'Mélodies & hooks'};
 
 
 /* ============ quiz ============ */
@@ -909,6 +909,15 @@ hiphoptech:[
  {l:'Application',q:`Tu veux isoler la voix d'un vieux mix pour la retravailler. Quel outil choisir ?`,o:[`La séparation de stems`,`Un générateur texte-vers-musique`,`Un assistant de mastering`,`Un correcteur de justesse`],e:`La séparation de stems isole voix, batterie, basse et le reste à partir d'un fichier déjà mixé.`,ref:`quel outil pour quelle tâche`},
  {l:'Application',q:`Un assistant de mastering rend ton morceau plus détaillé. Comment juger honnêtement le résultat ?`,o:[`Le comparer à volume égal avant de valider`,`L'accepter directement, plus détaillé veut dire meilleur`,`Le refuser systématiquement`,`Le comparer sans écouter, juste en regardant les mesures`],e:`Un traitement qui sort plus fort ou plus détaillé paraît toujours meilleur au premier abord ; seule une comparaison à niveau égal le confirme.`,ref:`la méthode`},
  {l:'Diagnostic',q:`Tu génères un morceau complet et le publies tel quel, sans y toucher. Quel est le risque principal décrit ici ?`,o:[`Un résultat interchangeable, dont tu ne maîtrises ni les éléments ni les droits, et qui ne t'apprend rien`,`Le morceau sera automatiquement rejeté par les plateformes`,`Aucun risque particulier si le résultat est écoutable`,`Le morceau sera toujours trop court`],e:`Sans transformation personnelle, le résultat reste compétent mais générique, et ta position d'auteur dessus est fragile.`,ref:`pièges`}]
+,
+'focus:hooks':[
+ {l:'Rappel',q:`Combien de notes différentes tient en général un hook efficace ?`,o:[`4 à 8`,`15 à 20`,`Une seule, toujours`,`Le nombre n'a aucune importance`],e:`Peu de notes différentes, beaucoup de répétition : c'est ce qui permet à l'auditeur de retenir et de reconnaître le hook.`,ref:`Peu de notes, beaucoup de répétition`},
+ {l:'Rappel',q:`Qu'appelle-t-on le contour mélodique ?`,o:[`La forme dessinée par la succession des hauteurs (monte, descend, reste plat)`,`Le nombre exact de notes d'une mélodie`,`Le volume de la mélodie`,`L'instrument qui la joue`],e:`On se souvient d'un contour bien avant de se souvenir des notes précises.`,ref:`Le contour compte plus que les notes exactes`},
+ {l:'Compréhension',q:`Un hook peut-il fonctionner sans aucune mélodie ?`,o:[`Oui, un placement rythmique marqué peut suffire`,`Non, un hook a toujours besoin de notes`,`Seulement dans la musique électronique`,`Seulement s'il est très long`],e:`Un hook rythmique — une note répétée avec un placement syncopé marqué — peut être aussi mémorable qu'une mélodie complexe.`,ref:`Un hook peut être uniquement rythmique`},
+ {l:'Compréhension',q:`À quoi sert la structure question / réponse dans un motif de deux mesures ?`,o:[`Une première phrase reste en suspens, la seconde se résout : l'oreille retient mieux la paire`,`À doubler artificiellement la longueur du hook`,`À changer de tonalité au milieu du motif`,`Elle n'a aucun effet sur la mémorisation`],e:`C'est la même logique que le couplet/refrain, à l'échelle d'un motif court.`,ref:`La règle question / réponse`},
+ {l:'Application',q:`Ton hook est bon mais disparaît dans le mix. Quelle cause envisager en premier ?`,o:[`Il n'a pas assez de contraste avec ce qui joue au même moment, dans le même registre`,`Il contient trop peu de notes`,`Le tempo est trop lent`,`Il n'est pas assez complexe`],e:`Un hook doit se détacher de son environnement : registre, densité, espace autour de lui.`,ref:`Le hook fonctionne par contraste`},
+ {l:'Application',q:`Comment vérifier concrètement qu'une idée est un vrai hook ?`,o:[`Le test du chantonnage : le refredonner de mémoire sans l'instrumental`,`Compter le nombre d'accords utilisés`,`Vérifier qu'il dure au moins huit mesures`,`Le faire écouter uniquement à des musiciens professionnels`],e:`Si tu ne peux pas le fredonner correctement après l'avoir entendu deux fois, ce n'est pas encore un hook.`,ref:`Le test du chantonnage`},
+ {l:'Diagnostic',q:`Tu varies ton hook à chaque passage par souci de créativité, et il ne « prend » jamais. Pourquoi ?`,o:[`La variation empêche la répétition de faire son travail de mémorisation`,`Le hook est trop simple`,`Le tempo change trop souvent`,`Il manque des harmonies`],e:`Un bon hook se répète largement plus qu'on ne l'imagine avant de mériter sa première vraie variation.`,ref:`Changer le hook à chaque passage`}]
 };
 let quizActive=false;
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -1932,6 +1941,41 @@ function initAI(){
   initQuiz('focus:ai');
 }
 
+/* ============ mélodies et hooks ============ */
+function renderHooks(){
+  const tips=[[`Peu de notes, beaucoup de répétition`,`La plupart des hooks qui marchent tiennent sur 4 à 8 notes différentes. Ce n'est pas un manque d'idées : c'est ce qui permet à l'auditeur de le retenir dès la deuxième écoute et de le reconnaître à la dixième.`],
+   [`Le contour compte plus que les notes exactes`,`Le <b>contour mélodique</b> est la forme dessinée par la succession des hauteurs : ça monte, ça descend, ça reste plat. On se souvient d'un contour bien avant de se souvenir des notes précises — change les notes en gardant le contour, le hook reste reconnaissable.`],
+   [`Un hook peut être uniquement rythmique`,`Une seule note répétée, mais avec un placement rythmique marqué et syncopé, peut être aussi mémorable qu'une mélodie complexe. Le rythme du hook est une composante à part entière, pas un simple support pour les notes.`],
+   [`La règle question / réponse`,`Une première phrase qui reste en suspens, suivie d'une seconde qui se résout : l'oreille retient mieux une paire de phrases liées qu'une seule longue ligne. C'est la même logique que le couplet/refrain, à l'échelle d'un motif de deux mesures.`],
+   [`Le hook fonctionne par contraste`,`Il doit se détacher de ce qui l'entoure : plus aigu ou plus grave que le reste, plus simple ou au contraire seul là où tout était dense un instant plus tôt. Un hook noyé dans un arrangement aussi chargé que lui ne ressort pas, même s'il est bon.`],
+   [`Le test du chantonnage`,`Si tu ne peux pas le fredonner correctement sans l'instrumental, ni personne d'autre après l'avoir entendu deux fois, ce n'est pas encore un hook — c'est une ligne parmi d'autres. Le test est brutal, mais il ne ment pas.`]];
+  const traps=[[`Trop de notes différentes`,`Une ligne qui explore beaucoup de hauteurs et de rythmes différents peut être impressionnante à jouer, elle est presque toujours plus dure à retenir qu'un motif simple répété.`],
+   [`Changer le hook à chaque passage`,`Varier par respect de la « créativité » empêche justement la répétition de faire son travail. Un bon hook se répète largement plus qu'on ne l'imagine avant de mériter sa première vraie variation.`],
+   [`Le noyer dans l'arrangement`,`Le meilleur hook du monde ne ressort pas s'il est logé dans le même registre que trois autres éléments, au même volume, sans aucun espace autour de lui.`],
+   [`Confondre complexité et qualité`,`Un hook n'a pas à démontrer une maîtrise technique. Il a une seule fonction : se rappeler à l'esprit de l'auditeur sans qu'il le veuille. La simplicité n'est pas un raccourci, c'est l'objectif.`]];
+  return `<div class="section active"><h2>Mélodies et hooks qui marchent</h2>
+  <p class="lede">Un hook qui fonctionne n'est pas un coup de chance : c'est une structure qui obéit à quelques principes récurrents, observables dans des styles très différents. Cette page les isole un par un.</p>
+  ${block('',`ce qui fait qu'un hook marche`,concepts(tips))}
+  ${block('ex','le laboratoire à hooks',`<p>Cinq façons d'écrire une phrase sur la même progression et le même tempo. Écoute-les à la suite : ce qui change, ce sont les principes ci-dessus, pas l'harmonie ni le rythme de la boucle.</p><div id="demo-hookdemo" style="margin-top:14px"></div>`)}
+  ${block('','quatre familles de hooks',grid([
+   [`Hook mélodique`,`Une ligne de notes reconnaissable à son contour, chantée ou jouée par un instrument lead.`],
+   [`Hook rythmique`,`Un placement ou un motif de percussion si caractéristique qu'il fonctionne sans aucune note — un riff de basse coupé, un break reconnaissable dès la première frappe.`],
+   [`Hook vocal / textuel`,`Un mot ou une courte phrase répétée, parfois sans mélodie du tout (parlé, scandé, chopé). Le sens et le son du mot portent le hook autant que sa hauteur.`],
+   [`Hook harmonique`,`Un enchaînement d'accords ou un riff si identifiable qu'il tient lieu de refrain à lui seul, sans mélodie ajoutée par-dessus.`]]))}
+  ${block('','la méthode',stepList([
+   [`Écris vite, beaucoup, avant de juger.`,`Enregistre dix idées de deux mesures en une seule session, sans t'arrêter pour les évaluer. Le tri vient après, jamais pendant.`],
+   [`Esquisse le contour avant les notes précises.`,`Dessine à la voix ou au clavier une forme (monte, descend, reste plat) avant de figer les hauteurs exactes. Le contour se retient ; les notes exactes s'ajustent ensuite.`],
+   [`Limite-toi à 4 ou 5 notes différentes pour un premier jet.`,`Tu pourras toujours en ajouter. Il est plus facile d'enrichir un motif simple que de simplifier un motif déjà chargé.`],
+   [`Fais le test du chantonnage sur chaque candidat.`,`Écoute la boucle dix fois, coupe l'instrumental, essaie de la refredonner de mémoire. Ce qui ne survit pas au test n'est pas encore le hook.`],
+   [`Dégage-lui de la place dans l'arrangement.`,`Baisse ou retire ce qui joue dans le même registre au même moment, ajoute un silence juste avant sa première apparition.`],
+   [`Répète-le plus que ton instinct ne le suggère.`,`La répétition est ce qui transforme une bonne idée en hook. La première variation n'arrive qu'après plusieurs passages à l'identique.`]
+  ]))}
+  ${block('err','pièges',concepts(traps))}
+  ${block('todo','dans Ableton Live',`<p>Capture tes idées à la voix avec un enregistrement audio rapide avant de les retranscrire en MIDI : le contour survit mieux à une esquisse chantée qu'à une programmation directe à la souris. Active <b>Scale</b> sur les clips MIDI pour rester dans la tonalité pendant que tu improvises. Utilise <b>Capture MIDI</b> pour récupérer une idée jouée au clavier avant même d'avoir armé l'enregistrement. Fige (<b>Freeze</b>) chaque candidat retenu pour comparer plusieurs hooks côte à côte sans perdre de temps à les rejouer.</p>`)}
+  <div class="card"><h3>quiz</h3><div id="quiz"></div></div></div>`;
+}
+function initHooks(){DEMOS.hookdemo(document.getElementById('demo-hookdemo'));initQuiz('focus:hooks');}
+
 /* ============ glossaire ============ */
 // [terme, alias / anglais, définition, thème]
 const GLOSS=[
@@ -2187,11 +2231,14 @@ const GLOSS=[
 [`Alias`,`pseudonyme`,`Un second nom d'artiste utilisé pour une direction musicale distincte, plutôt que de diluer l'identité d'un projet existant.`,'focus:ownstyle'],
 [`Génération complète`,`text-to-music`,`Production d'un morceau ou d'un passage entier par IA à partir d'une description.`,'focus:ai'],
 [`Assistance ciblée`,``,`Usage de l'IA sur une étape précise d'un projet qui reste conduit par la personne : séparation de stems, correction, mastering assisté.`,'focus:ai'],
-[`Transformation personnelle`,``,`Une modification humaine apportée à un élément généré par IA — rechanter, rejouer, rééchantillonner — qui en change le statut et le rend reconnaissable.`,'focus:ai']
+[`Transformation personnelle`,``,`Une modification humaine apportée à un élément généré par IA — rechanter, rejouer, rééchantillonner — qui en change le statut et le rend reconnaissable.`,'focus:ai'],
+[`Contour mélodique`,`melodic contour`,`La forme dessinée par la succession des hauteurs d'une mélodie — monte, descend, reste plat — indépendamment des notes exactes utilisées.`,'focus:hooks'],
+[`Hook rythmique`,``,`Un hook porté uniquement par son placement dans le temps, sans variation de hauteur : une seule note, mais reconnaissable à son rythme.`,'focus:hooks'],
+[`Test du chantonnage`,``,`Vérifier qu'une mélodie est un vrai hook en la refredonnant de mémoire, sans l'instrumental, après l'avoir entendue deux fois.`,'focus:hooks']
 ];
 const isStyle=k=>k.indexOf('style:')===0, isFocus=k=>k.indexOf('era:')===0||k.indexOf('focus:')===0;
-const glossLabel=k=>isStyle(k)?'Style · '+((STYLES.find(x=>x.id===k.slice(6))||{}).name||k.slice(6)):k.indexOf('era:')===0?'Époque · '+((ERAS.find(x=>x.id===k.slice(4))||{}).name||k.slice(4)):k==='focus:swing'?'Focus · Swing':k==='focus:practices'?'Pratiques':k==='focus:marketing'?'Diffusion':k==='focus:ownstyle'?'Focus · Ton style':k==='focus:ai'?'Focus · IA':topicTitle(k);
-const glossGo=k=>{if(isStyle(k)){styleSel=k.slice(6);go('styles');}else if(k.indexOf('era:')===0){eraSel=k.slice(4);go('eras');}else if(k==='focus:swing')go('swing');else if(k==='focus:practices')go('prac');else if(k==='focus:marketing')go('mkt');else if(k==='focus:ownstyle')go('ownstyle');else if(k==='focus:ai')go('ai');else go(k);};
+const glossLabel=k=>isStyle(k)?'Style · '+((STYLES.find(x=>x.id===k.slice(6))||{}).name||k.slice(6)):k.indexOf('era:')===0?'Époque · '+((ERAS.find(x=>x.id===k.slice(4))||{}).name||k.slice(4)):k==='focus:swing'?'Focus · Swing':k==='focus:practices'?'Pratiques':k==='focus:marketing'?'Diffusion':k==='focus:ownstyle'?'Focus · Ton style':k==='focus:ai'?'Focus · IA':k==='focus:hooks'?'Focus · Mélodies & hooks':topicTitle(k);
+const glossGo=k=>{if(isStyle(k)){styleSel=k.slice(6);go('styles');}else if(k.indexOf('era:')===0){eraSel=k.slice(4);go('eras');}else if(k==='focus:swing')go('swing');else if(k==='focus:practices')go('prac');else if(k==='focus:marketing')go('mkt');else if(k==='focus:ownstyle')go('ownstyle');else if(k==='focus:ai')go('ai');else if(k==='focus:hooks')go('hooks');else go(k);};
 const norm=x=>x.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 function renderGloss(){return `<div class="section active"><h2>Glossaire</h2>
   <p class="lede">${GLOSS.length} termes, en français et en anglais, reliés à leur thème ou à leur style. La recherche ignore les accents et fouille aussi les définitions.</p>
@@ -2219,7 +2266,7 @@ function renderReview(){return `<div class="section active"><h2>Mode révision</
   <p class="lede">Des questions tirées au hasard dans tous les thèmes et tous les styles. Le tirage favorise ce que tu as raté, puis ce que tu n'as jamais vu : tu travailles là où c'est utile.</p>
   <div class="card"><div id="rev"></div></div></div>`;}
 function initReview(){
-  const root=document.getElementById('rev'),themeQ=TOPICS.flatMap(t=>(QUIZ[t.id]||[]).map(q=>({id:t.id,q}))),styleQ=STYLES.flatMap(x=>(QUIZ['style:'+x.id]||[]).map(q=>({id:'style:'+x.id,q}))),focusQ=['focus:swing','focus:practices','focus:marketing','focus:ownstyle','focus:ai',...ERAS.map(e=>'era:'+e.id)].flatMap(id=>(QUIZ[id]||[]).map(q=>({id,q}))),all=themeQ.concat(styleQ,focusQ);
+  const root=document.getElementById('rev'),themeQ=TOPICS.flatMap(t=>(QUIZ[t.id]||[]).map(q=>({id:t.id,q}))),styleQ=STYLES.flatMap(x=>(QUIZ['style:'+x.id]||[]).map(q=>({id:'style:'+x.id,q}))),focusQ=['focus:swing','focus:practices','focus:marketing','focus:ownstyle','focus:ai','focus:hooks',...ERAS.map(e=>'era:'+e.id)].flatMap(id=>(QUIZ[id]||[]).map(q=>({id,q}))),all=themeQ.concat(styleQ,focusQ);
   const st=it=>S.qstat[qkey(it.id,it.q)];
   const draw=(pool,n)=>{pool=pool.map(it=>{const x=st(it);return {it,w:!x?2:x.last?1:4};});const out=[];
     while(out.length<n&&pool.length){let r=Math.random()*pool.reduce((a,p)=>a+p.w,0),k=0;while(k<pool.length-1&&(r-=pool[k].w)>0)k++;out.push(pool.splice(k,1)[0].it);}
@@ -2275,8 +2322,8 @@ function initReview(){
 
 /* ============ render ============ */
 const tabsEl=document.getElementById('tabs'), pageEl=document.getElementById('page');
-const SECTIONS=[{id:'home',label:'Accueil',tabs:['home']},{id:'fond',label:'Fondamentaux',tabs:TOPICS.map(t=>t.id)},{id:'sty',label:'Styles & époques',tabs:['styles','eras','swing','ownstyle']},{id:'meth',label:'Méthode & diffusion',tabs:['prac','mkt','ai']},{id:'out',label:'Réviser',tabs:['gloss','rev']}];
-const TABLABEL=Object.fromEntries([OVERVIEW,...TOPICS,STYLESTAB,ERASTAB,SWINGTAB,OWNSTYLETAB,PRACTAB,MKTTAB,AITAB,GLOSSTAB,REVIEW].map(t=>[t.id,t.tab])),lastIn={};
+const SECTIONS=[{id:'home',label:'Accueil',tabs:['home']},{id:'fond',label:'Fondamentaux',tabs:TOPICS.map(t=>t.id)},{id:'sty',label:'Styles & époques',tabs:['styles','eras','swing','ownstyle','hooks']},{id:'meth',label:'Méthode & diffusion',tabs:['prac','mkt','ai']},{id:'out',label:'Réviser',tabs:['gloss','rev']}];
+const TABLABEL=Object.fromEntries([OVERVIEW,...TOPICS,STYLESTAB,ERASTAB,SWINGTAB,OWNSTYLETAB,HOOKSTAB,PRACTAB,MKTTAB,AITAB,GLOSSTAB,REVIEW].map(t=>[t.id,t.tab])),lastIn={};
 const subEl=document.getElementById('subtabs');
 function renderTabs(active){
   const sec=SECTIONS.find(x=>x.tabs.includes(active))||SECTIONS[0],n=TOPICS.filter(t=>S.done[t.id]).length;lastIn[sec.id]=active;
@@ -2300,6 +2347,7 @@ function go(id){
   else if(id==='prac'){pageEl.innerHTML=renderPractices();initPractices();}
   else if(id==='mkt'){pageEl.innerHTML=renderMarketing();initMarketing();}
   else if(id==='ownstyle'){pageEl.innerHTML=renderOwnStyle();initOwnStyle();}
+  else if(id==='hooks'){pageEl.innerHTML=renderHooks();initHooks();}
   else if(id==='ai'){pageEl.innerHTML=renderAI();initAI();}
   else if(id==='gloss'){pageEl.innerHTML=renderGloss();initGloss();}
   else{
@@ -2330,6 +2378,7 @@ function renderHome(){
   <button class="step" data-id="eras"><span class="n">⏱</span><div><b>Méthodes de production par décennie</b><span>Des années 70 aux années 2020 : l'outil, la contrainte, la méthode, et la même progression produite six fois.</span></div></button>
   <button class="step" data-id="swing"><span class="n">~</span><div><b>Swing et quantification</b><span>Le placement à la milliseconde dans la musique actuelle, avec un laboratoire interactif.</span></div></button>
   <button class="step" data-id="ownstyle"><span class="n">✦</span><div><b>Créer son propre style</b><span>Mélanger ses influences avec méthode, avec un outil pour comparer deux styles et proposer une recette.</span></div></button>
+  <button class="step" data-id="hooks"><span class="n">♪</span><div><b>Mélodies et hooks qui marchent</b><span>Ce qui rend un motif mémorable, avec un laboratoire audio de cinq écritures comparées.</span></div></button>
 </div><h3 class="grp">Méthode et diffusion</h3><div class="flow">
   <button class="step" data-id="prac"><span class="n">✓✕</span><div><b>Bonnes et mauvaises pratiques</b><span>Ce qui fait consensus aujourd'hui, les erreurs documentées en fiches ERR, et trois check-lists.</span></div></button>
   <button class="step" data-id="mkt"><span class="n">↗</span><div><b>Diffuser et faire connaître sa musique</b><span>Marketing, plateformes, réseau : bonnes pratiques, erreurs, rétro-planning de sortie daté et modèles de messages.</span></div></button>
@@ -3357,6 +3406,30 @@ blend(root){
      <b>Une piste de mélange concrète</b> — un ingrédient de chacun, pas les deux morceaux entiers : garde le tempo et la grille de <b>${A.name}</b> (${A.cmp[0]} BPM), emprunte « ${ia[0].toLowerCase()} » à <b>${A.name}</b> et « ${ib[0].toLowerCase()} » à <b>${B.name}</b>. Ce n'est qu'une des combinaisons possibles : change les styles ou relance pour une autre piste.</p>`;
   };
   draw();
+},
+
+hookdemo(root){
+  const Q=[[0,69,2],[3,72,2],[6,70,3]],A=[[0,67,2],[3,70,2],[6,67,3]];   // question (bars impaires) / réponse (bars paires), même rythme
+  const R=[
+   ['Contour en arche',[[0,67,2],[2,69,2],[4,72,3],[8,69,2],[10,67,3]],`Ça monte puis ça redescend : une forme simple, à la fois pour l'oreille et pour la mémoire. Le motif est identique à chaque passage — c'est la répétition qui fait le hook, pas la nouveauté.`],
+   ['Hook rythmique, une seule note',[[0,67,1],[3,67,1],[6,67,1],[10,67,2],[14,67,1]],`Aucune variation de hauteur : tout est dans le placement syncopé. Un hook rythmique fonctionne sans la moindre mélodie, à condition que son placement soit assez marqué pour se reconnaître seul.`],
+   ['Question / réponse',null,`Bars impaires : la phrase finit en l'air, sur une tension. Bars paires : le même rythme se referme sur la tonique. L'oreille entend une phrase complète, pas une boucle qui tourne sans but.`],
+   ['Répétition + une variation finale',[[0,67,2],[2,70,2],[5,69,3],[9,67,2],[11,70,2],[14,69,3]],`Le même motif joué trois fois à l'identique, puis une seule note change au dernier passage. C'est presque toujours plus efficace qu'un motif différent à chaque fois : la répétition installe le hook, la variation le fait respirer sans le perdre.`],
+   ['Trop chargé (contre-exemple)',[[0,64,1],[1,69,1],[3,65,1],[4,72,1],[6,62,1],[7,70,1],[9,67,1],[10,73,1],[12,63,1],[13,68,1],[15,71,1]],`Beaucoup de notes, beaucoup de rythmes différents, aucune répétition reconnaissable. Techniquement, chaque note est « juste » — dans la gamme, sur le tempo — mais rien n'y accroche l'oreille. C'est l'erreur la plus fréquente d'un premier jet.`]
+  ];
+  let sel=0;
+  root.innerHTML=`<div class="row" id="hp"></div><p class="note" id="ht" style="margin:10px 0 0"></p><div class="row" style="margin-top:12px"><button class="btn primary" id="play">▶ Écouter la phrase</button></div>`;
+  const txt=()=>root.querySelector('#ht').innerHTML=R[sel][2];
+  choice(root,'#hp',R.map(r=>r[0]),()=>sel,i=>{sel=i;txt();});txt();
+  const ch=[55,58,62];
+  root.querySelector('#play').onclick=e=>toggleLoop(e.currentTarget,112,64,(s,t,d)=>{
+    const bar=s>>4,st=s%16;
+    if(st===0)ch.forEach(m=>tone(t,mtof(m),d*15,{type:'triangle',vol:.1,cutoff:1800,a:.03,r:.2}));
+    if(st%4===0)kick(t,master,.5);
+    if(st%4===2){noise(t,master,.07,'highpass',7000,.05);tone(t,mtof(ch[0]-12),d*1.5,{vol:.24,cutoff:450});}
+    const notes=sel===2?(bar%2===0?Q:A):R[sel][1];
+    notes.forEach(n=>{if(n[0]===st)tone(t,mtof(n[1]),d*n[2]*1.05,{type:'square',vol:.16,cutoff:2600,a:.005,r:.12});});
+  });
 },
 };
 
@@ -4723,7 +4796,7 @@ Next release: [title], on [date].`],
 
 const UI_EN={
 '· production musicale':'· music production','Accueil':'Home','Fondamentaux':'Fundamentals','Styles & époques':'Styles & eras','Méthode & diffusion':'Method & release','Réviser':'Review',
-'Groove & batterie':'Groove & drums','Basse & low-end':'Bass & low end','Voix & vocoder':'Vocals & vocoder','Mixage & EQ':'Mixing & EQ','Espace':'Space','Époques':'Eras','Pratiques':'Practices','Diffusion':'Release & promo','Glossaire':'Glossary','↻ Révision':'↻ Review','Vue d\'ensemble':'Overview','Sampling':'Sampling','Techniques hip-hop':'Hip-hop techniques','Ton style':'Your style','IA':'AI',
+'Groove & batterie':'Groove & drums','Basse & low-end':'Bass & low end','Voix & vocoder':'Vocals & vocoder','Mixage & EQ':'Mixing & EQ','Espace':'Space','Époques':'Eras','Pratiques':'Practices','Diffusion':'Release & promo','Glossaire':'Glossary','↻ Révision':'↻ Review','Vue d\'ensemble':'Overview','Sampling':'Sampling','Techniques hip-hop':'Hip-hop techniques','Ton style':'Your style','IA':'AI','Mélodies & hooks':'Melody & hooks',
 'Composition':'Composition','Sampling':'Sampling','Techniques hip-hop : platines et MPC':'Hip-hop techniques: turntables and the MPC','Groove et batterie':'Groove and drums','Basse et low-end':'Bass and low end','Voix et vocoder':'Vocals and vocoder','Mixage & égalisation':'Mixing & equalization','Espace : réverbe et delay':'Space: reverb and delay',
 'De l\'idée au morceau fini':'From idea to finished track','Conseils par style':'Style guides','Méthodes de production par décennie':'Production methods by decade','Swing et quantification':'Swing and quantization','Bonnes et mauvaises pratiques':'Good and bad practices','Diffuser et faire connaître sa musique':'Releasing and promoting your music','Mode révision':'Review mode',
 'notions clés':'key concepts','exemple concret':'worked example','erreur classique':'classic mistake','à tester dans Ableton Live':'try it in Ableton Live','mes notes':'my notes','données':'data','les codes':'the codes','pièges':'pitfalls','dans Ableton Live':'in Ableton Live','pour aller plus loin':'going further','carte d\'identité':'ID card','à l\'écoute':'listen',
@@ -4819,6 +4892,7 @@ function buildIndex(){
   TIMELINE.forEach(r=>add('era','Époques · frise',r[0]+' · '+r[1],r[2],()=>{eraSel='cmp';go('eras');focusCard('les inventions');}));
   cardsOf(renderSwing(),'Swing','swing',h=>{go('swing');focusCard(h);});
   cardsOf(renderOwnStyle(),'Focus · Ton style','ownstyle',h=>{go('ownstyle');focusCard(h);});
+  cardsOf(renderHooks(),'Focus · Mélodies & hooks','hooks',h=>{go('hooks');focusCard(h);});
   cardsOf(renderAI(),'Focus · IA','ai',h=>{go('ai');focusCard(h);});
   GLOSS.forEach(g=>add('gloss','Glossaire',g[0],(g[1]?g[1]+'. ':'')+g[2],()=>{glossState={q:g[0],th:''};go('gloss');},4));
   BEST.forEach(b=>add('prac','Pratique · '+PDOM[b[0]],b[1],b[2]+' '+b[3],()=>{pracState={mode:'best',dom:'',q:b[1]};go('prac');},1));
