@@ -102,6 +102,7 @@ code,.mono{font-family:var(--mono);font-size:.9em}
 .note{font-size:14px;color:var(--muted);margin-top:12px;max-width:64ch}
 .done{display:flex;align-items:center;gap:10px;min-height:44px;margin-top:8px;font-size:15px;cursor:pointer}
 .done input{width:20px;height:20px}
+.ilink{color:var(--accent);text-decoration:underline;text-decoration-color:var(--border)}
 .badge{font-size:12px;color:var(--muted);white-space:nowrap;font-family:var(--mono)}
 .dbtn{min-height:44px;padding:0 12px;border:1px solid var(--border);border-radius:8px;background:transparent;font-size:13px;font-weight:500;white-space:nowrap}
 .dbtn.ok{border-color:var(--green);color:var(--green)}
@@ -257,6 +258,7 @@ function ensureState(){
   if(!S.qstat||typeof S.qstat!=='object')S.qstat={};
   if(!S.checks||typeof S.checks!=='object')S.checks={};
   if(!S.plan||typeof S.plan!=='object')S.plan={};if(typeof S.plan.date!=='string')S.plan.date='';if(!S.plan.done||typeof S.plan.done!=='object')S.plan.done={};
+  if(!S.melTrain||typeof S.melTrain!=='object'||typeof S.melTrain.done!=='number')S.melTrain={done:(S.melTrain&&S.melTrain.done)||0};
   if(typeof S.updatedAt!=='number')S.updatedAt=0;
 }
 function load(){ try{const r=localStorage.getItem(SK); if(r)S=JSON.parse(r);}catch(e){} ensureState(); }
@@ -668,7 +670,7 @@ const TOPICS=[
  todo:`<p>Dans Live, un <b>Drum Rack</b> assigné à un contrôleur à pads (ou aux touches du clavier) pour retrouver la logique du sampler à pads. Enregistre en jouant en direct sur la boucle plutôt qu\'en dessinant les notes. Applique ensuite un groove du dossier <b>MPC</b> dans le <b>Groove Pool</b>, dosé avec <b>Timing</b> plutôt qu\'à 100 %.</p>`}
 ];
 
-const OVERVIEW={id:'home',tab:'Vue d\'ensemble'}, REVIEW={id:'rev',tab:'↻ Révision'}, GLOSSTAB={id:'gloss',tab:'Glossaire'}, STYLESTAB={id:'styles',tab:'Styles'}, ERASTAB={id:'eras',tab:'Époques'}, SWINGTAB={id:'swing',tab:'Swing'}, PRACTAB={id:'prac',tab:'Pratiques'}, MKTTAB={id:'mkt',tab:'Diffusion'}, OWNSTYLETAB={id:'ownstyle',tab:'Ton style'}, AITAB={id:'ai',tab:'IA'}, HOOKSTAB={id:'hooks',tab:'Mélodies & hooks'};
+const OVERVIEW={id:'home',tab:'Vue d\'ensemble'}, REVIEW={id:'rev',tab:'↻ Révision'}, GLOSSTAB={id:'gloss',tab:'Glossaire'}, STYLESTAB={id:'styles',tab:'Styles'}, ERASTAB={id:'eras',tab:'Époques'}, SWINGTAB={id:'swing',tab:'Swing'}, PRACTAB={id:'prac',tab:'Pratiques'}, MKTTAB={id:'mkt',tab:'Diffusion'}, OWNSTYLETAB={id:'ownstyle',tab:'Ton style'}, AITAB={id:'ai',tab:'IA'}, HOOKSTAB={id:'hooks',tab:'Mélodies & hooks'}, MELTRAINTAB={id:'meltrain',tab:'Entraînement'};
 
 
 /* ============ quiz ============ */
@@ -918,6 +920,14 @@ hiphoptech:[
  {l:'Application',q:`Ton hook est bon mais disparaît dans le mix. Quelle cause envisager en premier ?`,o:[`Il n'a pas assez de contraste avec ce qui joue au même moment, dans le même registre`,`Il contient trop peu de notes`,`Le tempo est trop lent`,`Il n'est pas assez complexe`],e:`Un hook doit se détacher de son environnement : registre, densité, espace autour de lui.`,ref:`Le hook fonctionne par contraste`},
  {l:'Application',q:`Comment vérifier concrètement qu'une idée est un vrai hook ?`,o:[`Le test du chantonnage : le refredonner de mémoire sans l'instrumental`,`Compter le nombre d'accords utilisés`,`Vérifier qu'il dure au moins huit mesures`,`Le faire écouter uniquement à des musiciens professionnels`],e:`Si tu ne peux pas le fredonner correctement après l'avoir entendu deux fois, ce n'est pas encore un hook.`,ref:`Le test du chantonnage`},
  {l:'Diagnostic',q:`Tu varies ton hook à chaque passage par souci de créativité, et il ne « prend » jamais. Pourquoi ?`,o:[`La variation empêche la répétition de faire son travail de mémorisation`,`Le hook est trop simple`,`Le tempo change trop souvent`,`Il manque des harmonies`],e:`Un bon hook se répète largement plus qu'on ne l'imagine avant de mériter sa première vraie variation.`,ref:`Changer le hook à chaque passage`}]
+,
+'focus:meltrain':[
+ {l:'Rappel',q:`Selon cette page, quelle durée de pratique est la plus efficace ?`,o:[`Des sessions courtes et fréquentes plutôt qu'une longue session rare`,`Une seule session de plusieurs heures par semaine`,`La durée n'a aucune importance`,`Au moins une heure d'affilée à chaque fois`],e:`Dix minutes par jour valent mieux qu'une session de deux heures une fois par semaine : c'est un réflexe qui se construit par répétition.`,ref:`Pratique par sessions courtes et fréquentes`},
+ {l:'Compréhension',q:`Pourquoi utiliser une contrainte à chaque exercice plutôt que d'écrire librement ?`,o:[`Une grille vide sans objectif invite à l'indécision`,`Les contraintes sont obligatoires dans Ableton Live`,`Écrire librement est interdit pendant l'entraînement`,`Une contrainte garantit toujours un bon résultat`],e:`Une limite de notes, un contour imposé ou un rythme donnent quelque chose de concret à résoudre.`,ref:`Utilise une contrainte à chaque fois`},
+ {l:'Compréhension',q:`Pourquoi l'outil d'analyse est-il utile plutôt que de juger au feeling ?`,o:[`Le nombre de notes et la répétition rythmique sont mesurables`,`Le feeling n'a jamais raison`,`L'outil remplace complètement l'oreille`,`Il donne toujours la même réponse`],e:`L'oreille est la plus biaisée juste après avoir écrit quelque chose ; des mesures objectives permettent d'y revenir plus tard.`,ref:`Juge avec l'outil, pas seulement au feeling`},
+ {l:'Application',q:`Dans l'outil, que signifie une répétition rythmique détectée entre les deux moitiés de la grille ?`,o:[`Les pas occupés dans les 8 premiers pas ressemblent à ceux des 8 derniers`,`Les mêmes notes exactes sont jouées partout`,`Le tempo est identique sur toute la boucle`,`Aucune note n'a été placée`],e:`C'est un bon point d'ancrage pour la mémoire, même si les hauteurs exactes diffèrent d'une moitié à l'autre.`,ref:`le laboratoire d'entraînement`},
+ {l:'Application',q:`Que faut-il faire après un essai plutôt que de l'effacer immédiatement ?`,o:[`Le garder pour le comparer à un essai plus propre juste après`,`L'exporter en fichier audio`,`Le marquer comme défi terminé automatiquement`,`Recommencer exactement le même essai`],e:`Une mélodie ratée enseigne quelque chose au moment où on la compare à un essai plus réussi.`,ref:`Garde aussi les essais ratés`},
+ {l:'Diagnostic',q:`Tu ne t'entraînes qu'aux contours en arche parce que c'est ce que tu écris naturellement. Quel est le risque ?`,o:[`Ne jamais développer d'aisance sur les hooks rythmiques ou les contours en vallée`,`Aucun risque, l'arche est toujours la meilleure forme`,`Le tempo de la boucle va se dérégler`,`L'outil d'analyse ne fonctionnera plus`],e:`Faire tourner les défis plutôt que d'éviter ceux qui gênent est ce qui construit une vraie aisance.`,ref:`Pratiquer uniquement les styles qu'on aime déjà`}]
 };
 let quizActive=false;
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -2076,6 +2086,75 @@ function renderHooks(){
 }
 function initHooks(){DEMOS.hookdemo(document.getElementById('demo-hookdemo'));initQuiz('focus:hooks');}
 
+/* ============ s'entraîner aux mélodies ============ */
+const MELCH=[[55,58,62],[51,55,58],[53,58,62],[53,57,60]];
+const MELCHALL_FR=[
+ `Écris un hook en 4 notes différentes maximum.`,
+ `Écris un hook purement rythmique : une seule hauteur, tout se joue sur le placement.`,
+ `Écris un contour en arche : ça monte, puis ça redescend.`,
+ `Écris une structure question / réponse sur les deux moitiés de la grille.`,
+ `Écris un hook qui commence par un silence d'au moins deux pas.`,
+ `Écris un hook en évitant complètement la première rangée (la note la plus aiguë).`,
+ `Écris un motif de 4 pas, puis répète-le trois fois à l'identique sur toute la grille.`,
+ `Écris un hook où la dernière note est la plus grave de tout le motif.`,
+ `Écris un hook avec au moins quatre pas vides d'affilée quelque part.`,
+ `Écris le même hook deux fois, puis change une seule note au tout dernier pas.`
+];
+const MELCHALL_EN=[
+ `Write a hook using 4 different notes at most.`,
+ `Write a purely rhythmic hook: a single pitch, everything happens in the placement.`,
+ `Write an arch contour: it rises, then falls.`,
+ `Write a question / answer structure across the two halves of the grid.`,
+ `Write a hook that starts with a silence of at least two steps.`,
+ `Write a hook that completely avoids the top row (the highest note).`,
+ `Write a 4-step motif, then repeat it identically three times across the grid.`,
+ `Write a hook where the last note is the lowest one in the whole motif.`,
+ `Write a hook with at least four empty steps in a row somewhere.`,
+ `Write the same hook twice, then change just one note on the very last step.`
+];
+function renderMelTrain(){
+  const isEN=LANG==='en';
+  const method=isEN?[
+   [`Practice in short, frequent sessions.`,`Ten minutes a day beats one two-hour session a week. Melody writing is a reflex you build through repetition, not a problem you solve once.`],
+   [`Use a constraint every time.`,`An empty grid and no goal invites indecision. A constraint — a note limit, a required contour, a rhythm — gives you something concrete to solve.`],
+   [`Judge with the tool, not just your gut.`,`Note count and rhythm repetition are measurable. Check them before deciding whether an attempt is good or not.`],
+   [`Keep the bad attempts too.`,`A cluttered, unmemorable melody still teaches you something the moment you compare it with a clean one right after. Don't erase before comparing.`],
+   [`Separate writing from polishing.`,`During practice, write fast and move to the next attempt. Refining a single idea for twenty minutes belongs to actual production work, not training.`],
+   [`Come back to old attempts later.`,`A motif that felt weak yesterday can suddenly sound obvious a week later, once your ear has calibrated on more examples.`]
+  ]:[
+   [`Pratique par sessions courtes et fréquentes.`,`Dix minutes par jour valent mieux qu'une session de deux heures une fois par semaine. Écrire des mélodies est un réflexe qui se construit par répétition, pas un problème qu'on résout une fois pour toutes.`],
+   [`Utilise une contrainte à chaque fois.`,`Une grille vide sans objectif invite à l'indécision. Une contrainte — une limite de notes, un contour imposé, un rythme — te donne quelque chose de concret à résoudre.`],
+   [`Juge avec l'outil, pas seulement au feeling.`,`Le nombre de notes et la répétition rythmique sont mesurables. Vérifie-les avant de décider si un essai est bon ou non.`],
+   [`Garde aussi les essais ratés.`,`Une mélodie chargée et peu mémorable t'apprend quelque chose au moment même où tu la compares à un essai plus propre juste après. N'efface pas avant de comparer.`],
+   [`Sépare l'écriture du polissage.`,`Pendant l'entraînement, écris vite et passe à l'essai suivant. Peaufiner une seule idée pendant vingt minutes relève du travail de production, pas de l'entraînement.`],
+   [`Reviens sur d'anciens essais plus tard.`,`Un motif qui semblait faible hier peut soudain paraître évident une semaine plus tard, une fois ton oreille calibrée sur davantage d'exemples.`]
+  ];
+  const traps=isEN?[[`Chasing perfection on the first attempt`,`Practice is for volume, not for a finished result. Aim for twenty quick attempts in a session, not one flawless one.`],
+   [`Writing with no constraint`,`Complete freedom is harder to work with than a limit. If you're stuck, add a constraint instead of removing one.`],
+   [`Judging by ear alone, right after writing`,`Your ear is at its most biased right after you've written something. Use the analysis tool, and come back to it later.`],
+   [`Practicing only the styles you already like`,`Writing a rhythmic-only hook when you always write melodic ones (or the reverse) is exactly what builds range. Rotate through the challenges rather than skipping the uncomfortable ones.`]]
+   :[[`Chercher la perfection dès le premier essai`,`L'entraînement sert au volume, pas à un résultat abouti. Vise vingt essais rapides dans une session, pas un seul sans défaut.`],
+   [`Écrire sans aucune contrainte`,`La liberté totale est plus difficile à exploiter qu'une limite. Si tu bloques, ajoute une contrainte plutôt que d'en retirer une.`],
+   [`Juger au feeling seul, juste après avoir écrit`,`L'oreille est la plus biaisée juste après avoir écrit quelque chose. Utilise l'outil d'analyse, et reviens dessus plus tard.`],
+   [`Ne s'entraîner que sur les styles qu'on aime déjà`,`Écrire un hook purement rythmique quand on écrit toujours mélodique (ou l'inverse) est exactement ce qui construit de la aisance. Fais tourner les défis plutôt que d'éviter ceux qui gênent.`]];
+  return isEN?`<div class="section active"><h2>Practice writing melodies</h2>
+  <p class="lede">The <a href="#" data-go="hooks" class="ilink">Melody & hooks</a> page covers the principles. This page is where you drill them: write short motifs against a fixed constraint, get immediate measurable feedback, and repeat.</p>
+  ${block('ex','the melody trainer',`<p>Click the grid to place notes — one per step, ten pitches diatonic to the loop's key. Play it back, then hit <b>Analyze</b> for a measured read on note count and rhythmic repetition. Use <b>New challenge</b> for a constraint to write against.</p><div id="demo-meltrain" style="margin-top:14px"></div>`)}
+  ${block('','how to practice',stepList(method))}
+  ${block('err','pitfalls',concepts(traps))}
+  <div class="card"><h3>quiz</h3><div id="quiz"></div></div></div>`
+  :`<div class="section active"><h2>S'entraîner aux mélodies</h2>
+  <p class="lede">La page <a href="#" data-go="hooks" class="ilink">Mélodies & hooks</a> pose les principes. Celle-ci sert à les répéter : écrire des motifs courts contre une contrainte fixée, recevoir un retour mesuré immédiat, et recommencer.</p>
+  ${block('ex',`le laboratoire d'entraînement`,`<p>Clique sur la grille pour placer des notes — une par pas, dix hauteurs diatoniques à la tonalité de la boucle. Écoute le résultat, puis clique sur <b>Analyser</b> pour un retour mesuré sur le nombre de notes et la répétition rythmique. Utilise <b>Nouveau défi</b> pour une contrainte à respecter.</p><div id="demo-meltrain" style="margin-top:14px"></div>`)}
+  ${block('',`comment s'entraîner`,stepList(method))}
+  ${block('err','pièges',concepts(traps))}
+  <div class="card"><h3>quiz</h3><div id="quiz"></div></div></div>`;
+}
+function initMelTrain(){
+  document.querySelectorAll('#page .ilink').forEach(a=>a.onclick=e=>{e.preventDefault();go(a.dataset.go);});
+  DEMOS.meltrain(document.getElementById('demo-meltrain'));initQuiz('focus:meltrain');
+}
+
 /* ============ glossaire ============ */
 // [terme, alias / anglais, définition, thème]
 const GLOSS=[
@@ -2334,11 +2413,13 @@ const GLOSS=[
 [`Transformation personnelle`,``,`Une modification humaine apportée à un élément généré par IA — rechanter, rejouer, rééchantillonner — qui en change le statut et le rend reconnaissable.`,'focus:ai'],
 [`Contour mélodique`,`melodic contour`,`La forme dessinée par la succession des hauteurs d'une mélodie — monte, descend, reste plat — indépendamment des notes exactes utilisées.`,'focus:hooks'],
 [`Hook rythmique`,``,`Un hook porté uniquement par son placement dans le temps, sans variation de hauteur : une seule note, mais reconnaissable à son rythme.`,'focus:hooks'],
-[`Test du chantonnage`,``,`Vérifier qu'une mélodie est un vrai hook en la refredonnant de mémoire, sans l'instrumental, après l'avoir entendue deux fois.`,'focus:hooks']
+[`Test du chantonnage`,``,`Vérifier qu'une mélodie est un vrai hook en la refredonnant de mémoire, sans l'instrumental, après l'avoir entendue deux fois.`,'focus:hooks'],
+[`Pratique délibérée`,`deliberate practice`,`Un entraînement structuré autour d'un objectif précis et mesurable, avec un retour immédiat — par opposition à une répétition sans structure.`,'focus:meltrain'],
+[`Défi de pratique`,``,`Une contrainte courte et précise (une limite de notes, un contour imposé, un rythme) utilisée pour cadrer un seul exercice d'écriture mélodique.`,'focus:meltrain']
 ];
 const isStyle=k=>k.indexOf('style:')===0, isFocus=k=>k.indexOf('era:')===0||k.indexOf('focus:')===0;
-const glossLabel=k=>isStyle(k)?'Style · '+((STYLES.find(x=>x.id===k.slice(6))||{}).name||k.slice(6)):k.indexOf('era:')===0?'Époque · '+((ERAS.find(x=>x.id===k.slice(4))||{}).name||k.slice(4)):k==='focus:swing'?'Focus · Swing':k==='focus:practices'?'Pratiques':k==='focus:marketing'?'Diffusion':k==='focus:ownstyle'?'Focus · Ton style':k==='focus:ai'?'Focus · IA':k==='focus:hooks'?'Focus · Mélodies & hooks':topicTitle(k);
-const glossGo=k=>{if(isStyle(k)){styleSel=k.slice(6);go('styles');}else if(k.indexOf('era:')===0){eraSel=k.slice(4);go('eras');}else if(k==='focus:swing')go('swing');else if(k==='focus:practices')go('prac');else if(k==='focus:marketing')go('mkt');else if(k==='focus:ownstyle')go('ownstyle');else if(k==='focus:ai')go('ai');else if(k==='focus:hooks')go('hooks');else go(k);};
+const glossLabel=k=>isStyle(k)?'Style · '+((STYLES.find(x=>x.id===k.slice(6))||{}).name||k.slice(6)):k.indexOf('era:')===0?'Époque · '+((ERAS.find(x=>x.id===k.slice(4))||{}).name||k.slice(4)):k==='focus:swing'?'Focus · Swing':k==='focus:practices'?'Pratiques':k==='focus:marketing'?'Diffusion':k==='focus:ownstyle'?'Focus · Ton style':k==='focus:ai'?'Focus · IA':k==='focus:hooks'?'Focus · Mélodies & hooks':k==='focus:meltrain'?'Focus · Entraînement':topicTitle(k);
+const glossGo=k=>{if(isStyle(k)){styleSel=k.slice(6);go('styles');}else if(k.indexOf('era:')===0){eraSel=k.slice(4);go('eras');}else if(k==='focus:swing')go('swing');else if(k==='focus:practices')go('prac');else if(k==='focus:marketing')go('mkt');else if(k==='focus:ownstyle')go('ownstyle');else if(k==='focus:ai')go('ai');else if(k==='focus:hooks')go('hooks');else if(k==='focus:meltrain')go('meltrain');else go(k);};
 const norm=x=>x.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 function renderGloss(){return `<div class="section active"><h2>Glossaire</h2>
   <p class="lede">${GLOSS.length} termes, en français et en anglais, reliés à leur thème ou à leur style. La recherche ignore les accents et fouille aussi les définitions.</p>
@@ -2366,7 +2447,7 @@ function renderReview(){return `<div class="section active"><h2>Mode révision</
   <p class="lede">Des questions tirées au hasard dans tous les thèmes et tous les styles. Le tirage favorise ce que tu as raté, puis ce que tu n'as jamais vu : tu travailles là où c'est utile.</p>
   <div class="card"><div id="rev"></div></div></div>`;}
 function initReview(){
-  const root=document.getElementById('rev'),themeQ=TOPICS.flatMap(t=>(QUIZ[t.id]||[]).map(q=>({id:t.id,q}))),styleQ=STYLES.flatMap(x=>(QUIZ['style:'+x.id]||[]).map(q=>({id:'style:'+x.id,q}))),focusQ=['focus:swing','focus:practices','focus:marketing','focus:ownstyle','focus:ai','focus:hooks',...ERAS.map(e=>'era:'+e.id)].flatMap(id=>(QUIZ[id]||[]).map(q=>({id,q}))),all=themeQ.concat(styleQ,focusQ);
+  const root=document.getElementById('rev'),themeQ=TOPICS.flatMap(t=>(QUIZ[t.id]||[]).map(q=>({id:t.id,q}))),styleQ=STYLES.flatMap(x=>(QUIZ['style:'+x.id]||[]).map(q=>({id:'style:'+x.id,q}))),focusQ=['focus:swing','focus:practices','focus:marketing','focus:ownstyle','focus:ai','focus:hooks','focus:meltrain',...ERAS.map(e=>'era:'+e.id)].flatMap(id=>(QUIZ[id]||[]).map(q=>({id,q}))),all=themeQ.concat(styleQ,focusQ);
   const st=it=>S.qstat[qkey(it.id,it.q)];
   const draw=(pool,n)=>{pool=pool.map(it=>{const x=st(it);return {it,w:!x?2:x.last?1:4};});const out=[];
     while(out.length<n&&pool.length){let r=Math.random()*pool.reduce((a,p)=>a+p.w,0),k=0;while(k<pool.length-1&&(r-=pool[k].w)>0)k++;out.push(pool.splice(k,1)[0].it);}
@@ -2422,8 +2503,8 @@ function initReview(){
 
 /* ============ render ============ */
 const tabsEl=document.getElementById('tabs'), pageEl=document.getElementById('page');
-const SECTIONS=[{id:'home',label:'Accueil',tabs:['home']},{id:'fond',label:'Fondamentaux',tabs:TOPICS.map(t=>t.id)},{id:'sty',label:'Styles & époques',tabs:['styles','eras','swing','ownstyle','hooks']},{id:'meth',label:'Méthode & diffusion',tabs:['prac','mkt','ai']},{id:'out',label:'Réviser',tabs:['gloss','rev']}];
-const TABLABEL=Object.fromEntries([OVERVIEW,...TOPICS,STYLESTAB,ERASTAB,SWINGTAB,OWNSTYLETAB,HOOKSTAB,PRACTAB,MKTTAB,AITAB,GLOSSTAB,REVIEW].map(t=>[t.id,t.tab])),lastIn={};
+const SECTIONS=[{id:'home',label:'Accueil',tabs:['home']},{id:'fond',label:'Fondamentaux',tabs:TOPICS.map(t=>t.id)},{id:'sty',label:'Styles & époques',tabs:['styles','eras','swing','ownstyle','hooks','meltrain']},{id:'meth',label:'Méthode & diffusion',tabs:['prac','mkt','ai']},{id:'out',label:'Réviser',tabs:['gloss','rev']}];
+const TABLABEL=Object.fromEntries([OVERVIEW,...TOPICS,STYLESTAB,ERASTAB,SWINGTAB,OWNSTYLETAB,HOOKSTAB,MELTRAINTAB,PRACTAB,MKTTAB,AITAB,GLOSSTAB,REVIEW].map(t=>[t.id,t.tab])),lastIn={};
 const subEl=document.getElementById('subtabs');
 function renderTabs(active){
   const sec=SECTIONS.find(x=>x.tabs.includes(active))||SECTIONS[0],n=TOPICS.filter(t=>S.done[t.id]).length;lastIn[sec.id]=active;
@@ -2448,6 +2529,7 @@ function go(id){
   else if(id==='mkt'){pageEl.innerHTML=renderMarketing();initMarketing();}
   else if(id==='ownstyle'){pageEl.innerHTML=renderOwnStyle();initOwnStyle();}
   else if(id==='hooks'){pageEl.innerHTML=renderHooks();initHooks();}
+  else if(id==='meltrain'){pageEl.innerHTML=renderMelTrain();initMelTrain();}
   else if(id==='ai'){pageEl.innerHTML=renderAI();initAI();}
   else if(id==='gloss'){pageEl.innerHTML=renderGloss();initGloss();}
   else{
@@ -2479,6 +2561,7 @@ function renderHome(){
   <button class="step" data-id="swing"><span class="n">~</span><div><b>Swing et quantification</b><span>Le placement à la milliseconde dans la musique actuelle, avec un laboratoire interactif.</span></div></button>
   <button class="step" data-id="ownstyle"><span class="n">✦</span><div><b>Créer son propre style</b><span>Mélanger ses influences avec méthode, avec un outil pour comparer deux styles et proposer une recette.</span></div></button>
   <button class="step" data-id="hooks"><span class="n">♪</span><div><b>Mélodies et hooks qui marchent</b><span>Ce qui rend un motif mémorable, avec un laboratoire audio de cinq écritures comparées.</span></div></button>
+  <button class="step" data-id="meltrain"><span class="n">✎</span><div><b>S'entraîner aux mélodies</b><span>Un compositeur en grille avec analyse automatique et défis, pour répéter les principes de la page précédente.</span></div></button>
 </div><h3 class="grp">Méthode et diffusion</h3><div class="flow">
   <button class="step" data-id="prac"><span class="n">✓✕</span><div><b>Bonnes et mauvaises pratiques</b><span>Ce qui fait consensus aujourd'hui, les erreurs documentées en fiches ERR, et trois check-lists.</span></div></button>
   <button class="step" data-id="mkt"><span class="n">↗</span><div><b>Diffuser et faire connaître sa musique</b><span>Marketing, plateformes, réseau : bonnes pratiques, erreurs, rétro-planning de sortie daté et modèles de messages.</span></div></button>
@@ -3545,6 +3628,76 @@ hookdemo(root){
     notes.forEach(n=>{if(n[0]===st)tone(t,mtof(n[1]),d*n[2]*1.05,{type:'square',vol:.16,cutoff:2600,a:.005,r:.12});});
   });
 },
+
+meltrain(root){
+  const isEN=LANG==='en';
+  const SCALE=[74,72,70,69,67,65,63,62,60,58],RN=isEN?['D5','C5','Bb4','A4','G4','F4','Eb4','D4','C4','Bb3']:['Ré5','Do5','Sib4','La4','Sol4','Fa4','Mib4','Ré4','Do4','Sib3'];
+  const CH=isEN?{newCh:'New challenge',done:'Mark done ✓',cnt:'challenges completed',empty:'No note placed yet. Click the grid to start.',an:'Analyze',clr:'Clear',hideOn:'Hide the grid (hum test)',hideOff:'Show the grid',used:'notes used',distinct:'different pitches',
+      rhyOk:'Rhythm repeats between the two halves of the grid: good anchor for memory.',rhyNo:`Rhythm doesn't repeat between the two halves: try echoing the first 8 steps' pattern in the last 8.`,
+      arch:'Contour: rises then falls (arch) — a classic, easy-to-remember shape.',valley:'Contour: falls then rises (valley) — also a clean, recognizable shape.',
+      asc:'Contour: keeps climbing — works, but rarer in strong hooks.',desc:'Contour: keeps descending — works, but rarer in strong hooks.',
+      flat:'Contour: stays on a single pitch — closer to a rhythmic hook than a melodic one, which is fine.',mixed:'Contour: changes direction often — harder to remember; try smoothing it toward an arch or a valley.',
+      countOk:'within the usual range for a memorable hook (4 to 8).',countHigh:'on the high side — consider cutting a few for an easier hook to retain.',play:'Play',an2:'analysis'}
+    :{newCh:'Nouveau défi',done:'Marquer comme fait ✓',cnt:'défis complétés',empty:'Aucune note placée. Clique sur la grille pour commencer.',an:'Analyser',clr:'Effacer',hideOn:'Masquer la grille (test du chantonnage)',hideOff:'Afficher la grille',used:'notes utilisées',distinct:'hauteurs différentes',
+      rhyOk:'Le rythme se répète entre les deux moitiés de la grille : bon point d\'ancrage pour la mémoire.',rhyNo:'Le rythme ne se répète pas entre les deux moitiés : essaie de faire écho au motif des 8 premiers pas dans les 8 derniers.',
+      arch:'Contour : monte puis descend (arche) — une forme classique, facile à retenir.',valley:'Contour : descend puis monte (vallée) — une forme tout aussi propre et reconnaissable.',
+      asc:'Contour : continue de monter — ça fonctionne, mais c\'est plus rare dans les hooks qui marchent.',desc:'Contour : continue de descendre — ça fonctionne, mais c\'est plus rare dans les hooks qui marchent.',
+      flat:'Contour : reste sur une seule hauteur — plus proche d\'un hook rythmique que mélodique, ce qui est très bien aussi.',mixed:'Contour : change souvent de direction — plus dur à retenir ; essaie de le lisser vers une arche ou une vallée.',
+      countOk:'dans la fourchette habituelle d\'un hook mémorable (4 à 8).',countHigh:'plutôt élevé — envisage d\'en retirer quelques-unes pour un hook plus facile à retenir.',play:'Écouter',an2:'analyse'};
+  const CHALL=isEN?MELCHALL_EN:MELCHALL_FR;
+  let notes=new Array(16).fill(null),hidden=false,chIdx=Math.floor(Math.random()*CHALL.length);
+  if(!S.melTrain||typeof S.melTrain!=='object')S.melTrain={done:0};
+  root.innerHTML=`<div class="card notes" style="margin:0 0 14px"><h3>${isEN?'challenge':'défi'}</h3><p id="mtc" style="margin:0"></p>
+     <div class="row" style="margin-top:10px"><button class="btn" id="mtn">${CH.newCh}</button><button class="btn" id="mtd">${CH.done}</button><span class="pill" id="mtcnt"></span></div></div>
+   <div class="scroll"><div class="seq" id="mtg"></div></div>
+   <div class="row" style="margin-top:12px"><button class="btn primary" id="play">▶ ${CH.play}</button><button class="btn" id="an">${CH.an}</button><button class="btn" id="clr">${CH.clr}</button><button class="btn" id="hide">${CH.hideOn}</button></div>
+   <div id="mta" style="margin-top:12px"></div>`;
+  const drawChall=()=>{root.querySelector('#mtc').textContent=CHALL[chIdx];root.querySelector('#mtcnt').textContent=`${S.melTrain.done} ${CH.cnt}`;};
+  drawChall();
+  root.querySelector('#mtn').onclick=()=>{chIdx=(chIdx+1)%CHALL.length;drawChall();};
+  root.querySelector('#mtd').onclick=()=>{S.melTrain.done++;autoSave();drawChall();};
+  const drawGrid=()=>{const g=root.querySelector('#mtg');
+    if(hidden){g.innerHTML=`<p class="note" style="grid-column:1/-1">${CH.empty}</p>`;return;}
+    g.innerHTML='<div></div>'+Array.from({length:16},(_,i)=>`<div class="h">${i%4===0?i/4+1:i%2===0?(isEN?'&':'et'):'·'}</div>`).join('')+
+      SCALE.map((pitch,row)=>`<div>${RN[row]}</div>`+Array.from({length:16},(_,x)=>`<div class="c${notes[x]===pitch?' s2':''}${x%4===0?' b':''}" data-x="${x}" data-row="${row}"></div>`).join('')).join('');
+    g.querySelectorAll('.c').forEach(c=>c.onclick=()=>{const x=+c.dataset.x,pitch=SCALE[+c.dataset.row];notes[x]=notes[x]===pitch?null:pitch;drawGrid();});
+  };
+  drawGrid();
+  root.querySelector('#hide').onclick=e=>{hidden=!hidden;e.currentTarget.textContent=hidden?CH.hideOff:CH.hideOn;drawGrid();};
+  root.querySelector('#clr').onclick=()=>{notes=new Array(16).fill(null);drawGrid();root.querySelector('#mta').innerHTML='';};
+  root.querySelector('#an').onclick=()=>{
+    const used=notes.filter(n=>n!==null),distinct=[...new Set(used)];
+    if(!used.length){root.querySelector('#mta').innerHTML=`<p class="note">${CH.empty}</p>`;return;}
+    let sameHalf=0;for(let i=0;i<8;i++){if((notes[i]!==null)===(notes[i+8]!==null))sameHalf++;}
+    const rhythmOk=sameHalf/8>=.75;
+    const seq=[];notes.forEach(n=>{if(n!==null)seq.push(n);});
+    let up=0,down=0,changes=0,lastDir=0;
+    for(let i=1;i<seq.length;i++){const d=seq[i]>seq[i-1]?1:seq[i]<seq[i-1]?-1:0;if(d>0)up++;if(d<0)down++;if(d&&lastDir&&d!==lastDir)changes++;if(d)lastDir=d;}
+    let contourMsg=null;
+    if(seq.length>=2){
+      if(up===0&&down===0)contourMsg=CH.flat;
+      else if(down===0)contourMsg=CH.asc;
+      else if(up===0)contourMsg=CH.desc;
+      else{const maxI=seq.indexOf(Math.max(...seq)),minI=seq.indexOf(Math.min(...seq));
+        if(changes<=2&&maxI>0&&maxI<seq.length-1)contourMsg=CH.arch;
+        else if(changes<=2&&minI>0&&minI<seq.length-1)contourMsg=CH.valley;
+        else contourMsg=CH.mixed;}
+    }
+    const countMsg=distinct.length<=8?CH.countOk:CH.countHigh;
+    root.querySelector('#mta').innerHTML=`<div class="card"><h3>${CH.an2}</h3>
+      <p><b>${used.length} ${CH.used}</b>, <b>${distinct.length} ${CH.distinct}</b> ${countMsg}</p>
+      <p>${rhythmOk?CH.rhyOk:CH.rhyNo}</p>
+      ${contourMsg?`<p>${contourMsg}</p>`:''}</div>`;
+  };
+  const ch=MELCH;
+  root.querySelector('#play').onclick=e=>toggleLoop(e.currentTarget,100,64,(s,t,d)=>{
+    const bar=s>>4,st=s%16;
+    if(st===0)ch[bar].forEach(m=>tone(t,mtof(m),d*15,{type:'triangle',vol:.09,cutoff:1800,a:.03,r:.2}));
+    if(st%4===0)kick(t,master,.5);
+    if(st%4===2){noise(t,master,.07,'highpass',7000,.05);tone(t,mtof(ch[bar][0]-12),d*1.5,{vol:.22,cutoff:450});}
+    if(notes[st]!==null)tone(t,mtof(notes[st]),d*1.3,{type:'square',vol:.17,cutoff:2800,a:.005,r:.1});
+  });
+},
 };
 
 /* ============ init ============ */
@@ -4506,6 +4659,26 @@ EN.GLOSS=[
 [`Demo`,``,`A finished, unreleased track sent to a label to pitch it for release.`,'focus:marketing']
 ];
 
+EN.GLOSS.push(
+[`One-shot`,``,`A sample of a single hit or sound event, as opposed to a multi-bar loop.`,'sample'],
+[`Slice`,``,`A slice of a sample, obtained by chopping it at regular intervals or at its transients.`,'sample'],
+[`Chop point`,`slice point`,`The exact spot where a sample slice begins. Placed wrong, it produces a click or a rhythmic offset.`,'sample'],
+[`Freeze / Flatten`,``,`In Live, freezing a track to an audio render (Freeze), then converting it into a new, reusable clip (Flatten).`,'sample'],
+[`Beat juggling`,``,`A turntable technique: alternating between two copies of the same record to recompose a rhythm live.`,'hiphoptech'],
+[`Baby scratch`,``,`The basic scratch: a simple back-and-forth of the record under the needle, with no work on the mixer.`,'hiphoptech'],
+[`Finger drumming`,``,`Playing a drum part or a beat by striking a controller's pads with your fingers, rather than programming it with the mouse.`,'hiphoptech'],
+[`Digging`,`crate digging`,`Searching record bins for raw material to sample: a break, a chord, a texture.`,'hiphoptech'],
+[`Style recipe`,``,`The precise, recurring combination of choices (tempo, sound, structure) that makes a body of tracks recognizable as coming from the same artist.`,'focus:ownstyle'],
+[`Alias`,`pseudonym`,`A second artist name used for a distinct musical direction, rather than diluting an existing project's identity.`,'focus:ownstyle'],
+[`Full generation`,`text-to-music`,`Producing an entire track or passage by AI from a description.`,'focus:ai'],
+[`Targeted assistance`,``,`Using AI on one precise step of a project that stays led by the person: stem separation, correction, assisted mastering.`,'focus:ai'],
+[`Personal transformation`,``,`A human modification applied to an AI-generated element — re-singing, replaying, resampling — that changes its status and makes it recognizable.`,'focus:ai'],
+[`Melodic contour`,``,`The shape drawn by the succession of pitches in a melody — rises, falls, stays flat — independent of the exact notes used.`,'focus:hooks'],
+[`Rhythmic hook`,``,`A hook carried only by its placement in time, with no pitch variation: a single note, recognizable by its rhythm.`,'focus:hooks'],
+[`Hum test`,``,`Checking that a melody is a real hook by humming it back from memory, with no instrumental, after hearing it twice.`,'focus:hooks'],
+[`Deliberate practice`,``,`Structured practice against a specific, measurable goal, with immediate feedback — as opposed to unstructured repetition.`,'focus:meltrain'],
+[`Practice challenge`,``,`A short, specific constraint (a note limit, a required contour, a rhythm) used to focus a single melody-writing exercise.`,'focus:meltrain']
+);
 EN.QUIZ={
 compo:[
  {q:`How many distinct notes does a scale like G minor contain?`,o:[`7`,`5`,`8`,`12`],e:`G A B♭ C D E♭ F: seven notes. 12 notes would be the full chromatic scale.`,ref:`Key`},
@@ -4729,6 +4902,13 @@ EN.QUIZ.hiphoptech=[
  {q:`Where does boom bap's particular groove come from?`,o:[`The technical constraints (memory, resolution, swing) of 80s-90s pad samplers`,`A modern quantization plugin`,`A complete absence of swing`,`A tempo that must always be very fast`],e:`Those original technical limits became writing habits, then a recognizable style.`,ref:`The pad sampler in history`},
  {q:`In what order should you work for convincing finger drumming?`,o:[`Play the gesture first, quantize it partially, add swing last`,`Quantize at 100% before playing`,`Add swing before you even have a motif`,`Program note by note with the mouse, then randomize`],e:`The physical gesture carries information a mouse-drawn part doesn't capture; keeping quantization light preserves it.`,ref:`the method`},
  {q:`Your mouse-programmed MPC pattern sounds dead despite good sound choices. Why?`,o:[`It's missing the actually-played gesture, which the mouse doesn't capture`,`The tempo is too fast`,`The pads are badly assigned`,`There aren't enough sounds`],e:`A drawn pattern, however precise, doesn't have the same feel as a motif played on the pads and then partially quantized.`,ref:`the classic mistake`}];
+EN.QUIZ.meltrain=[
+ {q:`According to this page, what practice duration is most effective?`,o:[`Short, frequent sessions rather than one rare long one`,`A single multi-hour session once a week`,`Duration doesn't matter at all`,`At least an hour straight every time`],e:`Ten minutes a day beats one two-hour session a week: it's a reflex you build through repetition.`,ref:`Practice in short, frequent sessions`},
+ {q:`Why use a constraint on every exercise rather than writing freely?`,o:[`An empty grid with no goal invites indecision`,`Constraints are mandatory in Ableton Live`,`Writing freely is banned during practice`,`A constraint always guarantees a good result`],e:`A note limit, a required contour or a rhythm gives you something concrete to solve.`,ref:`Use a constraint every time`},
+ {q:`Why is the analysis tool useful instead of judging by ear alone?`,o:[`Note count and rhythmic repetition are measurable`,`Gut feeling is never right`,`The tool completely replaces your ear`,`It always gives the same answer`],e:`The ear is most biased right after writing something; objective measures let you revisit it later.`,ref:`Judge with the tool, not just your gut`},
+ {q:`In the tool, what does detected rhythmic repetition between the two halves of the grid mean?`,o:[`The occupied steps in the first 8 steps resemble those in the last 8`,`The exact same notes play everywhere`,`The tempo is identical throughout the loop`,`No note has been placed`],e:`It's a good anchor for memory, even if the exact pitches differ between the two halves.`,ref:`the melody trainer`},
+ {q:`What should you do with an attempt instead of erasing it right away?`,o:[`Keep it to compare against a cleaner attempt right after`,`Export it as an audio file`,`Mark it as a completed challenge automatically`,`Redo the exact same attempt`],e:`A weak melody teaches you something the moment you compare it with a more successful attempt.`,ref:`Keep the bad attempts too`},
+ {q:`You only practice arch contours because that's what you naturally write. What's the risk?`,o:[`Never building range on rhythmic hooks or valley contours`,`No risk, the arch is always the best shape`,`The loop's tempo will drift`,`The analysis tool will stop working`],e:`Rotating through the challenges rather than skipping the uncomfortable ones is what builds real range.`,ref:`Practicing only the styles you already like`}];
 EN.BEST=[
 ['meth',`Separate the phases: create, arrange, mix`,`These are three incompatible mindsets. Tweaking a compressor while you're hunting for a melody kills the idea.`,`One session = one phase. While creating, no mixing plugins. While mixing, no new parts.`,'arr'],
 ['meth',`Finish, even imperfect`,`You learn ten times more by finishing ten average tracks than by polishing one loop for six months.`,`Set a deadline and a number of sessions. Once that's up, export and move to the next one.`,'arr'],
@@ -4975,7 +5155,7 @@ Next release: [title], on [date].`],
 
 const UI_EN={
 '· production musicale':'· music production','Accueil':'Home','Fondamentaux':'Fundamentals','Styles & époques':'Styles & eras','Méthode & diffusion':'Method & release','Réviser':'Review',
-'Groove & batterie':'Groove & drums','Basse & low-end':'Bass & low end','Voix & vocoder':'Vocals & vocoder','Mixage & EQ':'Mixing & EQ','Espace':'Space','Époques':'Eras','Pratiques':'Practices','Diffusion':'Release & promo','Glossaire':'Glossary','↻ Révision':'↻ Review','Vue d\'ensemble':'Overview','Sampling':'Sampling','Techniques hip-hop':'Hip-hop techniques','Ton style':'Your style','IA':'AI','Mélodies & hooks':'Melody & hooks',
+'Groove & batterie':'Groove & drums','Basse & low-end':'Bass & low end','Voix & vocoder':'Vocals & vocoder','Mixage & EQ':'Mixing & EQ','Espace':'Space','Époques':'Eras','Pratiques':'Practices','Diffusion':'Release & promo','Glossaire':'Glossary','↻ Révision':'↻ Review','Vue d\'ensemble':'Overview','Sampling':'Sampling','Techniques hip-hop':'Hip-hop techniques','Ton style':'Your style','IA':'AI','Mélodies & hooks':'Melody & hooks','Entraînement':'Practice',
 'Composition':'Composition','Sampling':'Sampling','Techniques hip-hop : platines et MPC':'Hip-hop techniques: turntables and the MPC','Groove et batterie':'Groove and drums','Basse et low-end':'Bass and low end','Voix et vocoder':'Vocals and vocoder','Mixage & égalisation':'Mixing & equalization','Espace : réverbe et delay':'Space: reverb and delay',
 'De l\'idée au morceau fini':'From idea to finished track','Conseils par style':'Style guides','Méthodes de production par décennie':'Production methods by decade','Swing et quantification':'Swing and quantization','Bonnes et mauvaises pratiques':'Good and bad practices','Diffuser et faire connaître sa musique':'Releasing and promoting your music','Mode révision':'Review mode',
 'notions clés':'key concepts','exemple concret':'worked example','erreur classique':'classic mistake','à tester dans Ableton Live':'try it in Ableton Live','mes notes':'my notes','données':'data','les codes':'the codes','pièges':'pitfalls','dans Ableton Live':'in Ableton Live','pour aller plus loin':'going further','carte d\'identité':'ID card','à l\'écoute':'listen',
@@ -5072,6 +5252,7 @@ function buildIndex(){
   cardsOf(renderSwing(),'Swing','swing',h=>{go('swing');focusCard(h);});
   cardsOf(renderOwnStyle(),'Focus · Ton style','ownstyle',h=>{go('ownstyle');focusCard(h);});
   cardsOf(renderHooks(),'Focus · Mélodies & hooks','hooks',h=>{go('hooks');focusCard(h);});
+  cardsOf(renderMelTrain(),'Focus · Entraînement','meltrain',h=>{go('meltrain');focusCard(h);});
   cardsOf(renderAI(),'Focus · IA','ai',h=>{go('ai');focusCard(h);});
   GLOSS.forEach(g=>add('gloss','Glossaire',g[0],(g[1]?g[1]+'. ':'')+g[2],()=>{glossState={q:g[0],th:''};go('gloss');},4));
   BEST.forEach(b=>add('prac','Pratique · '+PDOM[b[0]],b[1],b[2]+' '+b[3],()=>{pracState={mode:'best',dom:'',q:b[1]};go('prac');},1));
