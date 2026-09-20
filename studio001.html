@@ -1861,35 +1861,61 @@ function initMarketing(){
 
 /* ============ créer son propre style ============ */
 function renderOwnStyle(){
-  const tips=[[`Un style n'est pas une case, c'est une somme de choix récurrents`,`Écoute cinq morceaux d'un même artiste : ce n'est presque jamais un genre unique, c'est une manière de faire — un tempo qu'il revisite, un son de basse qu'il retrouve, une structure d'arrangement qu'il répète.`],
+  const isEN=LANG==='en';
+  const tips=isEN?[[`A style isn't a box, it's a sum of recurring choices`,`Listen to five tracks by the same artist: it's almost never a single genre, it's a way of doing things — a tempo they keep coming back to, a bass sound they reuse, an arrangement structure they repeat.`],
+   [`Pick two or three influences, not ten`,`A style born from crossing ten references goes off in every direction. Two or three, owned and blended consistently, produce something recognizable by the third track.`],
+   [`Borrow one element per reference, not the whole thing`,`The rhythm of one, the bass treatment of another, the harmony of a third. Copying a reference wholesale gives a pastiche; taking one precise ingredient gives a blend.`],
+   [`A signature fits in one sentence`,`"Disco made with a current low end and sidechain" sticks. A description that needs ten lines isn't a direction yet, it's still a search.`],
+   [`Constraint reveals a style faster than freedom does`,`The same synth across a whole EP, a single drum kit, a fixed tempo: it's the repetition of a choice, more than its nature, that creates recognition.`],
+   [`A style is built over time, not on one track`,`A single track can sound like anything. It's the recurrence across five, ten, twenty tracks that draws an identity — yours, like that of any artist you admire.`]]
+   :[[`Un style n'est pas une case, c'est une somme de choix récurrents`,`Écoute cinq morceaux d'un même artiste : ce n'est presque jamais un genre unique, c'est une manière de faire — un tempo qu'il revisite, un son de basse qu'il retrouve, une structure d'arrangement qu'il répète.`],
    [`Choisis deux ou trois influences, pas dix`,`Un style né du croisement de dix références part dans tous les sens. Deux ou trois assumées, mélangées avec constance, produisent quelque chose de reconnaissable dès le troisième morceau.`],
    [`Emprunte un élément par référence, pas le tout`,`Le rythme de l'une, le traitement de basse de l'autre, l'harmonie d'une troisième. Copier une référence dans son ensemble donne un pastiche ; en prendre un ingrédient précis donne un mélange.`],
    [`Une signature tient en une phrase`,`« Du disco produit avec un grave et un sidechain actuels » se retient. Une description qui a besoin de dix lignes n'est pas encore une direction, c'est encore une recherche.`],
    [`La contrainte révèle le style plus vite que la liberté`,`Un même synthé sur tout un EP, un seul kit de batterie, un tempo fixe : la répétition d'un choix, plus que sa nature, est ce qui crée la reconnaissance.`],
    [`Le style se construit sur la durée, pas sur un morceau`,`Un morceau isolé peut ressembler à n'importe quoi. C'est la récurrence sur cinq, dix, vingt morceaux qui dessine une identité — la tienne, comme celle de n'importe quel artiste que tu admires.`]];
-  const traps=[[`Le pastiche`,`Reproduire une référence trait pour trait, sons compris. Ça s'entend immédiatement, et ça ne mène nulle part au-delà du premier morceau.`],
+  const traps=isEN?[[`Pastiche`,`Reproducing a reference note for note, sounds included. It's audible immediately, and it goes nowhere beyond the first track.`],
+   [`Too many references at once`,`A track trying to be disco, drum & bass and pop at the same time becomes none of the three. Choose, and explore another direction on a different project if you must.`],
+   [`Changing sound with every release`,`See the Release & promo page: neither the audience nor the algorithms then know who to recommend you to. Diverging urges deserve a separate alias rather than a diluted identity.`],
+   [`Waiting to have "found your style" before releasing`,`Style reveals itself by doing, not beforehand. The first ten tracks are what surface what keeps coming back despite you; they point the direction, not prior reflection.`]]
+   :[[`Le pastiche`,`Reproduire une référence trait pour trait, sons compris. Ça s'entend immédiatement, et ça ne mène nulle part au-delà du premier morceau.`],
    [`Trop de références à la fois`,`Un morceau qui essaie d'être disco, drum & bass et pop en même temps ne devient aucun des trois. Choisis, quitte à explorer une autre direction sur un autre projet.`],
    [`Changer de son à chaque sortie`,`Voir la fiche Diffusion : ni le public ni les algorithmes ne savent alors à qui te recommander. Les envies divergentes méritent un alias distinct plutôt qu'une identité diluée.`],
    [`Attendre d'avoir « trouvé son style » avant de sortir`,`Le style se révèle en faisant, pas en amont. Les dix premiers morceaux servent à cerner ce qui revient malgré toi ; ce sont eux qui indiquent la direction, pas une réflexion préalable.`]];
-  return `<div class="section active"><h2>Créer son propre style</h2>
-  <p class="lede">Un style n'est pas un genre qu'on choisit dans une liste : c'est ce qui reste constant d'un morceau à l'autre une fois qu'on a arrêté de copier une seule référence. Cette page aide à le construire délibérément plutôt qu'à l'attendre.</p>
-  ${block('','ce qui fait un style',concepts(tips))}
-  ${block('ex','le mélangeur de styles',`<p>Choisis deux styles parmi ceux de la section Styles. L'outil montre ce qu'ils ont en commun, ce qui les oppose, et propose une piste de mélange concrète — un ingrédient de chacun, jamais les deux intégralement. Écoute les deux boucles d'origine avant de juger le résultat proposé.</p><div id="demo-blend" style="margin-top:14px"></div>`)}
-  ${block('','la méthode',stepList([
+  const method=isEN?[
+   [`Pick two styles you genuinely listen to, not ones that "should" pair well.`,`The ear follows what you actually like, not a combination that looks clever on paper.`],
+   [`Identify one precise ingredient in each.`,`Not "the disco vibe", but "the octave bass"; not "the techno energy", but "the rumble between the kicks". The more precise, the more reusable.`],
+   [`Fix the rest on a single one of the two styles.`,`Tempo, rhythmic grid, structure: borrow them from just one, to give the blend a coherent skeleton.`],
+   [`Make five tracks with the same recipe before judging.`,`A single track can sound like a happy accident or an isolated failure. Recurrence is what reveals whether the blend holds up.`],
+   [`Name your recipe in one sentence.`,`The day you can describe it to someone else in one sentence, you have a style, not just an experiment.`],
+   [`Let it evolve, but slowly.`,`A living style changes from one EP to the next; a style that changes with every track isn't one. The margin is in the speed of the change.`]
+  ]:[
    [`Choisis deux styles que tu écoutes vraiment, pas ceux qui « devraient » bien s'associer.`,`L'oreille suit ce qu'on aime réellement, pas une combinaison qui semble maligne sur le papier.`],
    [`Identifie un ingrédient précis dans chacun.`,`Pas « l'ambiance disco », mais « la basse en octaves » ; pas « l'énergie techno », mais « le rumble entre les kicks ». Plus c'est précis, plus c'est réutilisable.`],
    [`Fixe le reste sur un seul des deux styles.`,`Tempo, grille rythmique, structure : emprunte-les à un seul, pour donner un squelette cohérent au mélange.`],
    [`Fais cinq morceaux avec la même recette avant de juger.`,`Un morceau peut sonner comme un accident heureux ou un échec isolé. C'est la récurrence qui révèle si le mélange tient.`],
    [`Nomme ta recette en une phrase.`,`Le jour où tu peux la décrire à quelqu'un d'autre en une phrase, tu as un style, pas juste une expérimentation.`],
    [`Laisse-la évoluer, mais lentement.`,`Un style vivant change d'un EP à l'autre ; un style qui change à chaque morceau n'en est pas un. La marge est dans la vitesse du changement.`]
-  ]))}
+  ];
+  return isEN?`<div class="section active"><h2>Create your own style</h2>
+  <p class="lede">A style isn't a genre picked from a list: it's what stays constant from one track to the next once you've stopped copying a single reference. This page helps build it deliberately rather than wait for it.</p>
+  ${block('','what makes a style',concepts(tips))}
+  ${block('ex','the style blender',`<p>Pick two styles from the Styles section. The tool shows what they share, what sets them apart, and suggests a concrete blend idea — one ingredient from each, never both tracks in full. Listen to both original loops before judging the suggested result.</p><div id="demo-blend" style="margin-top:14px"></div>`)}
+  ${block('','the method',stepList(method))}
+  ${block('err','pitfalls',concepts(traps))}
+  <div class="card"><h3>quiz</h3><div id="quiz"></div></div></div>`
+  :`<div class="section active"><h2>Créer son propre style</h2>
+  <p class="lede">Un style n'est pas un genre qu'on choisit dans une liste : c'est ce qui reste constant d'un morceau à l'autre une fois qu'on a arrêté de copier une seule référence. Cette page aide à le construire délibérément plutôt qu'à l'attendre.</p>
+  ${block('','ce qui fait un style',concepts(tips))}
+  ${block('ex','le mélangeur de styles',`<p>Choisis deux styles parmi ceux de la section Styles. L'outil montre ce qu'ils ont en commun, ce qui les oppose, et propose une piste de mélange concrète — un ingrédient de chacun, jamais les deux intégralement. Écoute les deux boucles d'origine avant de juger le résultat proposé.</p><div id="demo-blend" style="margin-top:14px"></div>`)}
+  ${block('','la méthode',stepList(method))}
   ${block('err','pièges',concepts(traps))}
   <div class="card"><h3>quiz</h3><div id="quiz"></div></div></div>`;
 }
 function initOwnStyle(){DEMOS.blend(document.getElementById('demo-blend'));initQuiz('focus:ownstyle');}
 
 /* ============ IA dans la musique actuelle ============ */
-const AI_TASKS=[
+const AI_TASKS_FR=[
  [`Esquisser une mélodie ou une progression`,`Générateur texte-vers-musique, ou les générateurs et transformations MIDI de Live 12.`,`Ce n'est qu'un point de départ : rejoue, réharmonise ou transpose avant de la garder telle quelle.`],
  [`Isoler la voix ou la batterie d'un fichier déjà mixé`,`Séparation de stems (intégrée à Live, ou en ligne).`,`La qualité dépend beaucoup du matériau d'origine ; attends-toi à des artefacts sur un mix dense.`],
  [`Corriger la justesse d'une voix`,`Correction de hauteur assistée (Auto Shift dans Live 12, ou équivalent).`,`Corrige ce qui gêne à l'oreille, pas ce qui dépasse à l'écran. Garde les respirations.`],
@@ -1899,40 +1925,79 @@ const AI_TASKS=[
  [`Générer un morceau complet`,`Un service de génération musicale complète.`,`Le point de départ le plus rapide, et le moins tien : sépare en stems, retravaille, ou utilise-le comme simple référence d'ambiance.`],
  [`Écrire des paroles`,`Un assistant de texte généraliste.`,`Relis et réécris avec ta propre voix : un texte non retouché se reconnaît, et se reconnaît mal.`]
 ];
+const AI_TASKS_EN=[
+ [`Sketch a melody or a chord progression`,`A text-to-music generator, or Live 12's MIDI generators and transformations.`,`It's only a starting point: replay, re-harmonize or transpose it before keeping it as-is.`],
+ [`Isolate the vocal or drums from an already-mixed file`,`Stem separation (built into Live, or online).`,`Quality depends a lot on the source material; expect artifacts on a dense mix.`],
+ [`Correct a vocal's pitch`,`Assisted pitch correction (Auto Shift in Live 12, or equivalent).`,`Fix what actually bothers the ear, not what overshoots on screen. Keep the breaths.`],
+ [`Balance a mix by comparison`,`A reference-based EQ assistant.`,`A second opinion, not a pilot: check every suggestion by ear before accepting it.`],
+ [`Master a track`,`An online assisted mastering service.`,`Always compare at matched volume before judging, as with any processing (see Practices, ERR01).`],
+ [`Find a sound or a preset`,`AI-generated presets or samples.`,`Transform it before using it: filter it, resample it, add a personal layer.`],
+ [`Generate a complete track`,`A full music generation service.`,`The fastest starting point, and the least yours: split it into stems, rework it, or use it only as a mood reference.`],
+ [`Write lyrics`,`A general-purpose text assistant.`,`Reread and rewrite it in your own voice: an untouched text is recognizable, and recognizable in a bad way.`]
+];
 function renderAI(){
-  const tips=[[`Trois familles d'usage`,`<b>Génération complète</b> : un texte devient un morceau ou un passage entier. <b>Assistance ciblée</b> : séparation de stems, mastering assisté, correction de justesse, complétion MIDI — l'IA traite une étape précise d'un projet qui reste le tien. <b>Outils créatifs</b> : génération de samples, de presets ou d'idées mélodiques, à retravailler.`],
+  const isEN=LANG==='en';
+  const tips=isEN?[[`Three families of use`,`<b>Full generation</b>: a text becomes an entire track or passage. <b>Targeted assistance</b>: stem separation, assisted mastering, pitch correction, MIDI completion — the AI handles one precise step of a project that stays yours. <b>Creative tools</b>: generating samples, presets or melodic ideas, to be reworked.`],
+   [`What AI does well`,`Speeding up a sketch, unblocking a blank page, suggesting variations you wouldn't have thought of, handling in seconds what used to take hours (separating a vocal, for instance).`],
+   [`What AI doesn't do for you`,`Deciding what's good in <b>your</b> context, choosing what sounds like you, judging whether a result serves the track or just the algorithm that produced it. These decisions remain the part of the work that gives a track a signature.`],
+   [`Rights are evolving fast`,`Generators' commercial usage terms have changed several times since 2024, through lawsuits and then licensing deals with record labels (see the Eras topic, 2020s). They often depend on the subscription tier: recheck before every release, not once and for all.`],
+   [`Personal transformation is what remains`,`An untouched generated result is competent and interchangeable. Re-singing, replaying, resampling, re-harmonizing: it's that gesture, not the tool, that makes a track recognizable as yours.`]]
+   :[[`Trois familles d'usage`,`<b>Génération complète</b> : un texte devient un morceau ou un passage entier. <b>Assistance ciblée</b> : séparation de stems, mastering assisté, correction de justesse, complétion MIDI — l'IA traite une étape précise d'un projet qui reste le tien. <b>Outils créatifs</b> : génération de samples, de presets ou d'idées mélodiques, à retravailler.`],
    [`Ce que l'IA fait bien`,`Accélérer l'esquisse, débloquer une page blanche, proposer des variations auxquelles tu n'aurais pas pensé, traiter en quelques secondes ce qui prenait des heures (séparer une voix, par exemple).`],
    [`Ce que l'IA ne fait pas à ta place`,`Décider ce qui est bon dans <b>ton</b> contexte, choisir ce qui te ressemble, juger si un résultat sert le morceau ou juste l'algorithme qui l'a produit. Ces décisions restent la partie du travail qui fait qu'un morceau porte une signature.`],
    [`Les droits évoluent vite`,`Les conditions d'utilisation commerciale des générateurs ont changé plusieurs fois depuis 2024, au fil de procès puis d'accords de licence avec des maisons de disques (voir le thème Époques, années 2020). Elles dépendent souvent de la formule d'abonnement : à revérifier avant chaque sortie, pas une fois pour toutes.`],
    [`La transformation personnelle est ce qui reste`,`Un résultat généré sans y toucher est compétent et interchangeable. Rechanter, rejouer, rééchantillonner, réharmoniser : c'est ce geste, pas l'outil, qui rend un morceau reconnaissable comme le tien.`]];
-  const traps=[[`Utiliser l'IA comme raccourci vers la fin plutôt que vers le début`,`Générer un morceau complet et le publier tel quel saute par-dessus tout ce que les autres sections de cette application enseignent — composition, arrangement, mixage. Le résultat peut être écoutable ; il ne t'apprend rien et ne sonne comme personne.`],
+  const traps=isEN?[[`Using AI as a shortcut to the end rather than to the start`,`Generating a complete track and publishing it as-is jumps over everything the rest of this application teaches — composition, arrangement, mixing. The result may be listenable; it teaches you nothing and sounds like no one.`],
+   [`Letting an assistant decide for you`,`Automated mastering or mixing doesn't know what you wanted. Use it as a second opinion, compare, and decide yourself.`],
+   [`Publishing a generation without checking the current rights`,`"It was allowed when I generated it" isn't enough if the terms have changed since. Recheck at the release date, not the generation date.`],
+   [`Keeping no trace of what was generated`,`The day the question comes up, you should be able to say which tool, which subscription tier, which date. See the Practices card on keeping a source log.`]]
+   :[[`Utiliser l'IA comme raccourci vers la fin plutôt que vers le début`,`Générer un morceau complet et le publier tel quel saute par-dessus tout ce que les autres sections de cette application enseignent — composition, arrangement, mixage. Le résultat peut être écoutable ; il ne t'apprend rien et ne sonne comme personne.`],
    [`Laisser un assistant décider à ta place`,`Un mastering ou un mixage automatique ne sait pas ce que tu voulais. Utilise-le comme un second avis, compare, et tranche toi-même.`],
    [`Publier une génération sans vérifier les droits en vigueur`,`« C'était autorisé quand je l'ai généré » ne suffit pas si les conditions ont changé depuis. Revérifie à la date de sortie, pas à la date de génération.`],
    [`Ne garder aucune trace de ce qui a été généré`,`Le jour où la question se pose, tu dois pouvoir dire quel outil, quelle formule d'abonnement, quelle date. Voir la fiche Pratiques sur le registre des sources.`]];
-  return `<div class="section active"><h2>L'IA dans la musique actuelle</h2>
-  <p class="lede">L'IA a changé la vitesse à laquelle une idée devient un morceau. Elle n'a pas changé ce qui fait qu'un morceau porte une signature : ça reste le travail que décrit le reste de cette application.</p>
-  ${block('',`ce qu'il faut savoir`,concepts(tips))}
-  ${block('ex','quel outil pour quelle tâche',`<p>Choisis une tâche pour voir la catégorie d'outil qui lui correspond, et ce qu'il faut vérifier après coup.</p><div id="demo-aitasks" style="margin-top:14px"></div>`)}
-  ${block('','la méthode',stepList([
+  const method=isEN?[
+   [`Use AI to explore, not to deliver.`,`A quick sketch beats a blank page. It's only a beginning.`],
+   [`Systematically check before keeping anything.`,`Listen, read, compare. Nothing is kept by default just because it's generated.`],
+   [`Add at least one personal transformation.`,`Re-singing, replaying, resampling, re-harmonizing, retouching: a single gesture is enough to change the result's status.`],
+   [`Always compare at matched quality or volume.`,`An assisted master or mix often seems better simply because it comes out louder or more detailed. Check at matched level, as with any processing.`],
+   [`Document what you used.`,`Tool, date, subscription tier. One line is enough, and it can save trouble later.`],
+   [`Recheck the terms at every release.`,`Not once and for all: they change. See the Practices card and the Release & promo page for details.`]
+  ]:[
    [`Utilise l'IA pour explorer, pas pour livrer.`,`Une esquisse rapide vaut mieux qu'une page blanche. Ce n'est qu'un début.`],
    [`Vérifie systématiquement avant de garder quoi que ce soit.`,`Écoute, lis, compare. Rien n'est gardé par défaut sous prétexte que c'est généré.`],
    [`Ajoute au moins une transformation personnelle.`,`Rechanter, rejouer, rééchantillonner, réharmoniser, retoucher : un seul geste suffit à changer le statut du résultat.`],
    [`Compare toujours à qualité ou volume égal.`,`Un mastering ou un mixage assisté paraît souvent meilleur simplement parce qu'il sort plus fort ou plus détaillé. Vérifie à niveau égal, comme pour tout traitement.`],
    [`Documente ce que tu as utilisé.`,`Outil, date, formule d'abonnement. Une ligne suffit, et elle peut éviter un problème plus tard.`],
    [`Revérifie les conditions à chaque sortie.`,`Pas une fois pour toutes : elles changent. Voir la fiche Pratiques et la page Diffusion pour le détail.`]
-  ]))}
+  ];
+  return isEN?`<div class="section active"><h2>AI in music today</h2>
+  <p class="lede">AI has changed how fast an idea becomes a track. It hasn't changed what gives a track a signature: that's still the work the rest of this application describes.</p>
+  ${block('','what to know',concepts(tips))}
+  ${block('ex','which tool for which task',`<p>Pick a task to see which category of tool fits it, and what to check afterward.</p><div id="demo-aitasks" style="margin-top:14px"></div>`)}
+  ${block('','the method',stepList(method))}
+  ${block('err','pitfalls',concepts(traps))}
+  ${block('todo','in Ableton Live',`<p>Live's built-in <b>stem separation</b> to isolate and resample a vocal or a drum part. Live 12's <b>MIDI generators and transformations</b> to kick out a starting idea, to be reworked by hand afterward. <b>Auto Shift</b> for a vocal correction or transformation. <b>Roar</b> for deliberate digital distortion rather than to imitate an AI flaw.</p>`)}
+  <div class="card"><h3>checklist before releasing a track made with AI</h3><div id="aick"></div></div>
+  <div class="card"><h3>quiz</h3><div id="quiz"></div></div></div>`
+  :`<div class="section active"><h2>L'IA dans la musique actuelle</h2>
+  <p class="lede">L'IA a changé la vitesse à laquelle une idée devient un morceau. Elle n'a pas changé ce qui fait qu'un morceau porte une signature : ça reste le travail que décrit le reste de cette application.</p>
+  ${block('',`ce qu'il faut savoir`,concepts(tips))}
+  ${block('ex','quel outil pour quelle tâche',`<p>Choisis une tâche pour voir la catégorie d'outil qui lui correspond, et ce qu'il faut vérifier après coup.</p><div id="demo-aitasks" style="margin-top:14px"></div>`)}
+  ${block('','la méthode',stepList(method))}
   ${block('err','pièges',concepts(traps))}
   ${block('todo','dans Ableton Live',`<p>La <b>séparation de stems</b> intégrée à Live pour isoler et rééchantillonner une voix ou une batterie. Les <b>générateurs et transformations MIDI</b> de Live 12 pour sortir une idée de départ, à retravailler ensuite à la main. <b>Auto Shift</b> pour une correction ou une transformation de voix. <b>Roar</b> pour une distorsion numérique assumée plutôt que pour imiter un défaut d'IA.</p>`)}
   <div class="card"><h3>check-list avant de publier un morceau avec de l'IA</h3><div id="aick"></div></div>
   <div class="card"><h3>quiz</h3><div id="quiz"></div></div></div>`;
 }
 function initAI(){
+  const isEN=LANG==='en',AI_TASKS=isEN?AI_TASKS_EN:AI_TASKS_FR;
   const root=document.getElementById('demo-aitasks');let sel=0;
   const draw=()=>{root.innerHTML=`<div class="row" id="atl"></div><p class="note" id="att" style="margin-top:10px"></p>`;
     choice(root,'#atl',AI_TASKS.map(x=>x[0]),()=>sel,i=>{sel=i;draw();});
-    root.querySelector('#att').innerHTML=`<b>Outil :</b> ${AI_TASKS[sel][1]}<br><b>À vérifier :</b> ${AI_TASKS[sel][2]}`;};
+    root.querySelector('#att').innerHTML=isEN?`<b>Tool:</b> ${AI_TASKS[sel][1]}<br><b>Check:</b> ${AI_TASKS[sel][2]}`:`<b>Outil :</b> ${AI_TASKS[sel][1]}<br><b>À vérifier :</b> ${AI_TASKS[sel][2]}`;};
   draw();
-  const items=[`Chaque partie générée porte au moins une transformation personnelle`,`Les stems ou éléments générés ont été réécoutés en entier, pas seulement survolés`,`Un mastering ou un mix assisté a été comparé à volume égal avant validation`,`Les conditions d'utilisation commerciale ont été relues à la date de sortie, pas à la date de génération`,`Un registre note l'outil, la date et la formule d'abonnement utilisés`,`Aucun élément généré n'est publié sans savoir précisément d'où il vient`];
+  const items=isEN?[`Every generated part carries at least one personal transformation`,`Generated stems or elements have been listened to in full, not just skimmed`,`An assisted master or mix has been compared at matched volume before approval`,`Commercial usage terms have been re-read at the release date, not the generation date`,`A log notes the tool, the date and the subscription tier used`,`No generated element is published without knowing precisely where it came from`]
+    :[`Chaque partie générée porte au moins une transformation personnelle`,`Les stems ou éléments générés ont été réécoutés en entier, pas seulement survolés`,`Un mastering ou un mix assisté a été comparé à volume égal avant validation`,`Les conditions d'utilisation commerciale ont été relues à la date de sortie, pas à la date de génération`,`Un registre note l'outil, la date et la formule d'abonnement utilisés`,`Aucun élément généré n'est publié sans savoir précisément d'où il vient`];
   const ck=document.getElementById('aick');
   const drawCk=()=>{const done=items.filter((_,i)=>S.checks['ai:'+i]).length;
     ck.innerHTML=`<p class="note" style="margin:0 0 10px">${done}/${items.length}</p>`+items.map((it,i)=>`<label class="done" style="margin:0;min-height:40px;align-items:flex-start;padding:6px 0"><input type="checkbox" data-c="${i}" ${S.checks['ai:'+i]?'checked':''} style="margin-top:3px;flex:none"><span>${it}</span></label>`).join('');
@@ -1943,33 +2008,68 @@ function initAI(){
 
 /* ============ mélodies et hooks ============ */
 function renderHooks(){
-  const tips=[[`Peu de notes, beaucoup de répétition`,`La plupart des hooks qui marchent tiennent sur 4 à 8 notes différentes. Ce n'est pas un manque d'idées : c'est ce qui permet à l'auditeur de le retenir dès la deuxième écoute et de le reconnaître à la dixième.`],
+  const isEN=LANG==='en';
+  const tips=isEN?[[`Few notes, lots of repetition`,`Most hooks that work sit on 4 to 8 different notes. That's not a lack of ideas: it's what lets the listener retain it by the second listen and recognize it by the tenth.`],
+   [`Contour matters more than the exact notes`,`The <b>melodic contour</b> is the shape drawn by the succession of pitches: it rises, falls, stays flat. We remember a contour well before we remember the exact notes — change the notes while keeping the contour, the hook stays recognizable.`],
+   [`A hook can be purely rhythmic`,`A single repeated note, but with a distinctive, syncopated rhythmic placement, can be as memorable as a complex melody. A hook's rhythm is a component in its own right, not just a vehicle for the notes.`],
+   [`The question / answer rule`,`A first phrase left hanging, followed by a second that resolves: the ear retains a linked pair of phrases better than one long line. Same logic as verse/chorus, at the scale of a two-bar motif.`],
+   [`A hook works through contrast`,`It has to stand out from what surrounds it: higher or lower than the rest, simpler or, conversely, alone where everything was dense a moment earlier. A hook buried in an arrangement as busy as itself doesn't come through, even if it's a good one.`],
+   [`The hum test`,`If you can't hum it correctly with no instrumental, and no one else can either after hearing it twice, it isn't a hook yet — it's one line among others. The test is brutal, but it doesn't lie.`]]
+   :[[`Peu de notes, beaucoup de répétition`,`La plupart des hooks qui marchent tiennent sur 4 à 8 notes différentes. Ce n'est pas un manque d'idées : c'est ce qui permet à l'auditeur de le retenir dès la deuxième écoute et de le reconnaître à la dixième.`],
    [`Le contour compte plus que les notes exactes`,`Le <b>contour mélodique</b> est la forme dessinée par la succession des hauteurs : ça monte, ça descend, ça reste plat. On se souvient d'un contour bien avant de se souvenir des notes précises — change les notes en gardant le contour, le hook reste reconnaissable.`],
    [`Un hook peut être uniquement rythmique`,`Une seule note répétée, mais avec un placement rythmique marqué et syncopé, peut être aussi mémorable qu'une mélodie complexe. Le rythme du hook est une composante à part entière, pas un simple support pour les notes.`],
    [`La règle question / réponse`,`Une première phrase qui reste en suspens, suivie d'une seconde qui se résout : l'oreille retient mieux une paire de phrases liées qu'une seule longue ligne. C'est la même logique que le couplet/refrain, à l'échelle d'un motif de deux mesures.`],
    [`Le hook fonctionne par contraste`,`Il doit se détacher de ce qui l'entoure : plus aigu ou plus grave que le reste, plus simple ou au contraire seul là où tout était dense un instant plus tôt. Un hook noyé dans un arrangement aussi chargé que lui ne ressort pas, même s'il est bon.`],
    [`Le test du chantonnage`,`Si tu ne peux pas le fredonner correctement sans l'instrumental, ni personne d'autre après l'avoir entendu deux fois, ce n'est pas encore un hook — c'est une ligne parmi d'autres. Le test est brutal, mais il ne ment pas.`]];
-  const traps=[[`Trop de notes différentes`,`Une ligne qui explore beaucoup de hauteurs et de rythmes différents peut être impressionnante à jouer, elle est presque toujours plus dure à retenir qu'un motif simple répété.`],
+  const traps=isEN?[[`Too many different notes`,`A line that explores many different pitches and rhythms might be impressive to play; it's almost always harder to remember than a simple, repeated motif.`],
+   [`Changing the hook every pass`,`Varying it out of respect for "creativity" is exactly what stops repetition from doing its job. A good hook repeats far more than you'd expect before it earns its first real variation.`],
+   [`Burying it in the arrangement`,`The best hook in the world doesn't come through if it sits in the same register as three other elements, at the same volume, with no space around it.`],
+   [`Confusing complexity with quality`,`A hook doesn't have to demonstrate technical mastery. It has one job: to come back to the listener's mind whether they want it to or not. Simplicity isn't a shortcut, it's the goal.`]]
+   :[[`Trop de notes différentes`,`Une ligne qui explore beaucoup de hauteurs et de rythmes différents peut être impressionnante à jouer, elle est presque toujours plus dure à retenir qu'un motif simple répété.`],
    [`Changer le hook à chaque passage`,`Varier par respect de la « créativité » empêche justement la répétition de faire son travail. Un bon hook se répète largement plus qu'on ne l'imagine avant de mériter sa première vraie variation.`],
    [`Le noyer dans l'arrangement`,`Le meilleur hook du monde ne ressort pas s'il est logé dans le même registre que trois autres éléments, au même volume, sans aucun espace autour de lui.`],
    [`Confondre complexité et qualité`,`Un hook n'a pas à démontrer une maîtrise technique. Il a une seule fonction : se rappeler à l'esprit de l'auditeur sans qu'il le veuille. La simplicité n'est pas un raccourci, c'est l'objectif.`]];
-  return `<div class="section active"><h2>Mélodies et hooks qui marchent</h2>
-  <p class="lede">Un hook qui fonctionne n'est pas un coup de chance : c'est une structure qui obéit à quelques principes récurrents, observables dans des styles très différents. Cette page les isole un par un.</p>
-  ${block('',`ce qui fait qu'un hook marche`,concepts(tips))}
-  ${block('ex','le laboratoire à hooks',`<p>Cinq façons d'écrire une phrase sur la même progression et le même tempo. Écoute-les à la suite : ce qui change, ce sont les principes ci-dessus, pas l'harmonie ni le rythme de la boucle.</p><div id="demo-hookdemo" style="margin-top:14px"></div>`)}
-  ${block('','quatre familles de hooks',grid([
+  const families=isEN?[
+   [`Melodic hook`,`A line of notes recognizable by its contour, sung or played by a lead instrument.`],
+   [`Rhythmic hook`,`A placement or percussion pattern so distinctive it works with no notes at all — a chopped bass riff, a break recognizable from its first hit.`],
+   [`Vocal / textual hook`,`A word or short phrase repeated, sometimes with no melody at all (spoken, chanted, chopped). The meaning and sound of the word carry the hook as much as its pitch.`],
+   [`Harmonic hook`,`A chord progression or riff so identifiable it acts as a chorus on its own, with no melody added on top.`]
+  ]:[
    [`Hook mélodique`,`Une ligne de notes reconnaissable à son contour, chantée ou jouée par un instrument lead.`],
    [`Hook rythmique`,`Un placement ou un motif de percussion si caractéristique qu'il fonctionne sans aucune note — un riff de basse coupé, un break reconnaissable dès la première frappe.`],
    [`Hook vocal / textuel`,`Un mot ou une courte phrase répétée, parfois sans mélodie du tout (parlé, scandé, chopé). Le sens et le son du mot portent le hook autant que sa hauteur.`],
-   [`Hook harmonique`,`Un enchaînement d'accords ou un riff si identifiable qu'il tient lieu de refrain à lui seul, sans mélodie ajoutée par-dessus.`]]))}
-  ${block('','la méthode',stepList([
+   [`Hook harmonique`,`Un enchaînement d'accords ou un riff si identifiable qu'il tient lieu de refrain à lui seul, sans mélodie ajoutée par-dessus.`]
+  ];
+  const method=isEN?[
+   [`Write fast, write a lot, before judging.`,`Record ten two-bar ideas in a single session, without stopping to evaluate them. Sorting comes after, never during.`],
+   [`Sketch the contour before the exact notes.`,`Draw a shape with your voice or the keyboard (rises, falls, stays flat) before locking in exact pitches. The contour is what's remembered; the exact notes get adjusted after.`],
+   [`Limit yourself to 4 or 5 different notes for a first draft.`,`You can always add more. It's easier to enrich a simple motif than to simplify an already busy one.`],
+   [`Run the hum test on every candidate.`,`Listen to the loop ten times, cut the instrumental, try humming it back from memory. What doesn't survive the test isn't the hook yet.`],
+   [`Clear it space in the arrangement.`,`Lower or remove whatever plays in the same register at the same time, add a silence right before its first appearance.`],
+   [`Repeat it more than your instinct suggests.`,`Repetition is what turns a good idea into a hook. The first variation only comes after several identical passes.`]
+  ]:[
    [`Écris vite, beaucoup, avant de juger.`,`Enregistre dix idées de deux mesures en une seule session, sans t'arrêter pour les évaluer. Le tri vient après, jamais pendant.`],
    [`Esquisse le contour avant les notes précises.`,`Dessine à la voix ou au clavier une forme (monte, descend, reste plat) avant de figer les hauteurs exactes. Le contour se retient ; les notes exactes s'ajustent ensuite.`],
    [`Limite-toi à 4 ou 5 notes différentes pour un premier jet.`,`Tu pourras toujours en ajouter. Il est plus facile d'enrichir un motif simple que de simplifier un motif déjà chargé.`],
    [`Fais le test du chantonnage sur chaque candidat.`,`Écoute la boucle dix fois, coupe l'instrumental, essaie de la refredonner de mémoire. Ce qui ne survit pas au test n'est pas encore le hook.`],
    [`Dégage-lui de la place dans l'arrangement.`,`Baisse ou retire ce qui joue dans le même registre au même moment, ajoute un silence juste avant sa première apparition.`],
    [`Répète-le plus que ton instinct ne le suggère.`,`La répétition est ce qui transforme une bonne idée en hook. La première variation n'arrive qu'après plusieurs passages à l'identique.`]
-  ]))}
+  ];
+  return isEN?`<div class="section active"><h2>Melodies and hooks that work</h2>
+  <p class="lede">A hook that works isn't a stroke of luck: it's a structure that follows a handful of recurring principles, observable across very different styles. This page isolates them one by one.</p>
+  ${block('','what makes a hook work',concepts(tips))}
+  ${block('ex','the hook lab',`<p>Five ways to write a phrase over the same progression and the same tempo. Listen to them in sequence: what changes is the principles above, not the harmony or the loop's rhythm.</p><div id="demo-hookdemo" style="margin-top:14px"></div>`)}
+  ${block('','four families of hooks',grid(families))}
+  ${block('','the method',stepList(method))}
+  ${block('err','pitfalls',concepts(traps))}
+  ${block('todo','in Ableton Live',`<p>Capture your ideas with a quick audio recording before transcribing them to MIDI: contour survives a sung sketch better than direct mouse programming. Turn on <b>Scale</b> on MIDI clips to stay in key while you improvise. Use <b>Capture MIDI</b> to recover an idea played on the keyboard even before you'd armed recording. <b>Freeze</b> each candidate you keep to compare several hooks side by side without losing time replaying them.</p>`)}
+  <div class="card"><h3>quiz</h3><div id="quiz"></div></div></div>`
+  :`<div class="section active"><h2>Mélodies et hooks qui marchent</h2>
+  <p class="lede">Un hook qui fonctionne n'est pas un coup de chance : c'est une structure qui obéit à quelques principes récurrents, observables dans des styles très différents. Cette page les isole un par un.</p>
+  ${block('',`ce qui fait qu'un hook marche`,concepts(tips))}
+  ${block('ex','le laboratoire à hooks',`<p>Cinq façons d'écrire une phrase sur la même progression et le même tempo. Écoute-les à la suite : ce qui change, ce sont les principes ci-dessus, pas l'harmonie ni le rythme de la boucle.</p><div id="demo-hookdemo" style="margin-top:14px"></div>`)}
+  ${block('','quatre familles de hooks',grid(families))}
+  ${block('','la méthode',stepList(method))}
   ${block('err','pièges',concepts(traps))}
   ${block('todo','dans Ableton Live',`<p>Capture tes idées à la voix avec un enregistrement audio rapide avant de les retranscrire en MIDI : le contour survit mieux à une esquisse chantée qu'à une programmation directe à la souris. Active <b>Scale</b> sur les clips MIDI pour rester dans la tonalité pendant que tu improvises. Utilise <b>Capture MIDI</b> pour récupérer une idée jouée au clavier avant même d'avoir armé l'enregistrement. Fige (<b>Freeze</b>) chaque candidat retenu pour comparer plusieurs hooks côte à côte sans perdre de temps à les rejouer.</p>`)}
   <div class="card"><h3>quiz</h3><div id="quiz"></div></div></div>`;
@@ -3318,9 +3418,11 @@ lufs(root){
 
 chop(root){
   let buf=null,revBuf=null,rev=false,rate=1,building=false;
-  root.innerHTML=`<div class="row"><button class="btn primary" id="build">▶ Générer le sample</button><button class="btn" id="revb" disabled>Inverser</button></div>
-    <div class="row" id="pads" style="margin-top:12px"></div>${slider('cpr','Vitesse (hauteur liée)',60,140,5,100)}
-    <p class="note" id="ctxt">Génère d'abord le sample « comme s'il venait d'un disque », puis clique les pads pour le découper.</p>`;
+  const T=LANG==='en'?{build:'▶ Generate the sample',rev:'Reverse',speed:'Speed (pitch linked)',intro:`Generate the sample "as if pulled from a record" first, then click the pads to chop it.`,rendering:'Rendering…',ready:'Sample ready. Click a pad to play the matching slice.'}
+    :{build:'▶ Générer le sample',rev:'Inverser',speed:'Vitesse (hauteur liée)',intro:`Génère d'abord le sample « comme s'il venait d'un disque », puis clique les pads pour le découper.`,rendering:'Rendu en cours…',ready:'Sample prêt. Clique un pad pour jouer la tranche correspondante.'};
+  root.innerHTML=`<div class="row"><button class="btn primary" id="build">${T.build}</button><button class="btn" id="revb" disabled>${T.rev}</button></div>
+    <div class="row" id="pads" style="margin-top:12px"></div>${slider('cpr',T.speed,60,140,5,100)}
+    <p class="note" id="ctxt">${T.intro}</p>`;
   const N=8;
   const build=()=>{ac();
     const sr=ctx.sampleRate,dur=2.2,oac=new OfflineAudioContext(1,Math.ceil(sr*dur),sr);
@@ -3335,10 +3437,10 @@ chop(root){
     for(let s=0;s<10;s++){const t=1.6+s*.055,n=oac.createBufferSource(),f=oac.createBiquadFilter(),g=oac.createGain();
       n.buffer=nb;f.type='bandpass';f.frequency.value=6000;g.gain.setValueAtTime(.1,t);g.gain.exponentialRampToValueAtTime(.001,t+.03);
       n.connect(f).connect(g).connect(oac.destination);n.start(t);n.stop(t+.04);}
-    root.querySelector('#ctxt').textContent='Rendu en cours…';
+    root.querySelector('#ctxt').textContent=T.rendering;
     oac.startRendering().then(b=>{buf=b;const rd=new Float32Array(b.length),src=b.getChannelData(0);for(let i=0;i<rd.length;i++)rd[i]=src[rd.length-1-i];
       revBuf=oac.createBuffer?null:null;revBuf={getChannelData:()=>rd,length:b.length,duration:b.duration,sampleRate:b.sampleRate};
-      root.querySelector('#revb').disabled=false;root.querySelector('#ctxt').textContent="Sample prêt. Clique un pad pour jouer la tranche correspondante.";drawPads();});
+      root.querySelector('#revb').disabled=false;root.querySelector('#ctxt').textContent=T.ready;drawPads();});
   };
   const drawPads=()=>{root.querySelector('#pads').innerHTML=Array.from({length:N},(_,i)=>`<button class="btn" data-i="${i}" style="min-width:52px">${i+1}</button>`).join('');
     root.querySelectorAll('#pads .btn').forEach(b=>b.onclick=()=>play(+b.dataset.i));};
@@ -3351,11 +3453,14 @@ chop(root){
 },
 
 mpcpad(root){
-  const bpm=92,PADS=[['Kick',0],['Snare',1],['Charley',2],['Charley ouvert',3],['Clap',4],['Perc',5],['Voix',6],['Scratch',7]];
+  const bpm=92,PN=LANG==='en'?['Kick','Snare','Hi-hat','Open hi-hat','Clap','Perc','Voice','Scratch']:['Kick','Snare','Charley','Charley ouvert','Clap','Perc','Voix','Scratch'];
+  const PADS=PN.map((n,i)=>[n,i]);
+  const T=LANG==='en'?{play:'▶ Play the loop',clr:'Clear',intro:'Start the loop, turn recording on, then click the pads in time: each hit snaps to the nearest grid step.',recOn:'Recording: on',recOff:'Recording: off',noteOn:'Recording is on: play the pads, they snap to the grid and loop back.',noteOff:'Recording is off: the pads play freely, without locking to the loop.'}
+    :{play:'▶ Lire la boucle',clr:'Effacer',intro:`Lance la boucle, active l'enregistrement, puis clique les pads en rythme : chaque frappe se cale sur le pas de grille le plus proche.`,recOn:'Enregistrement : on',recOff:'Enregistrement : off',noteOn:'Enregistrement actif : joue les pads, ils se calent sur la grille et se rejouent en boucle.',noteOff:'Enregistrement en pause : les pads jouent librement, sans se fixer sur la boucle.'};
   let rec=false,sw=0,now=-1,G=Array.from({length:8},()=>new Array(16).fill(0));
-  root.innerHTML=`<div class="row" id="pd"></div><div class="row" style="margin-top:12px"><button class="btn primary" id="play">▶ Lire la boucle</button><button class="btn" id="rec"></button><button class="btn" id="clr">Effacer</button></div>
+  root.innerHTML=`<div class="row" id="pd"></div><div class="row" style="margin-top:12px"><button class="btn primary" id="play">${T.play}</button><button class="btn" id="rec"></button><button class="btn" id="clr">${T.clr}</button></div>
     ${slider('mpsw','Swing',50,70,1,50)}<div class="scroll" style="margin-top:10px"><div class="seq" id="sg"></div></div>
-    <p class="note" id="mpt">Lance la boucle, active l'enregistrement, puis clique les pads en rythme : chaque frappe se cale sur le pas de grille le plus proche.</p>`;
+    <p class="note" id="mpt">${T.intro}</p>`;
   const hit=(i,v=1)=>{ac();const t=ctx.currentTime+.02;
     if(i===0)kick(t,master,v);
     else if(i===1){noise(t,master,.5*v,'bandpass',1700,.16);tone(t,185,.05,{type:'triangle',vol:.2,cutoff:1200,a:.002,r:.06});}
@@ -3375,8 +3480,8 @@ mpcpad(root){
   const drawGrid=()=>{const el=root.querySelector('#sg');el.innerHTML='<div></div>'+Array.from({length:16},(_,i)=>`<div class="h">${i%4===0?i/4+1:i%2===0?'et':'·'}</div>`).join('')+
     G.map((r,y)=>`<div>${PADS[y][0]}</div>`+r.map((v,x)=>`<div class="c${v?' s2':''}${x%4===0?' b':''}${x===now?' now':''}"></div>`).join('')).join('');};
   drawGrid();
-  root.querySelector('#rec').onclick=e=>{rec=!rec;e.currentTarget.textContent='Enregistrement : '+(rec?'on':'off');e.currentTarget.classList.toggle('on',rec);
-    root.querySelector('#mpt').textContent=rec?'Enregistrement actif : joue les pads, ils se calent sur la grille et se rejouent en boucle.':'Enregistrement en pause : les pads jouent librement, sans se fixer sur la boucle.';};
+  root.querySelector('#rec').onclick=e=>{rec=!rec;e.currentTarget.textContent=rec?T.recOn:T.recOff;e.currentTarget.classList.toggle('on',rec);
+    root.querySelector('#mpt').textContent=rec?T.noteOn:T.noteOff;};
   root.querySelector('#clr').onclick=()=>{G=Array.from({length:8},()=>new Array(16).fill(0));drawGrid();};
   bind(root,'mpsw',v=>v+' %',v=>sw=v);
   root.querySelector('#play').onclick=e=>{const btn=e.currentTarget;if(current&&current.btn===btn){stopLoop();return;}stopLoop();ac();
@@ -3391,26 +3496,35 @@ blend(root){
   root.innerHTML=`<div class="row" id="ba"></div><div class="row" id="bb" style="margin-top:8px"></div>
     <div class="row" id="prevA" style="margin-top:14px"></div><div class="row" id="prevB" style="margin-top:8px"></div>
     <p class="note" id="bt" style="margin-top:10px"></p>`;
-  const CMPH=['Tempo','Swing','Kick','Backbeat','Basse','Signature','Priorité du mix'];
+  const isEN=LANG==='en';
+  const CMPH=isEN?['Tempo','Swing','Kick','Backbeat','Bass','Signature','Mix priority']:['Tempo','Swing','Kick','Backbeat','Basse','Signature','Priorité du mix'];
+  const T=isEN?{diff:'Choose two different styles',diffSub:'to see what they share and what sets them apart.',shared:'Shared traits:',none:'none on this table — two very distant styles, a riskier blend but potentially more original',opp:'What sets them apart:',recipe:'A concrete blend idea',recipeBody:(A,B,ia,ib)=>` — one ingredient from each, not both tracks in full: keep the tempo and grid of <b>${A.name}</b> (${A.cmp[0]} BPM), borrow "${ia[0].toLowerCase()}" from <b>${A.name}</b> and "${ib[0].toLowerCase()}" from <b>${B.name}</b>. This is just one of many possible combinations: change the styles or run it again for another idea.`}
+    :{diff:'Choisis deux styles différents',diffSub:`pour voir ce qu'ils partagent et ce qui les oppose.`,shared:'Points communs :',none:'aucun sur ce tableau — deux styles très éloignés, mélange plus risqué mais potentiellement plus original',opp:'Ce qui les oppose :',recipe:'Une piste de mélange concrète',recipeBody:(A,B,ia,ib)=>` — un ingrédient de chacun, pas les deux morceaux entiers : garde le tempo et la grille de <b>${A.name}</b> (${A.cmp[0]} BPM), emprunte « ${ia[0].toLowerCase()} » à <b>${A.name}</b> et « ${ib[0].toLowerCase()} » à <b>${B.name}</b>. Ce n'est qu'une des combinaisons possibles : change les styles ou relance pour une autre piste.`};
   const draw=()=>{stopLoop();const A=STYLES[a],B=STYLES[b];
     choice(root,'#ba',STYLES.map(x=>x.name),()=>a,i=>{a=i;draw();});
     choice(root,'#bb',STYLES.map(x=>x.name),()=>b,i=>{b=i;draw();});
     root.querySelector('#prevA').innerHTML='';root.querySelector('#prevB').innerHTML='';
     stylePlayer(root.querySelector('#prevA'),A);stylePlayer(root.querySelector('#prevB'),B);
-    if(a===b){root.querySelector('#bt').innerHTML='<b>Choisis deux styles différents</b> pour voir ce qu\'ils partagent et ce qui les oppose.';return;}
+    if(a===b){root.querySelector('#bt').innerHTML=`<b>${T.diff}</b> ${T.diffSub}`;return;}
     const shared=[],diff=[];CMPH.forEach((h,i)=>{(A.cmp[i]===B.cmp[i]?shared:diff).push(h);});
     const ingr=x=>x.tips[Math.floor(Math.random()*Math.min(3,x.tips.length))];
     const ia=ingr(A),ib=ingr(B);
-    root.querySelector('#bt').innerHTML=`<b>Points communs :</b> ${shared.length?shared.join(', '):'aucun sur ce tableau — deux styles très éloignés, mélange plus risqué mais potentiellement plus original'}.<br>
-     <b>Ce qui les oppose :</b> ${diff.join(', ')}.<br><br>
-     <b>Une piste de mélange concrète</b> — un ingrédient de chacun, pas les deux morceaux entiers : garde le tempo et la grille de <b>${A.name}</b> (${A.cmp[0]} BPM), emprunte « ${ia[0].toLowerCase()} » à <b>${A.name}</b> et « ${ib[0].toLowerCase()} » à <b>${B.name}</b>. Ce n'est qu'une des combinaisons possibles : change les styles ou relance pour une autre piste.</p>`;
+    root.querySelector('#bt').innerHTML=`<b>${T.shared}</b> ${shared.length?shared.join(', '):T.none}.<br>
+     <b>${T.opp}</b> ${diff.join(', ')}.<br><br>
+     <b>${T.recipe}</b>${T.recipeBody(A,B,ia,ib)}`;
   };
   draw();
 },
 
 hookdemo(root){
   const Q=[[0,69,2],[3,72,2],[6,70,3]],A=[[0,67,2],[3,70,2],[6,67,3]];   // question (bars impaires) / réponse (bars paires), même rythme
-  const R=[
+  const R=LANG==='en'?[
+   ['Arch contour',[[0,67,2],[2,69,2],[4,72,3],[8,69,2],[10,67,3]],`It rises then falls: a simple shape, both for the ear and for memory. The motif is identical on every pass — it's the repetition that makes the hook, not novelty.`],
+   ['Rhythmic hook, one note only',[[0,67,1],[3,67,1],[6,67,1],[10,67,2],[14,67,1]],`No pitch variation at all: everything is in the syncopated placement. A rhythmic hook works with no melody whatsoever, as long as its placement is distinctive enough to be recognized alone.`],
+   ['Question / answer',null,`Odd bars: the phrase ends up in the air, on a tension. Even bars: the same rhythm closes back on the tonic. The ear hears a complete phrase, not a loop going nowhere.`],
+   ['Repetition + one final variation',[[0,67,2],[2,70,2],[5,69,3],[9,67,2],[11,70,2],[14,69,3]],`The same motif played identically three times, then a single note changes on the last pass. This is almost always more effective than a different motif every time: repetition installs the hook, the variation lets it breathe without losing it.`],
+   ['Too busy (counter-example)',[[0,64,1],[1,69,1],[3,65,1],[4,72,1],[6,62,1],[7,70,1],[9,67,1],[10,73,1],[12,63,1],[13,68,1],[15,71,1]],`Lots of notes, lots of different rhythms, no recognizable repetition. Technically, every note is "correct" — in the scale, on tempo — but nothing catches the ear. It's the most common mistake in a first draft.`]
+  ]:[
    ['Contour en arche',[[0,67,2],[2,69,2],[4,72,3],[8,69,2],[10,67,3]],`Ça monte puis ça redescend : une forme simple, à la fois pour l'oreille et pour la mémoire. Le motif est identique à chaque passage — c'est la répétition qui fait le hook, pas la nouveauté.`],
    ['Hook rythmique, une seule note',[[0,67,1],[3,67,1],[6,67,1],[10,67,2],[14,67,1]],`Aucune variation de hauteur : tout est dans le placement syncopé. Un hook rythmique fonctionne sans la moindre mélodie, à condition que son placement soit assez marqué pour se reconnaître seul.`],
    ['Question / réponse',null,`Bars impaires : la phrase finit en l'air, sur une tension. Bars paires : le même rythme se referme sur la tonique. L'oreille entend une phrase complète, pas une boucle qui tourne sans but.`],
@@ -3418,7 +3532,7 @@ hookdemo(root){
    ['Trop chargé (contre-exemple)',[[0,64,1],[1,69,1],[3,65,1],[4,72,1],[6,62,1],[7,70,1],[9,67,1],[10,73,1],[12,63,1],[13,68,1],[15,71,1]],`Beaucoup de notes, beaucoup de rythmes différents, aucune répétition reconnaissable. Techniquement, chaque note est « juste » — dans la gamme, sur le tempo — mais rien n'y accroche l'oreille. C'est l'erreur la plus fréquente d'un premier jet.`]
   ];
   let sel=0;
-  root.innerHTML=`<div class="row" id="hp"></div><p class="note" id="ht" style="margin:10px 0 0"></p><div class="row" style="margin-top:12px"><button class="btn primary" id="play">▶ Écouter la phrase</button></div>`;
+  root.innerHTML=`<div class="row" id="hp"></div><p class="note" id="ht" style="margin:10px 0 0"></p><div class="row" style="margin-top:12px"><button class="btn primary" id="play">${LANG==='en'?'▶ Listen to the phrase':'▶ Écouter la phrase'}</button></div>`;
   const txt=()=>root.querySelector('#ht').innerHTML=R[sel][2];
   choice(root,'#hp',R.map(r=>r[0]),()=>sel,i=>{sel=i;txt();});txt();
   const ch=[55,58,62];
@@ -3746,6 +3860,57 @@ EN.TOPICS=[
  todo:`<p>On the master: <b>Limiter</b> last, ceiling at −1 dB. Add a LUFS meter (Youlean Loudness Meter, for instance, which has a free version) and aim for your target on the densest passage. Then compare against a reference imported onto a track, matched to the same level.</p>`}
 ];
 
+EN.TOPICS.push(
+{lede:`Reusing an existing sound as raw material: extract, transform, recompose. Sampling isn't a shortcut, it's a different way of writing, with its own reflexes.`,
+ concepts:[
+  [`Sample or loop`,`A <b>one-shot</b> is a single isolated hit (a kick, a word); a <b>loop</b> is a multi-bar fragment that repeats. The production gesture differs: a one-shot gets triggered, a loop gets synced and chopped.`],
+  [`Pitch and length are tied to the source`,`Slowing a sample down without <b>Warp</b> lowers its pitch, speeding it up raises it: that's the natural link between playback speed and pitch. Warp lets you decouple them, at the cost of artifacts if pushed too far.`],
+  [`The chop point`,`Lining a slice's start exactly on the sound's transient (its attack) avoids clicks and rhythmic offsets. A chop point that's slightly late is enough to make a chop sound "late" throughout the whole loop.`],
+  [`Layering`,`Stacking several samples (a record's kick + a synthetic click) gives a richer sound than either alone. Same logic as layering in sound design, applied to recorded sounds.`],
+  [`Two algorithms, two uses`,`<b>Pitch-shift</b> changes pitch without touching length; <b>time-stretch</b> changes length without touching pitch. Each has its own artifacts, and the Warp mode chosen should match the type of material (percussive, melodic, complex).`]],
+ example:`<p>A short sample synthesized on the spot, as if you'd just pulled it off a record: a few chords, a bass note, a handful of shakers. <b>Chop it</b> into eight slices and trigger them in any order, like on a sampler's pads. Then change the speed to hear the link between pitch and length, and reverse it to hear how much backward playback changes its character.</p>`,
+ extras:[
+  {title:`going further · four chopping techniques`,cls:'',html:{grid:[
+   [`Regular chop`,`Slicing at equal intervals (every beat, every eighth note, for instance). Simple, predictable, the basis of beatmaking.`],
+   [`Transient-based chop`,`Slicing at the sound's real attacks rather than at fixed intervals. More faithful to the material, essential on a sample with an irregular tempo.`],
+   [`Chop and reorder`,`The slices aren't replayed in their original order: this move, more than the chopping itself, is what turns a quote into a composition.`],
+   [`Chop and transpose`,`Each slice replayed at a different pitch depending on the pad or MIDI note: a single sample becomes a playable instrument across the whole keyboard.`]]}},
+  {title:`going further · the method`,cls:'',html:{steps:[
+   [`Choose the source for its material, not for the whole track.`,`Two bars with a good groove and a good timbre beat an entire song you only like one passage of.`],
+   [`Clean up before chopping.`,`Remove unwanted hiss, line up the sample's exact start on the first transient.`],
+   [`Chop wide, refine after.`,`Start with a regular chop, then adjust by ear any chop point that doesn't land right on a transient.`],
+   [`Filter to make room.`,`A sample rarely keeps its whole original spectrum: cut whatever will clash with the kick, bass or vocal layered on top later.`],
+   [`Transform at least one parameter.`,`Speed, pitch, playback direction, filter: an untransformed sample stays a quote; a transformed sample becomes a sound.`],
+   [`Check the rights before releasing.`,`A sample pulled from a protected recording needs clearance, whatever its length. See the Practices section.`]]}}
+ ],
+ err:`<p><b>Chopping without listening to the result in context.</b> A slice can sound right in isolation and wrong once it's sitting against the track's kick and bass: the chop point is set with everything else playing, not in solo. Second pitfall: re-releasing a recognizable sample without transforming or clearing it.</p>`,
+ todo:`<p><b>Simpler</b> in <b>Slice</b> mode for automatic transient-based chopping, spread across the pads. <b>Classic</b> mode to play the whole sample, transposable across the keyboard. An audio clip's <b>Warp</b> (Beats mode for percussive material, Complex Pro for melodic material or a vocal) to lock a sample to the project's tempo without changing its pitch. <b>Freeze then Flatten</b> on a track to turn a render into a new, reusable sample.</p>`},
+
+{lede:`Before software, hip-hop was built with two machines: the turntable, to manipulate the record live, and the pad sampler, to replay it. Both techniques shaped the genre, and now live inside the software itself.`,
+ concepts:[
+  [`Beat juggling`,`Alternating between two copies of the same record on two turntables to recompose a rhythm live, playing the mixer's crossfade by hand. The ancestor of digital chop-and-reorder: the same idea, done manually.`],
+  [`The scratch`,`Moving the record back and forth under the needle while cutting the sound at the mixer. The <b>baby scratch</b> (a simple back-and-forth) is the basis; <b>chirp</b>, <b>flare</b>, <b>transformer</b> are variations that play with the timing of the cut.`],
+  [`The pad as an instrument`,`On a pad sampler, each pad triggers a sound with its own velocity. Playing "with your fingers" (finger drumming) takes the same work on accents and ghost notes as a drummer, covered in the Groove topic.`],
+  [`The loop as a starting point`,`A pad sampler imposes its own grid and its own swing (see the Swing topic). Programming on it means composing inside the machine's constraints, not despite them.`],
+  [`Digging`,`Searching record bins for raw material: a break, a chord, a texture. The skill doesn't stop at the sampler, it starts in the hunt for the sound.`]],
+ example:`<p>An MPC-style pad, eight sounds assigned. <b>Play it live</b>, with the mouse or the keyboard: each pad triggers its sound instantly. Turn on <b>recording</b> to capture your hits onto a looping 16-step grid, with a swing control to feel the effect of placement on the result, like a real beatmaker at the pads.</p>`,
+ extras:[
+  {title:`going further · the scratch, broken down`,cls:'',html:{grid:[
+   [`Baby scratch`,`A back-and-forth of the record, with no work on the mixer. The basic move, the one you learn first.`],
+   [`Chirp`,`The record is only let go halfway through its stroke, producing a shorter, more percussive sound than a baby scratch.`],
+   [`Transformer`,`The mixer's fader cuts and releases the sound several times during a single record movement, in rhythm.`],
+   [`Flare`,`A variant of the transformer where the cut happens during the movement rather than at its end, for a more complex pattern.`]]}},
+  {title:`going further · the pad sampler in history`,html:`<p>The pad samplers of the 80s and 90s (see the Eras topic, 90s) each imposed their own rhythmic resolution, memory size and swing. Those technical constraints became writing habits, then a recognizable style: boom bap's particular groove (see the Styles section) comes directly from these original limitations.</p>`},
+  {title:`going further · the method`,cls:'',html:{steps:[
+   [`Listen before you play.`,`Spot a break's or loop's natural accents before programming over it: the pad reproduces a drummer's gesture, not an abstract grid.`],
+   [`Assign smartly.`,`Group similar sounds on neighboring pads (the three hi-hat variants side by side) so you can play fast without thinking about placement.`],
+   [`Play before you quantize.`,`Record your gesture as-is first, even imperfect. Quantizing afterward at 50–70% beats programming note by note with the mouse.`],
+   [`Add swing last.`,`Once the motif is down, an MPC-style groove between 54 and 66% (see the Swing topic) gives the played motif its final feel.`],
+   [`Keep a trace of the gesture.`,`Keep a take with its imperfections alongside the quantized version: it's often the one with the most life in it.`]]}}
+ ],
+ err:`<p><b>Programming with the mouse what should be played.</b> A pattern drawn click by click, however precise, doesn't have the same feel as a motif actually played on the pads and then partially quantized. The physical gesture — even an approximate one — carries information the mouse doesn't capture.</p>`,
+ todo:`<p>In Live, a <b>Drum Rack</b> assigned to a pad controller (or the computer keyboard) to recreate a pad sampler's logic. Record by playing live over the loop rather than drawing notes in. Then apply a groove from the <b>MPC</b> folder in the <b>Groove Pool</b>, dialed in with <b>Timing</b> rather than at 100%.</p>`}
+);
 EN.STYLES=[
 {lede:`Orchestral music played by humans to make people dance: a relentless rhythm section, rich harmony, strings and horns. Everything else on this list descends from it.`,
  idc:[[`Tempo`,`110–130 BPM, often 118–125`],[`Feeling`,`Straight, but played: human micro-variations, no programmed swing`],[`Harmony`,`Extended chords: m7, maj7, 9th, dominant 7th`],[`Form`,`Song form (verse/chorus) with long instrumental passages`]],
@@ -4550,6 +4715,20 @@ master:[
  {q:`Your release went unnoticed, even by your own followers. The track went live two days after the master was finished. Main cause?`,o:[`No preparation at all: no editorial pitch, no Release Radar, no content ready`,`The master wasn't loud enough`,`The track was too short`,`Friday is a bad day`],e:`Three to four weeks between delivery and release, following the countdown: that's the difference between uploading and releasing a track.`,ref:`Release & promo · Countdown`}]
 };
 
+EN.QUIZ.sample=[
+ {q:`What's the difference between a one-shot and a loop?`,o:[`A one-shot is a single isolated hit, a loop is a fragment that repeats over several bars`,`A one-shot always lasts longer than a loop`,`A loop can't be chopped`,`There's no difference`],e:`The production gesture differs: a one-shot gets triggered like a percussion hit, a loop gets synced and chopped.`,ref:`Sample or loop`},
+ {q:`Without Warp, what happens when you slow a sample down?`,o:[`Its pitch drops`,`Its pitch rises`,`Nothing, the pitch stays the same`,`The sample gets shorter`],e:`Playback speed and pitch are naturally linked; Warp lets you decouple them.`,ref:`Pitch and length are tied to the source`},
+ {q:`Why line a chop point up exactly on the transient?`,o:[`To avoid clicks and rhythmic offsets`,`To make the sample louder`,`To change its pitch`,`It isn't necessary`],e:`A chop point that's slightly late on the attack is enough to make a chop sound late throughout the whole loop.`,ref:`The chop point`},
+ {q:`What's the difference between pitch-shift and time-stretch?`,o:[`One changes pitch without touching length, the other changes length without touching pitch`,`They're two names for the same algorithm`,`Pitch-shift only works on vocals`,`Time-stretch removes the highs`],e:`Two different algorithms, each with its own artifacts depending on the chosen Warp mode.`,ref:`Two algorithms, two uses`},
+ {q:`Which Simpler mode should you pick for automatic chopping spread across the pads?`,o:[`Slice`,`Classic`,`One-Shot`,`Complex Pro`],e:`Slice mode automatically spreads the detected slices across the pads, ready to be replayed in a different order.`,ref:`In Live`},
+ {q:`You're re-releasing a sample that's easily recognizable, untransformed, and uncleared. What's the risk?`,o:[`A claim or a takedown, as with any unauthorized sample`,`None, under 5 seconds it's free to use`,`The sample automatically becomes royalty-free`,`Only mastering is affected`],e:`No duration is free by default. See the Practices section for the right reflexes.`,ref:`the method, last step`}];
+EN.QUIZ.hiphoptech=[
+ {q:`What is beat juggling?`,o:[`Alternating between two copies of the same record on two turntables to recompose a rhythm live`,`A digital mixing technique with no turntables`,`A specific type of scratch`,`A mastering method`],e:`It's the ancestor of digital chop-and-reorder: the same idea of recomposition, but played by hand.`,ref:`Beat juggling`},
+ {q:`What's the basic scratch, the one you learn first?`,o:[`The baby scratch`,`The flare`,`The transformer`,`The chirp`],e:`A simple back-and-forth of the record, with no work on the mixer.`,ref:`The scratch, broken down`},
+ {q:`What sets the transformer apart from the baby scratch?`,o:[`The mixer's fader cuts and releases the sound several times during a single record movement`,`The record spins the other way`,`It uses two turntables at once`,`It never touches the mixer`],e:`The transformer adds a rhythmic play on the fader that the baby scratch doesn't have.`,ref:`The scratch, broken down`},
+ {q:`Where does boom bap's particular groove come from?`,o:[`The technical constraints (memory, resolution, swing) of 80s-90s pad samplers`,`A modern quantization plugin`,`A complete absence of swing`,`A tempo that must always be very fast`],e:`Those original technical limits became writing habits, then a recognizable style.`,ref:`The pad sampler in history`},
+ {q:`In what order should you work for convincing finger drumming?`,o:[`Play the gesture first, quantize it partially, add swing last`,`Quantize at 100% before playing`,`Add swing before you even have a motif`,`Program note by note with the mouse, then randomize`],e:`The physical gesture carries information a mouse-drawn part doesn't capture; keeping quantization light preserves it.`,ref:`the method`},
+ {q:`Your mouse-programmed MPC pattern sounds dead despite good sound choices. Why?`,o:[`It's missing the actually-played gesture, which the mouse doesn't capture`,`The tempo is too fast`,`The pads are badly assigned`,`There aren't enough sounds`],e:`A drawn pattern, however precise, doesn't have the same feel as a motif played on the pads and then partially quantized.`,ref:`the classic mistake`}];
 EN.BEST=[
 ['meth',`Separate the phases: create, arrange, mix`,`These are three incompatible mindsets. Tweaking a compressor while you're hunting for a melody kills the idea.`,`One session = one phase. While creating, no mixing plugins. While mixing, no new parts.`,'arr'],
 ['meth',`Finish, even imperfect`,`You learn ten times more by finishing ten average tracks than by polishing one loop for six months.`,`Set a deadline and a number of sessions. Once that's up, export and move to the next one.`,'arr'],
@@ -4861,7 +5040,7 @@ function hydrateBlocks(entries){
 }
 function applyEN(){            // fusionne les jeux de données anglais disponibles dans les structures françaises
   if(LANG!=='en')return;
-  const arr=(fr,en)=>{if(en&&en.length===fr.length)fr.splice(0,fr.length,...en);},objs=(fr,en)=>{if(en)fr.forEach((o,i)=>en[i]&&Object.assign(o,en[i]));};
+  const arr=(fr,en)=>{if(en)en.forEach((v,i)=>{if(v!==undefined)fr[i]=v;});},objs=(fr,en)=>{if(en)fr.forEach((o,i)=>en[i]&&Object.assign(o,en[i]));};
   arr(GLOSS,EN.GLOSS);arr(BEST,EN.BEST);arr(BAD,EN.BAD);arr(MBEST,EN.MBEST);arr(MBAD,EN.MBAD);arr(PLAN,EN.PLAN);arr(TPL,EN.TPL);arr(TIMELINE,EN.TIMELINE);arr(CHECKS,EN.CHECKS);
   hydrateBlocks(EN.TOPICS);hydrateBlocks(EN.STYLES);hydrateBlocks(EN.ERAS);
   objs(TOPICS,EN.TOPICS);objs(STYLES,EN.STYLES);objs(ERAS,EN.ERAS);
