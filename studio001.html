@@ -3475,40 +3475,49 @@ vcomp(root){
 },
 
 vduck(root){
+  const isEN=LANG==='en';
   const P={dep:80,rel:180};
-  root.innerHTML=`<canvas class="eqcv" id="c" style="height:150px"></canvas>${slider('dd','Profondeur',0,100,5,80)}${slider('dr','Release',40,450,10,180)}<p class="note" id="dx"></p>`;
+  root.innerHTML=`<canvas class="eqcv" id="c" style="height:150px"></canvas>${slider('dd',isEN?'Depth':'Profondeur',0,100,5,80)}${slider('dr','Release',40,450,10,180)}<p class="note" id="dx"></p>`;
   const cv=root.querySelector('#c'),beat=60000/116;
-  const draw=()=>{root.querySelector('#dx').textContent=P.rel>beat*.85?`Release trop long : la nappe n'a pas le temps de remonter avant le kick suivant. Elle reste basse en permanence, et le pompage disparaît.`:P.rel<90?`Release très court : la nappe revient presque instantanément. Le kick est dégagé, mais on n'entend pas de respiration.`:`La nappe plonge à chaque kick puis remonte juste avant le suivant : c'est ce mouvement, calé sur le tempo, qu'on entend comme un pompage.`;
+  const draw=()=>{root.querySelector('#dx').textContent=isEN?
+      (P.rel>beat*.85?`Release too long: the pad doesn't have time to come back up before the next kick. It stays low permanently, and the pumping disappears.`:P.rel<90?`Release very short: the pad comes back almost instantly. The kick is clear, but you don't hear any breathing.`:`The pad dips on every kick then comes back up just before the next one: that's the movement, locked to the tempo, that you hear as pumping.`)
+     :(P.rel>beat*.85?`Release trop long : la nappe n'a pas le temps de remonter avant le kick suivant. Elle reste basse en permanence, et le pompage disparaît.`:P.rel<90?`Release très court : la nappe revient presque instantanément. Le kick est dégagé, mais on n'entend pas de respiration.`:`La nappe plonge à chaque kick puis remonte juste avant le suivant : c'est ce mouvement, calé sur le tempo, qu'on entend comme un pompage.`);
     const k=cv2d(cv);if(!k)return;const {g,W,H,C}=k,tot=beat*4,X=t=>t/tot*W,base=H-24,topY=16;
     g.beginPath();g.moveTo(0,base);for(let i=0;i<=400;i++){const t=i/400*tot,ph=t%beat,lv=1-P.dep/100*Math.max(0,1-ph/P.rel);g.lineTo(X(t),base-lv*(base-topY));}g.lineTo(W,base);g.closePath();g.fillStyle=C('--accent');g.globalAlpha=.35;g.fill();g.globalAlpha=1;
     for(let b=0;b<4;b++){const x=X(b*beat);g.fillStyle=C('--text');g.beginPath();g.moveTo(x,base);g.lineTo(x,base-(base-topY)*.95);g.lineTo(x+Math.max(10,X(90)),base);g.closePath();g.fill();}
-    g.font='10px '+(C('--mono')||'monospace');g.fillStyle=C('--muted');g.fillText('noir : kick · couleur : niveau de la nappe',6,H-6);};
+    g.font='10px '+(C('--mono')||'monospace');g.fillStyle=C('--muted');g.fillText(isEN?'black: kick · color: pad level':'noir : kick · couleur : niveau de la nappe',6,H-6);};
   VIZ.push(draw);bind(root,'dd',v=>v+' %',v=>{P.dep=v;draw();});bind(root,'dr',v=>v+' ms',v=>{P.rel=v;draw();});
 },
 
 vrev(root){
+  const isEN=LANG==='en';
   const P={pre:30,dec:1.5},RN=Array.from({length:260},(_,i)=>.35+.65*Math.abs(Math.sin(i*12.9898)*43758.5453%1)),ER=[[.012,.62],[.021,.5],[.029,.55],[.04,.4],[.052,.43],[.066,.33]];
   root.innerHTML=`<canvas class="eqcv" id="c" style="height:190px"></canvas>${slider('rp2','Pre-delay',0,120,5,30)}${slider('rd2','Decay',.3,4,.1,1.5)}<p class="note" id="rx"></p>`;
   const cv=root.querySelector('#c');
-  const draw=()=>{root.querySelector('#rx').textContent=(P.pre<10?`Sans pre-delay, la réverbe colle au son direct : il est perçu comme plus lointain, moins net.`:`${P.pre} ms de silence après le son direct : l'oreille perçoit d'abord la source, nette, puis l'espace derrière elle.`)+(P.dec>2.5?` Avec ${P.dec.toFixed(1)} s de decay, la queue déborde sur les notes suivantes : à réserver aux passages clairsemés.`:``);
+  const draw=()=>{root.querySelector('#rx').textContent=isEN?
+      (P.pre<10?`With no pre-delay, the reverb sticks to the dry sound: it's perceived as more distant, less clear.`:`${P.pre} ms of silence after the dry sound: the ear perceives the source first, clearly, then the space behind it.`)+(P.dec>2.5?` With ${P.dec.toFixed(1)} s of decay, the tail spills over into the following notes: best reserved for sparse passages.`:``)
+     :(P.pre<10?`Sans pre-delay, la réverbe colle au son direct : il est perçu comme plus lointain, moins net.`:`${P.pre} ms de silence après le son direct : l'oreille perçoit d'abord la source, nette, puis l'espace derrière elle.`)+(P.dec>2.5?` Avec ${P.dec.toFixed(1)} s de decay, la queue déborde sur les notes suivantes : à réserver aux passages clairsemés.`:``);
     const k=cv2d(cv);if(!k)return;const {g,W,H,C}=k,span=Math.max(1.2,P.pre/1000+P.dec*1.05),X=t=>14+t/span*(W-28),base=H-24,Y=a=>base-a*(base-14),pd=P.pre/1000;
     g.strokeStyle=C('--border');g.beginPath();g.moveTo(0,base);g.lineTo(W,base);g.stroke();
     if(pd>0){g.fillStyle=C('--amber');g.globalAlpha=.14;g.fillRect(X(0),14,X(pd)-X(0),base-14);g.globalAlpha=1;}
     const t0=pd+.075;g.strokeStyle=C('--accent');g.globalAlpha=.55;g.lineWidth=1.5;RN.forEach((r,i)=>{const t=t0+i/RN.length*P.dec,a=.34*r*Math.pow(10,-3*(t-t0)/P.dec);if(a<.004)return;g.beginPath();g.moveTo(X(t),base);g.lineTo(X(t),Y(a));g.stroke();});g.globalAlpha=1;
     g.strokeStyle=C('--accent');g.lineWidth=2.5;ER.forEach(([t,a])=>{g.beginPath();g.moveTo(X(pd+t),base);g.lineTo(X(pd+t),Y(a));g.stroke();});
     g.strokeStyle=C('--text');g.lineWidth=4;g.beginPath();g.moveTo(X(0),base);g.lineTo(X(0),Y(1));g.stroke();
-    g.font='11px '+(C('--sans')||'sans-serif');g.fillStyle=C('--text');g.fillText('son direct',X(0)+6,24);g.fillStyle=C('--accent');g.fillText('premières réflexions',X(pd)+8,Y(.66));g.fillText('queue de réverbe',X(t0+P.dec*.18),Y(.3));
+    g.font='11px '+(C('--sans')||'sans-serif');g.fillStyle=C('--text');g.fillText(isEN?'dry signal':'son direct',X(0)+6,24);g.fillStyle=C('--accent');g.fillText(isEN?'early reflections':'premières réflexions',X(pd)+8,Y(.66));g.fillText(isEN?'reverb tail':'queue de réverbe',X(t0+P.dec*.18),Y(.3));
     if(pd>.02){g.fillStyle=C('--amber');g.fillText('pre-delay',X(0)+6,base-6);}
-    g.font='10px '+(C('--mono')||'monospace');g.fillStyle=C('--muted');g.fillText('temps →  '+span.toFixed(1)+' s',W-96,H-6);};
+    g.font='10px '+(C('--mono')||'monospace');g.fillStyle=C('--muted');g.fillText((isEN?'time →  ':'temps →  ')+span.toFixed(1)+' s',W-96,H-6);};
   VIZ.push(draw);bind(root,'rp2',v=>v+' ms',v=>{P.pre=v;draw();});bind(root,'rd2',v=>v.toFixed(1)+' s',v=>{P.dec=v;draw();});
 },
 
 vdly(root){
+  const isEN=LANG==='en';
   const P={div:1,fb:45,bpm:116},T=[['1/4',1],['3/16',.75],['1/8',.5],['1/16',.25]];
   root.innerHTML=`<div class="row" id="yd"></div><canvas class="eqcv" id="c" style="height:160px;margin-top:12px"></canvas>${slider('yf','Feedback',0,90,5,45)}${slider('yb','Tempo',80,160,1,116)}<p class="note" id="yx"></p>`;
   const cv=root.querySelector('#c');
   const draw=()=>{const q=60/P.bpm,dl=q*T[P.div][1],fb=P.fb/100;let n=0;while(fb>0&&Math.pow(fb,n+1)>.02&&n<60)n++;
-    root.querySelector('#yx').textContent=`Une répétition toutes les ${Math.round(dl*1000)} ms. Avec ${P.fb} % de feedback, chaque écho vaut ${P.fb} % du précédent : ${n} répétition${n>1?'s':''} audible${n>1?'s':''}. `+(P.div===1?`En croche pointée, les échos tombent entre les temps : le rebond syncopé classique.`:`Les échos tombent sur la grille : effet régulier, plus discret.`)+(P.fb>=80?` Au-delà de 80 %, les répétitions s'accumulent plus vite qu'elles ne s'éteignent.`:``);
+    root.querySelector('#yx').textContent=isEN?
+      `One repeat every ${Math.round(dl*1000)} ms. With ${P.fb}% feedback, each echo is worth ${P.fb}% of the previous one: ${n} audible repeat${n>1?'s':''}. `+(P.div===1?`On a dotted eighth, the echoes fall between the beats: the classic syncopated bounce.`:`The echoes fall on the grid: a steadier, more discreet effect.`)+(P.fb>=80?` Past 80%, the repeats pile up faster than they fade out.`:``)
+     :`Une répétition toutes les ${Math.round(dl*1000)} ms. Avec ${P.fb} % de feedback, chaque écho vaut ${P.fb} % du précédent : ${n} répétition${n>1?'s':''} audible${n>1?'s':''}. `+(P.div===1?`En croche pointée, les échos tombent entre les temps : le rebond syncopé classique.`:`Les échos tombent sur la grille : effet régulier, plus discret.`)+(P.fb>=80?` Au-delà de 80 %, les répétitions s'accumulent plus vite qu'elles ne s'éteignent.`:``);
     const k=cv2d(cv);if(!k)return;const {g,W,H,C}=k,span=q*8,X=t=>12+t/span*(W-24),base=H-24;
     g.font='10px '+(C('--mono')||'monospace');for(let b=0;b<=8;b++){g.strokeStyle=C('--border');g.lineWidth=b%4===0?2:1;g.beginPath();g.moveTo(X(b*q),10);g.lineTo(X(b*q),base);g.stroke();if(b<8){g.fillStyle=C('--muted');g.fillText(String(b%4+1),X(b*q)+3,H-8);}}
     for(let i=0;i<=60;i++){const t=i*dl,a=Math.pow(fb,i);if(t>span||(i&&a<.02))break;g.fillStyle=i?C('--accent'):C('--text');g.globalAlpha=i?Math.max(.3,1-i*.09):1;g.fillRect(X(t)-3,base-a*(base-16),6,a*(base-16));g.globalAlpha=1;}};
@@ -3516,24 +3525,35 @@ vdly(root){
 },
 
 vlim(root){
+  const isEN=LANG==='en';
   const P={drive:0,norm:false},N=640,sig=[];for(let i=0;i<N;i++){const ph=i%80,k=.95*Math.exp(-ph/9)*Math.sin(ph*.9),sn=(i%160>=80&&i%160<96)?.5*Math.exp(-(i%160-80)/6)*Math.sin(i*2.3):0,bed=.2*Math.sin(i*.37)*Math.sin(i*.051)+.12*Math.sin(i*1.31);sig.push(k+sn+bed);}
   const rms=a=>Math.sqrt(a.reduce((s,v)=>s+v*v,0)/a.length),pk=a=>Math.max(...a.map(Math.abs)),r0=rms(sig);
-  root.innerHTML=`<canvas class="eqcv" id="c" style="height:200px"></canvas>${slider('ld2','Gain dans le limiteur',0,18,.5,0)}<div class="row" style="margin-top:12px"><button class="btn" id="ln"></button></div><p class="note" id="lx"></p>`;
+  root.innerHTML=`<canvas class="eqcv" id="c" style="height:200px"></canvas>${slider('ld2',isEN?'Gain into the limiter':'Gain dans le limiteur',0,18,.5,0)}<div class="row" style="margin-top:12px"><button class="btn" id="ln"></button></div><p class="note" id="lx"></p>`;
   const cv=root.querySelector('#c');
   const draw=()=>{const ceil=.89,gn=Math.pow(10,P.drive/20);let out=sig.map(v=>Math.max(-ceil,Math.min(ceil,v*gn)));const gain=20*Math.log10(rms(out)/r0);if(P.norm){const s=r0/rms(out);out=out.map(v=>v*s);}
     const crest=20*Math.log10(pk(out)/rms(out)),c0=20*Math.log10(pk(sig)/r0);
-    root.querySelector('#lx').textContent=`Volume perçu gagné : +${gain.toFixed(1)} dB. Facteur de crête (écart entre les pics et le niveau moyen) : ${crest.toFixed(1)} dB, contre ${c0.toFixed(1)} dB au départ. `+(P.norm?`Après normalisation, la plateforme a ramené le morceau au volume de l'original : il ne sonne pas plus fort, mais ses frappes sont ${crest<c0-1?`désormais plus petites que celles de la version dynamique`:`intactes`}.`:P.drive>8?`Les pics de kick sont rabotés contre le plafond : le signal devient une « saucisse ». Active la normalisation pour voir ce que l'auditeur reçoit.`:`Tant que seuls quelques pics touchent le plafond, le limiteur reste transparent.`);
+    root.querySelector('#lx').textContent=isEN?
+      `Perceived volume gained: +${gain.toFixed(1)} dB. Crest factor (gap between the peaks and the average level): ${crest.toFixed(1)} dB, versus ${c0.toFixed(1)} dB at the start. `+(P.norm?`After normalization, the platform brought the track back to the original's volume: it doesn't sound louder, but its hits are ${crest<c0-1?`now smaller than the dynamic version's`:`intact`}.`:P.drive>8?`The kick peaks are shaved flat against the ceiling: the signal becomes a "sausage". Turn on normalization to see what the listener actually gets.`:`As long as only a few peaks touch the ceiling, the limiter stays transparent.`)
+     :`Volume perçu gagné : +${gain.toFixed(1)} dB. Facteur de crête (écart entre les pics et le niveau moyen) : ${crest.toFixed(1)} dB, contre ${c0.toFixed(1)} dB au départ. `+(P.norm?`Après normalisation, la plateforme a ramené le morceau au volume de l'original : il ne sonne pas plus fort, mais ses frappes sont ${crest<c0-1?`désormais plus petites que celles de la version dynamique`:`intactes`}.`:P.drive>8?`Les pics de kick sont rabotés contre le plafond : le signal devient une « saucisse ». Active la normalisation pour voir ce que l'auditeur reçoit.`:`Tant que seuls quelques pics touchent le plafond, le limiteur reste transparent.`);
     const k=cv2d(cv);if(!k)return;const {g,W,H,C}=k,mid=H/2,sc=H/2-12,X=i=>i/(N-1)*W;
     const wave=(arr,col,al,lw)=>{g.beginPath();arr.forEach((v,i)=>i?g.lineTo(X(i),mid-v*sc):g.moveTo(X(i),mid-v*sc));g.strokeStyle=col;g.globalAlpha=al;g.lineWidth=lw;g.stroke();g.globalAlpha=1;};
     wave(sig,C('--text'),.28,1.2);wave(out,C('--accent'),1,1.6);
     g.setLineDash([4,4]);g.strokeStyle=C('--red');g.lineWidth=1;[-1,1].forEach(s=>{g.beginPath();g.moveTo(0,mid+s*ceil*sc);g.lineTo(W,mid+s*ceil*sc);g.stroke();});g.setLineDash([]);
-    g.font='10px '+(C('--mono')||'monospace');g.fillStyle=C('--red');g.fillText('plafond −1 dB',6,mid-ceil*sc-3);g.fillStyle=C('--muted');g.fillText('gris : mix d\'origine · couleur : après limiteur'+(P.norm?' et normalisation':''),6,H-4);};
-  VIZ.push(draw);bind(root,'ld2',v=>'+'+v+' dB',v=>{P.drive=v;draw();});toggleBtn(root,'#ln','Après normalisation de la plateforme',()=>P.norm,v=>{P.norm=v;draw();});
+    g.font='10px '+(C('--mono')||'monospace');g.fillStyle=C('--red');g.fillText((isEN?'ceiling −1 dB':'plafond −1 dB'),6,mid-ceil*sc-3);g.fillStyle=C('--muted');g.fillText(isEN?'gray: original mix · color: after limiter'+(P.norm?' and normalization':''):'gris : mix d\'origine · couleur : après limiteur'+(P.norm?' et normalisation':''),6,H-4);};
+  VIZ.push(draw);bind(root,'ld2',v=>'+'+v+' dB',v=>{P.drive=v;draw();});toggleBtn(root,'#ln',isEN?'After platform normalization':'Après normalisation de la plateforme',()=>P.norm,v=>{P.norm=v;draw();});
 },
 
 swinglab(root){
+  const isEN=LANG==='en';
   const P={bpm:92,sw:50,res:0,q:100,sn:0,hh:0,rnd:0,acc:true};
-  const PRE=[['Grille stricte',[120,50,0,100,0,0,0,0],`Tout sur la grille, vélocités plates. C'est le point de départ d'un clip MIDI dessiné à la souris, et le choix assumé de la trap, de la pop et de la techno dure.`],
+  const PRE=isEN?[['Strict grid',[120,50,0,100,0,0,0,0],`Everything on the grid, flat velocities. This is the starting point of a mouse-drawn MIDI clip, and the deliberate choice of trap, pop and hard techno.`],
+   ['House',[124,57,0,100,0,0,2,1],`57% on the 16th notes, fully quantized, accents on the hi-hats. The kick doesn't move: it's against it that the sway is heard.`],
+   ['Pad sampler',[90,63,0,100,10,0,3,1],`Quantized to 100%, but on a 63% grid. Even and yet dragging: the sound of boom bap. The snare is slightly delayed.`],
+   ['Not quantized',[88,58,0,25,24,-11,5,1],`Quantization at 25%: the original performance is almost intact. Snare clearly late, hi-hats early. The instruments don't agree with each other, and that's exactly the effect being sought.`],
+   ['"Drunk" beat',[78,60,0,0,32,-9,8,1],`No quantization, snare delay right at the edge of a flam. The pulse seems to stumble every bar. Bring the delay down to 0 to measure just how much rests on it.`],
+   ['Garage 2-step',[132,64,0,100,0,0,2,1],`Very pronounced swing at a fast tempo. Notice that at 132 BPM, 64% only represents 32 ms of delay: you have to push the percentage for it to be heard.`],
+   ['Eighth-note shuffle',[104,64,1,100,0,0,3,1],`Same percentage, but applied to eighth notes: it tips into a blues shuffle. It's the resolution, not the amount, that changes the style.`]]
+   :[['Grille stricte',[120,50,0,100,0,0,0,0],`Tout sur la grille, vélocités plates. C'est le point de départ d'un clip MIDI dessiné à la souris, et le choix assumé de la trap, de la pop et de la techno dure.`],
    ['House',[124,57,0,100,0,0,2,1],`57 % sur les doubles-croches, tout quantifié, accents sur les charleys. Le kick ne bouge pas : c'est contre lui que le balancement s'entend.`],
    ['Sampler à pads',[90,63,0,100,10,0,3,1],`Quantifié à 100 %, mais sur une grille à 63 %. Régulier et pourtant traînant : le son du boom bap. La caisse claire est légèrement retardée.`],
    ['Non quantifié',[88,58,0,25,24,-11,5,1],`Quantification à 25 % : le geste d'origine est presque intact. Caisse claire nettement en retard, charleys en avance. Les instruments ne sont pas d'accord entre eux, et c'est exactement l'effet recherché.`],
@@ -3544,14 +3564,16 @@ swinglab(root){
   const PERF={k:[0,0,0,0,0,0,0,14,0,0,-9,0,0,0,0,0],s:[0,0,0,0,11,0,0,0,0,0,0,0,17,0,0,-6],h:[3,-8,6,12,-4,9,-7,15,2,-11,8,13,-5,10,-9,16]};
   const G={k:[2,0,0,0,0,0,0,1,0,0,2,0,0,0,0,0],s:[0,0,0,0,2,0,0,0,0,0,0,0,2,0,0,1],h:[2,1,1,1,2,1,1,1,2,1,1,1,2,1,1,1]};
   root.innerHTML=`<div class="row" id="lp"></div><p class="note" id="lt" style="margin:10px 0 12px"></p><canvas class="eqcv" id="c" style="height:190px"></canvas>
-    ${slider('lb','Tempo',70,140,1,92)}${slider('lsw','Swing',50,75,1,50)}${slider('lq','Quantification',0,100,5,100)}${slider('lsn','Caisse claire',-30,40,1,0)}${slider('lhh','Charleys',-30,30,1,0)}${slider('lr','Aléatoire',0,20,1,0)}
-    <div class="row" id="lres" style="margin-top:12px"></div><div class="row" style="margin-top:10px"><button class="btn primary" id="play">▶ Écouter</button><button class="btn" id="la"></button></div><p class="note" id="lx"></p>`;
+    ${slider('lb','Tempo',70,140,1,92)}${slider('lsw','Swing',50,75,1,50)}${slider('lq',isEN?'Quantization':'Quantification',0,100,5,100)}${slider('lsn',isEN?'Snare':'Caisse claire',-30,40,1,0)}${slider('lhh',isEN?'Hi-hats':'Charleys',-30,30,1,0)}${slider('lr',isEN?'Random':'Aléatoire',0,20,1,0)}
+    <div class="row" id="lres" style="margin-top:12px"></div><div class="row" style="margin-top:10px"><button class="btn primary" id="play">▶ ${isEN?'Listen':'Écouter'}</button><button class="btn" id="la"></button></div><p class="note" id="lx"></p>`;
   const cv=root.querySelector('#c'),d16=()=>60/P.bpm/4;
   const swOff=s=>{const d=d16();if(P.res===0)return s%2?(P.sw-50)/50*d:0;return s%4===2?(P.sw-50)/50*2*d:0;};          // secondes
   const off=(lane,s)=>swOff(s)+PERF[lane][s]/1000*(1-P.q/100)+(lane==='s'?P.sn:lane==='h'?P.hh:0)/1000;
   const draw=()=>{const d=d16()*1000,so=P.res===0?(P.sw-50)/50*d:(P.sw-50)/50*2*d;
-    root.querySelector('#lx').innerHTML=`À ${P.bpm} BPM, une double-croche dure <b>${Math.round(d)} ms</b>. Swing ${P.sw} % en ${P.res?'croches':'doubles-croches'} = retard de <b>${Math.round(so)} ms</b> sur les notes concernées.`+(P.sn?` Caisse claire ${P.sn>0?'en retard':'en avance'} de ${Math.abs(P.sn)} ms${Math.abs(P.sn)>30?', proche du flam':''}.`:'')+(P.hh?` Charleys ${P.hh>0?'en retard':'en avance'} de ${Math.abs(P.hh)} ms.`:'')+(P.q<100?` Quantification à ${P.q} % : il reste ${100-P.q} % du geste d'origine.`:'');
-    const k=cv2d(cv);if(!k)return;const {g,W,H,C}=k,m=64,st=(W-m-12)/16,lanes=[['h','Charleys'],['s','Caisse claire'],['k','Kick']],lh=(H-34)/3;
+    root.querySelector('#lx').innerHTML=isEN?
+      `At ${P.bpm} BPM, a 16th note lasts <b>${Math.round(d)} ms</b>. Swing ${P.sw}% on ${P.res?'8th notes':'16th notes'} = a delay of <b>${Math.round(so)} ms</b> on the affected notes.`+(P.sn?` Snare ${P.sn>0?'delayed':'ahead'} by ${Math.abs(P.sn)} ms${Math.abs(P.sn)>30?', close to a flam':''}.`:'')+(P.hh?` Hi-hats ${P.hh>0?'delayed':'ahead'} by ${Math.abs(P.hh)} ms.`:'')+(P.q<100?` Quantization at ${P.q}%: ${100-P.q}% of the original performance remains.`:'')
+     :`À ${P.bpm} BPM, une double-croche dure <b>${Math.round(d)} ms</b>. Swing ${P.sw} % en ${P.res?'croches':'doubles-croches'} = retard de <b>${Math.round(so)} ms</b> sur les notes concernées.`+(P.sn?` Caisse claire ${P.sn>0?'en retard':'en avance'} de ${Math.abs(P.sn)} ms${Math.abs(P.sn)>30?', proche du flam':''}.`:'')+(P.hh?` Charleys ${P.hh>0?'en retard':'en avance'} de ${Math.abs(P.hh)} ms.`:'')+(P.q<100?` Quantification à ${P.q} % : il reste ${100-P.q} % du geste d'origine.`:'');
+    const k=cv2d(cv);if(!k)return;const {g,W,H,C}=k,m=64,st=(W-m-12)/16,lanes=isEN?[['h','Hi-hats'],['s','Snare'],['k','Kick']]:[['h','Charleys'],['s','Caisse claire'],['k','Kick']],lh=(H-34)/3;
     g.font='10px '+(C('--mono')||'monospace');for(let i=0;i<=16;i++){const x=m+i*st;g.strokeStyle=C('--border');g.lineWidth=i%4===0?2:1;g.setLineDash(i%4===0?[]:[3,4]);g.beginPath();g.moveTo(x,18);g.lineTo(x,H-14);g.stroke();if(i<16&&i%4===0){g.fillStyle=C('--muted');g.fillText(String(i/4+1),x+3,12);}}g.setLineDash([]);
     if(now>=0){g.fillStyle=C('--text');g.globalAlpha=.07;g.fillRect(m+now*st,18,st,H-32);g.globalAlpha=1;}
     lanes.forEach(([id,label],y)=>{const cy=24+lh*y+lh/2;g.fillStyle=C('--muted');g.font='11px '+(C('--sans')||'sans-serif');g.fillText(label,2,cy+4);
@@ -3559,11 +3581,11 @@ swinglab(root){
         if(Math.abs(o)>.5){g.strokeStyle=o>0?C('--accent'):C('--amber');g.lineWidth=1.5;g.beginPath();g.moveTo(m+s*st,cy);g.lineTo(x,cy);g.stroke();}
         if(P.rnd){g.beginPath();g.arc(x,cy,r+P.rnd/d*st,0,Math.PI*2);g.fillStyle=C('--muted');g.globalAlpha=.18;g.fill();g.globalAlpha=1;}
         g.beginPath();g.arc(x,cy,r,0,Math.PI*2);g.fillStyle=Math.abs(o)<=.5?C('--text'):o>0?C('--accent'):C('--amber');g.fill();}});
-    g.fillStyle=C('--muted');g.font='10px '+(C('--mono')||'monospace');g.fillText('couleur : en retard · ambre : en avance · halo : aléatoire',m,H-2);};
+    g.fillStyle=C('--muted');g.font='10px '+(C('--mono')||'monospace');g.fillText(isEN?'color: late · amber: early · halo: random':'couleur : en retard · ambre : en avance · halo : aléatoire',m,H-2);};
   VIZ.push(draw);
   [['lb','bpm',v=>v+' BPM'],['lsw','sw',v=>v+' %'],['lq','q',v=>v+' %'],['lsn','sn',v=>(v>0?'+':'')+v+' ms'],['lhh','hh',v=>(v>0?'+':'')+v+' ms'],['lr','rnd',v=>'± '+v+' ms']].forEach(([id,key,f])=>els[id]=bind(root,id,f,v=>{P[key]=v;draw();}));
-  const resD=choice(root,'#lres',['Swing des doubles-croches','Swing des croches'],()=>P.res,i=>{P.res=i;draw();});
-  const accB=root.querySelector('#la'),accD=()=>{accB.textContent='Accents : '+(P.acc?'on':'off');accB.classList.toggle('on',P.acc);};accB.onclick=()=>{P.acc=!P.acc;accD();draw();};
+  const resD=choice(root,'#lres',isEN?['Swing the 16th notes','Swing the 8th notes']:['Swing des doubles-croches','Swing des croches'],()=>P.res,i=>{P.res=i;draw();});
+  const accB=root.querySelector('#la'),accD=()=>{accB.textContent=(isEN?'Accents: ':'Accents : ')+(P.acc?'on':'off');accB.classList.toggle('on',P.acc);};accB.onclick=()=>{P.acc=!P.acc;accD();draw();};
   const load=i=>{pre=i;const a=PRE[i][1];['lb','lsw',null,'lq','lsn','lhh','lr'].forEach((id,k)=>{if(id){els[id].value=a[k];els[id].oninput();}});P.res=a[2];P.acc=!!a[7];resD();accD();root.querySelector('#lt').textContent=PRE[i][2];draw();};
   choice(root,'#lp',PRE.map(p=>p[0]),()=>pre,load);load(0);
   const bass={0:31,7:31,10:34,14:29};
@@ -3578,23 +3600,33 @@ swinglab(root){
 },
 
 delay(root){
-  root.innerHTML=`${slider('bpm','Tempo',60,180,1,116)}<table class="t"><thead><tr><th>Valeur</th><th>Usage typique</th><th>Temps</th></tr></thead><tbody id="tb"></tbody></table>
-   <p class="note">Formule : une noire = 60 000 ÷ BPM, en millisecondes. Tout le reste en découle.</p>`;
-  const rows=[['Noire (1/4)','Écho large, fin de phrase',1],['Croche pointée (3/16)','Delay rythmique, guitares, leads',.75],['Croche (1/8)','Delay standard voix',.5],['Croche de triolet','Groove shuffle, swing',1/3],['Double-croche (1/16)','Épaississement, slapback',.25],['1/32','Pre-delay de réverbe',.125]];
+  const isEN=LANG==='en';
+  root.innerHTML=`${slider('bpm','Tempo',60,180,1,116)}<table class="t"><thead><tr><th>${isEN?'Value':'Valeur'}</th><th>${isEN?'Typical use':'Usage typique'}</th><th>${isEN?'Time':'Temps'}</th></tr></thead><tbody id="tb"></tbody></table>
+   <p class="note">${isEN?'Formula: a quarter note = 60,000 ÷ BPM, in milliseconds. Everything else follows from that.':'Formule : une noire = 60 000 ÷ BPM, en millisecondes. Tout le reste en découle.'}</p>`;
+  const rows=isEN?[['Quarter (1/4)','Wide echo, end of phrase',1],['Dotted eighth (3/16)','Rhythmic delay, guitars, leads',.75],['Eighth (1/8)','Standard vocal delay',.5],['Triplet eighth','Shuffle groove, swing',1/3],['16th note (1/16)','Thickening, slapback',.25],['1/32','Reverb pre-delay',.125]]
+   :[['Noire (1/4)','Écho large, fin de phrase',1],['Croche pointée (3/16)','Delay rythmique, guitares, leads',.75],['Croche (1/8)','Delay standard voix',.5],['Croche de triolet','Groove shuffle, swing',1/3],['Double-croche (1/16)','Épaississement, slapback',.25],['1/32','Pre-delay de réverbe',.125]];
   bind(root,'bpm',v=>v+' BPM',v=>{const q=60000/v;root.querySelector('#tb').innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td style="color:var(--muted)">${r[1]}</td><td>${Math.round(q*r[2])} ms</td></tr>`).join('');});
 },
 
 lufs(root){
+  const isEN=LANG==='en';
   const T=[['Spotify (normal)',-14],['YouTube',-14],['Apple Music',-16]];
-  root.innerHTML=`${slider('lu','Ton master',-20,-5,.5,-8)}<div class="big" id="verdict"></div><p class="note" id="vtxt" style="margin-top:0"></p>
-   <table class="t"><thead><tr><th>Plateforme</th><th>Cible</th><th>Ajustement</th></tr></thead><tbody id="tb2"></tbody></table>`;
+  root.innerHTML=`${slider('lu',isEN?'Master tone':'Ton master',-20,-5,.5,-8)}<div class="big" id="verdict"></div><p class="note" id="vtxt" style="margin-top:0"></p>
+   <table class="t"><thead><tr><th>${isEN?'Platform':'Plateforme'}</th><th>${isEN?'Target':'Cible'}</th><th>${isEN?'Adjustment':'Ajustement'}</th></tr></thead><tbody id="tb2"></tbody></table>`;
   bind(root,'lu',v=>v.toFixed(1)+' LUFS',v=>{
-    root.querySelector('#tb2').innerHTML=T.map(p=>{const a=p[1]-v;return `<tr><td>${p[0]}</td><td class="mono" style="color:var(--muted)">${p[1]} LUFS</td><td>${a<0?a.toFixed(1)+' dB':(a===0?'0 dB':'≈ inchangé')}</td></tr>`;}).join('');
+    root.querySelector('#tb2').innerHTML=T.map(p=>{const a=p[1]-v;return `<tr><td>${p[0]}</td><td class="mono" style="color:var(--muted)">${p[1]} LUFS</td><td>${a<0?a.toFixed(1)+' dB':(a===0?'0 dB':(isEN?'≈ unchanged':'≈ inchangé'))}</td></tr>`;}).join('');
     const a=-14-v,V=root.querySelector('#verdict'),X=root.querySelector('#vtxt');
-    if(v>-9){V.textContent='Baissé de '+Math.abs(a).toFixed(1)+' dB';V.style.color='var(--red)';X.textContent='Tu as sacrifié les transitoires pour un volume que la plateforme annule. À l\'arrivée : même niveau que les autres, avec moins de punch. Ce niveau reste un choix assumé en club ou sur certains styles, mais il doit être un choix.';}
-    else if(v>-13){V.textContent='Baissé de '+Math.abs(a).toFixed(1)+' dB';V.style.color='var(--amber)';X.textContent='Zone courante pour l\'électro et la pop : dense mais encore dynamique. Vérifie que le kick garde son impact après le limiteur.';}
-    else if(v>=-16){V.textContent='Quasi inchangé';V.style.color='var(--green)';X.textContent='Proche des cibles de streaming : ce que tu entends en studio est ce que l\'auditeur recevra.';}
-    else{V.textContent='Plus faible que la cible';V.style.color='var(--amber)';X.textContent='Spotify remonte les masters plus faibles que sa cible, mais seulement tant que leurs crêtes restent 1 dB sous le maximum : un morceau très dynamique restera un peu en dessous des autres.';}
+    if(isEN){
+      if(v>-9){V.textContent='Turned down by '+Math.abs(a).toFixed(1)+' dB';V.style.color='var(--red)';X.textContent='You sacrificed the transients for a volume the platform cancels out anyway. End result: same level as everyone else, with less punch. This level can still be a deliberate choice in club settings or certain styles, but it has to be a choice.';}
+      else if(v>-13){V.textContent='Turned down by '+Math.abs(a).toFixed(1)+' dB';V.style.color='var(--amber)';X.textContent='A common zone for electronic and pop music: dense but still dynamic. Check that the kick keeps its impact after the limiter.';}
+      else if(v>=-16){V.textContent='Nearly unchanged';V.style.color='var(--green)';X.textContent='Close to the streaming targets: what you hear in the studio is what the listener will receive.';}
+      else{V.textContent='Lower than the target';V.style.color='var(--amber)';X.textContent="Spotify boosts masters that are quieter than its target, but only as long as their peaks stay 1 dB under the ceiling: a very dynamic track will still sit a little under the others.";}
+    }else{
+      if(v>-9){V.textContent='Baissé de '+Math.abs(a).toFixed(1)+' dB';V.style.color='var(--red)';X.textContent='Tu as sacrifié les transitoires pour un volume que la plateforme annule. À l\'arrivée : même niveau que les autres, avec moins de punch. Ce niveau reste un choix assumé en club ou sur certains styles, mais il doit être un choix.';}
+      else if(v>-13){V.textContent='Baissé de '+Math.abs(a).toFixed(1)+' dB';V.style.color='var(--amber)';X.textContent='Zone courante pour l\'électro et la pop : dense mais encore dynamique. Vérifie que le kick garde son impact après le limiteur.';}
+      else if(v>=-16){V.textContent='Quasi inchangé';V.style.color='var(--green)';X.textContent='Proche des cibles de streaming : ce que tu entends en studio est ce que l\'auditeur recevra.';}
+      else{V.textContent='Plus faible que la cible';V.style.color='var(--amber)';X.textContent='Spotify remonte les masters plus faibles que sa cible, mais seulement tant que leurs crêtes restent 1 dB sous le maximum : un morceau très dynamique restera un peu en dessous des autres.';}
+    }
   });
 }
 ,
@@ -3660,7 +3692,7 @@ mpcpad(root){
   const near=()=>{if(!current)return -1;const el=60/bpm/4,ph=((ctx.currentTime-loopT0)%(el*16)+el*16)%(el*16);return Math.round(ph/el)%16;};
   let loopT0=0;
   root.querySelectorAll('#pd .btn').forEach(b=>b.onclick=()=>{const p=+b.dataset.p;hit(p);if(rec&&current){const s=near();if(s>=0){G[p][s]=1;drawGrid();}}});
-  const drawGrid=()=>{const el=root.querySelector('#sg');el.innerHTML='<div></div>'+Array.from({length:16},(_,i)=>`<div class="h">${i%4===0?i/4+1:i%2===0?'et':'·'}</div>`).join('')+
+  const drawGrid=()=>{const el=root.querySelector('#sg');el.innerHTML='<div></div>'+Array.from({length:16},(_,i)=>`<div class="h">${i%4===0?i/4+1:i%2===0?(LANG==='en'?'&':'et'):'·'}</div>`).join('')+
     G.map((r,y)=>`<div>${PADS[y][0]}</div>`+r.map((v,x)=>`<div class="c${v?' s2':''}${x%4===0?' b':''}${x===now?' now':''}"></div>`).join('')).join('');};
   drawGrid();
   root.querySelector('#rec').onclick=e=>{rec=!rec;e.currentTarget.textContent=rec?T.recOn:T.recOff;e.currentTarget.classList.toggle('on',rec);
