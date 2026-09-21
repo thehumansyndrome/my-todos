@@ -2665,12 +2665,17 @@ function cv2d(cv){const g=cv&&cv.getContext&&cv.getContext('2d');if(!g)return nu
 /* ============ demos ============ */
 const DEMOS={
 chords(root){
-  const P=[
+  const isEN=LANG==='en';
+  const P=isEN?[
+   {name:'Epic',deg:['i','VI','III','VII'],ch:[['Gm',[55,58,62]],['E♭',[51,55,58]],['B♭',[58,62,65]],['F',[53,57,60]]],why:`Starting in minor, then three major chords climbing: melancholic and euphoric at once. This is the color of a lot of French house and pop.`},
+   {name:'Dark',deg:['i','iv','v','i'],ch:[['Gm',[55,58,62]],['Cm',[60,63,67]],['Dm',[62,65,69]],['Gm',[55,58,62]]],why:`Only minor chords and a return to the start: closed, low, with no light. Same scale notes, opposite emotion.`},
+   {name:'Funk / disco',deg:['i','IV','i','IV'],ch:[['Gm',[55,58,62]],['C',[60,64,67]],['Gm',[55,58,62]],['C',[60,64,67]]],why:`C major contains a natural E, absent from G minor: that's the dorian mode. This one note lights up the whole thing and gives it its funk color.`}]
+   :[
    {name:'Épique',deg:['i','VI','III','VII'],ch:[['Gm',[55,58,62]],['E♭',[51,55,58]],['B♭',[58,62,65]],['F',[53,57,60]]],why:'Départ en mineur, puis trois accords majeurs qui montent : mélancolique et euphorique à la fois. C\'est la couleur de beaucoup de french house et de pop.'},
    {name:'Sombre',deg:['i','iv','v','i'],ch:[['Gm',[55,58,62]],['Cm',[60,63,67]],['Dm',[62,65,69]],['Gm',[55,58,62]]],why:'Que des accords mineurs et un retour au point de départ : fermé, grave, sans lumière. Mêmes notes de la gamme, émotion opposée.'},
    {name:'Funk / disco',deg:['i','IV','i','IV'],ch:[['Gm',[55,58,62]],['C',[60,64,67]],['Gm',[55,58,62]],['C',[60,64,67]]],why:'Le Do majeur contient un Mi naturel, absent de sol mineur : c\'est le mode dorien. Cette seule note éclaire l\'ensemble et donne la couleur funk.'}];
   let sel=0;
-  root.innerHTML=`<div class="row" id="pp"></div><div class="chords" id="cc"></div><p id="why" class="note" style="margin:0 0 14px"></p><button class="btn primary" id="play">▶ Écouter la progression</button>`;
+  root.innerHTML=`<div class="row" id="pp"></div><div class="chords" id="cc"></div><p id="why" class="note" style="margin:0 0 14px"></p><button class="btn primary" id="play">▶ ${isEN?'Listen to the progression':'Écouter la progression'}</button>`;
   const draw=()=>{root.querySelector('#pp').innerHTML=P.map((p,i)=>`<button class="btn${i===sel?' on':''}" data-i="${i}">${p.name}</button>`).join('');
     root.querySelectorAll('#pp .btn').forEach(b=>b.onclick=()=>{sel=+b.dataset.i;draw();});
     root.querySelector('#cc').innerHTML=P[sel].ch.map((c,i)=>`<div class="chord" data-i="${i}">${c[0]}<small>${P[sel].deg[i]}</small></div>`).join('');
@@ -2686,29 +2691,39 @@ chords(root){
 },
 
 arr(root){
-  const secs=[['Intro','16 mes.',3,'Kick et charleys seuls, accords très filtrés en fond. Rôle : installer le tempo et laisser un DJ mixer. On devine le thème sans l\'entendre clairement.'],
+  const isEN=LANG==='en';
+  const secs=isEN?[['Intro','16 bars',3,`Kick and hats alone, chords heavily filtered in the background. Role: set the tempo and let a DJ mix in. You sense the theme without hearing it clearly.`],
+   ['Build','8 bars',5,`The chords' filter opens up gradually, a riser climbs. The bass is still absent: it builds anticipation.`],
+   ['Drop 1','16 bars',8,`The bass comes in, the filter is wide open. First peak. The lead is kept in reserve for the second drop.`],
+   ['Break','8 bars',4,`Kick, bass and hats are removed. What's left is the chords and the vocal hook: a breather, and the melody put forward.`],
+   ['Build 2','8 bars',6,`Snare roll, riser, the kick comes back in fragments. The tension is stronger than the first time.`],
+   ['Drop 2','16 bars',10,`Everything plays together for the first time, lead included. It's the track's peak: it only exists because of the restraint before it.`],
+   ['Outro','16 bars',3,`Elements are removed one by one down to the kick alone. Mirrors the intro.`]]
+   :[['Intro','16 mes.',3,'Kick et charleys seuls, accords très filtrés en fond. Rôle : installer le tempo et laisser un DJ mixer. On devine le thème sans l\'entendre clairement.'],
    ['Build','8 mes.',5,'Le filtre des accords s\'ouvre progressivement, un riser monte. La basse est toujours absente : on crée l\'attente.'],
    ['Drop 1','16 mes.',8,'La basse entre, le filtre est grand ouvert. Premier sommet. On garde le lead en réserve pour le second drop.'],
    ['Break','8 mes.',4,'On retire kick, basse et charleys. Restent les accords et le hook vocal : respiration, et mise en avant de la mélodie.'],
    ['Build 2','8 mes.',6,'Roulement de caisse claire, riser, le kick revient par fragments. La tension est plus forte que la première fois.'],
    ['Drop 2','16 mes.',10,'Tout joue ensemble pour la première fois, lead compris. C\'est le sommet du morceau : il n\'existe que parce qu\'on s\'est retenu avant.'],
    ['Outro','16 mes.',3,'On retire les éléments un par un jusqu\'au kick seul. Miroir de l\'intro.']];
-  const tr=[['Kick',[1,1,1,0,2,1,1]],['Charleys / claps',[1,1,1,0,1,1,1]],['Basse',[0,0,1,0,0,1,2]],['Accords',[2,2,1,1,1,1,0]],['Lead / vocoder',[0,0,0,1,1,1,0]],['FX (risers)',[0,1,0,0,1,0,0]]];
+  const tr=isEN?[['Kick',[1,1,1,0,2,1,1]],['Hats / claps',[1,1,1,0,1,1,1]],['Bass',[0,0,1,0,0,1,2]],['Chords',[2,2,1,1,1,1,0]],['Lead / vocoder',[0,0,0,1,1,1,0]],['FX (risers)',[0,1,0,0,1,0,0]]]
+   :[['Kick',[1,1,1,0,2,1,1]],['Charleys / claps',[1,1,1,0,1,1,1]],['Basse',[0,0,1,0,0,1,2]],['Accords',[2,2,1,1,1,1,0]],['Lead / vocoder',[0,0,0,1,1,1,0]],['FX (risers)',[0,1,0,0,1,0,0]]];
   let sel=2;
   const draw=()=>{root.innerHTML=`<div class="scroll"><table class="arr"><thead><tr><th></th>${secs.map((s,i)=>`<th><button data-i="${i}" class="${i===sel?'sel':''}">${s[0]}<br><span class="mono" style="opacity:.7">${s[1]}</span></button></th>`).join('')}</tr></thead>
     <tbody>${tr.map(r=>`<tr><th>${r[0]}</th>${r[1].map(v=>`<td class="v${v}"></td>`).join('')}</tr>`).join('')}
-    <tr class="energy"><th>Énergie</th>${secs.map(s=>`<td><div style="height:${s[2]*6}px"></div></td>`).join('')}</tr></tbody></table></div>
+    <tr class="energy"><th>${isEN?'Energy':'Énergie'}</th>${secs.map(s=>`<td><div style="height:${s[2]*6}px"></div></td>`).join('')}</tr></tbody></table></div>
     <p style="margin-top:12px"><b>${secs[sel][0]}.</b> ${secs[sel][3]}</p>`;
     root.querySelectorAll('thead button').forEach(b=>b.onclick=()=>{sel=+b.dataset.i;draw();});};
   draw();
 },
 
 synth(root){
+  const isEN=LANG==='en';
   const P={type:'sawtooth',cutoff:600,q:4,a:.005,r:.08};
-  root.innerHTML=`<div class="row" id="waves">${[['sine','Sinus'],['sawtooth','Dent de scie'],['square','Carré']].map(w=>`<button class="btn" data-w="${w[0]}">${w[1]}</button>`).join('')}</div>
-   ${slider('cut','Cutoff',80,8000,10,600)}${slider('res','Résonance',0,20,.5,4)}${slider('att','Attaque',1,400,1,5)}${slider('rel','Release',20,800,10,80)}
-   <div class="row" style="margin-top:14px"><button class="btn primary" id="play">▶ Jouer la ligne de basse</button></div>
-   <p class="note">À essayer : cutoff à 200 Hz (sourd) puis monte lentement à 4000 Hz pendant la lecture. Puis attaque à 300 ms : la basse devient une nappe.</p>`;
+  root.innerHTML=`<div class="row" id="waves">${(isEN?[['sine','Sine'],['sawtooth','Sawtooth'],['square','Square']]:[['sine','Sinus'],['sawtooth','Dent de scie'],['square','Carré']]).map(w=>`<button class="btn" data-w="${w[0]}">${w[1]}</button>`).join('')}</div>
+   ${slider('cut','Cutoff',80,8000,10,600)}${slider('res',isEN?'Resonance':'Résonance',0,20,.5,4)}${slider('att',isEN?'Attack':'Attaque',1,400,1,5)}${slider('rel','Release',20,800,10,80)}
+   <div class="row" style="margin-top:14px"><button class="btn primary" id="play">▶ ${isEN?'Play the bassline':'Jouer la ligne de basse'}</button></div>
+   <p class="note">${isEN?'Try this: cutoff at 200 Hz (dull) then slowly raise it to 4000 Hz while it plays. Then attack at 300 ms: the bass becomes a pad.':'À essayer : cutoff à 200 Hz (sourd) puis monte lentement à 4000 Hz pendant la lecture. Puis attaque à 300 ms : la basse devient une nappe.'}</p>`;
   const wv=()=>root.querySelectorAll('#waves .btn').forEach(b=>b.classList.toggle('on',b.dataset.w===P.type));
   root.querySelectorAll('#waves .btn').forEach(b=>b.onclick=()=>{P.type=b.dataset.w;wv();});wv();
   bind(root,'cut',v=>v+' Hz',v=>P.cutoff=v);bind(root,'res',v=>v.toFixed(1),v=>P.q=v);
@@ -2721,7 +2736,15 @@ synth(root){
 },
 
 freq(root){
-  const B=[['Sub','20–60 Hz','Sub du kick, 808. On le ressent plus qu\'on ne l\'entend.','Garde-le mono et réservé à un seul élément à la fois. Piège : presque inaudible au casque et sur petites enceintes, donc facile à surcharger sans le savoir. Vérifie à l\'analyseur.'],
+  const isEN=LANG==='en';
+  const B=isEN?[['Sub','20–60 Hz',`Kick sub, 808. You feel it more than hear it.`,`Keep it mono and reserved for a single element at a time. Trap: almost inaudible on headphones and small speakers, so easy to overload without knowing it. Check with the analyzer.`],
+   ['Bass','60–250 Hz',`Kick body, bass fundamental, warmth.`,`The kick / bass conflict zone. High-pass here on anything that has no business being there: vocals, guitars, pads, hi-hats.`],
+   ['Low-mid','250–500 Hz',`Warmth, thickness… and "mud".`,`Everything piles up here. A light dip (2–3 dB) on pads and guitars often clears up the mix instantly. Too much cut: a thin sound.`],
+   ['Mid','500 Hz–2 kHz',`Body of vocals, snare, guitars, lead synths.`,`Around 500–800 Hz: "cardboard" sound. Around 1 kHz: nasal sound. It's the zone the ear and small speakers render best.`],
+   ['Upper-mid','2–6 kHz',`Presence, intelligibility, percussion attack.`,`A small boost brings a vocal forward in the mix. In excess: harsh and fatiguing, especially loud on headphones.`],
+   ['Highs','6–12 kHz',`Brightness, hi-hats, cymbals.`,`Vocal sibilance ("s", "sh") sits between 5 and 9 kHz: treat it with a de-esser rather than EQ.`],
+   ['Air','12–20 kHz',`A sense of openness, of "expensive".`,`A gentle 1–2 dB shelf on the vocal or master bus is enough. Beyond that, you're mostly adding hiss.`]]
+   :[['Sub','20–60 Hz','Sub du kick, 808. On le ressent plus qu\'on ne l\'entend.','Garde-le mono et réservé à un seul élément à la fois. Piège : presque inaudible au casque et sur petites enceintes, donc facile à surcharger sans le savoir. Vérifie à l\'analyseur.'],
    ['Basse','60–250 Hz','Corps du kick, fondamentale de la basse, chaleur.','Zone du conflit kick / basse. Passe-haut ici sur tout ce qui n\'a rien à y faire : voix, guitares, nappes, charleys.'],
    ['Bas-médium','250–500 Hz','Chaleur, épaisseur… et « boue ».','Tout s\'accumule ici. Un creux léger (2–3 dB) sur les nappes et guitares éclaircit souvent le mix d\'un coup. Trop coupé : son maigre.'],
    ['Médium','500 Hz–2 kHz','Corps des voix, caisse claire, guitares, synthés lead.','Vers 500–800 Hz : son « carton ». Vers 1 kHz : son nasal. C\'est la zone que l\'oreille et les petits haut-parleurs restituent le mieux.'],
@@ -2736,18 +2759,19 @@ freq(root){
 },
 
 comp(root){
+  const isEN=LANG==='en';
   let bus=null,comp=null,mk=null,on=false,raf=0;
   const P={thr:-24,ratio:4,att:10,rel:150,mk:0};
-  root.innerHTML=`<div class="comp"><svg viewBox="0 0 200 200" width="100%" role="img" aria-label="Courbe de transfert du compresseur">
+  root.innerHTML=`<div class="comp"><svg viewBox="0 0 200 200" width="100%" role="img" aria-label="${isEN?'Compressor transfer curve':'Courbe de transfert du compresseur'}">
      <rect x="0.5" y="0.5" width="199" height="199" fill="none" stroke="var(--border)"/>
      <line x1="0" y1="200" x2="200" y2="0" stroke="var(--muted)" stroke-dasharray="3 4" stroke-width="1"/>
      <line id="thl" y1="0" y2="200" stroke="var(--amber)" stroke-width="1"/>
      <polyline id="curve" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
-     <text x="6" y="14" font-size="9" fill="var(--muted)" font-family="var(--mono)">sortie ↑  entrée →</text></svg>
-   <div><div class="row"><button class="btn primary" id="play">▶ Boucle de batterie</button><button class="btn" id="byp">Compresseur : off</button></div>
-     ${slider('thr','Threshold',-50,0,1,-24)}${slider('rat','Ratio',1,20,.5,4)}${slider('catt','Attaque',0,100,1,10)}${slider('crel','Release',20,600,10,150)}${slider('cmk','Make-up',0,15,.5,0)}
-     <div class="note" style="margin-top:10px">Réduction de gain <span class="mono" id="grv">0.0 dB</span><div class="meter"><div id="gr"></div></div></div></div></div>
-   <p class="note">Lecture de la courbe : en pointillé, le signal non traité. Au-dessus du seuil (trait vertical), la courbe s'aplatit : plus le ratio est élevé, plus elle est plate. Essaie attaque 0 ms contre 40 ms et écoute la frappe de la caisse claire.</p>`;
+     <text x="6" y="14" font-size="9" fill="var(--muted)" font-family="var(--mono)">${isEN?'output ↑  input →':'sortie ↑  entrée →'}</text></svg>
+   <div><div class="row"><button class="btn primary" id="play">▶ ${isEN?'Drum loop':'Boucle de batterie'}</button><button class="btn" id="byp">${isEN?'Compressor: off':'Compresseur : off'}</button></div>
+     ${slider('thr','Threshold',-50,0,1,-24)}${slider('rat','Ratio',1,20,.5,4)}${slider('catt',isEN?'Attack':'Attaque',0,100,1,10)}${slider('crel','Release',20,600,10,150)}${slider('cmk','Make-up',0,15,.5,0)}
+     <div class="note" style="margin-top:10px">${isEN?'Gain reduction':'Réduction de gain'} <span class="mono" id="grv">0.0 dB</span><div class="meter"><div id="gr"></div></div></div></div></div>
+   <p class="note">${isEN?`Reading the curve: dotted line is the untreated signal. Above the threshold (vertical line), the curve flattens: the higher the ratio, the flatter it gets. Try 0 ms attack against 40 ms and listen to the snare's hit.`:`Lecture de la courbe : en pointillé, le signal non traité. Au-dessus du seuil (trait vertical), la courbe s'aplatit : plus le ratio est élevé, plus elle est plate. Essaie attaque 0 ms contre 40 ms et écoute la frappe de la caisse claire.`}</p>`;
   const curve=()=>{const x=d=>(d+60)/60*200,y=d=>200-(d+60)/60*200;const o0=P.thr+(0-P.thr)/P.ratio;
     root.querySelector('#curve').setAttribute('points',`${x(-60)},${y(-60)} ${x(P.thr)},${y(P.thr)} ${x(0)},${y(o0)}`);
     const l=root.querySelector('#thl');l.setAttribute('x1',x(P.thr));l.setAttribute('x2',x(P.thr));};
@@ -2755,7 +2779,7 @@ comp(root){
   const route=()=>{if(!bus)return;bus.disconnect();bus.connect(on?comp:master);};
   bind(root,'thr',v=>v+' dB',v=>{P.thr=v;apply();});bind(root,'rat',v=>v+':1',v=>{P.ratio=v;apply();});
   bind(root,'catt',v=>v+' ms',v=>{P.att=v;apply();});bind(root,'crel',v=>v+' ms',v=>{P.rel=v;apply();});bind(root,'cmk',v=>'+'+v+' dB',v=>{P.mk=v;apply();});
-  const byp=root.querySelector('#byp');byp.onclick=()=>{on=!on;byp.textContent='Compresseur : '+(on?'on':'off');byp.classList.toggle('on',on);route();};
+  const byp=root.querySelector('#byp');byp.onclick=()=>{on=!on;byp.textContent=(isEN?'Compressor: ':'Compresseur : ')+(on?'on':'off');byp.classList.toggle('on',on);route();};
   const meter=()=>{const r=(on&&comp)?Math.abs(comp.reduction):0;const g=root.querySelector('#gr');if(!g)return;g.style.width=Math.min(100,r/20*100)+'%';root.querySelector('#grv').textContent=r.toFixed(1)+' dB';raf=requestAnimationFrame(meter);};
   root.querySelector('#play').onclick=e=>toggleLoop(e.currentTarget,100,16,(s,t)=>{
     if(s===0||s===7||s===10)kick(t,bus,.55);
@@ -2768,12 +2792,13 @@ comp(root){
 },
 
 sc(root){
+  const isEN=LANG==='en';
   let duck=null,on=true;const P={depth:.8,rel:180};
-  root.innerHTML=`<div class="row"><button class="btn primary" id="play">▶ Kick + nappe</button><button class="btn on" id="tog">Sidechain : on</button></div>
-    ${slider('dep','Profondeur',0,100,5,80)}${slider('srel','Release',40,400,10,180)}
-    <p class="note">Coupe le sidechain : la nappe devient un mur statique et le kick perd son impact. Remets-le : le morceau respire.</p>`;
+  root.innerHTML=`<div class="row"><button class="btn primary" id="play">▶ ${isEN?'Kick + pad':'Kick + nappe'}</button><button class="btn on" id="tog">${isEN?'Sidechain: on':'Sidechain : on'}</button></div>
+    ${slider('dep',isEN?'Depth':'Profondeur',0,100,5,80)}${slider('srel','Release',40,400,10,180)}
+    <p class="note">${isEN?'Cut the sidechain: the pad becomes a static wall and the kick loses its impact. Bring it back: the track breathes.':'Coupe le sidechain : la nappe devient un mur statique et le kick perd son impact. Remets-le : le morceau respire.'}</p>`;
   bind(root,'dep',v=>v+' %',v=>P.depth=v/100);bind(root,'srel',v=>v+' ms',v=>P.rel=v);
-  const tog=root.querySelector('#tog');tog.onclick=()=>{on=!on;tog.textContent='Sidechain : '+(on?'on':'off');tog.classList.toggle('on',on);};
+  const tog=root.querySelector('#tog');tog.onclick=()=>{on=!on;tog.textContent=(isEN?'Sidechain: ':'Sidechain : ')+(on?'on':'off');tog.classList.toggle('on',on);};
   const chords=[[55,58,62,65],[51,55,58,62]];
   root.querySelector('#play').onclick=e=>toggleLoop(e.currentTarget,116,32,(s,t,d)=>{
     if(s%16===0)chords[s/16].forEach(m=>tone(t,mtof(m),d*15.5,{vol:.13,cutoff:1800,q:1,a:.03,r:.1,dest:duck}));
@@ -2784,11 +2809,12 @@ sc(root){
 },
 
 eq(root){
+  const isEN=LANG==='en';
   const P={hp:20,bf:350,bg:0,bq:1.4,sh:0}; let on=true,solo=false,F=null,pad=null,others=null,raf=0;
   const ex=(v,a,b)=>a*Math.pow(b/a,v/100), inv=(f,a,b)=>100*Math.log(f/a)/Math.log(b/a);
   root.innerHTML=`<canvas class="eqcv" id="cv"></canvas>
-    <div class="row" style="margin-top:12px"><button class="btn primary" id="play">▶ Lancer la boucle</button><button class="btn on" id="eon">EQ : on</button><button class="btn" id="solo">Solo nappe</button></div>
-    ${slider('ehp','Passe-haut',0,100,1,0)}${slider('ebf','Cloche · fréq.',0,100,1,Math.round(inv(350,100,8000)))}${slider('ebg','Cloche · gain',-15,15,.5,0)}${slider('ebq','Cloche · Q',.3,10,.1,1.4)}${slider('esh','Air (shelf 8 kHz)',-12,12,.5,0)}`;
+    <div class="row" style="margin-top:12px"><button class="btn primary" id="play">▶ ${isEN?'Start the loop':'Lancer la boucle'}</button><button class="btn on" id="eon">${isEN?'EQ: on':'EQ : on'}</button><button class="btn" id="solo">${isEN?'Solo pad':'Solo nappe'}</button></div>
+    ${slider('ehp',isEN?'High-pass':'Passe-haut',0,100,1,0)}${slider('ebf',isEN?'Bell · freq.':'Cloche · fréq.',0,100,1,Math.round(inv(350,100,8000)))}${slider('ebg',isEN?'Bell · gain':'Cloche · gain',-15,15,.5,0)}${slider('ebq','Bell · Q',.3,10,.1,1.4)}${slider('esh',isEN?'Air (shelf 8 kHz)':'Air (shelf 8 kHz)',-12,12,.5,0)}`;
   const cv=root.querySelector('#cv'),g=cv.getContext&&cv.getContext('2d');
   const N=160,fr=new Float32Array(N).map((_,i)=>20*Math.pow(1000,i/(N-1))),m1=new Float32Array(N),m2=new Float32Array(N),m3=new Float32Array(N),ph=new Float32Array(N);
   let spec=null;
@@ -2812,7 +2838,7 @@ eq(root){
     if(F){F.hp.getFrequencyResponse(fr,m1,ph);F.bell.getFrequencyResponse(fr,m2,ph);F.sh.getFrequencyResponse(fr,m3,ph);
       g.beginPath();for(let i=0;i<N;i++){const db=on?20*Math.log10(Math.max(1e-6,m1[i]*m2[i]*m3[i])):0,y=H/2-Math.max(-24,Math.min(24,db))/24*(H/2-8);i?g.lineTo(X(fr[i]),y):g.moveTo(X(fr[i]),y);}
       g.strokeStyle=C('--accent');g.globalAlpha=on?1:.35;g.lineWidth=2.5;g.stroke();g.globalAlpha=1;}
-    else{g.fillStyle=C('--muted');g.font='13px '+(C('--sans')||'sans-serif');g.fillText('Lance la boucle pour voir le spectre de la nappe',12,24);}
+    else{g.fillStyle=C('--muted');g.font='13px '+(C('--sans')||'sans-serif');g.fillText(isEN?'Start the loop to see the pad\'s spectrum':'Lance la boucle pour voir le spectre de la nappe',12,24);}
   }
   const loop=()=>{draw();raf=requestAnimationFrame(loop);};
   const touch=()=>{ensureF();apply();};
@@ -2823,7 +2849,7 @@ eq(root){
   bind(root,'esh',v=>(v>0?'+':'')+v+' dB',v=>{P.sh=v;F&&apply();});
   root.querySelectorAll('input[type=range]').forEach(el=>el.addEventListener('pointerdown',touch,{once:true}));
   const eon=root.querySelector('#eon'),sb=root.querySelector('#solo');
-  eon.onclick=()=>{on=!on;eon.textContent='EQ : '+(on?'on':'off');eon.classList.toggle('on',on);route();draw();};
+  eon.onclick=()=>{on=!on;eon.textContent=(isEN?'EQ: ':'EQ : ')+(on?'on':'off');eon.classList.toggle('on',on);route();draw();};
   sb.onclick=()=>{solo=!solo;sb.classList.toggle('on',solo);route();};
   const chords=[[43,46,50,55,58],[39,43,46,51,55]], bass={0:31,3:31,6:34,10:31,14:29};
   root.querySelector('#play').onclick=e=>toggleLoop(e.currentTarget,116,32,(s,t,d)=>{
@@ -2838,17 +2864,16 @@ eq(root){
 },
 
 kb(root){
+  const isEN=LANG==='en';
   let eqOn=false,scOn=false,bEQ=null,kEQ=null,duck=null,bBus=null,kBus=null;
-  root.innerHTML=`<div class="row"><button class="btn primary" id="play">▶ Kick + basse</button><button class="btn" id="e">EQ complémentaire : off</button><button class="btn" id="s">Sidechain : off</button></div>
+  root.innerHTML=`<div class="row"><button class="btn primary" id="play">▶ ${isEN?'Kick + bass':'Kick + basse'}</button><button class="btn" id="e">${isEN?'Complementary EQ: off':'EQ complémentaire : off'}</button><button class="btn" id="s">${isEN?'Sidechain: off':'Sidechain : off'}</button></div>
    <p class="note" id="kbt"></p>`;
-  const txt=()=>{root.querySelector('#kbt').textContent=
-    eqOn&&scOn?'Les deux : séparation en fréquence et dans le temps. Le kick a du contour, la basse reste pleine entre les coups.':
-    eqOn?'La basse est creusée de 9 dB à 50 Hz (le kick y règne) et le kick de 5 dB à 100 Hz (la basse y vit). Chacun a sa zone.':
-    scOn?'La basse s\'efface 120 ms à chaque kick : séparation dans le temps plutôt qu\'en fréquence. Solution courante en house.':
-    'État brut : les deux se superposent à 50 Hz. Écoute le grave qui « bave » et le kick qui manque d\'attaque.';};
+  const T=isEN?{both:`Both: separation in frequency and in time. The kick has definition, the bass stays full between hits.`,eq:`The bass is dipped 9 dB at 50 Hz (where the kick rules) and the kick 5 dB at 100 Hz (where the bass lives). Each has its zone.`,sc:`The bass ducks out for 120 ms on every kick: separation in time rather than frequency. A common house solution.`,raw:`Raw state: both overlap at 50 Hz. Listen to the low end "bleeding" and the kick lacking attack.`}
+   :{both:'Les deux : séparation en fréquence et dans le temps. Le kick a du contour, la basse reste pleine entre les coups.',eq:'La basse est creusée de 9 dB à 50 Hz (le kick y règne) et le kick de 5 dB à 100 Hz (la basse y vit). Chacun a sa zone.',sc:'La basse s\'efface 120 ms à chaque kick : séparation dans le temps plutôt qu\'en fréquence. Solution courante en house.',raw:'État brut : les deux se superposent à 50 Hz. Écoute le grave qui « bave » et le kick qui manque d\'attaque.'};
+  const txt=()=>{root.querySelector('#kbt').textContent=eqOn&&scOn?T.both:eqOn?T.eq:scOn?T.sc:T.raw;};
   const apply=()=>{if(!bEQ)return;bEQ.gain.value=eqOn?-9:0;kEQ.gain.value=eqOn?-5:0;};
-  const mk=(id,get,set,label)=>{const b=root.querySelector(id);b.onclick=()=>{set(!get());b.textContent=label+' : '+(get()?'on':'off');b.classList.toggle('on',get());apply();txt();};};
-  mk('#e',()=>eqOn,v=>eqOn=v,'EQ complémentaire');mk('#s',()=>scOn,v=>scOn=v,'Sidechain');txt();
+  const mk=(id,get,set,label)=>{const b=root.querySelector(id);b.onclick=()=>{set(!get());b.textContent=label+(isEN?': ':' : ')+(get()?'on':'off');b.classList.toggle('on',get());apply();txt();};};
+  mk('#e',()=>eqOn,v=>eqOn=v,isEN?'Complementary EQ':'EQ complémentaire');mk('#s',()=>scOn,v=>scOn=v,'Sidechain');txt();
   root.querySelector('#play').onclick=e=>toggleLoop(e.currentTarget,116,16,(s,t,d)=>{
     if(s%4===0){const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(50,t+.09);
       g.gain.setValueAtTime(.8,t);g.gain.exponentialRampToValueAtTime(.001,t+.45);o.connect(g).connect(kBus);o.start(t);o.stop(t+.5);
@@ -2861,17 +2886,20 @@ kb(root){
 },
 
 prog(root){
-  const D=[['i','Gm',[55,58,62],'repos'],['ii°','A°',[57,60,63],'tension'],['III','B♭',[58,62,65],'repos'],['iv','Cm',[60,63,67],'mouvement'],['v','Dm',[62,65,69],'tension'],['VI','E♭',[51,55,58],'mouvement'],['VII','F',[53,57,60],'tension']];
+  const isEN=LANG==='en';
+  const RD=isEN?['rest','tension','rest','movement','tension','movement','tension']:['repos','tension','repos','mouvement','tension','mouvement','tension'];
+  const D=[['i','Gm',[55,58,62],RD[0]],['ii°','A°',[57,60,63],RD[1]],['III','B♭',[58,62,65],RD[2]],['iv','Cm',[60,63,67],RD[3]],['v','Dm',[62,65,69],RD[4]],['VI','E♭',[51,55,58],RD[5]],['VII','F',[53,57,60],RD[6]]];
   let slots=[0,5,2,6],cur=0,lit=-1;
-  root.innerHTML=`<div class="chords" id="sl"></div><div class="row" id="dg"></div><p class="note" id="rd"></p><div class="row" style="margin-top:12px"><button class="btn primary" id="play">▶ Écouter ma progression</button></div>`;
+  root.innerHTML=`<div class="chords" id="sl"></div><div class="row" id="dg"></div><p class="note" id="rd"></p><div class="row" style="margin-top:12px"><button class="btn primary" id="play">▶ ${isEN?'Listen to my progression':'Écouter ma progression'}</button></div>`;
   const draw=()=>{
     root.querySelector('#sl').innerHTML=slots.map((d,i)=>`<div class="chord pick${i===cur?' sel':''}${i===lit?' lit':''}" data-i="${i}">${D[d][1]}<small>${D[d][0]} · ${D[d][3]}</small></div>`).join('');
     root.querySelectorAll('#sl .chord').forEach(c=>c.onclick=()=>{cur=+c.dataset.i;draw();});
     root.querySelector('#dg').innerHTML=D.map((d,i)=>`<button class="btn${slots[cur]===i?' on':''}" data-i="${i}">${d[0]} ${d[1]}</button>`).join('');
     root.querySelectorAll('#dg .btn').forEach(b=>b.onclick=()=>{slots[cur]=+b.dataset.i;cur=(cur+1)%4;draw();});
     const f=slots.map(i=>D[i][3]),last=f[3];
-    root.querySelector('#rd').textContent=f.join(' → ')+'. '+(slots[0]!==0?`Elle ne démarre pas sur le i : la tonalité est plus ambiguë, ce qui peut être voulu. `:'')+
-      (last==='tension'?`Elle finit sur une tension : la boucle se relance d'elle-même.`:last==='repos'?`Elle finit au repos : bonne fin de section, mais la boucle relance moins.`:`Elle finit en mouvement : fin ouverte, plus douce.`);};
+    root.querySelector('#rd').textContent=f.join(' → ')+'. '+(slots[0]!==0?(isEN?`It doesn't start on the i: the key feels more ambiguous, which can be intentional. `:`Elle ne démarre pas sur le i : la tonalité est plus ambiguë, ce qui peut être voulu. `):'')+
+      (isEN?(last==='tension'?`It ends on a tension: the loop relaunches itself.`:last==='rest'?`It ends at rest: a good section ending, but the loop relaunches less.`:`It ends in movement: an open, softer ending.`)
+        :(last==='tension'?`Elle finit sur une tension : la boucle se relance d'elle-même.`:last==='repos'?`Elle finit au repos : bonne fin de section, mais la boucle relance moins.`:`Elle finit en mouvement : fin ouverte, plus douce.`));};
   draw();
   root.querySelector('#play').onclick=e=>toggleLoop(e.currentTarget,110,64,(s,t,d)=>{
     const bar=Math.floor(s/16),c=D[slots[bar]][2];
@@ -2883,14 +2911,20 @@ prog(root){
 },
 
 mel(root){
+  const isEN=LANG==='en';
   const M=[[0,67],[3,70],[6,72],[10,70]];
-  const V=[['Répétition exacte',M,`Rassurant, mais au bout de quatre passages l'oreille décroche. À réserver aux hooks très courts et aux mantras.`],
+  const V=isEN?[['Exact repetition',M,`Reassuring, but after four passes the ear checks out. Best reserved for very short hooks and mantras.`],
+   ['Modified ending',[[0,67],[3,70],[6,72],[10,74]],`Only the last note changes. The motif is instantly recognizable and the phrase seems to "answer" the first one: the most cost-effective variation.`],
+   ['Transposition',[[0,70],[3,74],[6,75],[10,74]],`Same rhythm, same shape, a third higher. The energy rises without introducing a new idea.`],
+   ['Shifted rhythm',[[2,67],[5,70],[8,72],[12,70]],`Same notes, shifted by an eighth note. The motif stays recognizable, the groove changes.`],
+   ['No connection (counter-example)',[[0,62],[2,65],[5,69],[7,63],[9,74],[13,60]],`Everything is in the scale, and yet it tells no story: rhythm and shape have no relation to the motif. Being "correct" isn't enough.`]]
+   :[['Répétition exacte',M,`Rassurant, mais au bout de quatre passages l'oreille décroche. À réserver aux hooks très courts et aux mantras.`],
    ['Fin modifiée',[[0,67],[3,70],[6,72],[10,74]],`Seule la dernière note change. On reconnaît le motif immédiatement et la phrase semble « répondre » à la première : la variation la plus rentable.`],
    ['Transposition',[[0,70],[3,74],[6,75],[10,74]],`Même rythme, même dessin, une tierce plus haut. L'énergie monte sans introduire d'idée nouvelle.`],
    ['Rythme déplacé',[[2,67],[5,70],[8,72],[12,70]],`Mêmes notes, décalées d'une croche. Le motif reste reconnaissable, le groove change.`],
    ['Sans lien (contre-exemple)',[[0,62],[2,65],[5,69],[7,63],[9,74],[13,60]],`Tout est dans la gamme, et pourtant ça ne raconte rien : rythme et dessin n'ont aucun rapport avec le motif. Être « juste » ne suffit pas.`]];
   let sel=1; const ch=[[55,58,62],[55,58,62],[51,55,58],[53,57,60]];
-  root.innerHTML=`<div class="row" id="vv"></div><p class="note" id="vt"></p><div class="row" style="margin-top:12px"><button class="btn primary" id="play">▶ Motif puis variante</button></div>`;
+  root.innerHTML=`<div class="row" id="vv"></div><p class="note" id="vt"></p><div class="row" style="margin-top:12px"><button class="btn primary" id="play">▶ ${isEN?'Motif then variant':'Motif puis variante'}</button></div>`;
   const txt=()=>root.querySelector('#vt').textContent=V[sel][2];
   choice(root,'#vv',V.map(v=>v[0]),()=>sel,i=>{sel=i;txt();});txt();
   root.querySelector('#play').onclick=e=>toggleLoop(e.currentTarget,110,64,(s,t,d)=>{
@@ -2902,16 +2936,17 @@ mel(root){
 },
 
 trans(root){
+  const isEN=LANG==='en';
   const O={flt:true,roll:true,riser:true,sil:true};let riser=null;
   root.innerHTML=`<div class="row"><button class="btn" id="o1"></button><button class="btn" id="o2"></button><button class="btn" id="o3"></button><button class="btn" id="o4"></button></div>
-    <div class="row" style="margin-top:12px"><button class="btn primary" id="play">▶ Build → drop</button><span class="pill" id="ph">à l'arrêt</span></div>`;
-  toggleBtn(root,'#o1','Filtre',()=>O.flt,v=>O.flt=v);toggleBtn(root,'#o2','Roulement',()=>O.roll,v=>O.roll=v);
-  toggleBtn(root,'#o3','Riser',()=>O.riser,v=>O.riser=v);toggleBtn(root,'#o4','Silence',()=>O.sil,v=>O.sil=v);
+    <div class="row" style="margin-top:12px"><button class="btn primary" id="play">▶ Build → drop</button><span class="pill" id="ph">${isEN?'stopped':"à l'arrêt"}</span></div>`;
+  toggleBtn(root,'#o1',isEN?'Filter':'Filtre',()=>O.flt,v=>O.flt=v);toggleBtn(root,'#o2',isEN?'Roll':'Roulement',()=>O.roll,v=>O.roll=v);
+  toggleBtn(root,'#o3','Riser',()=>O.riser,v=>O.riser=v);toggleBtn(root,'#o4',isEN?'Silence':'Silence',()=>O.sil,v=>O.sil=v);
   const ch=[55,58,62,65],bass={0:31,3:31,6:34,10:31,14:29},ph=root.querySelector('#ph');
   const killRiser=()=>{if(riser){try{riser.stop();}catch(e){}riser=null;}};
   root.querySelector('#play').onclick=e=>toggleLoop(e.currentTarget,120,128,(s,t,d)=>{
     const build=s<64,p=s/64;
-    if(s%16===0)setTimeout(()=>{if(current)ph.textContent=build?'build · mesure '+(s/16+1)+'/4':'drop · mesure '+((s-64)/16+1)+'/4';},Math.max(0,(t-ctx.currentTime)*1000));
+    if(s%16===0)setTimeout(()=>{if(current)ph.textContent=isEN?(build?'build · bar '+(s/16+1)+'/4':'drop · bar '+((s-64)/16+1)+'/4'):(build?'build · mesure '+(s/16+1)+'/4':'drop · mesure '+((s-64)/16+1)+'/4');},Math.max(0,(t-ctx.currentTime)*1000));
     if(s===0&&O.riser){killRiser();const src=ctx.createBufferSource(),f=ctx.createBiquadFilter(),g=ctx.createGain(),end=t+(O.sil?60:64)*d;
       src.buffer=noiseBuf;src.loop=true;f.type='bandpass';f.Q.value=2;f.frequency.setValueAtTime(400,t);f.frequency.exponentialRampToValueAtTime(9000,end);
       g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(.2,end-.02);g.gain.linearRampToValueAtTime(0,end);src.connect(f).connect(g).connect(master);src.start(t);src.stop(end+.05);riser=src;}
@@ -2922,15 +2957,16 @@ trans(root){
     if(!build){if(s===64)noise(t,master,.3,'highpass',5000,1.4);
       if(s%4===2)noise(t,master,.08,'highpass',7000,.05);if(s%8===4)noise(t,master,.3,'bandpass',1800,.15);
       if(bass[s%16]!==undefined)tone(t,mtof(bass[s%16]+12),d*1.6,{vol:.32,cutoff:600});}
-  },null,()=>{killRiser();ph.textContent="à l'arrêt";});
+  },null,()=>{killRiser();ph.textContent=isEN?'stopped':"à l'arrêt";});
 },
 
 lfo(root){
-  let N=null;const P={rate:2,depth:.7,base:700,shape:0},R=[['1/2',.5],['1/4',1],['1/8',2],['1/16',4]],SH=[['sine','Sinus'],['square','Carré'],['sawtooth','Scie']];
-  root.innerHTML=`<div class="row" id="rt"></div><div class="row" id="sh" style="margin-top:8px"></div>${slider('ld','Profondeur',0,100,5,70)}${slider('lb','Cutoff de base',150,3000,10,700)}
-    <div class="row" style="margin-top:14px"><button class="btn primary" id="play">▶ Basse tenue + LFO</button></div>`;
+  const isEN=LANG==='en';
+  let N=null;const P={rate:2,depth:.7,base:700,shape:0},R=[['1/2',.5],['1/4',1],['1/8',2],['1/16',4]],SH=isEN?[['sine','Sine'],['square','Square'],['sawtooth','Sawtooth']]:[['sine','Sinus'],['square','Carré'],['sawtooth','Scie']];
+  root.innerHTML=`<div class="row" id="rt"></div><div class="row" id="sh" style="margin-top:8px"></div>${slider('ld',isEN?'Depth':'Profondeur',0,100,5,70)}${slider('lb',isEN?'Base cutoff':'Cutoff de base',150,3000,10,700)}
+    <div class="row" style="margin-top:14px"><button class="btn primary" id="play">▶ ${isEN?'Held bass + LFO':'Basse tenue + LFO'}</button></div>`;
   const apply=()=>{if(!N)return;N.lfo.frequency.value=116/60*R[P.rate][1];N.lfo.type=SH[P.shape][0];N.f.frequency.value=P.base;N.lg.gain.value=P.base*.9*P.depth;};
-  choice(root,'#rt',R.map(r=>'Vitesse '+r[0]),()=>P.rate,i=>{P.rate=i;apply();});choice(root,'#sh',SH.map(x=>x[1]),()=>P.shape,i=>{P.shape=i;apply();});
+  choice(root,'#rt',R.map(r=>(isEN?'Speed ':'Vitesse ')+r[0]),()=>P.rate,i=>{P.rate=i;apply();});choice(root,'#sh',SH.map(x=>x[1]),()=>P.shape,i=>{P.shape=i;apply();});
   bind(root,'ld',v=>v+' %',v=>{P.depth=v/100;apply();});bind(root,'lb',v=>v+' Hz',v=>{P.base=v;apply();});
   const roots=[43,43,39,41];
   root.querySelector('#play').onclick=e=>toggleLoop(e.currentTarget,116,64,(s,t)=>{
@@ -2945,10 +2981,11 @@ lfo(root){
 },
 
 uni(root){
+  const isEN=LANG==='en';
   const P={n:1,det:15,wide:true};
-  root.innerHTML=`${slider('un','Voix',1,7,1,1)}${slider('ud','Detune',0,50,1,15)}<div class="row" style="margin-top:12px"><button class="btn primary" id="play">▶ Stabs d'accords</button><button class="btn" id="uw"></button></div>
-   <p class="note">1 voix : fin et centré. 5 voix à 15 cents : large et dense. 7 voix à 50 cents : désaccordé, presque faux. La zone utile est étroite.</p>`;
-  bind(root,'un',v=>v+(v>1?' voix':' voix'),v=>P.n=v);bind(root,'ud',v=>v+' cents',v=>P.det=v);toggleBtn(root,'#uw','Répartition stéréo',()=>P.wide,v=>P.wide=v);
+  root.innerHTML=`${slider('un',isEN?'Voices':'Voix',1,7,1,1)}${slider('ud','Detune',0,50,1,15)}<div class="row" style="margin-top:12px"><button class="btn primary" id="play">▶ ${isEN?'Chord stabs':"Stabs d'accords"}</button><button class="btn" id="uw"></button></div>
+   <p class="note">${isEN?'1 voice: thin and centered. 5 voices at 15 cents: wide and dense. 7 voices at 50 cents: detuned, almost off-pitch. The useful zone is narrow.':'1 voix : fin et centré. 5 voix à 15 cents : large et dense. 7 voix à 50 cents : désaccordé, presque faux. La zone utile est étroite.'}</p>`;
+  bind(root,'un',v=>v+(isEN?' voices':' voix'),v=>P.n=v);bind(root,'ud',v=>v+' cents',v=>P.det=v);toggleBtn(root,'#uw',isEN?'Stereo spread':'Répartition stéréo',()=>P.wide,v=>P.wide=v);
   const ch=[[55,58,62,65],[51,55,58,62]];
   root.querySelector('#play').onclick=e=>toggleLoop(e.currentTarget,120,32,(s,t,d)=>{
     if(s%4===0)kick(t,master,.5);
@@ -2961,10 +2998,11 @@ uni(root){
 },
 
 par(root){
+  const isEN=LANG==='en';
   let bus=null,comp=null,wet=null,raf=0;const P={wet:0};
-  root.innerHTML=`<div class="row"><button class="btn primary" id="play">▶ Boucle de batterie</button></div>${slider('pw','Copie écrasée',0,100,5,0)}
-    <div class="note" style="margin-top:10px">Réduction sur la copie <span class="mono" id="pgv">0.0 dB</span><div class="meter"><div id="pg"></div></div></div>
-    <p class="note">La copie est compressée à 20:1 avec un seuil à −40 dB : inutilisable seule, précieuse en dessous du signal intact.</p>`;
+  root.innerHTML=`<div class="row"><button class="btn primary" id="play">▶ ${isEN?'Drum loop':'Boucle de batterie'}</button></div>${slider('pw',isEN?'Crushed copy':'Copie écrasée',0,100,5,0)}
+    <div class="note" style="margin-top:10px">${isEN?'Reduction on the copy':'Réduction sur la copie'} <span class="mono" id="pgv">0.0 dB</span><div class="meter"><div id="pg"></div></div></div>
+    <p class="note">${isEN?'The copy is compressed at 20:1 with a −40 dB threshold: unusable alone, precious underneath the untouched signal.':'La copie est compressée à 20:1 avec un seuil à −40 dB : inutilisable seule, précieuse en dessous du signal intact.'}</p>`;
   bind(root,'pw',v=>v+' %',v=>{P.wet=v/100;if(wet)wet.gain.value=P.wet*2.2;});
   const meter=()=>{const g=root.querySelector('#pg');if(!g||!comp)return;const r=Math.abs(comp.reduction);g.style.width=Math.min(100,r/30*100)+'%';root.querySelector('#pgv').textContent=r.toFixed(1)+' dB';raf=requestAnimationFrame(meter);};
   root.querySelector('#play').onclick=e=>toggleLoop(e.currentTarget,100,16,(s,t)=>{
@@ -2976,14 +3014,15 @@ par(root){
 },
 
 rev(root){
+  const isEN=LANG==='en';
   let N=null,irT=0;const P={dec:1.5,pre:20,send:.35,hp:false};
   const mkIR=sec=>{const len=Math.floor(ctx.sampleRate*sec),b=ctx.createBuffer(2,len,ctx.sampleRate);for(let c=0;c<2;c++){const d=b.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3.2);}return b;};
-  root.innerHTML=`<div class="row"><button class="btn primary" id="play">▶ Boucle + retour réverbe</button><button class="btn" id="rh"></button></div>
+  root.innerHTML=`<div class="row"><button class="btn primary" id="play">▶ ${isEN?'Loop + reverb return':'Boucle + retour réverbe'}</button><button class="btn" id="rh"></button></div>
     ${slider('rd','Decay',0.3,4,.1,1.5)}${slider('rp','Pre-delay',0,120,5,20)}${slider('rs','Send',0,100,5,35)}`;
   const apply=()=>{if(!N)return;N.pre.delayTime.value=P.pre/1000;N.send.gain.value=P.send;N.hp.frequency.value=P.hp?320:20;};
   bind(root,'rd',v=>v.toFixed(1)+' s',v=>{P.dec=v;clearTimeout(irT);irT=setTimeout(()=>{if(N)N.cv.buffer=mkIR(P.dec);},150);});
   bind(root,'rp',v=>v+' ms',v=>{P.pre=v;apply();});bind(root,'rs',v=>v+' %',v=>{P.send=v/100;apply();});
-  toggleBtn(root,'#rh','Passe-haut sur le retour',()=>P.hp,v=>{P.hp=v;apply();});
+  toggleBtn(root,'#rh',isEN?'High-pass on the return':'Passe-haut sur le retour',()=>P.hp,v=>{P.hp=v;apply();});
   const mel={2:67,5:70,8:74,18:72,21:70,24:67};
   root.querySelector('#play').onclick=e=>toggleLoop(e.currentTarget,100,32,(s,t,d)=>{
     if(s%4===0)kick(t,master,.6);
@@ -2996,9 +3035,10 @@ rev(root){
 },
 
 dly(root){
+  const isEN=LANG==='en';
   let N=null;const P={t:1,fb:.45,mix:.5},T=[['1/4',4],['3/16',3],['1/8',2],['1/16',1]],bpm=116;
-  root.innerHTML=`<div class="row" id="dt"></div>${slider('df','Feedback',0,85,5,45)}${slider('dm','Niveau du retour',0,100,5,50)}
-   <div class="row" style="margin-top:14px"><button class="btn primary" id="play">▶ Phrase + delay</button></div>`;
+  root.innerHTML=`<div class="row" id="dt"></div>${slider('df','Feedback',0,85,5,45)}${slider('dm',isEN?'Return level':'Niveau du retour',0,100,5,50)}
+   <div class="row" style="margin-top:14px"><button class="btn primary" id="play">▶ ${isEN?'Phrase + delay':'Phrase + delay'}</button></div>`;
   const apply=()=>{if(!N)return;N.d.delayTime.setTargetAtTime(60/bpm/4*T[P.t][1],ctx.currentTime,.02);N.fb.gain.value=P.fb;N.wet.gain.value=P.mix;};
   choice(root,'#dt',T.map(x=>x[0]),()=>P.t,i=>{P.t=i;apply();});
   bind(root,'df',v=>v+' %',v=>{P.fb=v/100;apply();});bind(root,'dm',v=>v+' %',v=>{P.mix=v/100;apply();});
@@ -3013,20 +3053,23 @@ dly(root){
 },
 
 lim(root){
+  const isEN=LANG==='en';
   let N=null,raf=0,rd=0,rw=0,mg=1;const P={drive:0,match:false};
-  root.innerHTML=`<div class="row"><button class="btn primary" id="play">▶ Mix complet</button><button class="btn" id="lm"></button></div>${slider('lg','Gain d\'entrée',0,18,.5,0)}
-    <div class="note" style="margin-top:10px">Réduction du limiteur <span class="mono" id="lgv">0.0 dB</span><div class="meter"><div id="lgb"></div></div></div>
-    <div class="big" id="lv">+0.0 dB</div><p class="note" id="lt" style="margin-top:0">de volume perçu gagné par rapport au mix d'origine.</p>`;
+  root.innerHTML=`<div class="row"><button class="btn primary" id="play">▶ ${isEN?'Full mix':'Mix complet'}</button><button class="btn" id="lm"></button></div>${slider('lg',isEN?'Input gain':"Gain d'entrée",0,18,.5,0)}
+    <div class="note" style="margin-top:10px">${isEN?'Limiter reduction':'Réduction du limiteur'} <span class="mono" id="lgv">0.0 dB</span><div class="meter"><div id="lgb"></div></div></div>
+    <div class="big" id="lv">+0.0 dB</div><p class="note" id="lt" style="margin-top:0">${isEN?'of perceived volume gained versus the original mix.':"de volume perçu gagné par rapport au mix d'origine."}</p>`;
   bind(root,'lg',v=>'+'+v+' dB',v=>{P.drive=v;if(N)N.drive.gain.value=Math.pow(10,v/20);});
-  toggleBtn(root,'#lm','Volume compensé',()=>P.match,v=>P.match=v);
+  toggleBtn(root,'#lm',isEN?'Volume matched':'Volume compensé',()=>P.match,v=>P.match=v);
   const rms=(an,buf)=>{an.getFloatTimeDomainData(buf);let a=0;for(let i=0;i<buf.length;i++)a+=buf[i]*buf[i];return Math.sqrt(a/buf.length);};
   const tick=()=>{if(!N||!root.querySelector('#lgb'))return;
     rd+=(rms(N.aD,N.b1)-rd)*.04;rw+=(rms(N.aW,N.b2)-rw)*.04;
     const ratio=rd>1e-4?rw/rd:1,target=P.match?Math.max(.05,Math.min(1.5,1/ratio)):1;mg+=(target-mg)*.1;N.match.gain.value=mg;
     const gr=Math.abs(N.lim.reduction),gain=20*Math.log10(Math.max(1e-4,ratio));
     root.querySelector('#lgb').style.width=Math.min(100,gr/20*100)+'%';root.querySelector('#lgv').textContent=gr.toFixed(1)+' dB';
-    const V=root.querySelector('#lv');V.textContent=(gain>=0?'+':'')+gain.toFixed(1)+' dB'+(P.match?' (annulés)':'');V.style.color='var(--'+(gr<3?'green':gr<7?'amber':'red')+')';
-    root.querySelector('#lt').textContent=gr<3?`de volume perçu. Le limiteur ne fait qu'attraper quelques crêtes : transparent.`:gr<7?`de volume perçu. Dense mais encore vivant : zone de travail habituelle. Écoute l'attaque du kick.`:`de volume perçu. Les frappes sont aplaties : chaque dB gagné ici se paie en impact. Active la compensation pour l'entendre.`;
+    const V=root.querySelector('#lv');V.textContent=(gain>=0?'+':'')+gain.toFixed(1)+' dB'+(P.match?(isEN?' (canceled)':' (annulés)'):'');V.style.color='var(--'+(gr<3?'green':gr<7?'amber':'red')+')';
+    root.querySelector('#lt').textContent=isEN?
+      (gr<3?`of perceived volume. The limiter only catches a few peaks: transparent.`:gr<7?`of perceived volume. Dense but still alive: the usual working zone. Listen to the kick's attack.`:`of perceived volume. The hits are flattened: every dB gained here costs impact. Turn on matching to hear it.`)
+     :(gr<3?`de volume perçu. Le limiteur ne fait qu'attraper quelques crêtes : transparent.`:gr<7?`de volume perçu. Dense mais encore vivant : zone de travail habituelle. Écoute l'attaque du kick.`:`de volume perçu. Les frappes sont aplaties : chaque dB gagné ici se paie en impact. Active la compensation pour l'entendre.`);
     raf=requestAnimationFrame(tick);};
   const bass={0:31,3:31,6:34,10:31,14:29},ch=[55,58,62,65];
   root.querySelector('#play').onclick=e=>toggleLoop(e.currentTarget,120,16,(s,t,d)=>{
@@ -3041,15 +3084,16 @@ lim(root){
 },
 
 mono(root){
+  const isEN=LANG==='en';
   let N=null;const P={mode:0,mono:false};
-  root.innerHTML=`<div class="row" id="mm"></div><div class="row" style="margin-top:8px"><button class="btn primary" id="play">▶ Kick + nappe large</button><button class="btn" id="mo"></button></div><p class="note" id="mt"></p>`;
-  const txt=()=>root.querySelector('#mt').textContent=P.mode===0
-    ?(P.mono?`En mono, gauche et droite opposées s'additionnent à zéro : la nappe a disparu, il ne reste que le kick. Sur un téléphone, ton morceau perdrait son harmonie.`:`Largeur spectaculaire au casque : le canal droit est la copie inversée du gauche. C'est ce que font certains « élargisseurs » poussés à fond.`)
-    :(P.mono?`En mono, la nappe est toujours là : un peu moins large, légèrement chorusée, mais présente. C'est une largeur saine.`:`Largeur obtenue par deux voix légèrement désaccordées, l'une à gauche, l'autre à droite. Moins extrême, mais robuste.`);
+  root.innerHTML=`<div class="row" id="mm"></div><div class="row" style="margin-top:8px"><button class="btn primary" id="play">▶ ${isEN?'Kick + wide pad':'Kick + nappe large'}</button><button class="btn" id="mo"></button></div><p class="note" id="mt"></p>`;
+  const T=isEN?{a1:`In mono, opposite left and right cancel to zero: the pad has disappeared, only the kick is left. On a phone, your track would lose its harmony.`,a2:`Spectacular width on headphones: the right channel is the inverted copy of the left. That's what some "widener" plugins do pushed to the max.`,b1:`In mono, the pad is still there: a bit narrower, slightly chorused, but present. This is a healthy kind of width.`,b2:`Width obtained from two slightly detuned voices, one left, one right. Less extreme, but robust.`}
+   :{a1:'En mono, gauche et droite opposées s\'additionnent à zéro : la nappe a disparu, il ne reste que le kick. Sur un téléphone, ton morceau perdrait son harmonie.',a2:'Largeur spectaculaire au casque : le canal droit est la copie inversée du gauche. C\'est ce que font certains « élargisseurs » poussés à fond.',b1:'En mono, la nappe est toujours là : un peu moins large, légèrement chorusée, mais présente. C\'est une largeur saine.',b2:'Largeur obtenue par deux voix légèrement désaccordées, l\'une à gauche, l\'autre à droite. Moins extrême, mais robuste.'};
+  const txt=()=>root.querySelector('#mt').textContent=P.mode===0?(P.mono?T.a1:T.a2):(P.mono?T.b1:T.b2);
   const route=()=>{if(!N)return;[N.L,N.inv,N.sum].forEach(x=>x.disconnect());N.R.connect(N.inv);N.inv.gain.value=P.mode===0?-1:1;
     if(P.mono){N.L.connect(N.sum);N.inv.connect(N.sum);N.sum.connect(N.mg,0,0);N.sum.connect(N.mg,0,1);}else{N.L.connect(N.mg,0,0);N.inv.connect(N.mg,0,1);}};
-  choice(root,'#mm',['Largeur par inversion de phase','Largeur par detune'],()=>P.mode,i=>{P.mode=i;route();txt();});
-  toggleBtn(root,'#mo','Écoute mono',()=>P.mono,v=>{P.mono=v;route();txt();});txt();
+  choice(root,'#mm',isEN?['Width by phase inversion','Width by detune']:['Largeur par inversion de phase','Largeur par detune'],()=>P.mode,i=>{P.mode=i;route();txt();});
+  toggleBtn(root,'#mo',isEN?'Mono monitoring':'Écoute mono',()=>P.mono,v=>{P.mono=v;route();txt();});txt();
   const ch=[[55,58,62,65],[51,55,58,62]];
   root.querySelector('#play').onclick=e=>toggleLoop(e.currentTarget,116,32,(s,t,d)=>{
     if(s%4===0)kick(t,master,.6); if(s%4===2)noise(t,master,.05,'highpass',7000,.05);
@@ -3059,19 +3103,21 @@ mono(root){
 },
 
 vow(root){
+  const isEN=LANG==='en';
   let f0=120;
-  root.innerHTML=`<div class="row" id="vw">${Object.keys(VOWELS).map(v=>`<button class="btn" data-v="${v}">${v.toUpperCase()}</button>`).join('')}<button class="btn" data-v="raw">Source brute</button></div>${slider('vf','Hauteur',80,300,1,120)}
-   <p class="note" id="vwt">Clique sur une voyelle. Change ensuite la hauteur : la voyelle reste reconnaissable, car les formants ne bougent pas.</p>`;
+  root.innerHTML=`<div class="row" id="vw">${Object.keys(VOWELS).map(v=>`<button class="btn" data-v="${v}">${v.toUpperCase()}</button>`).join('')}<button class="btn" data-v="raw">${isEN?'Raw source':'Source brute'}</button></div>${slider('vf',isEN?'Pitch':'Hauteur',80,300,1,120)}
+   <p class="note" id="vwt">${isEN?'Click a vowel. Then change the pitch: the vowel stays recognizable, because the formants don\'t move.':'Clique sur une voyelle. Change ensuite la hauteur : la voyelle reste reconnaissable, car les formants ne bougent pas.'}</p>`;
   bind(root,'vf',v=>v+' Hz',v=>f0=v);
   root.querySelectorAll('#vw .btn').forEach(b=>b.onclick=()=>{stopLoop();ac();const v=b.dataset.v,t=ctx.currentTime+.03;vowelNote(t,f0,v==='raw'?'a':v,.8,master,.5,v==='raw');
-    root.querySelector('#vwt').textContent=v==='raw'?`Dent de scie nue : toutes les harmoniques, aucun relief. C'est l'équivalent des cordes vocales sans la bouche.`:`« ${v} » : formants à ${VOWELS[v].join(', ')} Hz. La même source, passée dans trois filtres passe-bande.`;});
+    root.querySelector('#vwt').textContent=v==='raw'?(isEN?`Raw sawtooth: every harmonic, no shaping at all. It's the equivalent of vocal cords with no mouth.`:`Dent de scie nue : toutes les harmoniques, aucun relief. C'est l'équivalent des cordes vocales sans la bouche.`):(isEN?`"${v}": formants at ${VOWELS[v].join(', ')} Hz. The same source, run through three bandpass filters.`:`« ${v} » : formants à ${VOWELS[v].join(', ')} Hz. La même source, passée dans trois filtres passe-bande.`);});
 },
 
 voc(root){
+  const isEN=LANG==='en';
   let N=null,mic=null,redrawSrc=null;const P={src:0,bands:2,car:0,listen:0,unv:false},B=[4,8,16,32];
   root.innerHTML=`<div class="row" id="vs"></div><div class="row" id="vb" style="margin-top:8px"></div><div class="row" id="vc" style="margin-top:8px"></div>
-    <div class="row" id="vl" style="margin-top:8px"></div><div class="row" style="margin-top:14px"><button class="btn primary" id="play">▶ Lancer le vocoder</button><button class="btn" id="vu"></button></div><p class="note" id="vn"></p>`;
-  const note=()=>root.querySelector('#vn').textContent=['Tu entends la porteuse sculptée par la voix : les notes du synthé, l\'articulation de la voix.','Le modulateur seul. Remarque que sa mélodie monte et descend : tu ne la retrouveras pas à la sortie.','La porteuse seule : un accord tenu, sans aucun rythme ni articulation.'][P.listen]+(P.src===1?' Micro actif : parle ou chante, au casque pour éviter le larsen.':'');
+    <div class="row" id="vl" style="margin-top:8px"></div><div class="row" style="margin-top:14px"><button class="btn primary" id="play">▶ ${isEN?'Start the vocoder':'Lancer le vocoder'}</button><button class="btn" id="vu"></button></div><p class="note" id="vn"></p>`;
+  const note=()=>root.querySelector('#vn').textContent=(isEN?['You hear the carrier sculpted by the voice: the synth\'s notes, the voice\'s articulation.','The modulator alone. Notice its melody rises and falls: you won\'t find it at the output.','The carrier alone: a held chord, with no rhythm or articulation at all.']:['Tu entends la porteuse sculptée par la voix : les notes du synthé, l\'articulation de la voix.','Le modulateur seul. Remarque que sa mélodie monte et descend : tu ne la retrouveras pas à la sortie.','La porteuse seule : un accord tenu, sans aucun rythme ni articulation.'])[P.listen]+(P.src===1?(isEN?' Mic active: talk or sing, on headphones to avoid feedback.':' Micro actif : parle ou chante, au casque pour éviter le larsen.'):'');
   const abs=new Float32Array(1024).map((_,i)=>Math.abs(i/511.5-1));
   const listen=()=>{if(!N)return;N.out.gain.value=P.listen===0?1:0;N.modMon.gain.value=P.listen===1?.7:0;N.carMon.gain.value=P.listen===2?.22:0;};
   function build(){const all=[],mk=n=>{all.push(n);return n;},oscs=[];
@@ -3089,13 +3135,13 @@ voc(root){
     N={all,oscs,mod,out,modMon,carMon};listen();}
   function teardown(){const n=N;N=null;if(!n)return;n.oscs.forEach(o=>{try{o.stop();}catch(e){}});n.all.forEach(x=>{try{x.disconnect();}catch(e){}});}
   const rebuild=()=>{if(N){teardown();build();}note();};
-  redrawSrc=choice(root,'#vs',['Voix de synthèse','Mon micro'],()=>P.src,async i=>{
+  redrawSrc=choice(root,'#vs',isEN?['Synth voice','My mic']:['Voix de synthèse','Mon micro'],()=>P.src,async i=>{
     if(i===1&&!mic){try{mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});}
-      catch(e){toast('Micro indisponible ou refusé dans cet environnement');P.src=0;redrawSrc&&redrawSrc();note();return;}}
+      catch(e){toast(isEN?'Mic unavailable or denied in this environment':'Micro indisponible ou refusé dans cet environnement');P.src=0;redrawSrc&&redrawSrc();note();return;}}
     P.src=i;redrawSrc&&redrawSrc();rebuild();});
-  choice(root,'#vb',B.map(b=>b+' bandes'),()=>P.bands,i=>{P.bands=i;rebuild();});
-  choice(root,'#vc',['Porteuse scie','Porteuse carrée','Porteuse bruit'],()=>P.car,i=>{P.car=i;rebuild();});
-  choice(root,'#vl',['Écouter : résultat','Écouter : voix seule','Écouter : porteuse seule'],()=>P.listen,i=>{P.listen=i;listen();note();});
+  choice(root,'#vb',B.map(b=>b+(isEN?' bands':' bandes')),()=>P.bands,i=>{P.bands=i;rebuild();});
+  choice(root,'#vc',isEN?['Sawtooth carrier','Square carrier','Noise carrier']:['Porteuse scie','Porteuse carrée','Porteuse bruit'],()=>P.car,i=>{P.car=i;rebuild();});
+  choice(root,'#vl',isEN?['Listen: result','Listen: voice only','Listen: carrier only']:['Écouter : résultat','Écouter : voix seule','Écouter : porteuse seule'],()=>P.listen,i=>{P.listen=i;listen();note();});
   toggleBtn(root,'#vu','Unvoiced',()=>P.unv,v=>{P.unv=v;rebuild();});note();
   const seq={0:['a',45,1],2:['i',47,0],4:['o',50,1],7:['é',48,0],8:['ou',43,1],10:['a',45,0],12:['i',52,1],14:['o',50,0]},ch=[[43,50,55,58,62],[39,46,51,55,58]];
   root.querySelector('#play').onclick=e=>toggleLoop(e.currentTarget,96,32,(s,t,d)=>{
@@ -3106,8 +3152,17 @@ voc(root){
 },
 
 seq(root){
-  const T=['Kick','Clap / snare','Charley fermé','Charley ouvert'],r4=a=>[...a,...a,...a,...a];
-  const PRE=[
+  const isEN=LANG==='en';
+  const T=isEN?['Kick','Clap / snare','Closed hi-hat','Open hi-hat']:['Kick','Clap / snare','Charley fermé','Charley ouvert'],r4=a=>[...a,...a,...a,...a];
+  const UI=isEN?{play:'▶ Play the pattern',clear:'Clear all'}:{play:'▶ Lire le pattern',clear:'Tout effacer'};
+  const PRE=isEN?[
+   ['House',124,55,[r4([2,0,0,0]),[0,0,0,0,2,0,0,0,0,0,0,0,2,0,0,0],r4([1,1,0,1]),r4([0,0,2,0])],`Kick on every beat, clap on 2 and 4, open hi-hat on every offbeat. The kick / open hi-hat alternation drives the whole thing.`],
+   ['Nu-disco',118,54,[[2,0,0,0,2,0,0,1,2,0,0,0,2,0,1,0],[0,0,0,0,2,0,0,0,0,0,0,0,2,0,0,1],r4([2,1,2,1]),[0,0,0,0,0,0,2,0,0,0,0,0,0,0,2,0]],`House skeleton, but two soft syncopated kicks and heavily accented 16th-note hi-hats: chattier, more danceable.`],
+   ['Funk',102,58,[[2,0,1,0,0,0,0,0,0,0,2,1,0,0,0,0],[0,0,0,0,2,0,0,1,0,1,0,0,2,0,0,1],r4([2,0,1,0]),[0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0]],`The kick avoids beat 3 and snare ghost notes fill the weak 16th notes. Remove the ghosts: the beat falls apart.`],
+   ['Boom bap',90,64,[[2,0,0,0,0,0,0,1,0,0,2,0,0,0,0,0],[0,0,0,0,2,0,0,0,0,0,0,0,2,0,0,0],r4([2,0,1,0]),new Array(16).fill(0)],`Few elements, lots of swing. Bring the swing back to 50% to measure what it adds: the same pattern turns stiff.`],
+   ['Electro 808',126,50,[[2,0,0,1,0,0,2,0,0,0,2,0,0,0,1,0],[0,0,0,0,2,0,0,0,0,0,0,0,2,0,0,0],r4([2,1,1,1]),new Array(16).fill(0)],`Drum-machine-style syncopated kick, mechanical 16th-note hi-hats, no swing at all: the stiffness is an aesthetic choice here.`],
+   ['Drum & bass',174,50,[[2,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0],[0,0,0,0,2,0,0,1,0,1,0,0,2,0,0,0],r4([2,0,1,0]),new Array(16).fill(0)],`The "two-step": kick on the 1 and just before the 3, snare on 2 and 4. At this tempo, two kicks per bar is enough.`]]
+   :[
    ['House',124,55,[r4([2,0,0,0]),[0,0,0,0,2,0,0,0,0,0,0,0,2,0,0,0],r4([1,1,0,1]),r4([0,0,2,0])],`Kick sur chaque temps, clap sur 2 et 4, charley ouvert sur chaque contretemps. L'alternance kick / charley ouvert fait tout le moteur.`],
    ['Nu-disco',118,54,[[2,0,0,0,2,0,0,1,2,0,0,0,2,0,1,0],[0,0,0,0,2,0,0,0,0,0,0,0,2,0,0,1],r4([2,1,2,1]),[0,0,0,0,0,0,2,0,0,0,0,0,0,0,2,0]],`Squelette house, mais deux kicks doux syncopés et des charleys en doubles-croches très accentués : plus bavard, plus dansant.`],
    ['Funk',102,58,[[2,0,1,0,0,0,0,0,0,0,2,1,0,0,0,0],[0,0,0,0,2,0,0,1,0,1,0,0,2,0,0,1],r4([2,0,1,0]),[0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0]],`Le kick évite le temps 3 et les ghost notes de caisse claire remplissent les doubles-croches faibles. Retire les ghosts : le beat s'effondre.`],
@@ -3117,9 +3172,9 @@ seq(root){
   let G=PRE[0][3].map(r=>r.slice()),pre=0,bpm=124,sw=55,now=-1;
   root.innerHTML=`<div class="row" id="sp"></div><p class="note" id="st" style="margin:10px 0 14px"></p><div class="scroll"><div class="seq" id="sg"></div></div>
     ${slider('sb','Tempo',70,180,1,124)}${slider('ss','Swing',50,75,1,55)}
-    <div class="row" style="margin-top:14px"><button class="btn primary" id="play">▶ Lire le pattern</button><button class="btn" id="sc">Tout effacer</button></div>`;
-  const grid=()=>{const el=root.querySelector('#sg');el.innerHTML='<div></div>'+Array.from({length:16},(_,i)=>`<div class="h">${i%4===0?i/4+1:i%2===0?'et':'·'}</div>`).join('')+
-    G.map((r,y)=>`<div>${T[y]}</div>`+r.map((v,x)=>`<button class="c s${v}${x%4===0?' b':''}${x===now?' now':''}" data-y="${y}" data-x="${x}" aria-label="${T[y]} pas ${x+1}"></button>`).join('')).join('');
+    <div class="row" style="margin-top:14px"><button class="btn primary" id="play">${UI.play}</button><button class="btn" id="sc">${UI.clear}</button></div>`;
+  const grid=()=>{const el=root.querySelector('#sg');el.innerHTML='<div></div>'+Array.from({length:16},(_,i)=>`<div class="h">${i%4===0?i/4+1:i%2===0?(isEN?'&':'et'):'·'}</div>`).join('')+
+    G.map((r,y)=>`<div>${T[y]}</div>`+r.map((v,x)=>`<button class="c s${v}${x%4===0?' b':''}${x===now?' now':''}" data-y="${y}" data-x="${x}" aria-label="${T[y]} ${isEN?'step':'pas'} ${x+1}"></button>`).join('')).join('');
     el.querySelectorAll('.c').forEach(c=>c.onclick=()=>{const y=+c.dataset.y,x=+c.dataset.x;G[y][x]=[2,0,1][G[y][x]];grid();});};
   const mark=x=>{now=x;root.querySelectorAll('.seq .c').forEach(c=>c.classList.toggle('now',+c.dataset.x===x));};
   const sb=bind(root,'sb',v=>v+' BPM',v=>bpm=v),ssl=bind(root,'ss',v=>v+' %',v=>sw=v);
@@ -3139,10 +3194,11 @@ seq(root){
 },
 
 feel(root){
+  const isEN=LANG==='en';
   let mode=0,sw=50;
-  root.innerHTML=`<div class="row" id="fm"></div>${slider('fs','Swing',50,70,1,50)}<div class="row" style="margin-top:14px"><button class="btn primary" id="play">▶ Écouter</button></div><p class="note" id="ft"></p>`;
-  const txt=()=>root.querySelector('#ft').textContent=[`Toutes les frappes à la même force, exactement sur la grille. C'est ce que produit un clip MIDI dessiné à la souris sans retouche.`,`Temps forts marqués, contretemps moyens, doubles-croches faibles. Le pattern n'a pas changé, mais une pulsation apparaît.`,`Mêmes accents, plus quelques millisecondes d'écart et de petites variations de force à chaque frappe. Subtil : c'est la différence entre « correct » et « joué ».`][mode];
-  choice(root,'#fm',['Machine','Accents','Accents + humain'],()=>mode,i=>{mode=i;txt();});txt();bind(root,'fs',v=>v+' %',v=>sw=v);
+  root.innerHTML=`<div class="row" id="fm"></div>${slider('fs','Swing',50,70,1,50)}<div class="row" style="margin-top:14px"><button class="btn primary" id="play">▶ ${isEN?'Listen':'Écouter'}</button></div><p class="note" id="ft"></p>`;
+  const txt=()=>root.querySelector('#ft').textContent=(isEN?[`Every hit at the same strength, exactly on the grid. This is what a MIDI clip drawn with the mouse and never touched up produces.`,`Strong beats marked, offbeats medium, 16th notes soft. The pattern hasn't changed, but a pulse appears.`,`Same accents, plus a few milliseconds of offset and small strength variations on each hit. Subtle: it's the difference between "correct" and "played".`]:[`Toutes les frappes à la même force, exactement sur la grille. C'est ce que produit un clip MIDI dessiné à la souris sans retouche.`,`Temps forts marqués, contretemps moyens, doubles-croches faibles. Le pattern n'a pas changé, mais une pulsation apparaît.`,`Mêmes accents, plus quelques millisecondes d'écart et de petites variations de force à chaque frappe. Subtil : c'est la différence entre « correct » et « joué ».`])[mode];
+  choice(root,'#fm',isEN?['Machine','Accents','Accents + human']:['Machine','Accents','Accents + humain'],()=>mode,i=>{mode=i;txt();});txt();bind(root,'fs',v=>v+' %',v=>sw=v);
   const A=[1,.3,.6,.3];
   root.querySelector('#play').onclick=e=>toggleLoop(e.currentTarget,120,16,(s,t0,d)=>{
     const h=mode===2,t=t0+(s%2?(sw-50)/50*d:0)+(h?(Math.random()-.5)*.014:0)+.01,j=h?1+(Math.random()-.5)*.3:1;
@@ -3154,11 +3210,12 @@ feel(root){
 },
 
 kickd(root){
+  const isEN=LANG==='en';
   const P={tune:50,sweep:4,pd:60,dec:350,click:40};
-  const PRE=[['House sec',[52,4,50,300,45]],['808 long',[45,3,90,850,10]],['Techno dur',[55,7,35,260,80]]];let pre=0;
-  root.innerHTML=`<div class="row" id="kp"></div>${slider('kt','Accord',35,80,1,50)}${slider('kw','Chute de hauteur',1,8,.5,4)}${slider('kd','Durée de la chute',15,200,5,60)}${slider('ka','Longueur',100,900,10,350)}${slider('kc','Clic d\'attaque',0,100,5,40)}
-    <div class="row" style="margin-top:14px"><button class="btn primary" id="play">▶ Kick + basse</button></div>
-    <p class="note">Accord : la note finale du kick (50 Hz ≈ sol grave). Chute : de combien de fois plus haut il démarre, c'est elle qui fait le « punch ». Avec le preset 808 long, écoute la basse se noyer.</p>`;
+  const PRE=isEN?[['Dry house',[52,4,50,300,45]],['Long 808',[45,3,90,850,10]],['Hard techno',[55,7,35,260,80]]]:[['House sec',[52,4,50,300,45]],['808 long',[45,3,90,850,10]],['Techno dur',[55,7,35,260,80]]];let pre=0;
+  root.innerHTML=`<div class="row" id="kp"></div>${slider('kt',isEN?'Tune':'Accord',35,80,1,50)}${slider('kw',isEN?'Pitch sweep':'Chute de hauteur',1,8,.5,4)}${slider('kd',isEN?'Sweep time':'Durée de la chute',15,200,5,60)}${slider('ka',isEN?'Length':'Longueur',100,900,10,350)}${slider('kc',isEN?'Attack click':"Clic d'attaque",0,100,5,40)}
+    <div class="row" style="margin-top:14px"><button class="btn primary" id="play">▶ ${isEN?'Kick + bass':'Kick + basse'}</button></div>
+    <p class="note">${isEN?'Tune: the kick\'s final note (50 Hz ≈ low G). Sweep: how many times higher it starts, that\'s what gives the "punch". With the long 808 preset, listen to the bass get swamped.':'Accord : la note finale du kick (50 Hz ≈ sol grave). Chute : de combien de fois plus haut il démarre, c\'est elle qui fait le « punch ». Avec le preset 808 long, écoute la basse se noyer.'}</p>`;
   const S={kt:['tune',v=>v+' Hz'],kw:['sweep',v=>'×'+v],kd:['pd',v=>v+' ms'],ka:['dec',v=>v+' ms'],kc:['click',v=>v+' %']},els={};
   Object.keys(S).forEach(id=>els[id]=bind(root,id,S[id][1],v=>P[S[id][0]]=v));
   const load=i=>{pre=i;Object.keys(S).forEach((id,k)=>{els[id].value=PRE[i][1][k];els[id].oninput();});};
@@ -3174,15 +3231,21 @@ kickd(root){
 },
 
 bline(root){
+  const isEN=LANG==='en';
   const R=[31,27,34,29],CH=[[55,58,62],[51,55,58],[58,62,65],[53,57,60]];
   const not4=[];for(let i=0;i<16;i++)if(i%4)not4.push([i,0,1]);
-  const L=[['Fondamentales tenues',[[0,0,15]],`Une note par accord. Assise maximale, aucun mouvement : la basse soutient, elle ne groove pas.`],
+  const L=isEN?[['Held roots',[[0,0,15]],`One note per chord. Maximum anchoring, no movement: the bass supports, it doesn't groove.`],
+   ['Disco octaves',[0,2,4,6,8,10,12,14].map((s,i)=>[s,i%2?12:0,2]),`Root, octave, root, octave, in eighth notes. Only two notes, and all the energy of disco.`],
+   ['House offbeat',[2,6,10,14].map(s=>[s,0,2]),`The bass only plays on the "&", never with the kick. No conflict in the low end, and the kick / bass alternation creates the bounce.`],
+   ['Funk syncopation',[[0,0,2],[3,0,1],[6,12,1],[7,7,1],[10,0,2],[13,7,1],[14,12,1]],`Root, fifth and octave placed on the weak 16th notes. Beat 3 is avoided: it's the silence that creates the tension.`],
+   ['Rolling',not4,`16th notes everywhere except on the kick. The bass becomes a continuous engine; very sensitive to note length.`]]
+   :[['Fondamentales tenues',[[0,0,15]],`Une note par accord. Assise maximale, aucun mouvement : la basse soutient, elle ne groove pas.`],
    ['Octaves disco',[0,2,4,6,8,10,12,14].map((s,i)=>[s,i%2?12:0,2]),`Fondamentale, octave, fondamentale, octave, en croches. Deux notes seulement, et toute l'énergie du disco.`],
    ['Contretemps house',[2,6,10,14].map(s=>[s,0,2]),`La basse ne joue que sur le « et », jamais avec le kick. Aucun conflit dans le grave, et l'alternance kick / basse crée le rebond.`],
    ['Syncopée funk',[[0,0,2],[3,0,1],[6,12,1],[7,7,1],[10,0,2],[13,7,1],[14,12,1]],`Fondamentale, quinte et octave placées sur les doubles-croches faibles. Le temps 3 est évité : c'est le silence qui crée la tension.`],
    ['Roulante',not4,`Doubles-croches partout sauf sur le kick. La basse devient un moteur continu ; très sensible à la longueur des notes.`]];
   let sel=2,gate=70;
-  root.innerHTML=`<div class="row" id="bl"></div><p class="note" id="bt" style="margin:10px 0 0"></p>${slider('bg','Longueur des notes',20,100,5,70)}<div class="row" style="margin-top:14px"><button class="btn primary" id="play">▶ Écouter la ligne</button></div>`;
+  root.innerHTML=`<div class="row" id="bl"></div><p class="note" id="bt" style="margin:10px 0 0"></p>${slider('bg',isEN?'Note length':'Longueur des notes',20,100,5,70)}<div class="row" style="margin-top:14px"><button class="btn primary" id="play">▶ ${isEN?'Listen to the bassline':'Écouter la ligne'}</button></div>`;
   const txt=()=>root.querySelector('#bt').textContent=L[sel][2];
   choice(root,'#bl',L.map(l=>l[0]),()=>sel,i=>{sel=i;txt();});txt();bind(root,'bg',v=>v+' %',v=>gate=v);
   root.querySelector('#play').onclick=e=>toggleLoop(e.currentTarget,120,64,(s,t,d)=>{
@@ -3195,18 +3258,21 @@ bline(root){
 },
 
 layers(root){
+  const isEN=LANG==='en';
   let N=null;const P={sub:true,mid:false,sat:false,spk:false};
   root.innerHTML=`<div class="row"><button class="btn" id="l1"></button><button class="btn" id="l2"></button><button class="btn" id="l3"></button><button class="btn" id="l4"></button></div>
-    <div class="row" style="margin-top:12px"><button class="btn primary" id="play">▶ Kick + basse</button></div><p class="note" id="lt"></p>`;
-  const txt=()=>{const heard=P.mid||(P.sub&&P.sat);root.querySelector('#lt').textContent=!P.sub&&!P.mid?`Aucune couche active.`:
-    P.spk?(heard?`Sur petites enceintes, la ligne reste lisible : il n'y a plus aucun grave, mais les harmoniques suffisent à l'oreille pour suivre les notes.`:`Sur petites enceintes, la basse a disparu. Le sinus n'existe que sous 60 Hz, et l'enceinte ne descend pas jusque-là. Monter son volume n'y changerait rien.`)
-    :(P.sub&&P.mid?`Les deux étages : le poids du sub, la définition du médium. Chacun dans sa zone.`:P.sub?(P.sat?`Sub saturé : toujours du poids, et un léger grain au-dessus qui le rendra audible partout.`:`Sub pur : beaucoup de poids au casque, aucune définition. Essaie maintenant les petites enceintes.`):`Couche médium seule : la ligne est lisible mais n'a aucun poids.`);};
+    <div class="row" style="margin-top:12px"><button class="btn primary" id="play">▶ ${isEN?'Kick + bass':'Kick + basse'}</button></div><p class="note" id="lt"></p>`;
+  const T=isEN?{none:`No layer active.`,spkY:`On small speakers, the line stays legible: there's no low end left at all, but the harmonics are enough for the ear to follow the notes.`,spkN:`On small speakers, the bass has vanished. The sine only exists below 60 Hz, and the speaker doesn't go that low. Turning up the volume wouldn't change anything.`,both:`Both layers: the sub's weight, the mid's definition. Each in its own zone.`,subSat:`Saturated sub: still weight, and a light grain on top that will make it audible everywhere.`,subPure:`Pure sub: lots of weight on headphones, no definition at all. Now try small speakers.`,midOnly:`Mid layer alone: the line is legible but has no weight.`}
+   :{none:`Aucune couche active.`,spkY:`Sur petites enceintes, la ligne reste lisible : il n'y a plus aucun grave, mais les harmoniques suffisent à l'oreille pour suivre les notes.`,spkN:`Sur petites enceintes, la basse a disparu. Le sinus n'existe que sous 60 Hz, et l'enceinte ne descend pas jusque-là. Monter son volume n'y changerait rien.`,both:`Les deux étages : le poids du sub, la définition du médium. Chacun dans sa zone.`,subSat:`Sub saturé : toujours du poids, et un léger grain au-dessus qui le rendra audible partout.`,subPure:`Sub pur : beaucoup de poids au casque, aucune définition. Essaie maintenant les petites enceintes.`,midOnly:`Couche médium seule : la ligne est lisible mais n'a aucun poids.`};
+  const txt=()=>{const heard=P.mid||(P.sub&&P.sat);root.querySelector('#lt').textContent=!P.sub&&!P.mid?T.none:
+    P.spk?(heard?T.spkY:T.spkN)
+    :(P.sub&&P.mid?T.both:P.sub?(P.sat?T.subSat:T.subPure):T.midOnly);};
   const curve=(()=>{const c=new Float32Array(2048);for(let i=0;i<2048;i++){const x=i/1023.5-1;c[i]=Math.tanh(5*x)/Math.tanh(5);}return c;})();
   const route=()=>{txt();if(!N)return;N.subIn.disconnect();N.ws.disconnect();N.bus.disconnect();
     if(P.sat){N.subIn.connect(N.ws);N.ws.connect(N.satOut);}else N.subIn.connect(N.bus);
     if(P.spk){N.bus.connect(N.h1);}else N.bus.connect(master);};
-  toggleBtn(root,'#l1','Sub',()=>P.sub,v=>{P.sub=v;route();});toggleBtn(root,'#l2','Couche médium',()=>P.mid,v=>{P.mid=v;route();});
-  toggleBtn(root,'#l3','Saturation du sub',()=>P.sat,v=>{P.sat=v;route();});toggleBtn(root,'#l4','Petites enceintes',()=>P.spk,v=>{P.spk=v;route();});txt();
+  toggleBtn(root,'#l1','Sub',()=>P.sub,v=>{P.sub=v;route();});toggleBtn(root,'#l2',isEN?'Mid layer':'Couche médium',()=>P.mid,v=>{P.mid=v;route();});
+  toggleBtn(root,'#l3',isEN?'Sub saturation':'Saturation du sub',()=>P.sat,v=>{P.sat=v;route();});toggleBtn(root,'#l4',isEN?'Small speakers':'Petites enceintes',()=>P.spk,v=>{P.spk=v;route();});txt();
   const R=[31,27,34,29],pat=[2,6,10,14,15];
   root.querySelector('#play').onclick=e=>toggleLoop(e.currentTarget,120,64,(s,t,d)=>{
     const st=s%16;if(st%4===0)kick(t,N.bus,.7);if(st%4===2)noise(t,N.bus,.05,'highpass',7000,.05);if(st%8===4)noise(t,N.bus,.25,'bandpass',1700,.14);
@@ -3220,39 +3286,52 @@ layers(root){
 },
 
 subnote(root){
-  const NT=[['Do 1',24,`32,7 Hz. Au casque tu le devines à peine ; sur la plupart des enceintes, rien. Seul un gros système de club le restitue. Inutilisable comme fondamentale.`],
+  const isEN=LANG==='en';
+  const NT=isEN?[['C1',24,`32.7 Hz. On headphones you can barely tell it's there; on most speakers, nothing. Only a big club system reproduces it. Unusable as a root note.`],
+   ['E1',28,`41.2 Hz. The practical low limit. Lots of pressure, but needs a good system. The lowest note of an electric bass.`],
+   ['G1',31,`49.0 Hz. Right in the useful zone: weight, and most decent systems reproduce it.`],
+   ['A1',33,`55.0 Hz. Also an ideal zone: full, stable, easy to mix against a kick tuned lower or higher.`],
+   ['C2',36,`65.4 Hz. The weight decreases, the note becomes easier to perceive. Good compromise for tracks in C: the octave below would be lost.`],
+   ['F2',41,`87.3 Hz. You're out of sub territory: this is already "audible" low end. Legible everywhere, but with no physical pressure. Call in reinforcement an octave below.`]]
+   :[['Do 1',24,`32,7 Hz. Au casque tu le devines à peine ; sur la plupart des enceintes, rien. Seul un gros système de club le restitue. Inutilisable comme fondamentale.`],
    ['Mi 1',28,`41,2 Hz. La limite basse pratique. Beaucoup de pression, mais demande un bon système. Note la plus grave d'une basse électrique.`],
    ['Sol 1',31,`49,0 Hz. En plein dans la zone utile : du poids, et la plupart des systèmes corrects le restituent.`],
    ['La 1',33,`55,0 Hz. Zone idéale également : plein, stable, facile à mixer contre un kick accordé plus bas ou plus haut.`],
    ['Do 2',36,`65,4 Hz. Le poids diminue, la note devient plus facile à percevoir. Bon compromis pour les morceaux en do : l'octave du dessous serait perdue.`],
    ['Fa 2',41,`87,3 Hz. On sort du sub : c'est déjà du grave « audible ». Lisible partout, mais sans pression physique. Appelle un renfort à l'octave inférieure.`]];
-  root.innerHTML=`<div class="row" id="sn">${NT.map((n,i)=>`<button class="btn" data-i="${i}">${n[0]}</button>`).join('')}</div><p class="note" id="snt">Clique sur une note. Garde un volume modéré : ne compense pas une note que tu entends mal en montant le son.</p>`;
+  root.innerHTML=`<div class="row" id="sn">${NT.map((n,i)=>`<button class="btn" data-i="${i}">${n[0]}</button>`).join('')}</div><p class="note" id="snt">${isEN?'Click a note. Keep the volume moderate: don\'t compensate for a note you can barely hear by turning up the volume.':'Clique sur une note. Garde un volume modéré : ne compense pas une note que tu entends mal en montant le son.'}</p>`;
   root.querySelectorAll('#sn .btn').forEach(b=>b.onclick=()=>{stopLoop();ac();const n=NT[+b.dataset.i];tone(ctx.currentTime+.03,mtof(n[1]),1.1,{type:'sine',vol:.55,cutoff:4000,a:.03,r:.15});
     root.querySelectorAll('#sn .btn').forEach(x=>x.classList.toggle('on',x===b));root.querySelector('#snt').textContent=n[0]+' · '+n[2];});
 },
 
 vkbd(root){
-  const NN=['Do','Do♯','Ré','Mi♭','Mi','Fa','Fa♯','Sol','La♭','La','Si♭','Si'],MODES=[['Mineur naturel',[0,2,3,5,7,8,10]],['Majeur',[0,2,4,5,7,9,11]],['Dorien',[0,2,3,5,7,9,10]]],TON=[[0,'Do'],[2,'Ré'],[4,'Mi'],[5,'Fa'],[7,'Sol'],[9,'La']];
+  const isEN=LANG==='en';
+  const NN=isEN?['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B']:['Do','Do♯','Ré','Mi♭','Mi','Fa','Fa♯','Sol','La♭','La','Si♭','Si'],
+   MODES=isEN?[['Natural minor',[0,2,3,5,7,8,10]],['Major',[0,2,4,5,7,9,11]],['Dorian',[0,2,3,5,7,9,10]]]:[['Mineur naturel',[0,2,3,5,7,8,10]],['Majeur',[0,2,4,5,7,9,11]],['Dorien',[0,2,3,5,7,9,10]]],
+   TON=isEN?[[0,'C'],[2,'D'],[4,'E'],[5,'F'],[7,'G'],[9,'A']]:[[0,'Do'],[2,'Ré'],[4,'Mi'],[5,'Fa'],[7,'Sol'],[9,'La']];
   let mode=0,ton=4,deg=-1;const WI={0:0,2:1,4:2,5:3,7:4,9:5,11:6},ROM=['I','II','III','IV','V','VI','VII'];
   root.innerHTML=`<div class="row" id="kt"></div><div class="row" id="km" style="margin-top:8px"></div><div id="ks" style="margin:14px 0 10px"></div><div class="row" id="kd"></div><p class="note" id="kx"></p>`;
   const scaleMidi=()=>{const out=[];for(let o=0;o<3;o++)MODES[mode][1].forEach(i=>out.push(48+TON[ton][0]+i+12*o));return out;};
-  const chord=()=>{if(deg<0)return null;const sc=scaleMidi(),n=[sc[deg],sc[deg+2],sc[deg+4]],a=n[1]-n[0],b=n[2]-n[0],q=a===4&&b===7?'majeur':a===3&&b===7?'mineur':'diminué';return {n,q};};
+  const chord=()=>{if(deg<0)return null;const sc=scaleMidi(),n=[sc[deg],sc[deg+2],sc[deg+4]],a=n[1]-n[0],b=n[2]-n[0],q=isEN?(a===4&&b===7?'major':a===3&&b===7?'minor':'diminished'):(a===4&&b===7?'majeur':a===3&&b===7?'mineur':'diminué');return {n,q};};
   const degLabel=d=>{const sc=scaleMidi(),a=sc[d+2]-sc[d],b=sc[d+4]-sc[d],min=a===3;return (min?ROM[d].toLowerCase():ROM[d])+(a===3&&b===6?'°':'');};
   const draw=()=>{const pcs=MODES[mode][1].map(i=>(TON[ton][0]+i)%12),ch=chord(),cn=ch?ch.n:[];let w='',bk='';
     for(let m=48;m<84;m++){const pc=m%12,oct=Math.floor((m-48)/12),inS=pcs.includes(pc),inC=cn.includes(m),fill=inC?'var(--accent)':inS?'var(--accent-soft)':null;
       if(pc in WI){const x=(oct*7+WI[pc])*20;w+=`<rect data-m="${m}" x="${x}" y="0" width="20" height="90" fill="${fill||'var(--card)'}" stroke="var(--border)" style="cursor:pointer"/>`+(pc===TON[ton][0]?`<circle cx="${x+10}" cy="78" r="3" fill="var(--text)" pointer-events="none"/>`:'');}
       else{const lower={1:0,3:1,6:3,8:4,10:5}[pc],x=(oct*7+lower+1)*20-6;bk+=`<rect data-m="${m}" x="${x}" y="0" width="12" height="56" fill="${fill||'var(--text)'}" stroke="var(--text)" style="cursor:pointer"/>`;}}
-    root.querySelector('#ks').innerHTML=`<svg viewBox="0 0 420 90" width="100%" role="img" aria-label="Clavier : notes de la gamme et de l'accord">${w}${bk}</svg>`;
+    root.querySelector('#ks').innerHTML=`<svg viewBox="0 0 420 90" width="100%" role="img" aria-label="${isEN?'Keyboard: scale and chord notes':"Clavier : notes de la gamme et de l'accord"}">${w}${bk}</svg>`;
     root.querySelectorAll('#ks rect').forEach(r=>r.onclick=()=>{stopLoop();ac();tone(ctx.currentTime+.02,mtof(+r.dataset.m),.5,{type:'triangle',vol:.22,cutoff:3000,a:.005,r:.3});});
     root.querySelector('#kd').innerHTML=ROM.map((_,d)=>`<button class="btn${d===deg?' on':''}" data-d="${d}">${degLabel(d)}</button>`).join('');
     root.querySelectorAll('#kd .btn').forEach(b=>b.onclick=()=>{deg=+b.dataset.d;draw();const c=chord();stopLoop();ac();c.n.forEach(m=>tone(ctx.currentTime+.02,mtof(m),.9,{type:'triangle',vol:.16,cutoff:3000,a:.01,r:.4}));});
-    root.querySelector('#kx').innerHTML=`<b>${TON[ton][1]} ${MODES[mode][0].toLowerCase()}</b> : ${pcs.map(p=>NN[p]).join(' · ')}.`+(ch?` Accord ${degLabel(deg)} : <b>${NN[ch.n[0]%12]} ${ch.q}</b> (${ch.n.map(m=>NN[m%12]).join(' – ')}), construit en prenant une note sur deux dans la gamme.`:` Clique sur un degré pour voir et entendre son accord, ou sur une touche pour l'entendre.`);};
+    root.querySelector('#kx').innerHTML=isEN?
+      `<b>${TON[ton][1]} ${MODES[mode][0].toLowerCase()}</b>: ${pcs.map(p=>NN[p]).join(' · ')}.`+(ch?` ${degLabel(deg)} chord: <b>${NN[ch.n[0]%12]} ${ch.q}</b> (${ch.n.map(m=>NN[m%12]).join(' – ')}), built by taking every other note in the scale.`:` Click a degree to see and hear its chord, or a key to hear it.`)
+     :`<b>${TON[ton][1]} ${MODES[mode][0].toLowerCase()}</b> : ${pcs.map(p=>NN[p]).join(' · ')}.`+(ch?` Accord ${degLabel(deg)} : <b>${NN[ch.n[0]%12]} ${ch.q}</b> (${ch.n.map(m=>NN[m%12]).join(' – ')}), construit en prenant une note sur deux dans la gamme.`:` Clique sur un degré pour voir et entendre son accord, ou sur une touche pour l'entendre.`);};
   choice(root,'#kt',TON.map(t=>t[1]),()=>ton,i=>{ton=i;draw();});choice(root,'#km',MODES.map(m=>m[0]),()=>mode,i=>{mode=i;draw();});draw();
 },
 
 vswing(root){
+  const isEN=LANG==='en';
   let sw=50,acc=true;
-  root.innerHTML=`<canvas class="eqcv" id="c" style="height:150px"></canvas>${slider('vsw','Swing',50,75,1,50)}<div class="row" style="margin-top:12px"><button class="btn primary" id="play">▶ Écouter</button><button class="btn" id="va"></button></div><p class="note" id="vt"></p>`;
+  root.innerHTML=`<canvas class="eqcv" id="c" style="height:150px"></canvas>${slider('vsw','Swing',50,75,1,50)}<div class="row" style="margin-top:12px"><button class="btn primary" id="play">▶ ${isEN?'Listen':'Écouter'}</button><button class="btn" id="va"></button></div><p class="note" id="vt"></p>`;
   const A=[1,.3,.6,.3],cv=root.querySelector('#c');
   const draw=()=>{const k=cv2d(cv);if(!k)return;const {g,W,H,C}=k,m=24,st=(W-2*m)/16;
     for(let i=0;i<=16;i++){const x=m+i*st;g.strokeStyle=C('--border');g.lineWidth=i%4===0?2:1;g.setLineDash(i%4===0?[]:[3,4]);g.beginPath();g.moveTo(x,18);g.lineTo(x,H-26);g.stroke();}g.setLineDash([]);
@@ -3260,15 +3339,20 @@ vswing(root){
     for(let i=0;i<16;i++){const off=i%2?(sw-50)/50*st:0,x=m+i*st+off,v=acc?A[i%4]:.6,r=4+v*9;
       if(i%2&&off>0){g.strokeStyle=C('--accent');g.lineWidth=1;g.beginPath();g.moveTo(m+i*st,H/2+4);g.lineTo(x,H/2+4);g.stroke();}
       g.beginPath();g.arc(x,H/2+4,r,0,Math.PI*2);g.fillStyle=i%2?C('--accent'):C('--text');g.globalAlpha=.35+v*.65;g.fill();g.globalAlpha=1;}
-    g.fillStyle=C('--muted');g.fillText('taille du point = force de la frappe',m,H-8);};
+    g.fillStyle=C('--muted');g.fillText(isEN?'dot size = hit strength':'taille du point = force de la frappe',m,H-8);};
   VIZ.push(draw);
-  const txt=()=>root.querySelector('#vt').textContent=sw===50?`50 % : chaque double-croche tombe exactement sur la grille. Régulier, mécanique.`:sw<60?`${sw} % : les doubles-croches paires (en couleur) arrivent un peu tard. Un balancement subtil, celui de la house et du nu-disco.`:sw<67?`${sw} % : retard net. Le feeling « traîne », typique du boom bap.`:`${sw} % : proche du ternaire (66,7 % = triolet exact). Shuffle franc.`;
-  bind(root,'vsw',v=>v+' %',v=>{sw=v;draw();txt();});toggleBtn(root,'#va','Accents',()=>acc,v=>{acc=v;draw();});
+  const txt=()=>root.querySelector('#vt').textContent=isEN?(sw===50?`50%: every 16th note falls exactly on the grid. Even, mechanical.`:sw<60?`${sw}%: the even 16th notes (colored) arrive a bit late. A subtle sway, the one heard in house and nu-disco.`:sw<67?`${sw}%: a clear delay. That "dragging" feeling, typical of boom bap.`:`${sw}%: close to a triplet feel (66.7% = an exact triplet). Full shuffle.`)
+   :(sw===50?`50 % : chaque double-croche tombe exactement sur la grille. Régulier, mécanique.`:sw<60?`${sw} % : les doubles-croches paires (en couleur) arrivent un peu tard. Un balancement subtil, celui de la house et du nu-disco.`:sw<67?`${sw} % : retard net. Le feeling « traîne », typique du boom bap.`:`${sw} % : proche du ternaire (66,7 % = triolet exact). Shuffle franc.`);
+  bind(root,'vsw',v=>v+' %',v=>{sw=v;draw();txt();});toggleBtn(root,'#va',isEN?'Accents':'Accents',()=>acc,v=>{acc=v;draw();});
   root.querySelector('#play').onclick=e=>toggleLoop(e.currentTarget,112,16,(s,t0,d)=>{const t=t0+(s%2?(sw-50)/50*d:0)+.005;noise(t,master,acc?.2*A[s%4]:.12,'highpass',7500,.04);if(s%4===0)kick(t0+.005,master,.7);if(s%8===4)noise(t0+.005,master,.4,'bandpass',1700,.15);});
 },
 
 vtension(root){
-  const A=[['Format club',[[0,'Intro',3],[16,'Build',5],[24,'Drop 1',8],[40,'Break',3],[48,'Build 2',6],[56,'Drop 2',10],[72,'Outro',3],[88,'',1]],`Deux sommets, le second plus haut que le premier, séparés par un vrai creux. Les longues pentes de début et de fin servent au DJ.`],
+  const isEN=LANG==='en';
+  const A=isEN?[['Club format',[[0,'Intro',3],[16,'Build',5],[24,'Drop 1',8],[40,'Break',3],[48,'Build 2',6],[56,'Drop 2',10],[72,'Outro',3],[88,'',1]],`Two peaks, the second higher than the first, separated by a real dip. The long slopes at the start and end serve the DJ.`],
+   ['Pop song',[[0,'Intro',3],[4,'Verse',4],[12,'Pre-chorus',6],[16,'Chorus',9],[24,'Verse 2',5],[32,'Pre',7],[36,'Chorus',9],[44,'Bridge',4],[52,'Final chorus',10],[64,'',6]],`A staircase: each section has its level, and the pre-chorus acts as a ramp. The bridge dips before the last, fullest chorus.`],
+   ['Loop with no arrangement',[[0,'Everything plays',8],[32,'Everything plays',8],[64,'Still everything plays',8],[88,'',8]],`A flat line. Even with great sounds, nothing happens because nothing was ever removed. This is the classic beat-making mistake.`]]
+   :[['Format club',[[0,'Intro',3],[16,'Build',5],[24,'Drop 1',8],[40,'Break',3],[48,'Build 2',6],[56,'Drop 2',10],[72,'Outro',3],[88,'',1]],`Deux sommets, le second plus haut que le premier, séparés par un vrai creux. Les longues pentes de début et de fin servent au DJ.`],
    ['Chanson pop',[[0,'Intro',3],[4,'Couplet',4],[12,'Pré-refrain',6],[16,'Refrain',9],[24,'Couplet 2',5],[32,'Pré',7],[36,'Refrain',9],[44,'Pont',4],[52,'Refrain final',10],[64,'',6]],`Des marches d'escalier : chaque section a son niveau, et le pré-refrain sert de rampe. Le pont creuse avant le dernier refrain, le plus plein.`],
    ['Boucle sans arrangement',[[0,'Tout joue',8],[32,'Tout joue',8],[64,'Tout joue encore',8],[88,'',8]],`Une ligne plate. Même avec d'excellents sons, rien n'arrive parce que rien n'a jamais été retiré. C'est l'erreur classique du thème.`]];
   let sel=0;root.innerHTML=`<div class="row" id="ta"></div><canvas class="eqcv" id="c" style="height:180px;margin-top:12px"></canvas><p class="note" id="tt"></p>`;
@@ -3277,49 +3361,54 @@ vtension(root){
     g.beginPath();g.moveTo(X(0),H-26);P.forEach((p,i)=>{if(i<P.length-1){g.lineTo(X(p[0]),Y(p[2]));g.lineTo(X(P[i+1][0]),Y(p[2]));}});g.lineTo(X(tot),H-26);g.closePath();g.fillStyle=C('--accent');g.globalAlpha=.25;g.fill();g.globalAlpha=1;
     g.beginPath();P.forEach((p,i)=>{if(i<P.length-1){i?g.lineTo(X(p[0]),Y(p[2])):g.moveTo(X(p[0]),Y(p[2]));g.lineTo(X(P[i+1][0]),Y(p[2]));}});g.strokeStyle=C('--accent');g.lineWidth=2.5;g.stroke();
     g.font='11px '+(C('--sans')||'sans-serif');g.fillStyle=C('--text');P.forEach((p,i)=>{if(p[1]){g.save();g.translate(X(p[0])+4,Y(p[2])-6);g.fillText(p[1],0,0);g.restore();}});
-    g.fillStyle=C('--muted');g.font='10px '+(C('--mono')||'monospace');g.fillText('mesures →',12,H-8);g.fillText('énergie ↑',W-70,14);};
+    g.fillStyle=C('--muted');g.font='10px '+(C('--mono')||'monospace');g.fillText(isEN?'bars →':'mesures →',12,H-8);g.fillText(isEN?'energy ↑':'énergie ↑',W-70,14);};
   VIZ.push(draw);choice(root,'#ta',A.map(a=>a[0]),()=>sel,i=>{sel=i;draw();});draw();
 },
 
 vharm(root){
-  let w=0,spk=false,f0=49;const WV=[['Sinus pur',n=>n===1?1:0],['Sinus saturé',n=>n%2?[1,0,.35,0,.2,0,.13,0,.09][n-1]||.05:0],['Dent de scie',n=>1/n]];
-  root.innerHTML=`<div class="row" id="hw"></div><canvas class="eqcv" id="c" style="height:180px;margin-top:12px"></canvas>${slider('hf','Note jouée',33,98,1,49)}<div class="row" style="margin-top:12px"><button class="btn" id="hs"></button></div><p class="note" id="ht"></p>`;
+  const isEN=LANG==='en';
+  let w=0,spk=false,f0=49;const WV=isEN?[['Pure sine',n=>n===1?1:0],['Saturated sine',n=>n%2?[1,0,.35,0,.2,0,.13,0,.09][n-1]||.05:0],['Sawtooth',n=>1/n]]:[['Sinus pur',n=>n===1?1:0],['Sinus saturé',n=>n%2?[1,0,.35,0,.2,0,.13,0,.09][n-1]||.05:0],['Dent de scie',n=>1/n]];
+  root.innerHTML=`<div class="row" id="hw"></div><canvas class="eqcv" id="c" style="height:180px;margin-top:12px"></canvas>${slider('hf',isEN?'Note played':'Note jouée',33,98,1,49)}<div class="row" style="margin-top:12px"><button class="btn" id="hs"></button></div><p class="note" id="ht"></p>`;
   const cv=root.querySelector('#c');
   const draw=()=>{let heard=0;const k=cv2d(cv);const lim=180;
     for(let n=1;n<=24;n++){if(WV[w][1](n)>.04&&n*f0>=lim&&n*f0<2000)heard++;}
-    root.querySelector('#ht').textContent=spk?(heard?`Sous ${lim} Hz, l'enceinte ne restitue rien. Il reste ${heard} harmonique${heard>1?'s':''} audible${heard>1?'s':''} : l'oreille s'en sert pour reconstituer la note, et la basse reste lisible.`:`Sous ${lim} Hz, l'enceinte ne restitue rien, et ce son n'a aucune harmonique au-dessus : la basse a disparu. Monter son volume n'y changera rien.`):`Chaque barre est une fréquence présente dans le son. La première est la fondamentale (${f0} Hz), les suivantes ses harmoniques. Active les petites enceintes pour voir ce qu'il en reste.`;
+    root.querySelector('#ht').textContent=isEN?
+      (spk?(heard?`Below ${lim} Hz, the speaker reproduces nothing. There are ${heard} audible harmonic${heard>1?'s':''} left: the ear uses them to reconstruct the note, and the bass stays legible.`:`Below ${lim} Hz, the speaker reproduces nothing, and this sound has no harmonic above that: the bass has vanished. Turning up the volume won't change that.`):`Each bar is a frequency present in the sound. The first is the fundamental (${f0} Hz), the rest are its harmonics. Turn on small speakers to see what's left.`)
+     :(spk?(heard?`Sous ${lim} Hz, l'enceinte ne restitue rien. Il reste ${heard} harmonique${heard>1?'s':''} audible${heard>1?'s':''} : l'oreille s'en sert pour reconstituer la note, et la basse reste lisible.`:`Sous ${lim} Hz, l'enceinte ne restitue rien, et ce son n'a aucune harmonique au-dessus : la basse a disparu. Monter son volume n'y changera rien.`):`Chaque barre est une fréquence présente dans le son. La première est la fondamentale (${f0} Hz), les suivantes ses harmoniques. Active les petites enceintes pour voir ce qu'il en reste.`);
     if(!k)return;const {g,W,H,C}=k,X=f=>Math.log(f/20)/Math.log(100)*W;
-    if(spk){g.fillStyle=C('--red');g.globalAlpha=.1;g.fillRect(0,0,X(lim),H-22);g.globalAlpha=1;g.fillStyle=C('--red');g.font='11px '+(C('--sans')||'sans-serif');g.fillText('non restitué',6,14);}
+    if(spk){g.fillStyle=C('--red');g.globalAlpha=.1;g.fillRect(0,0,X(lim),H-22);g.globalAlpha=1;g.fillStyle=C('--red');g.font='11px '+(C('--sans')||'sans-serif');g.fillText(isEN?'not reproduced':'non restitué',6,14);}
     g.font='10px '+(C('--mono')||'monospace');[20,50,100,200,500,1000,2000].forEach(f=>{g.strokeStyle=C('--border');g.beginPath();g.moveTo(X(f),0);g.lineTo(X(f),H-22);g.stroke();g.fillStyle=C('--muted');g.fillText(f>=1000?f/1000+'k':f,X(f)+3,H-8);});
     for(let n=1;n<=24;n++){const a=WV[w][1](n),f=n*f0;if(a<=.04||f>2000)continue;const x=X(f),h=a*(H-46),dead=spk&&f<lim;g.fillStyle=n===1?C('--text'):C('--accent');g.globalAlpha=dead?.15:1;g.fillRect(x-3,H-22-h,6,h);g.globalAlpha=1;}};
-  VIZ.push(draw);choice(root,'#hw',WV.map(x=>x[0]),()=>w,i=>{w=i;draw();});bind(root,'hf',v=>v+' Hz',v=>{f0=v;draw();});toggleBtn(root,'#hs','Petites enceintes',()=>spk,v=>{spk=v;draw();});
+  VIZ.push(draw);choice(root,'#hw',WV.map(x=>x[0]),()=>w,i=>{w=i;draw();});bind(root,'hf',v=>v+' Hz',v=>{f0=v;draw();});toggleBtn(root,'#hs',isEN?'Small speakers':'Petites enceintes',()=>spk,v=>{spk=v;draw();});
 },
 
 vwave(root){
-  let w=1,fc=8000;const f0=110,WV=[['Sinus',n=>n===1?1:0],['Dent de scie',n=>1/n],['Carré',n=>n%2?1/n:0],['Triangle',n=>n%2?(((n-1)/2)%2?-1:1)/(n*n):0]];
-  root.innerHTML=`<div class="row" id="ww"></div><canvas class="eqcv" id="c" style="height:200px;margin-top:12px"></canvas>${slider('wc','Cutoff du filtre',0,100,1,100)}<p class="note" id="wt"></p>`;
+  const isEN=LANG==='en';
+  let w=1,fc=8000;const f0=110,WV=isEN?[['Sine',n=>n===1?1:0],['Sawtooth',n=>1/n],['Square',n=>n%2?1/n:0],['Triangle',n=>n%2?(((n-1)/2)%2?-1:1)/(n*n):0]]:[['Sinus',n=>n===1?1:0],['Dent de scie',n=>1/n],['Carré',n=>n%2?1/n:0],['Triangle',n=>n%2?(((n-1)/2)%2?-1:1)/(n*n):0]];
+  root.innerHTML=`<div class="row" id="ww"></div><canvas class="eqcv" id="c" style="height:200px;margin-top:12px"></canvas>${slider('wc',isEN?'Filter cutoff':'Cutoff du filtre',0,100,1,100)}<p class="note" id="wt"></p>`;
   const cv=root.querySelector('#c'),amp=n=>WV[w][1](n)/Math.sqrt(1+Math.pow(n*f0/fc,8));
   const draw=()=>{let cnt=0;for(let n=1;n<=60;n++)if(Math.abs(amp(n))>.02)cnt++;
-    root.querySelector('#wt').textContent=`À gauche, la forme d'onde ; à droite, les harmoniques qui la composent (${cnt} significative${cnt>1?'s':''}). Ferme le filtre : les harmoniques aiguës disparaissent et toute forme d'onde finit par ressembler à un sinus. C'est ça, « assombrir » un son.`;
+    root.querySelector('#wt').textContent=isEN?`On the left, the waveform; on the right, the harmonics that make it up (${cnt} significant). Close the filter: the high harmonics disappear and every waveform ends up sounding like a sine. That's what "darkening" a sound means.`:`À gauche, la forme d'onde ; à droite, les harmoniques qui la composent (${cnt} significative${cnt>1?'s':''}). Ferme le filtre : les harmoniques aiguës disparaissent et toute forme d'onde finit par ressembler à un sinus. C'est ça, « assombrir » un son.`;
     const k=cv2d(cv);if(!k)return;const {g,W,H,C}=k,L=W*.52,mid=H/2;
     g.strokeStyle=C('--border');g.beginPath();g.moveTo(0,mid);g.lineTo(L-16,mid);g.stroke();
     let mx=0;const pts=[];for(let i=0;i<=240;i++){const ph=i/240*4*Math.PI;let y=0;for(let n=1;n<=60;n++){const a=amp(n);if(a)y+=a*Math.sin(n*ph);}pts.push(y);mx=Math.max(mx,Math.abs(y));}
     g.beginPath();pts.forEach((y,i)=>{const x=i/240*(L-16),yy=mid-y/(mx||1)*(H/2-16);i?g.lineTo(x,yy):g.moveTo(x,yy);});g.strokeStyle=C('--accent');g.lineWidth=2.5;g.stroke();
-    const bx=L+8,bw=(W-bx-8)/20;g.font='10px '+(C('--mono')||'monospace');g.fillStyle=C('--muted');g.fillText('harmoniques 1 → 20',bx,12);
+    const bx=L+8,bw=(W-bx-8)/20;g.font='10px '+(C('--mono')||'monospace');g.fillStyle=C('--muted');g.fillText(isEN?'harmonics 1 → 20':'harmoniques 1 → 20',bx,12);
     for(let n=1;n<=20;n++){const a=Math.abs(amp(n)),raw=Math.abs(WV[w][1](n));g.fillStyle=C('--border');g.fillRect(bx+(n-1)*bw+1,H-10-raw*(H-40),bw-2,raw*(H-40));g.fillStyle=n===1?C('--text'):C('--accent');g.fillRect(bx+(n-1)*bw+1,H-10-a*(H-40),bw-2,a*(H-40));}};
   VIZ.push(draw);choice(root,'#ww',WV.map(x=>x[0]),()=>w,i=>{w=i;draw();});bind(root,'wc',v=>{const f=Math.round(100*Math.pow(80,v/100));return f>=1000?(f/1000).toFixed(1)+' kHz':f+' Hz';},v=>{fc=100*Math.pow(80,v/100);draw();});
 },
 
 vadsr(root){
-  const P={a:10,d:150,s:60,r:200},PRE=[['Pluck',[3,180,0,120]],['Basse',[5,120,55,80]],['Orgue',[5,10,100,40]],['Nappe',[600,400,75,900]]];let pre=1;
-  root.innerHTML=`<div class="row" id="ap"></div><canvas class="eqcv" id="c" style="height:170px;margin-top:12px"></canvas>${slider('aa','Attaque',1,1000,1,5)}${slider('ad','Decay',5,1000,5,120)}${slider('as','Sustain',0,100,1,55)}${slider('ar','Release',10,1500,10,80)}
-   <div class="row" style="margin-top:12px"><button class="btn primary" id="ago">▶ Jouer une note</button></div><p class="note">La touche est tenue pendant la zone « sustain ». Attaque : temps de montée. Decay : descente vers le niveau de sustain. Release : extinction après le relâchement.</p>`;
+  const isEN=LANG==='en';
+  const P={a:10,d:150,s:60,r:200},PRE=isEN?[['Pluck',[3,180,0,120]],['Bass',[5,120,55,80]],['Organ',[5,10,100,40]],['Pad',[600,400,75,900]]]:[['Pluck',[3,180,0,120]],['Basse',[5,120,55,80]],['Orgue',[5,10,100,40]],['Nappe',[600,400,75,900]]];let pre=1;
+  root.innerHTML=`<div class="row" id="ap"></div><canvas class="eqcv" id="c" style="height:170px;margin-top:12px"></canvas>${slider('aa',isEN?'Attack':'Attaque',1,1000,1,5)}${slider('ad','Decay',5,1000,5,120)}${slider('as','Sustain',0,100,1,55)}${slider('ar','Release',10,1500,10,80)}
+   <div class="row" style="margin-top:12px"><button class="btn primary" id="ago">▶ ${isEN?'Play a note':'Jouer une note'}</button></div><p class="note">${isEN?'The key is held during the "sustain" zone. Attack: rise time. Decay: fall to the sustain level. Release: fade after the key is released.':'La touche est tenue pendant la zone « sustain ». Attaque : temps de montée. Decay : descente vers le niveau de sustain. Release : extinction après le relâchement.'}</p>`;
   const cv=root.querySelector('#c'),hold=500,els={};
   const draw=()=>{const k=cv2d(cv);if(!k)return;const {g,W,H,C}=k,tot=P.a+P.d+hold+P.r,X=t=>10+t/tot*(W-20),Y=v=>H-24-v*(H-44),s=P.s/100;
     const seg=[[0,0],[P.a,1],[P.a+P.d,s],[P.a+P.d+hold,s],[tot,0]];
     [['A',0,P.a],['D',P.a,P.a+P.d],['S',P.a+P.d,P.a+P.d+hold],['R',P.a+P.d+hold,tot]].forEach(([l,a,b],i)=>{g.fillStyle=C(i%2?'--accent-soft':'--bg');g.fillRect(X(a),6,X(b)-X(a),H-30);g.fillStyle=C('--muted');g.font='11px '+(C('--mono')||'monospace');if(X(b)-X(a)>12)g.fillText(l,(X(a)+X(b))/2-3,H-8);});
     g.beginPath();seg.forEach((p,i)=>i?g.lineTo(X(p[0]),Y(p[1])):g.moveTo(X(p[0]),Y(p[1])));g.strokeStyle=C('--accent');g.lineWidth=2.5;g.stroke();
-    g.setLineDash([3,4]);g.strokeStyle=C('--muted');g.lineWidth=1;g.beginPath();g.moveTo(X(P.a+P.d+hold),6);g.lineTo(X(P.a+P.d+hold),H-24);g.stroke();g.setLineDash([]);g.fillStyle=C('--muted');g.fillText('touche relâchée',Math.min(W-100,X(P.a+P.d+hold)+4),16);};
+    g.setLineDash([3,4]);g.strokeStyle=C('--muted');g.lineWidth=1;g.beginPath();g.moveTo(X(P.a+P.d+hold),6);g.lineTo(X(P.a+P.d+hold),H-24);g.stroke();g.setLineDash([]);g.fillStyle=C('--muted');g.fillText(isEN?'key released':'touche relâchée',Math.min(W-100,X(P.a+P.d+hold)+4),16);};
   VIZ.push(draw);
   [['aa','a',v=>v+' ms'],['ad','d',v=>v+' ms'],['as','s',v=>v+' %'],['ar','r',v=>v+' ms']].forEach(([id,key,f])=>els[id]=bind(root,id,f,v=>{P[key]=v;draw();}));
   const load=i=>{pre=i;['aa','ad','as','ar'].forEach((id,k)=>{els[id].value=PRE[i][1][k];els[id].oninput();});};choice(root,'#ap',PRE.map(p=>p[0]),()=>pre,load);load(1);
@@ -3329,10 +3418,13 @@ vadsr(root){
 },
 
 vform(root){
+  const isEN=LANG==='en';
   let v='a',f0=120,nb=2;const B=[0,4,8,16,32];
-  root.innerHTML=`<div class="row" id="fv"></div><canvas class="eqcv" id="c" style="height:200px;margin-top:12px"></canvas>${slider('ff','Hauteur de la voix',80,300,1,120)}<div class="row" id="fb" style="margin-top:12px"></div><p class="note" id="ft"></p>`;
+  root.innerHTML=`<div class="row" id="fv"></div><canvas class="eqcv" id="c" style="height:200px;margin-top:12px"></canvas>${slider('ff',isEN?'Voice pitch':'Hauteur de la voix',80,300,1,120)}<div class="row" id="fb" style="margin-top:12px"></div><p class="note" id="ft"></p>`;
   const cv=root.querySelector('#c'),env=f=>VOWELS[v].reduce((a,F,i)=>a+[1,.75,.45][i]*Math.exp(-Math.pow(Math.log(f/F)/.22,2)),0)+.04;
-  const draw=()=>{root.querySelector('#ft').textContent=B[nb]?`En escalier : ce qu'un vocoder à ${B[nb]} bandes « voit » de cette voyelle. ${B[nb]<=8?`Les pics sont fondus dans de larges marches : les voyelles se ressemblent, le son est robotique.`:`Les trois pics sont bien séparés : la voyelle est reconnaissable, donc le mot intelligible.`}`:`Les traits fins sont les harmoniques de la voix : ils se resserrent ou s'écartent avec la hauteur. La courbe est l'enveloppe des formants : elle ne bouge pas quand la note change. C'est elle qui fait la voyelle.`;
+  const draw=()=>{root.querySelector('#ft').textContent=isEN?
+      (B[nb]?`Staircase view: what a ${B[nb]}-band vocoder "sees" of this vowel. ${B[nb]<=8?`The peaks are blended into broad steps: the vowels sound alike, the sound is robotic.`:`The three peaks are clearly separated: the vowel is recognizable, so the word is intelligible.`}`:`The thin lines are the voice's harmonics: they tighten or spread out with pitch. The curve is the formant envelope: it doesn't move when the note changes. That's what makes the vowel.`)
+     :(B[nb]?`En escalier : ce qu'un vocoder à ${B[nb]} bandes « voit » de cette voyelle. ${B[nb]<=8?`Les pics sont fondus dans de larges marches : les voyelles se ressemblent, le son est robotique.`:`Les trois pics sont bien séparés : la voyelle est reconnaissable, donc le mot intelligible.`}`:`Les traits fins sont les harmoniques de la voix : ils se resserrent ou s'écartent avec la hauteur. La courbe est l'enveloppe des formants : elle ne bouge pas quand la note change. C'est elle qui fait la voyelle.`);
     const k=cv2d(cv);if(!k)return;const {g,W,H,C}=k,lo=100,hi=5000,X=f=>Math.log(f/lo)/Math.log(hi/lo)*W,Y=a=>H-22-Math.min(1.1,a)/1.1*(H-40);
     g.font='10px '+(C('--mono')||'monospace');[200,500,1000,2000,4000].forEach(f=>{g.strokeStyle=C('--border');g.beginPath();g.moveTo(X(f),0);g.lineTo(X(f),H-22);g.stroke();g.fillStyle=C('--muted');g.fillText(f>=1000?f/1000+'k':f,X(f)+3,H-8);});
     if(B[nb]){const n=B[nb],r=Math.pow(7000/120,1/n);g.fillStyle=C('--accent');g.globalAlpha=.22;for(let i=0;i<n;i++){const a=120*Math.pow(r,i),b=a*r;let s=0;for(let j=0;j<8;j++)s+=env(a*Math.pow(r,(j+.5)/8));s/=8;const x1=Math.max(0,X(a)),x2=Math.min(W,X(b));if(x2>x1)g.fillRect(x1,Y(s),x2-x1-1,H-22-Y(s));}g.globalAlpha=1;}
@@ -3340,39 +3432,45 @@ vform(root){
     g.beginPath();for(let i=0;i<=200;i++){const f=lo*Math.pow(hi/lo,i/200);i?g.lineTo(X(f),Y(env(f))):g.moveTo(X(f),Y(env(f)));}g.strokeStyle=C('--accent');g.lineWidth=2.5;g.stroke();
     g.fillStyle=C('--accent');VOWELS[v].forEach((F,i)=>g.fillText('F'+(i+1),X(F)-6,Math.max(10,Y(env(F))-6)));};
   VIZ.push(draw);const ks=Object.keys(VOWELS);choice(root,'#fv',ks.map(x=>x.toUpperCase()),()=>ks.indexOf(v),i=>{v=ks[i];draw();stopLoop();ac();vowelNote(ctx.currentTime+.03,f0,v,.6,master,.45);});
-  bind(root,'ff',x=>x+' Hz',x=>{f0=x;draw();});choice(root,'#fb',['Sans vocoder','4 bandes','8 bandes','16 bandes','32 bandes'],()=>nb,i=>{nb=i;draw();});
+  bind(root,'ff',x=>x+' Hz',x=>{f0=x;draw();});choice(root,'#fb',isEN?['No vocoder','4 bands','8 bands','16 bands','32 bands']:['Sans vocoder','4 bandes','8 bandes','16 bandes','32 bandes'],()=>nb,i=>{nb=i;draw();});
 },
 
 vmask(root){
+  const isEN=LANG==='en';
   const P={cb:0,ck:0,oct:false};
-  root.innerHTML=`<canvas class="eqcv" id="c" style="height:190px"></canvas>${slider('mb','Creux basse à 55 Hz',0,12,.5,0)}${slider('mk','Creux kick à 110 Hz',0,12,.5,0)}<div class="row" style="margin-top:12px"><button class="btn" id="mo"></button></div><p class="note" id="mt"></p>`;
+  root.innerHTML=`<canvas class="eqcv" id="c" style="height:190px"></canvas>${slider('mb',isEN?'Bass dip at 55 Hz':'Creux basse à 55 Hz',0,12,.5,0)}${slider('mk',isEN?'Kick dip at 110 Hz':'Creux kick à 110 Hz',0,12,.5,0)}<div class="row" style="margin-top:12px"><button class="btn" id="mo"></button></div><p class="note" id="mt"></p>`;
   const cv=root.querySelector('#c'),hump=(f,c,wd)=>Math.exp(-Math.pow(Math.log(f/c)/wd,2)),dip=(f,c,db)=>Math.pow(10,-db*Math.exp(-Math.pow(Math.log(f/c)/.28,2))/20);
   const K=f=>(hump(f,58,.42)+.35*hump(f,110,.5))*dip(f,110,P.ck),Bs=f=>(hump(f,P.oct?110:62,.6)*.95)*dip(f,55,P.cb);
   const draw=()=>{let ov=0,tot=0;for(let i=0;i<=200;i++){const f=25*Math.pow(16,i/200);ov+=Math.min(K(f),Bs(f));tot+=Math.min(hump(f,58,.42)+.35*hump(f,110,.5),hump(f,62,.6)*.95);}const pc=Math.round(ov/tot*100);
-    root.querySelector('#mt').textContent=`Zone de conflit : ${pc} % de la situation de départ. `+(pc>80?`Kick et basse occupent la même zone : le plus fort masque l'autre, et le grave devient flou.`:pc>50?`Le conflit diminue. Chaque creux laisse à l'autre instrument une zone où il domine.`:`Chacun a désormais sa zone : le kick règne vers 55 Hz, la basse au-dessus. Aucun des deux n'a été « abîmé » : des creux de quelques dB suffisent.`);
+    root.querySelector('#mt').textContent=isEN?
+      `Conflict zone: ${pc}% of the starting situation. `+(pc>80?`Kick and bass occupy the same zone: the louder one masks the other, and the low end turns muddy.`:pc>50?`The conflict is shrinking. Each dip leaves the other instrument a zone where it dominates.`:`Each now has its own zone: the kick rules around 55 Hz, the bass above it. Neither has been "damaged": dips of a few dB are enough.`)
+     :`Zone de conflit : ${pc} % de la situation de départ. `+(pc>80?`Kick et basse occupent la même zone : le plus fort masque l'autre, et le grave devient flou.`:pc>50?`Le conflit diminue. Chaque creux laisse à l'autre instrument une zone où il domine.`:`Chacun a désormais sa zone : le kick règne vers 55 Hz, la basse au-dessus. Aucun des deux n'a été « abîmé » : des creux de quelques dB suffisent.`);
     const k=cv2d(cv);if(!k)return;const {g,W,H,C}=k,X=f=>Math.log(f/25)/Math.log(16)*W,Y=a=>H-22-a/1.3*(H-36);
     g.font='10px '+(C('--mono')||'monospace');[30,55,110,200,400].forEach(f=>{g.strokeStyle=C('--border');g.beginPath();g.moveTo(X(f),0);g.lineTo(X(f),H-22);g.stroke();g.fillStyle=C('--muted');g.fillText(f+'',X(f)+3,H-8);});
     const path=(fn,close)=>{g.beginPath();if(close)g.moveTo(0,H-22);for(let i=0;i<=200;i++){const f=25*Math.pow(16,i/200);(i||close)?g.lineTo(X(f),Y(fn(f))):g.moveTo(X(f),Y(fn(f)));}if(close){g.lineTo(W,H-22);g.closePath();}};
     path(f=>Math.min(K(f),Bs(f)),true);g.fillStyle=C('--red');g.globalAlpha=.3;g.fill();g.globalAlpha=1;
     path(K);g.strokeStyle=C('--text');g.lineWidth=2.5;g.stroke();path(Bs);g.strokeStyle=C('--accent');g.stroke();
-    g.font='12px '+(C('--sans')||'sans-serif');g.fillStyle=C('--text');g.fillText('kick',X(36),Y(.75));g.fillStyle=C('--accent');g.fillText('basse',X(P.oct?170:120),Y(.8));g.fillStyle=C('--red');g.fillText('conflit',X(56),H-30);};
-  VIZ.push(draw);bind(root,'mb',v=>'−'+v+' dB',v=>{P.cb=v;draw();});bind(root,'mk',v=>'−'+v+' dB',v=>{P.ck=v;draw();});toggleBtn(root,'#mo','Basse une octave plus haut',()=>P.oct,v=>{P.oct=v;draw();});
+    g.font='12px '+(C('--sans')||'sans-serif');g.fillStyle=C('--text');g.fillText('kick',X(36),Y(.75));g.fillStyle=C('--accent');g.fillText(isEN?'bass':'basse',X(P.oct?170:120),Y(.8));g.fillStyle=C('--red');g.fillText(isEN?'conflict':'conflit',X(56),H-30);};
+  VIZ.push(draw);bind(root,'mb',v=>'−'+v+' dB',v=>{P.cb=v;draw();});bind(root,'mk',v=>'−'+v+' dB',v=>{P.ck=v;draw();});toggleBtn(root,'#mo',isEN?'Bass one octave higher':'Basse une octave plus haut',()=>P.oct,v=>{P.oct=v;draw();});
 },
 
 vcomp(root){
+  const isEN=LANG==='en';
   const P={thr:-14,ratio:4,att:10,rel:120,mk:0},N=600,dt=.002,hits=[[.05,1],[.45,.42],[.8,.75]];
-  root.innerHTML=`<canvas class="eqcv" id="c" style="height:210px"></canvas>${slider('vt','Threshold',-40,0,1,-14)}${slider('vr','Ratio',1,20,.5,4)}${slider('va2','Attaque',0,80,1,10)}${slider('vl','Release',20,500,10,120)}${slider('vm','Make-up',0,12,.5,0)}<p class="note" id="vx"></p>`;
+  root.innerHTML=`<canvas class="eqcv" id="c" style="height:210px"></canvas>${slider('vt','Threshold',-40,0,1,-14)}${slider('vr','Ratio',1,20,.5,4)}${slider('va2',isEN?'Attack':'Attaque',0,80,1,10)}${slider('vl','Release',20,500,10,120)}${slider('vm','Make-up',0,12,.5,0)}<p class="note" id="vx"></p>`;
   const cv=root.querySelector('#c'),inp=[];for(let i=0;i<N;i++){const t=i*dt;let a=0;hits.forEach(([t0,v])=>{if(t>=t0)a+=v*Math.exp(-(t-t0)/.11);});inp.push(a);}
   const draw=()=>{let gr=0,mx=0;const out=[],grs=[],ca=1-Math.exp(-dt/Math.max(.0005,P.att/1000)),cr=1-Math.exp(-dt/(P.rel/1000)),mk=Math.pow(10,P.mk/20);
     inp.forEach(a=>{const L=20*Math.log10(a+1e-5),tg=Math.max(0,L-P.thr)*(1-1/P.ratio);gr+=(tg-gr)*(tg>gr?ca:cr);grs.push(gr);mx=Math.max(mx,gr);out.push(a*Math.pow(10,-gr/20)*mk);});
     const pk=a=>Math.max(...a),d1=20*Math.log10(pk(out.slice(0,200))/pk(inp.slice(0,200))),d2=20*Math.log10(pk(out.slice(215,390))/pk(inp.slice(215,390)));
-    root.querySelector('#vx').textContent=`Réduction maximale : ${mx.toFixed(1)} dB. La frappe forte ressort à ${d1>=0?'+':''}${d1.toFixed(1)} dB, la frappe faible à ${d2>=0?'+':''}${d2.toFixed(1)} dB : l'écart entre les deux ${Math.abs(d1-d2)<.5?`n'a pas changé`:`s'est réduit de ${(d2-d1).toFixed(1)} dB`}. `+(P.att>=20&&mx>3?`Avec cette attaque lente, le pic initial passe presque intact : c'est le punch.`:P.att<=3&&mx>3?`Avec cette attaque très rapide, le pic lui-même est écrasé : le son recule.`:``);
+    root.querySelector('#vx').textContent=isEN?
+      `Maximum reduction: ${mx.toFixed(1)} dB. The loud hit comes out at ${d1>=0?'+':''}${d1.toFixed(1)} dB, the soft hit at ${d2>=0?'+':''}${d2.toFixed(1)} dB: the gap between the two ${Math.abs(d1-d2)<.5?`hasn't changed`:`has shrunk by ${(d2-d1).toFixed(1)} dB`}. `+(P.att>=20&&mx>3?`With this slow attack, the initial peak passes through almost untouched: that's the punch.`:P.att<=3&&mx>3?`With this very fast attack, the peak itself is crushed: the sound recedes.`:``)
+     :`Réduction maximale : ${mx.toFixed(1)} dB. La frappe forte ressort à ${d1>=0?'+':''}${d1.toFixed(1)} dB, la frappe faible à ${d2>=0?'+':''}${d2.toFixed(1)} dB : l'écart entre les deux ${Math.abs(d1-d2)<.5?`n'a pas changé`:`s'est réduit de ${(d2-d1).toFixed(1)} dB`}. `+(P.att>=20&&mx>3?`Avec cette attaque lente, le pic initial passe presque intact : c'est le punch.`:P.att<=3&&mx>3?`Avec cette attaque très rapide, le pic lui-même est écrasé : le son recule.`:``);
     const k=cv2d(cv);if(!k)return;const {g,W,H,C}=k,top=34,mid=top+(H-top)/2,sc=(H-top)/2-8,X=i=>i/(N-1)*W;
     const shape=(arr)=>{g.beginPath();arr.forEach((a,i)=>i?g.lineTo(X(i),mid-Math.min(1.25,a)*sc):g.moveTo(X(i),mid-Math.min(1.25,a)*sc));for(let i=N-1;i>=0;i--)g.lineTo(X(i),mid+Math.min(1.25,arr[i])*sc);g.closePath();};
     shape(inp);g.fillStyle=C('--text');g.globalAlpha=.16;g.fill();g.globalAlpha=1;shape(out);g.fillStyle=C('--accent');g.globalAlpha=.55;g.fill();g.globalAlpha=1;
     const th=Math.pow(10,P.thr/20);g.setLineDash([4,4]);g.strokeStyle=C('--amber');g.lineWidth=1;[-1,1].forEach(s=>{g.beginPath();g.moveTo(0,mid+s*th*sc);g.lineTo(W,mid+s*th*sc);g.stroke();});g.setLineDash([]);
     g.beginPath();grs.forEach((v,i)=>i?g.lineTo(X(i),4+v/24*26):g.moveTo(X(i),4+v/24*26));g.strokeStyle=C('--red');g.lineWidth=2;g.stroke();
-    g.font='10px '+(C('--mono')||'monospace');g.fillStyle=C('--red');g.fillText('réduction de gain',6,top-2);g.fillStyle=C('--amber');g.fillText('seuil',W-34,mid-th*sc-4);g.fillStyle=C('--muted');g.fillText('gris : entrée · couleur : sortie',6,H-6);};
+    g.font='10px '+(C('--mono')||'monospace');g.fillStyle=C('--red');g.fillText(isEN?'gain reduction':'réduction de gain',6,top-2);g.fillStyle=C('--amber');g.fillText(isEN?'threshold':'seuil',W-34,mid-th*sc-4);g.fillStyle=C('--muted');g.fillText(isEN?'gray: input · color: output':'gris : entrée · couleur : sortie',6,H-6);};
   VIZ.push(draw);[['vt','thr',v=>v+' dB'],['vr','ratio',v=>v+':1'],['va2','att',v=>v+' ms'],['vl','rel',v=>v+' ms'],['vm','mk',v=>'+'+v+' dB']].forEach(([id,key,f])=>bind(root,id,f,v=>{P[key]=v;draw();}));
 },
 
