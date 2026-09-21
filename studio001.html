@@ -1225,20 +1225,20 @@ const STYLES=[
   drums:{k:[2,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0],s:[0,0,0,0,2,0,0,1,0,1,0,0,2,0,0,1],ch:r4([2,0,1,1]),oh:z16()},pad:{cut:1800,vol:.05},
   bass:[[[0,0,8],[10,0,5]],[[0,0,6],[8,0,3],[12,0,3.5]]],bassSound:'reese',sc:0}}
 ];
-const CMPH=['Tempo (BPM)','Swing','Kick','Backbeat','Basse','Signature','Priorité du mix'];
 let styleSel='cmp';
 function renderStyles(){return `<div class="section active"><h2>Conseils par style</h2>
-  <p class="lede">${STYLES.length} styles, leurs codes et leurs pièges. Chaque fiche contient une boucle de démonstration qui applique les règles décrites.</p>
+  <p class="lede">${LANG==='en'?`${STYLES.length} styles, their codes and their pitfalls. Each card includes a demo loop applying the rules described.`:`${STYLES.length} styles, leurs codes et leurs pièges. Chaque fiche contient une boucle de démonstration qui applique les règles décrites.`}</p>
   <div class="chips" id="schips" style="padding-top:0"></div><div id="sbody" style="margin-top:12px"></div></div>`;}
 function initStyles(){
+  const CMPH=LANG==='en'?['Tempo (BPM)','Swing','Kick','Backbeat','Bass','Signature','Mix priority']:['Tempo (BPM)','Swing','Kick','Backbeat','Basse','Signature','Priorité du mix'];
   const chips=document.getElementById('schips'),body=document.getElementById('sbody');
   const draw=()=>{stopLoop();quizActive=false;
     chips.innerHTML=[['cmp','Comparer'],...STYLES.map(x=>[x.id,x.name])].map(([id,l])=>`<button class="chip${styleSel===id?' on':''}" data-s="${id}">${l}</button>`).join('');
     chips.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{styleSel=c.dataset.s;draw();});
     if(styleSel==='cmp'){body.innerHTML=block('','les styles côte à côte',`<div class="scroll"><table class="cmp"><thead><tr><th>Style</th>${CMPH.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
       <tbody>${STYLES.map(x=>`<tr><th><button data-s="${x.id}">${x.name}</button></th>${x.cmp.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
-      <p class="note">Tempos et pourcentages de swing : repères usuels, pas des frontières. Beaucoup de morceaux marquants se situent précisément à cheval entre deux colonnes.</p>`)+
-      block('','comment lire ces fiches',`<p>Un style, c'est un petit nombre de <b>contraintes</b> acceptées. Trois suffisent en général à le rendre reconnaissable : un tempo, une façon de placer la batterie, et une signature sonore. Au-delà, tout est libre. Commence par respecter ces trois-là à la lettre, puis écarte-toi d'une seule à la fois.</p>`);
+      <p class="note">${LANG==='en'?`Tempos and swing percentages: common reference points, not hard borders. Many landmark tracks sit precisely between two columns.`:`Tempos et pourcentages de swing : repères usuels, pas des frontières. Beaucoup de morceaux marquants se situent précisément à cheval entre deux colonnes.`}</p>`)+
+      block('',`comment lire ces fiches`,LANG==='en'?`<p>A style is a small number of accepted <b>constraints</b>. Three are usually enough to make it recognizable: a tempo, a way of placing the drums, and a sonic signature. Beyond that, everything is free. Start by respecting those three to the letter, then depart from just one at a time.</p>`:`<p>Un style, c'est un petit nombre de <b>contraintes</b> acceptées. Trois suffisent en général à le rendre reconnaissable : un tempo, une façon de placer la batterie, et une signature sonore. Au-delà, tout est libre. Commence par respecter ces trois-là à la lettre, puis écarte-toi d'une seule à la fois.</p>`);
       body.querySelectorAll('[data-s]').forEach(c=>c.onclick=()=>{styleSel=c.dataset.s;draw();window.scrollTo(0,0);});return;}
     const x=STYLES.find(k=>k.id===styleSel);
     body.innerHTML=`<p class="lede" style="margin-bottom:16px">${x.lede}</p>
@@ -1437,7 +1437,7 @@ const TIMELINE=[['≈1970','Magnétophones 16 puis 24 pistes','On peut séparer 
  ['2024–2025','Procès, puis premiers accords de licence','Les grandes maisons de disques attaquent des générateurs en 2024 ; les premiers accords sont signés fin 2025. Situation encore mouvante.']];
 let eraSel='cmp';
 function renderEras(){return `<div class="section active"><h2>Méthodes de production par décennie</h2>
-  <p class="lede">Chaque époque a son outil central, sa contrainte, et la méthode de travail qui en découle. Le « son » d'une décennie est la trace audible de cette méthode.</p>
+  <p class="lede">${LANG==='en'?`Each era has its central tool, its constraint, and the working method that follows from it. A decade's "sound" is the audible trace of that method.`:`Chaque époque a son outil central, sa contrainte, et la méthode de travail qui en découle. Le « son » d'une décennie est la trace audible de cette méthode.`}</p>
   <div class="chips" id="echips" style="padding-top:0"></div><div id="ebody" style="margin-top:12px"></div></div>`;}
 function initEras(){
   const chips=document.getElementById('echips'),body=document.getElementById('ebody');
@@ -1565,7 +1565,7 @@ const SWING={
 };
 function renderSwing(){
   return `<div class="section active"><h2>Swing et quantification</h2>
-  <p class="lede">Où tombent les notes par rapport à la grille, à quelques millisecondes près. C'est le réglage le plus discret d'une production actuelle, et celui qui sépare le plus sûrement un beat qui « tourne » d'un beat posé là.</p>
+  <p class="lede">${LANG==='en'?`Where notes fall relative to the grid, down to the millisecond. It's the most understated setting in a current production, and the one that most reliably separates a beat that "grooves" from one that just sits there.`:`Où tombent les notes par rapport à la grille, à quelques millisecondes près. C'est le réglage le plus discret d'une production actuelle, et celui qui sépare le plus sûrement un beat qui « tourne » d'un beat posé là.`}</p>
   ${block('','l\'essentiel',concepts(SWING.ess))}
   ${block('ex','le laboratoire',`<p>Un groove complet dont tu contrôles chaque dimension du placement. En haut, la grille exacte en pointillés et la position réelle de chaque frappe : <b>en couleur</b> quand elle est en retard, <b>en ambre</b> quand elle est en avance. Commence par charger les préréglages un par un, au casque.</p><div id="demo-swinglab" style="margin-top:14px"></div>`)}
   ${block('','le swing dans la musique actuelle',concepts(SWING.today)+`<p class="note">${SWING.todayNote}</p>`)}
@@ -1671,7 +1671,7 @@ const CHECKS=[
  ['pub','Avant de publier',['Niveau mesuré en LUFS intégrés sur tout le morceau','Crête vraie au plus à −1 dBTP (−2 dBTP si plus fort que −14 LUFS)','Écoute complète sur trois systèmes, dont un téléphone','Une nuit s\'est écoulée depuis le dernier réglage','Samples : autorisations obtenues, ou matière rejouée ou libre','Packs : licences conservées','Outils d\'IA : conditions d\'utilisation commerciale relues aujourd\'hui','Partages entre collaborateurs confirmés par écrit','Métadonnées complètes : titre, auteurs, codes d\'identification, pochette','Archive : projet consolidé, master, instrumental, stems']]];
 let pracState={mode:'best',dom:'',q:''};
 function renderPractices(){return `<div class="section active"><h2>Bonnes et mauvaises pratiques</h2>
-  <p class="lede">Ce qui fait consensus aujourd'hui chez les producteurs et ingénieurs du son, et les erreurs documentées les plus coûteuses. ${BEST.length} pratiques à adopter, ${BAD.length} fiches d'erreurs, trois check-lists.</p>
+  <p class="lede">${LANG==='en'?`What producers and audio engineers broadly agree on today, and the most costly documented mistakes. ${BEST.length} practices to adopt, ${BAD.length} mistake cards, three checklists.`:`Ce qui fait consensus aujourd'hui chez les producteurs et ingénieurs du son, et les erreurs documentées les plus coûteuses. ${BEST.length} pratiques à adopter, ${BAD.length} fiches d'erreurs, trois check-lists.`}</p>
   <div class="chips" id="pmode" style="padding-top:0"></div>
   <input class="gq" id="pq" type="search" placeholder="Chercher : sub, référence, limiteur, sample…" autocomplete="off" spellcheck="false" style="margin-top:8px">
   <div class="chips" id="pdom"></div><div class="gcount" id="pcount"></div><div id="plist"></div></div>`;}
@@ -1833,7 +1833,7 @@ Prochaine sortie : [titre], le [date].`],
 8. Logo et pochettes récentes`]];
 let mktState={mode:'best',dom:'',q:''};
 function renderMarketing(){return `<div class="section active"><h2>Diffuser et faire connaître sa musique</h2>
-  <p class="lede">Marketing, plateformes et réseau pour un artiste indépendant. Le principe directeur : on ne « perce » pas, on construit un public une personne à la fois, avec méthode et régularité.</p>
+  <p class="lede">${LANG==='en'?`Marketing, platforms and networking for an independent artist. The guiding principle: you don't "break through", you build an audience one person at a time, with method and consistency.`:`Marketing, plateformes et réseau pour un artiste indépendant. Le principe directeur : on ne « perce » pas, on construit un public une personne à la fois, avec méthode et régularité.`}</p>
   <div class="chips" id="mmode" style="padding-top:0"></div>
   <input class="gq" id="mq" type="search" placeholder="Chercher : playlist, démo, label, DJ, liste…" autocomplete="off" spellcheck="false" style="margin-top:8px">
   <div class="chips" id="mdom"></div><div class="gcount" id="mcount"></div><div id="mlist"></div></div>`;}
@@ -2421,7 +2421,7 @@ const glossLabel=k=>isStyle(k)?'Style · '+((STYLES.find(x=>x.id===k.slice(6))||
 const glossGo=k=>{if(isStyle(k)){styleSel=k.slice(6);go('styles');}else if(k.indexOf('era:')===0){eraSel=k.slice(4);go('eras');}else if(k==='focus:swing')go('swing');else if(k==='focus:practices')go('prac');else if(k==='focus:marketing')go('mkt');else if(k==='focus:ownstyle')go('ownstyle');else if(k==='focus:ai')go('ai');else if(k==='focus:hooks')go('hooks');else if(k==='focus:meltrain')go('meltrain');else go(k);};
 const norm=x=>x.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 function renderGloss(){return `<div class="section active"><h2>Glossaire</h2>
-  <p class="lede">${GLOSS.length} termes, en français et en anglais, reliés à leur thème ou à leur style. La recherche ignore les accents et fouille aussi les définitions.</p>
+  <p class="lede">${LANG==='en'?`${GLOSS.length} terms, in French and English, linked to their topic or style. Search ignores accents and also searches the definitions.`:`${GLOSS.length} termes, en français et en anglais, reliés à leur thème ou à leur style. La recherche ignore les accents et fouille aussi les définitions.`}</p>
   <input class="gq" id="gq" type="search" placeholder="Chercher : sidechain, formant, cutoff…" autocomplete="off" spellcheck="false">
   <div class="chips" id="gchips"></div><div class="gcount" id="gcount"></div><div id="glist"></div></div>`;}
 let glossState={q:'',th:''};
@@ -2443,7 +2443,7 @@ function initGloss(){
 
 /* ============ mode révision ============ */
 function renderReview(){return `<div class="section active"><h2>Mode révision</h2>
-  <p class="lede">Des questions tirées au hasard dans tous les thèmes et tous les styles. Le tirage favorise ce que tu as raté, puis ce que tu n'as jamais vu : tu travailles là où c'est utile.</p>
+  <p class="lede">${LANG==='en'?`Questions drawn at random from every topic and every style. The draw favors what you got wrong, then what you've never seen: you work where it's actually useful.`:`Des questions tirées au hasard dans tous les thèmes et tous les styles. Le tirage favorise ce que tu as raté, puis ce que tu n'as jamais vu : tu travailles là où c'est utile.`}</p>
   <div class="card"><div id="rev"></div></div></div>`;}
 function initReview(){
   const root=document.getElementById('rev'),themeQ=TOPICS.flatMap(t=>(QUIZ[t.id]||[]).map(q=>({id:t.id,q}))),styleQ=STYLES.flatMap(x=>(QUIZ['style:'+x.id]||[]).map(q=>({id:'style:'+x.id,q}))),focusQ=['focus:swing','focus:practices','focus:marketing','focus:ownstyle','focus:ai','focus:hooks','focus:meltrain',...ERAS.map(e=>'era:'+e.id)].flatMap(id=>(QUIZ[id]||[]).map(q=>({id,q}))),all=themeQ.concat(styleQ,focusQ);
@@ -2547,9 +2547,12 @@ function go(id){
   window.scrollTo(0,0);
 }
 function renderHome(){
-  const one={compo:'Trouver l\'idée : accords, mélodie, rythme.',groove:'Construire la pulsation : batterie, vélocité, swing.',bass:'Écrire et construire le grave : notes, couches, mono.',arr:'Organiser l\'idée dans le temps.',sd:'Donner à chaque partie son timbre.',voix:'Traiter une voix, et la transformer en instrument.',
+  const isEN=LANG==='en';
+  const one=isEN?{compo:'Find the idea: chords, melody, rhythm.',groove:'Build the pulse: drums, velocity, swing.',bass:'Write and build the low end: notes, layers, mono.',arr:'Organize the idea over time.',sd:'Give each part its timbre.',voix:'Treat a vocal, and turn it into an instrument.',
+    mix:'Make tracks coexist: levels and frequencies.',comp:'Control dynamics and create groove.',space:'Place sounds in depth.',master:'Final level and consistency across every system.',sample:'Extract, chop and transform an existing sound.',hiphoptech:'Turntables and the MPC: the techniques that shaped the genre.'}
+   :{compo:'Trouver l\'idée : accords, mélodie, rythme.',groove:'Construire la pulsation : batterie, vélocité, swing.',bass:'Écrire et construire le grave : notes, couches, mono.',arr:'Organiser l\'idée dans le temps.',sd:'Donner à chaque partie son timbre.',voix:'Traiter une voix, et la transformer en instrument.',
     mix:'Faire cohabiter les pistes : volumes et fréquences.',comp:'Maîtriser la dynamique et créer le groove.',space:'Placer les sons en profondeur.',master:'Niveau final et cohérence sur tous les systèmes.',sample:'Extraire, découper et transformer un son existant.',hiphoptech:'Platines et MPC : les techniques qui ont façonné le genre.'};
-  return `<div class="section active"><h2>De l'idée au morceau fini</h2>
+  return `<div class="section active"><h2>${isEN?'From idea to finished track':`De l'idée au morceau fini`}</h2>
   <p class="lede">La production suit une chaîne. Chaque étape règle un problème différent, et aucune ne répare la précédente : on ne corrige pas une composition faible au mixage, ni un mauvais mix au mastering.</p>
   ${LANG==='en'&&!EN_DONE?`<div class="card" style="border-left:3px solid var(--amber)"><h3>english · translation in progress</h3><p>The interface is in English. Content is being translated section by section; anything not yet translated stays in French.</p><div class="xl" style="margin-top:10px">${EN_PARTS.map(([n,ok])=>`<span class="pill" style="${ok?'color:var(--green);border-color:var(--green)':''}">${ok?'✓':'…'} ${n}</span>`).join('')}</div></div>`:''}
   <h3 class="grp" style="margin-top:8px">Fondamentaux · la chaîne de production</h3>
@@ -2558,13 +2561,13 @@ function renderHome(){
   <button class="step" data-id="styles"><span class="n">♫</span><div><b>Conseils par style</b><span>Douze styles, du disco à la techno : codes, pièges et boucles d'exemple.</span></div></button>
   <button class="step" data-id="eras"><span class="n">⏱</span><div><b>Méthodes de production par décennie</b><span>Des années 70 aux années 2020 : l'outil, la contrainte, la méthode, et la même progression produite six fois.</span></div></button>
   <button class="step" data-id="swing"><span class="n">~</span><div><b>Swing et quantification</b><span>Le placement à la milliseconde dans la musique actuelle, avec un laboratoire interactif.</span></div></button>
-  <button class="step" data-id="ownstyle"><span class="n">✦</span><div><b>Créer son propre style</b><span>Mélanger ses influences avec méthode, avec un outil pour comparer deux styles et proposer une recette.</span></div></button>
-  <button class="step" data-id="hooks"><span class="n">♪</span><div><b>Mélodies et hooks qui marchent</b><span>Ce qui rend un motif mémorable, avec un laboratoire audio de cinq écritures comparées.</span></div></button>
-  <button class="step" data-id="meltrain"><span class="n">✎</span><div><b>S'entraîner aux mélodies</b><span>Un compositeur en grille avec analyse automatique et défis, pour répéter les principes de la page précédente.</span></div></button>
+  <button class="step" data-id="ownstyle"><span class="n">✦</span><div><b>${isEN?'Create your own style':`Créer son propre style`}</b><span>${isEN?'Blending your influences with method, with a tool to compare two styles and suggest a recipe.':`Mélanger ses influences avec méthode, avec un outil pour comparer deux styles et proposer une recette.`}</span></div></button>
+  <button class="step" data-id="hooks"><span class="n">♪</span><div><b>${isEN?'Melodies and hooks that work':`Mélodies et hooks qui marchent`}</b><span>${isEN?'What makes a motif memorable, with an audio lab comparing five different writings.':`Ce qui rend un motif mémorable, avec un laboratoire audio de cinq écritures comparées.`}</span></div></button>
+  <button class="step" data-id="meltrain"><span class="n">✎</span><div><b>${isEN?'Practice writing melodies':`S'entraîner aux mélodies`}</b><span>${isEN?'A grid composer with automatic analysis and challenges, to drill the principles from the previous page.':`Un compositeur en grille avec analyse automatique et défis, pour répéter les principes de la page précédente.`}</span></div></button>
 </div><h3 class="grp">Méthode et diffusion</h3><div class="flow">
   <button class="step" data-id="prac"><span class="n">✓✕</span><div><b>Bonnes et mauvaises pratiques</b><span>Ce qui fait consensus aujourd'hui, les erreurs documentées en fiches ERR, et trois check-lists.</span></div></button>
   <button class="step" data-id="mkt"><span class="n">↗</span><div><b>Diffuser et faire connaître sa musique</b><span>Marketing, plateformes, réseau : bonnes pratiques, erreurs, rétro-planning de sortie daté et modèles de messages.</span></div></button>
-  <button class="step" data-id="ai"><span class="n">✳</span><div><b>L'IA dans la musique actuelle</b><span>Ce qu'elle fait bien, ce qu'elle ne fait pas à ta place, et un guide tâche par tâche.</span></div></button>
+  <button class="step" data-id="ai"><span class="n">✳</span><div><b>${isEN?'AI in music today':`L'IA dans la musique actuelle`}</b><span>${isEN?'What it does well, what it doesn\'t do for you, and a task-by-task guide.':`Ce qu'elle fait bien, ce qu'elle ne fait pas à ta place, et un guide tâche par tâche.`}</span></div></button>
 </div><h3 class="grp">Réviser</h3><div class="flow">
   <button class="step" data-id="gloss"><span class="n">Aa</span><div><b>Glossaire</b><span>Tous les termes, en français et en anglais, avec recherche.</span></div></button>
   <button class="step" data-id="rev"><span class="n">↻</span><div><b>Mode révision</b><span>Quiz aléatoire sur tous les thèmes, qui insiste sur tes erreurs.</span></div></button></div>
@@ -4063,6 +4066,7 @@ EN.TOPICS.push(
  err:`<p><b>Programming with the mouse what should be played.</b> A pattern drawn click by click, however precise, doesn't have the same feel as a motif actually played on the pads and then partially quantized. The physical gesture — even an approximate one — carries information the mouse doesn't capture.</p>`,
  todo:`<p>In Live, a <b>Drum Rack</b> assigned to a pad controller (or the computer keyboard) to recreate a pad sampler's logic. Record by playing live over the loop rather than drawing notes in. Then apply a groove from the <b>MPC</b> folder in the <b>Groove Pool</b>, dialed in with <b>Timing</b> rather than at 100%.</p>`}
 );
+[['compo','Composition'],['groove','Groove and drums'],['bass','Bass and low end'],['arr','Arrangement'],['sd','Sound design'],['voix','Vocals and vocoder'],['mix','Mixing & equalization'],['comp','Compression'],['space','Space: reverb and delay'],['master','Mastering']].forEach(([id,title],i)=>{if(EN.TOPICS[i])EN.TOPICS[i].title=title;});
 EN.STYLES=[
 {lede:`Orchestral music played by humans to make people dance: a relentless rhythm section, rich harmony, strings and horns. Everything else on this list descends from it.`,
  idc:[[`Tempo`,`110–130 BPM, often 118–125`],[`Feeling`,`Straight, but played: human micro-variations, no programmed swing`],[`Harmony`,`Extended chords: m7, maj7, 9th, dominant 7th`],[`Form`,`Song form (verse/chorus) with long instrumental passages`]],
@@ -4375,6 +4379,7 @@ EN.ERAS=[
  cmp:[`Laptop, mobile, online`,`Stems, assistants, AI generation`,`Everything coexists: grid, swing, polyrhythms`,`Controlled, built for earbuds`,`Close vocal; immersive optional`,`Normalized`,`Attention, and rights`]}
 ];
 
+[['70s','70s'],['80s','80s'],['90s','90s'],['00s','2000s'],['10s','2010s'],['20s','2020s']].forEach(([id,name],i)=>{if(EN.ERAS[i])EN.ERAS[i].name=name;});
 EN.SWING={
  ess:[[`Swing is a ratio, not an effect`,`Take every pair of 16th notes and decide where the second one falls. At <b>50%</b>, in the middle: straight. At <b>66.7%</b>, two thirds of the way: that's an exact triplet, the blues and jazz shuffle. Today's music lives almost entirely <b>in between</b>, from 54 to 62%, where the ear hears neither straight nor triplet.`],
   [`Swinging eighths or 16ths`,`In jazz, blues, rock shuffle, it's the <b>eighth notes</b> that get delayed. In funk, hip-hop, house, garage, it's the <b>16th notes</b>, and the eighths stay straight. Swinging the wrong subdivision is the most common mistake.`],
