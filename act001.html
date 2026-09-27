@@ -139,12 +139,19 @@ h3{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;
 
 .boot{margin:10px 16px 0;padding:12px 14px;border-radius:10px;background:var(--warn-soft);color:var(--warn);font-size:14px;line-height:1.4}
 .boot.err{background:var(--red-soft);color:var(--red)}
+
+.focus{text-align:center}
+.focus .ftime{font-family:var(--mono);font-size:56px;font-weight:500;letter-spacing:-.02em;margin:4px 0 2px;line-height:1.1}
+.focus .fmode{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.focus.run .ftime{color:var(--accent)}
+.focus.brk .ftime{color:var(--warn)}
+.focus .ring i{transition:width .5s linear}
 @media (max-width:420px){ .stats{grid-template-columns:repeat(2,1fr)} h2{font-size:20px} }
 </style>
 </head>
 <body>
 <div class="header">
-  <div class="brand"><span data-i18n="brand">Act more. Think less.</span><small>act001 <span class="ver">v1.7</span></small></div>
+  <div class="brand"><span data-i18n="brand">Act more. Think less.</span><small>act001 <span class="ver">v1.8</span></small></div>
   <div class="spacer"></div>
   <span class="sync" id="sync">⚫ Local</span>
   <button class="icon-btn" id="theme-btn" onclick="toggleTheme()" aria-label="Theme">☀︎</button>
@@ -172,6 +179,13 @@ If this message stays, JavaScript is not running: open the file in Chrome or Saf
     <div class="card" id="morning"></div>
 
     <h3 data-i18n="h.day">During the day</h3>
+    <div class="card focus" id="focus-card">
+      <div class="fmode" id="f-mode"></div>
+      <div class="ftime" id="f-time">25:00</div>
+      <div class="ring"><i id="f-bar"></i></div>
+      <p class="small muted" id="f-msg" style="margin:6px 0 10px"></p>
+      <div class="row" id="f-btns"></div>
+    </div>
     <div class="card">
       <div class="check"><div class="grow"><div class="lbl" data-i18n="c.blocks">25-minute blocks</div><div class="hint" data-i18n="c.blocksH"></div></div>
         <div class="counter"><button onclick="bump('blocks',-1)">−</button><span class="n" id="c-blocks">0</span><button onclick="bump('blocks',1)">+</button></div></div>
@@ -305,7 +319,7 @@ If this message stays, JavaScript is not running: open the file in Chrome or Saf
       <button class="btn danger" onclick="clearAll()" data-i18n="s.clear">Clear all data</button>
     </div>
     <p class="small muted" data-i18n="s.footer"></p>
-    <p class="small muted mono" id="app-version">act001 · v1.7 · 2026-09-27</p>
+    <p class="small muted mono" id="app-version">act001 · v1.8 · 2026-09-27</p>
   </div>
 </div>
 
@@ -318,7 +332,7 @@ en:{
  brand:'Act more. Think less.', yes:'Yes', no:'No', undo:'Undo',
  'tab.today':'Today','tab.work':'Work','tab.friday':'Friday','tab.tools':'Tools','tab.settings':'Settings',
  'h.morning':'Morning','h.day':'During the day','h.evening':'Evening',
- 'c.blocks':'25-minute blocks','c.blocksH':'Commit to one block, not the whole task.',
+ 'c.blocks':'25-minute blocks','fo.focus':'Focus block','fo.break':'Break','fo.ready':'One block. Not the whole task.','fo.running':'Stay on the one task. Nothing else.','fo.paused':'Paused.','fo.doneMsg':'Block done ✓ It\u2019s counted.','fo.breakMsg':'Stand up, breathe, drink water.','fo.breakDone':'Break over. Ready for the next block?','fo.start':'Start 25 min','fo.pause':'Pause','fo.resume':'Resume','fo.reset':'Reset','fo.startBreak':'Break 5 min','fo.next':'Next block','fo.tDone':'25 minutes done: +1 block','fo.tBreak':'Break over','c.blocksH':'Commit to one block, not the whole task.',
  'c.urgesR':'Urges resisted','c.urgesRH':'Surf 90 s, then 2 minutes of the real task.',
  'c.urgesG':'Urges given in to','c.urgesGH':'No judgment. Just count.',
  'c.dec':'Decisions time-boxed','c.decH':'Minor 10 min · Big 1 day · Irreversible 1 week',
@@ -390,7 +404,7 @@ fr:{
  brand:'Agir plus. Penser moins.', yes:'Oui', no:'Non', undo:'Annuler',
  'tab.today':'Aujourd’hui','tab.work':'Projets','tab.friday':'Vendredi','tab.tools':'Outils','tab.settings':'Réglages',
  'h.morning':'Matin','h.day':'Pendant la journée','h.evening':'Soir',
- 'c.blocks':'Blocs de 25 minutes','c.blocksH':'S’engager sur un bloc, pas sur toute la tâche.',
+ 'c.blocks':'Blocs de 25 minutes','fo.focus':'Bloc de concentration','fo.break':'Pause','fo.ready':'Un seul bloc. Pas toute la tâche.','fo.running':'Reste sur cette seule tâche. Rien d\u2019autre.','fo.paused':'En pause.','fo.doneMsg':'Bloc terminé ✓ Il est comptabilisé.','fo.breakMsg':'Lève-toi, respire, bois de l\u2019eau.','fo.breakDone':'Pause terminée. Prêt pour le bloc suivant ?','fo.start':'Lancer 25 min','fo.pause':'Pause','fo.resume':'Reprendre','fo.reset':'Réinitialiser','fo.startBreak':'Pause 5 min','fo.next':'Bloc suivant','fo.tDone':'25 minutes terminées : +1 bloc','fo.tBreak':'Pause terminée','c.blocksH':'S’engager sur un bloc, pas sur toute la tâche.',
  'c.urgesR':'Envies résistées','c.urgesRH':'Surfer 90 s, puis 2 minutes de la vraie tâche.',
  'c.urgesG':'Envies cédées','c.urgesGH':'Sans jugement. On compte, c’est tout.',
  'c.dec':'Décisions minutées','c.decH':'Mineure 10 min · Importante 1 jour · Irréversible 1 semaine',
@@ -478,13 +492,13 @@ function applyStatic(){
 
 /* ---------- keys & state ---------- */
 const APP='act001';
-const K={data:'td_v4_'+APP, act:'td_act_'+APP, undo:'td_undo_'+APP, theme:'td_theme_'+APP, fs:'td_fs_'+APP, cid:'td_cid_'+APP, tok:'td_tok_'+APP, last:'td_last_'+APP, bk:'td_bk_'+APP, lang:'td_lang_'+APP, on:'td_drive_'+APP, ver:'td_dver_'+APP};
+const K={data:'td_v4_'+APP, act:'td_act_'+APP, undo:'td_undo_'+APP, theme:'td_theme_'+APP, fs:'td_fs_'+APP, cid:'td_cid_'+APP, tok:'td_tok_'+APP, last:'td_last_'+APP, bk:'td_bk_'+APP, lang:'td_lang_'+APP, on:'td_drive_'+APP, ver:'td_dver_'+APP, timer:'td_timer_'+APP};
 const LS={get(k){try{return localStorage.getItem(k)}catch(e){return null}}, set(k,v){try{localStorage.setItem(k,v)}catch(e){}}, del(k){try{localStorage.removeItem(k)}catch(e){}}};
 const SS={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}}, set(k,v){try{sessionStorage.setItem(k,v)}catch(e){}}, del(k){try{sessionStorage.removeItem(k)}catch(e){}}};
 let S={};
 
 function setLang(l){ if(!LANGS.includes(l)) l='en'; const ch=l!==LANG; LANG=l; LS.set(K.lang,l); applyStatic(); renderAll(true); renderSync(); if(!uT) urgeReset(); if(ch) toast(t('x.lang')); }
-const APP_VERSION='act001 · v1.7 · 2026-09-27';
+const APP_VERSION='act001 · v1.8 · 2026-09-27';
 
 function blankDay(){return {fmt:{},mt:0,start:false,promise:'',promiseKept:null,blocks:0,urgesR:0,urgesG:0,decisions:0,debrief1:'',debrief2:'',insist:'',letgo:''};}
 function ensureState(){
@@ -945,6 +959,64 @@ function renderFriday(force){
   document.querySelectorAll('#tab-friday textarea').forEach(grow);
 }
 
+/* ---------- FOCUS TIMER (25 min) ---------- */
+// Timer state is local to the device (not synced); the finished block is synced via the day counter.
+// Based on an end timestamp, so it survives screen lock, tab switches and reloads.
+const FOCUS_MS=25*60*1000, BREAK_MS=5*60*1000;
+let TM=null, audioCtx=null;
+try{ TM=JSON.parse(LS.get(K.timer)||'null'); }catch(e){ TM=null; }
+function tmSave(){ if(TM) LS.set(K.timer,JSON.stringify(TM)); else LS.del(K.timer); }
+function unlockAudio(){ try{ if(!audioCtx){ const A=window.AudioContext||window.webkitAudioContext; if(A) audioCtx=new A(); } if(audioCtx&&audioCtx.state==='suspended') audioCtx.resume(); }catch(e){} }
+function chime(){
+  try{ if(!audioCtx) return; const now=audioCtx.currentTime;
+    [0,0.35,0.7].forEach((d,i)=>{ const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+      o.type='sine'; o.frequency.value=[660,880,990][i]; g.gain.setValueAtTime(0.0001,now+d);
+      g.gain.exponentialRampToValueAtTime(0.25,now+d+0.03); g.gain.exponentialRampToValueAtTime(0.0001,now+d+0.3);
+      o.connect(g); g.connect(audioCtx.destination); o.start(now+d); o.stop(now+d+0.32); });
+  }catch(e){}
+  try{ if(navigator.vibrate) navigator.vibrate([200,100,200]); }catch(e){}
+}
+function tmStart(mode){ unlockAudio(); const dur=mode==='focus'?FOCUS_MS:BREAK_MS; TM={mode,dur,end:Date.now()+dur,left:null}; tmSave(); renderTimer(); }
+function tmPause(){ if(!TM||!TM.end) return; TM.left=Math.max(0,TM.end-Date.now()); TM.end=null; tmSave(); renderTimer(); }
+function tmResume(){ if(!TM||TM.end) return; unlockAudio(); TM.end=Date.now()+TM.left; TM.left=null; tmSave(); renderTimer(); }
+function tmReset(){ TM=null; tmSave(); renderTimer(); }
+function tmFinish(){
+  const wasFocus=TM.mode==='focus';
+  TM={mode:wasFocus?'done':'brkdone'}; tmSave();
+  if(wasFocus){ bump('blocks',1); toast(t('fo.tDone')); } else toast(t('fo.tBreak'));
+  chime(); renderTimer();
+}
+function tmTick(){ if(TM&&TM.end&&Date.now()>=TM.end) tmFinish(); else if(TM&&TM.end) renderTimer(true); }
+const mmss=ms=>{ const s=Math.max(0,Math.ceil(ms/1000)); return pad(Math.floor(s/60))+':'+pad(s%60); };
+function renderTimer(light){
+  const card=document.getElementById('focus-card'); if(!card) return;
+  const tm=document.getElementById('f-time'), bar=document.getElementById('f-bar');
+  let left=FOCUS_MS, dur=FOCUS_MS, mode='focus', state='idle';
+  if(TM){ mode=TM.mode;
+    if(mode==='done'||mode==='brkdone'){ state=mode; left=0; dur=1; }
+    else { dur=TM.dur; left=TM.end?TM.end-Date.now():TM.left; state=TM.end?'run':'paused'; } }
+  tm.textContent=mmss(left);
+  bar.style.width=((1-left/dur)*100).toFixed(1)+'%';
+  const isBreak=(mode==='break'||state==='brkdone');
+  card.className='card focus'+(state==='run'?(isBreak?' brk':' run'):'');
+  bar.style.background=isBreak?'var(--warn)':'var(--accent)';
+  document.title=(state==='run'?'⏱ '+mmss(left)+' · ':'')+'act001 — '+t('brand');
+  if(light) return;
+  document.getElementById('f-mode').textContent=isBreak?t('fo.break'):t('fo.focus');
+  const msg={idle:'fo.ready',run:isBreak?'fo.breakMsg':'fo.running',paused:'fo.paused',done:'fo.doneMsg',brkdone:'fo.breakDone'}[state];
+  document.getElementById('f-msg').textContent=t(msg);
+  const B=(fn,key,cls)=>`<button class="btn grow ${cls||''}" onclick="${fn}">${t(key)}</button>`;
+  let h='';
+  if(state==='idle') h=B("tmStart('focus')",'fo.start','primary');
+  else if(state==='run') h=B('tmPause()','fo.pause')+B('tmReset()','fo.reset');
+  else if(state==='paused') h=B('tmResume()','fo.resume','primary')+B('tmReset()','fo.reset');
+  else if(state==='done') h=B("tmStart('break')",'fo.startBreak','soft')+B("tmStart('focus')",'fo.next','primary');
+  else h=B("tmStart('focus')",'fo.next','primary')+B('tmReset()','fo.reset');
+  document.getElementById('f-btns').innerHTML=h;
+}
+setInterval(tmTick,500);
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') tmTick(); });
+
 /* ---------- TOOLS ---------- */
 let uT=null;
 function urgeStart(){
@@ -991,7 +1063,7 @@ function clearAll(){const s=snap(); S={}; ensureState(); S.resetAt=Date.now(); S
 function renderAll(force){
   const a=document.activeElement;
   if(!force&&a&&/INPUT|TEXTAREA/.test(a.tagName)&&a.id!=='idea-in'&&a.id!=='cid') return; // re-render guard
-  renderToday(); renderWork(); renderFriday(force); renderTools();
+  renderToday(); renderWork(); renderFriday(force); renderTools(); renderTimer();
 }
 
 /* ---------- init ---------- */
