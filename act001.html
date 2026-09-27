@@ -32,11 +32,12 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)}
 button{font:inherit;cursor:pointer;color:inherit}
 
 .header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:10px 16px;height:52px}
-.brand{font-weight:500;letter-spacing:-.01em}
+.brand{font-weight:500;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
 .brand small{font-family:var(--mono);color:var(--muted);font-size:11px;margin-left:6px}
 .spacer{flex:1}
 .sync{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}
-@media (max-width:420px){.brand small{display:none}}
+@media (max-width:520px){.brand span{display:none}.brand small{margin:0;font-size:14px;color:var(--text);font-weight:500}.tabs .tab{padding:8px 8px;font-size:13.5px}.tabs .tab .hide-sm{display:none}.tabs{padding:8px 6px;gap:2px}.header{gap:6px;padding:10px 12px}}
+#lang-btn{padding:0 8px;white-space:nowrap}
 .icon-btn{background:transparent;border:1px solid var(--line);border-radius:8px;min-width:36px;height:36px}
 .tabs{position:sticky;top:52px;z-index:99;background:var(--bg);display:flex;gap:4px;padding:8px 12px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
@@ -145,7 +146,7 @@ h3{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;
   <button class="tab" data-tab="work" data-i18n="tab.work">Work</button>
   <button class="tab" data-tab="friday" data-i18n="tab.friday">Friday</button>
   <button class="tab" data-tab="tools" data-i18n="tab.tools">Tools</button>
-  <button class="tab" data-tab="settings" data-i18n="tab.settings">Settings</button>
+  <button class="tab" data-tab="settings" id="tab-settings-btn"><span aria-hidden="true">⚙︎</span> <span class="hide-sm" data-i18n="tab.settings">Settings</span></button>
 </nav>
 
 <div class="page">
@@ -447,7 +448,8 @@ function applyStatic(){
   document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n));
   document.querySelectorAll('[data-i18n-html]').forEach(el=>el.innerHTML=t(el.dataset.i18nHtml));
   document.querySelectorAll('[data-i18n-ph]').forEach(el=>el.placeholder=t(el.dataset.i18nPh));
-  document.getElementById('lang-btn').textContent=LANG==='en'?'FR':'EN';
+  document.getElementById('lang-btn').textContent='🌐 '+(LANG==='en'?'FR':'EN');
+  document.getElementById('tab-settings-btn').setAttribute('aria-label',t('tab.settings'));
   document.getElementById('lang-btn').title=LANG==='en'?'Passer en français':'Switch to English';
   document.getElementById('lang-en').className='btn'+(LANG==='en'?' primary':'');
   document.getElementById('lang-fr').className='btn'+(LANG==='fr'?' primary':'');
@@ -518,6 +520,10 @@ function setSync(s){ syncState=s; if(s==='ok') LS.set(K.last,String(Date.now()))
 function renderSync(){
   const last=LS.get(K.last), el=document.getElementById('sync');
   let txt = syncState==='ok' ? t('sync.ok',{x:fmtWhen(last)}) : t('sync.'+syncState)+(last?t('sync.last',{x:fmtWhen(last)}):'');
+  if(window.matchMedia&&matchMedia('(max-width:520px)').matches){ // compact on phones: icon + time only
+    const ic=t('sync.'+syncState).split(' ')[0]||'';
+    txt=(syncState==='ok'?t('sync.ok',{x:''}).split(' ')[0]:ic)+(last?' '+fmtWhen(last):'');
+  }
   el.textContent=txt;
   el.title=last?t('sync.tipLast',{x:new Date(+last).toLocaleString(LOC())}):t('sync.tipNever');
   const line=document.getElementById('last-sync-line');
@@ -526,6 +532,7 @@ function renderSync(){
   if(bl) bl.textContent=bk?t('s.lastBackup',{x:fmtKey(bk)}):t('s.noBackup');
 }
 setInterval(renderSync,60000);
+window.addEventListener('resize',()=>renderSync());
 function saveLocal(){S.updated=Date.now(); LS.set(K.data,JSON.stringify(S));}
 function autoSave(){saveLocal(); if(token&&fileReady()){dirty=true;setSync('pending');clearTimeout(saveTimer);saveTimer=setTimeout(()=>drivePush(false),2000);} else if(!token) setSync('local');}
 function save(){saveLocal(); renderAll(true); if(token) drivePush(false);}
