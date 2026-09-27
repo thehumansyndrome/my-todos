@@ -144,7 +144,7 @@ h3{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;
 </head>
 <body>
 <div class="header">
-  <div class="brand"><span data-i18n="brand">Act more. Think less.</span><small>act001 <span class="ver">v1.6</span></small></div>
+  <div class="brand"><span data-i18n="brand">Act more. Think less.</span><small>act001 <span class="ver">v1.7</span></small></div>
   <div class="spacer"></div>
   <span class="sync" id="sync">⚫ Local</span>
   <button class="icon-btn" id="theme-btn" onclick="toggleTheme()" aria-label="Theme">☀︎</button>
@@ -266,15 +266,22 @@ If this message stays, JavaScript is not running: open the file in Chrome or Saf
     </div>
     <h3 data-i18n="s.drive">Google Drive sync</h3>
     <div class="card">
-      <p class="small muted" style="margin-top:0" data-i18n-html="s.driveInfo"></p>
-      <label class="small muted" data-i18n="s.cid">OAuth Client ID (same as your other apps)</label>
-      <input id="cid" placeholder="xxxxxxxx.apps.googleusercontent.com" onchange="setCid(this.value)">
-      <div class="row wrap" style="margin-top:10px">
-        <button class="btn primary" onclick="driveConnect()" data-i18n="s.connect">Connect Drive</button>
-        <button class="btn" onclick="drivePull(true)" data-i18n="s.pull">Pull now</button>
-        <button class="btn" onclick="drivePush(true)" data-i18n="s.push">Push now</button>
+      <div id="drive-off">
+        <p class="small muted" style="margin-top:0" data-i18n-html="s.driveHow"></p>
+        <button class="btn primary" style="width:100%;min-height:48px" onclick="driveConnect()" data-i18n="s.connect">Connect Google Drive</button>
       </div>
-      <p class="small muted" id="last-sync-line" style="margin:10px 0 0"></p>
+      <div id="drive-on" style="display:none">
+        <p style="margin:0 0 4px;font-weight:500;color:var(--accent)" data-i18n="s.connected">✓ Connected: automatic sync</p>
+        <p class="small muted" id="last-sync-line" style="margin:0 0 10px"></p>
+        <div class="row wrap">
+          <button class="btn" onclick="syncNow('manual')" data-i18n="s.syncNow">Sync now</button>
+          <button class="btn danger" onclick="driveDisconnect()" data-i18n="s.disconnect">Disconnect</button>
+        </div>
+      </div>
+      <details style="margin-top:12px"><summary class="small muted" style="cursor:pointer" data-i18n="s.advanced">Advanced</summary>
+        <label class="small muted" data-i18n="s.cid">OAuth Client ID</label>
+        <input id="cid" class="mono small" onchange="setCid(this.value)">
+      </details>
     </div>
     <h3 data-i18n="s.backup">Weekly backup</h3>
     <div class="card">
@@ -298,7 +305,7 @@ If this message stays, JavaScript is not running: open the file in Chrome or Saf
       <button class="btn danger" onclick="clearAll()" data-i18n="s.clear">Clear all data</button>
     </div>
     <p class="small muted" data-i18n="s.footer"></p>
-    <p class="small muted mono" id="app-version">act001 · v1.6 · 2026-09-27</p>
+    <p class="small muted mono" id="app-version">act001 · v1.7 · 2026-09-27</p>
   </div>
 </div>
 
@@ -356,16 +363,16 @@ en:{
  't.playbook':'The playbook','t.trap':'Trap: ',
  's.title':'Settings','s.lang':'Language','s.drive':'Google Drive sync',
  's.driveInfo':'Data is always saved on this device first. Drive keeps it in sync across devices (file <span class="mono">act001.json</span>).',
- 's.cid':'OAuth Client ID (same as your other apps)','s.connect':'Connect Drive','s.pull':'Pull now','s.push':'Push now',
+ 's.cid':'OAuth Client ID (only change if needed)','s.connect':'Connect Google Drive','s.driveHow':'Do this <b>once on each device</b> (phone and computer). After that, every change syncs automatically in both directions.','s.connected':'✓ Connected: automatic sync','s.syncNow':'Sync now','s.disconnect':'Disconnect','s.advanced':'Advanced',
  's.lastSync':'Last synced with Drive: {x}','s.never':'Never synced on this device.',
  's.backup':'Weekly backup','s.backupInfo':'Every Friday (or at the first sync after it), a dated copy is saved to the Drive folder <span class="mono">act001-backups</span>, e.g. <span class="mono">act001-backup-2026-10-02.json</span>. Old copies are kept; to restore one, download it and use Import JSON.',
  's.lastBackup':'Last weekly backup: {x}','s.noBackup':'No backup yet.','s.backupNow':'Back up now',
  's.display':'Display','s.reset':'Reset','s.theme':'Change theme','s.data':'Data','s.export':'Export JSON','s.import':'Import JSON','s.clear':'Clear all data',
  's.footer':'Deck: “Act more. Think less.”, 4 pillars · 5 tools · Friday review.',
- 'sync.local':'⚫ Local','sync.pending':'🟡 Pending','sync.ok':'🟢 Synced {x}','sync.err':'🔴 Error','sync.reconnect':'🔴 Reconnect','sync.last':' · last {x}',
+ 'sync.local':'⚫ Local','sync.pending':'🟡 Pending','sync.tap':'🟡 Tap to sync','sync.offline':'⚪ Offline','sync.ok':'🟢 Synced {x}','sync.err':'🔴 Error','sync.reconnect':'🔴 Reconnect','sync.last':' · last {x}',
  'sync.tipLast':'Last synced with Drive: {x}','sync.tipNever':'Not synced with Drive yet','yesterday':'yesterday',
  'x.cidSaved':'Client ID saved','x.cidFirst':'Add your OAuth Client ID first','x.gisLoad':'Google library not loaded yet','x.connectFirst':'Connect Drive first',
- 'x.noFile':'No file on Drive yet','x.pulled':'Pulled from Drive','x.pushed':'Pushed to Drive','x.connected':'Drive connected',
+ 'x.noFile':'No file on Drive yet','x.pulled':'Pulled from Drive','x.pushed':'Pushed to Drive','x.connected':'Drive connected. Sync is now automatic.','x.synced':'Synced','x.disconnected':'Drive disconnected on this device','x.merged':'Updated from your other device',
  'x.bkAuto':'Weekly backup saved to Drive','x.bkSaved':'Backup saved: {x}','x.bkFail':'Backup failed. Try again.',
  'x.imported':'Imported','x.badJson':'Invalid JSON file','x.cleared':'All data cleared','x.lang':'Language: English',
  pb:[
@@ -428,16 +435,16 @@ fr:{
  't.playbook':'Le guide','t.trap':'Piège : ',
  's.title':'Réglages','s.lang':'Langue','s.drive':'Synchronisation Google Drive',
  's.driveInfo':'Les données sont toujours enregistrées d’abord sur cet appareil. Drive les synchronise entre appareils (fichier <span class="mono">act001.json</span>).',
- 's.cid':'Client ID OAuth (le même que pour tes autres apps)','s.connect':'Connecter Drive','s.pull':'Récupérer','s.push':'Envoyer',
+ 's.cid':'Client ID OAuth (à ne changer qu\u2019en cas de besoin)','s.connect':'Connecter Google Drive','s.driveHow':'À faire <b>une seule fois sur chaque appareil</b> (téléphone et ordinateur). Ensuite, chaque modification se synchronise automatiquement dans les deux sens.','s.connected':'✓ Connecté : synchro automatique','s.syncNow':'Synchroniser','s.disconnect':'Déconnecter','s.advanced':'Avancé',
  's.lastSync':'Dernière synchro Drive : {x}','s.never':'Jamais synchronisé sur cet appareil.',
  's.backup':'Sauvegarde hebdomadaire','s.backupInfo':'Chaque vendredi (ou à la première synchro qui suit), une copie datée est enregistrée dans le dossier Drive <span class="mono">act001-backups</span>, ex. <span class="mono">act001-backup-2026-10-02.json</span>. Les anciennes copies sont conservées ; pour en restaurer une, télécharge-la puis utilise Importer JSON.',
  's.lastBackup':'Dernière sauvegarde hebdo : {x}','s.noBackup':'Aucune sauvegarde pour l’instant.','s.backupNow':'Sauvegarder maintenant',
  's.display':'Affichage','s.reset':'Réinitialiser','s.theme':'Changer de thème','s.data':'Données','s.export':'Exporter JSON','s.import':'Importer JSON','s.clear':'Effacer toutes les données',
  's.footer':'Présentation : « Agir plus. Penser moins. », 4 piliers · 5 outils · revue du vendredi.',
- 'sync.local':'⚫ Local','sync.pending':'🟡 En attente','sync.ok':'🟢 Synchro {x}','sync.err':'🔴 Erreur','sync.reconnect':'🔴 Reconnecter','sync.last':' · dernière {x}',
+ 'sync.local':'⚫ Local','sync.pending':'🟡 En attente','sync.tap':'🟡 Touche pour synchro','sync.offline':'⚪ Hors ligne','sync.ok':'🟢 Synchro {x}','sync.err':'🔴 Erreur','sync.reconnect':'🔴 Reconnecter','sync.last':' · dernière {x}',
  'sync.tipLast':'Dernière synchro Drive : {x}','sync.tipNever':'Pas encore synchronisé avec Drive','yesterday':'hier',
  'x.cidSaved':'Client ID enregistré','x.cidFirst':'Ajoute d’abord ton Client ID OAuth','x.gisLoad':'Bibliothèque Google pas encore chargée','x.connectFirst':'Connecte d’abord Drive',
- 'x.noFile':'Aucun fichier sur Drive pour l’instant','x.pulled':'Récupéré depuis Drive','x.pushed':'Envoyé vers Drive','x.connected':'Drive connecté',
+ 'x.noFile':'Aucun fichier sur Drive pour l’instant','x.pulled':'Récupéré depuis Drive','x.pushed':'Envoyé vers Drive','x.connected':'Drive connecté. La synchro est maintenant automatique.','x.synced':'Synchronisé','x.disconnected':'Drive déconnecté sur cet appareil','x.merged':'Mis à jour depuis ton autre appareil',
  'x.bkAuto':'Sauvegarde hebdo enregistrée sur Drive','x.bkSaved':'Sauvegarde enregistrée : {x}','x.bkFail':'Échec de la sauvegarde. Réessaie.',
  'x.imported':'Importé','x.badJson':'Fichier JSON invalide','x.cleared':'Toutes les données ont été effacées','x.lang':'Langue : français',
  pb:[
@@ -471,15 +478,15 @@ function applyStatic(){
 
 /* ---------- keys & state ---------- */
 const APP='act001';
-const K={data:'td_v4_'+APP, act:'td_act_'+APP, undo:'td_undo_'+APP, theme:'td_theme_'+APP, fs:'td_fs_'+APP, cid:'td_cid_'+APP, tok:'td_tok_'+APP, last:'td_last_'+APP, bk:'td_bk_'+APP, lang:'td_lang_'+APP};
+const K={data:'td_v4_'+APP, act:'td_act_'+APP, undo:'td_undo_'+APP, theme:'td_theme_'+APP, fs:'td_fs_'+APP, cid:'td_cid_'+APP, tok:'td_tok_'+APP, last:'td_last_'+APP, bk:'td_bk_'+APP, lang:'td_lang_'+APP, on:'td_drive_'+APP, ver:'td_dver_'+APP};
 const LS={get(k){try{return localStorage.getItem(k)}catch(e){return null}}, set(k,v){try{localStorage.setItem(k,v)}catch(e){}}, del(k){try{localStorage.removeItem(k)}catch(e){}}};
 const SS={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}}, set(k,v){try{sessionStorage.setItem(k,v)}catch(e){}}, del(k){try{sessionStorage.removeItem(k)}catch(e){}}};
 let S={};
 
 function setLang(l){ if(!LANGS.includes(l)) l='en'; const ch=l!==LANG; LANG=l; LS.set(K.lang,l); applyStatic(); renderAll(true); renderSync(); if(!uT) urgeReset(); if(ch) toast(t('x.lang')); }
-const APP_VERSION='act001 · v1.6 · 2026-09-27';
+const APP_VERSION='act001 · v1.7 · 2026-09-27';
 
-function blankDay(){return {start:false,promise:'',promiseKept:null,blocks:0,urgesR:0,urgesG:0,decisions:0,debrief1:'',debrief2:'',insist:'',letgo:''};}
+function blankDay(){return {fmt:{},mt:0,start:false,promise:'',promiseKept:null,blocks:0,urgesR:0,urgesG:0,decisions:0,debrief1:'',debrief2:'',insist:'',letgo:''};}
 function ensureState(){
   if(!S||typeof S!=='object') S={};
   if(!S.days||typeof S.days!=='object') S.days={};
@@ -500,6 +507,9 @@ function ensureState(){
   while(d.wins.length<3) d.wins.push(''); while(d.next3.length<3) d.next3.push('');
   if(typeof d.adjust!=='string') d.adjust='';
   if(typeof S.updated!=='number') S.updated=0;
+  if(!S.mt||typeof S.mt!=='object') S.mt={};
+  SECS.forEach(s=>{if(typeof S.mt[s]!=='number') S.mt[s]=0;});
+  if(typeof S.resetAt!=='number') S.resetAt=0;
   S.ver=1;
 }
 
@@ -546,80 +556,160 @@ function renderSync(){
 }
 setInterval(renderSync,60000);
 window.addEventListener('resize',()=>renderSync());
+/* ---------- change tracking (for merge) ---------- */
+const SECS=['work','shipped','killed','reviews','draft'];
+function mark(){ const n=Date.now(); for(const s of arguments) S.mt[s]=n; }
+function markF(f){ const d=day(), n=Date.now(); d.mt=n; if(!d.fmt||typeof d.fmt!=='object') d.fmt={}; d.fmt[f]=n; }
+function markAllDiff(before){ // after undo/import: everything that differs counts as a new change
+  const n=Date.now(); SECS.forEach(s=>{ if(JSON.stringify(before[s])!==JSON.stringify(S[s])) S.mt[s]=n; });
+  Object.keys(S.days).forEach(k=>{ const d=S.days[k]; if(JSON.stringify((before.days||{})[k])!==JSON.stringify(d)){ d.mt=n; d.fmt=d.fmt||{}; Object.keys(blankDay()).forEach(f=>{ if(f!=='fmt'&&f!=='mt') d.fmt[f]=n; }); } });
+}
+const sig=o=>JSON.stringify(Object.assign({},o,{updated:0}));
+function newer(rt,lt,R,L){ return rt>lt || (rt===lt && rt===0 && (R.updated||0)>(L.updated||0)); }
+function merge(L,Rm){
+  const M=JSON.parse(JSON.stringify(L)), Rd=Rm.days||{}, Rmt=Rm.mt||{};
+  M.resetAt=Math.max(L.resetAt||0,Rm.resetAt||0);
+  Object.keys(Rd).forEach(k=>{ const r=Rd[k]||{}, l=M.days[k];
+    if(!l){ M.days[k]=r; return; }
+    // field-level merge: keep the newest value of each field
+    const rf=r.fmt||{}, lf=l.fmt||{}, fields=new Set(Object.keys(blankDay()).concat(Object.keys(rf),Object.keys(lf)));
+    fields.delete('fmt'); fields.delete('mt');
+    const m=Object.assign({},l,{fmt:Object.assign({},lf)});
+    fields.forEach(f=>{ const rt=rf[f]||0, lt=lf[f]||0;
+      if(rt>lt || (rt===0&&lt===0&&r[f]!==undefined&&newer(r.mt||0,l.mt||0,Rm,L))){ m[f]=r[f]; if(rt) m.fmt[f]=rt; } });
+    m.mt=Math.max(r.mt||0,l.mt||0); M.days[k]=m; });
+  Object.keys(M.days).forEach(k=>{ const d=M.days[k]; if(M.resetAt && (d.mt||0)<M.resetAt) delete M.days[k]; });
+  SECS.forEach(s=>{ const rt=Rmt[s]||0, lt=(M.mt||{})[s]||0;
+    if(Rm[s]!==undefined && newer(rt,lt,Rm,L) && !(M.resetAt && rt<M.resetAt)){ M[s]=Rm[s]; M.mt[s]=rt; } });
+  M.updated=Math.max(L.updated||0,Rm.updated||0);
+  return M;
+}
+
+/* ---------- save ---------- */
 function saveLocal(){S.updated=Date.now(); LS.set(K.data,JSON.stringify(S));}
-function autoSave(){saveLocal(); if(token&&fileReady()){dirty=true;setSync('pending');clearTimeout(saveTimer);saveTimer=setTimeout(()=>drivePush(false),2000);} else if(!token) setSync('local');}
-function save(){saveLocal(); renderAll(true); if(token) drivePush(false);}
+function autoSave(){ saveLocal(); dirty=true; scheduleSync(1500); if(!driveOn()) setSync('local'); else setSync(token?'pending':'tap'); }
+function save(){ saveLocal(); dirty=true; renderAll(true); scheduleSync(300); }
 function load(){try{S=JSON.parse(LS.get(K.data)||'{}')}catch(e){S={}} ensureState();}
 
-/* ---------- Drive ---------- */
+/* ---------- Drive: auth ---------- */
+const CLIENT_ID='962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com';
 const SCOPE='https://www.googleapis.com/auth/drive.file', FILE='act001.json';
-let token=SS.get(K.tok)||null, tokenClient=null, fileId=null, lastRemote=0, pollTimer=null;
-const fileReady=()=>!!fileId;
-function setCid(v){LS.set(K.cid,v.trim()); tokenClient=null; toast(t('x.cidSaved'));}
-function driveConnect(){ // user gesture only
-  const cid=LS.get(K.cid);
-  if(!cid){toast(t('x.cidFirst'));return;}
-  if(!window.google||!google.accounts||!google.accounts.oauth2){toast(t('x.gisLoad'));return;}
-  if(!tokenClient) tokenClient=google.accounts.oauth2.initTokenClient({client_id:cid,scope:SCOPE,callback:r=>{
-    if(r&&r.access_token){token=r.access_token;SS.set(K.tok,token);afterConnect();} else {setSync('err');}
-  }});
-  tokenClient.requestAccessToken();
+const cid=()=>LS.get(K.cid)||CLIENT_ID;
+const driveOn=()=>LS.get(K.on)==='1';
+let token=null, tokenExp=0, tokenClient=null, fileId=null, pollTimer=null, syncTimer=null, syncing=false, again=false, authPending=false;
+(function(){ try{ const o=JSON.parse(LS.get(K.tok)||'null'); if(o&&o.exp>Date.now()+60000){token=o.tok;tokenExp=o.exp;} }catch(e){} })();
+function setCid(v){ LS.set(K.cid,v.trim()); tokenClient=null; toast(t('x.cidSaved')); }
+function gisReady(){ return !!(window.google&&google.accounts&&google.accounts.oauth2); }
+function getClient(){
+  if(tokenClient||!gisReady()) return tokenClient;
+  tokenClient=google.accounts.oauth2.initTokenClient({client_id:cid(),scope:SCOPE,callback:r=>{
+    authPending=false;
+    if(r&&r.access_token){
+      token=r.access_token; tokenExp=Date.now()+((+r.expires_in||3600)*1000);
+      LS.set(K.tok,JSON.stringify({tok:token,exp:tokenExp}));
+      const first=!driveOn(); LS.set(K.on,'1'); renderDriveUI();
+      if(first) toast(t('x.connected'));
+      syncNow('auth');
+    } else { setSync(driveOn()?'tap':'err'); }
+  }, error_callback:()=>{ authPending=false; setSync(driveOn()?'tap':'err'); }});
+  return tokenClient;
 }
+function requestToken(silent){ // must run inside a user gesture
+  const c=getClient(); if(!c){ toast(t('x.gisLoad')); return; }
+  authPending=true; c.requestAccessToken(silent?{prompt:''}:{});
+}
+function driveConnect(){ requestToken(false); }
+function driveDisconnect(){
+  try{ if(token&&gisReady()) google.accounts.oauth2.revoke(token,()=>{}); }catch(e){}
+  token=null; tokenExp=0; fileId=null; LS.del(K.tok); LS.del(K.on); LS.del(K.ver);
+  clearInterval(pollTimer); setSync('local'); renderDriveUI(); toast(t('x.disconnected'));
+}
+const tokenValid=()=>!!token && tokenExp>Date.now()+60000;
+// Renew the token silently on the first tap once it has expired (browsers block popups without a gesture)
+document.addEventListener('pointerdown',()=>{
+  if(driveOn() && !tokenValid() && !authPending && navigator.onLine!==false) requestToken(true);
+},true);
+
+/* ---------- Drive: API ---------- */
 async function api(url,opt){
   opt=opt||{}; opt.headers=Object.assign({Authorization:'Bearer '+token},opt.headers||{});
   const r=await fetch(url,opt);
-  if(r.status===401){token=null;SS.del(K.tok);setSync('reconnect');throw new Error('auth');}
+  if(r.status===401){ token=null; tokenExp=0; LS.del(K.tok); setSync('tap'); throw new Error('auth'); }
   if(!r.ok) throw new Error('http '+r.status);
   return r;
 }
 async function findFile(){
   const q=encodeURIComponent(`name='${FILE}' and trashed=false`);
-  const r=await api(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,modifiedTime)&spaces=drive`);
+  const r=await api(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,version)&orderBy=modifiedTime desc&spaces=drive`);
   const j=await r.json(); if(j.files&&j.files.length){fileId=j.files[0].id;return j.files[0];} return null;
-}
-async function afterConnect(){
-  try{ setSync('pending');
-    const f=await findFile();
-    if(f){ await drivePull(false); } else { await drivePush(false); }
-    startPoll(); toast(t('x.connected'));
-  }catch(e){ if(e.message!=='auth') setSync('err'); }
-}
-async function drivePull(manual){
-  if(!token){ if(manual) toast(t('x.connectFirst')); return; }
-  try{
-    if(!fileId&&!(await findFile())){ if(manual) toast(t('x.noFile')); return; }
-    const r=await api(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
-    const remote=await r.json();
-    if(manual || (remote.updated||0)>(S.updated||0)){
-      if(document.activeElement&&/INPUT|TEXTAREA/.test(document.activeElement.tagName)&&!manual) return; // re-render guard
-      S=remote; ensureState(); LS.set(K.data,JSON.stringify(S)); renderAll(true);
-    }
-    lastRemote=S.updated; setSync('ok'); if(manual) toast(t('x.pulled'));
-    maybeBackup();
-  }catch(e){ if(e.message!=='auth') setSync('err'); }
-}
-async function drivePush(manual){
-  if(!token){ if(manual) toast(t('x.connectFirst')); return; }
-  try{
-    const body=JSON.stringify(S);
-    if(!fileId) await findFile();
-    if(fileId){
-      await api(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,{method:'PATCH',headers:{'Content-Type':'application/json'},body});
-    } else {
-      fileId=await createJson(FILE,body);
-    }
-    dirty=false; lastRemote=S.updated; setSync('ok'); if(manual) toast(t('x.pushed'));
-    maybeBackup();
-  }catch(e){ if(e.message!=='auth') setSync('err'); }
 }
 async function createJson(name,body,parent){
   const meta={name,mimeType:'application/json'}; if(parent) meta.parents=[parent];
   const b='act001b'+Date.now();
   const mp=`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${b}\r\nContent-Type: application/json\r\n\r\n${body}\r\n--${b}--`;
-  const r=await api('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+b},body:mp});
-  return (await r.json()).id;
+  const r=await api('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,version',{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+b},body:mp});
+  const j=await r.json(); LS.set(K.ver,String(j.version||'')); return j.id;
 }
-function startPoll(){clearInterval(pollTimer); pollTimer=setInterval(()=>{ if(token&&!dirty&&document.visibilityState==='visible') drivePull(false); },60000);}
+
+/* ---------- Drive: two-way sync ---------- */
+function scheduleSync(ms){ clearTimeout(syncTimer); syncTimer=setTimeout(()=>syncNow('change'),ms); }
+let pendingRender=false;
+function applyMerged(M){
+  S=M; ensureState(); LS.set(K.data,JSON.stringify(S));
+  const a=document.activeElement;
+  if(a&&/INPUT|TEXTAREA/.test(a.tagName)&&a.id!=='idea-in'){ pendingRender=true; } // don't disturb typing
+  else renderAll(true);
+}
+document.addEventListener('focusout',()=>{ setTimeout(()=>{ if(pendingRender){ const a=document.activeElement; if(!(a&&/INPUT|TEXTAREA/.test(a.tagName))){ pendingRender=false; renderAll(true);} } },50); });
+
+async function syncNow(reason){
+  if(!driveOn()){ setSync('local'); return; }
+  if(navigator.onLine===false){ setSync('offline'); return; }
+  if(!tokenValid()){ setSync('tap'); if(reason==='manual') requestToken(true); return; }
+  if(syncing){ again=true; return; }
+  syncing=true; again=false;
+  try{
+    setSync('pending');
+    let meta=null;
+    if(!fileId) meta=await findFile();
+    if(!fileId){ // first device: create the file from local data
+      fileId=await createJson(FILE,JSON.stringify(S)); dirty=false;
+    } else {
+      if(!meta){ const r=await api(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=version`); meta=await r.json(); }
+      const remoteVer=String(meta.version||''), knownVer=LS.get(K.ver)||'';
+      let remote=null;
+      if(remoteVer!==knownVer || reason==='manual' || reason==='auth'){
+        const r=await api(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
+        try{ remote=await r.json(); }catch(e){ remote={}; }
+      }
+      let needPush=dirty;
+      if(remote){
+        const M=merge(S,remote);
+        if(sig(M)!==sig(S)){ const hadData=Object.keys(S.days).length>0; applyMerged(M); if(hadData&&reason!=='change') toast(t('x.merged')); }
+        if(sig(M)!==sig(remote)) needPush=true;
+        LS.set(K.ver,remoteVer);
+      }
+      if(needPush){
+        const r=await api(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media&fields=version`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(S)});
+        const j=await r.json(); LS.set(K.ver,String(j.version||''));
+      }
+      dirty=false;
+    }
+    setSync('ok'); if(reason==='manual') toast(t('x.synced'));
+    startPoll(); maybeBackup();
+  }catch(e){ if(e.message==='auth') setSync('tap'); else setSync(navigator.onLine===false?'offline':'err'); }
+  finally{ syncing=false; if(again) scheduleSync(200); }
+}
+function startPoll(){ clearInterval(pollTimer); pollTimer=setInterval(()=>{ if(document.visibilityState==='visible') syncNow('poll'); },20000); }
+function renderDriveUI(){
+  const on=driveOn(); const a=document.getElementById('drive-on'), b=document.getElementById('drive-off');
+  if(a) a.style.display=on?'':'none'; if(b) b.style.display=on?'none':'';
+}
+// sync as soon as the app comes back to the foreground or the network returns
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'){ renderAll(); syncNow('resume'); } else if(dirty){ syncNow('leave'); } });
+window.addEventListener('focus',()=>syncNow('resume'));
+window.addEventListener('online',()=>syncNow('resume'));
+window.addEventListener('offline',()=>setSync('offline'));
 
 /* ---------- weekly backup ---------- */
 const BK_FOLDER='act001-backups';
@@ -669,7 +759,7 @@ let toastT=null, undoSnap=null;
 function toast(msg,undo){
   const el=document.getElementById('toast'), u=document.getElementById('toast-undo');
   document.getElementById('toast-msg').textContent=msg;
-  if(undo){undoSnap=undo;u.style.display='';u.onclick=()=>{S=JSON.parse(undoSnap);ensureState();save();el.classList.remove('show');};}
+  if(undo){undoSnap=undo;u.style.display='';u.onclick=()=>{const before=S; S=JSON.parse(undoSnap);ensureState();markAllDiff(before);save();el.classList.remove('show');};}
   else u.style.display='none';
   el.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('show'),4000);
 }
@@ -701,10 +791,10 @@ function showTab(tb){
 document.getElementById('tabs').addEventListener('click',e=>{const b=e.target.closest('.tab'); if(b) showTab(b.dataset.tab);});
 
 /* ---------- TODAY ---------- */
-function toggle(field){const d=day(); d[field]=!d[field]; autoSave(); renderToday();}
-function setKept(v){const d=day(); d.promiseKept=(d.promiseKept===v?null:v); autoSave(); renderToday();}
-function bump(f,n){const d=day(); d[f]=Math.max(0,(d[f]||0)+n); autoSave(); renderToday();}
-function setField(f,v){day()[f]=v; autoSave();}
+function toggle(field){const d=day(); d[field]=!d[field]; markF(field); autoSave(); renderToday();}
+function setKept(v){const d=day(); d.promiseKept=(d.promiseKept===v?null:v); markF('promiseKept'); autoSave(); renderToday();}
+function bump(f,n){const d=day(); d[f]=Math.max(0,(d[f]||0)+n); markF(f); autoSave(); renderToday();}
+function setField(f,v){day()[f]=v; markF(f); autoSave();}
 
 function renderToday(){
   const now=new Date(), k=todayKey(), d=day(k);
@@ -749,7 +839,7 @@ function renderToday(){
 
 /* ---------- WORK ---------- */
 function addIdea(){const i=document.getElementById('idea-in'); const v=i.value.trim(); if(!v) return;
-  S.work.parking.unshift({id:uid(),text:v,done:'',added:todayKey()}); i.value=''; autoSave(); renderWork(); toast(t('w.tParked'));}
+  S.work.parking.unshift({id:uid(),text:v,done:'',added:todayKey()}); i.value=''; mark('work'); autoSave(); renderWork(); toast(t('w.tParked'));}
 function findAny(id){
   if(S.work.active&&S.work.active.id===id) return {item:S.work.active,where:'active'};
   let ix=S.work.next.findIndex(x=>x.id===id); if(ix>-1) return {item:S.work.next[ix],where:'next',ix};
@@ -759,16 +849,16 @@ function findAny(id){
 function detach(id){const f=findAny(id); if(!f) return null;
   if(f.where==='active') S.work.active=null; else S.work[f.where].splice(f.ix,1); return f.item;}
 function toNext(id){ if(S.work.next.length>=2){toast(t('w.tQueueFull'));return;}
-  const s=snap(), it=detach(id); if(!it) return; S.work.next.push(it); autoSave(); renderWork(); toast(t('w.tQueued'),s);}
-function toPark(id){const s=snap(), it=detach(id); if(!it) return; S.work.parking.unshift(it); autoSave(); renderWork(); toast(t('w.tBack'),s);}
+  const s=snap(), it=detach(id); if(!it) return; S.work.next.push(it); mark('work'); autoSave(); renderWork(); toast(t('w.tQueued'),s);}
+function toPark(id){const s=snap(), it=detach(id); if(!it) return; S.work.parking.unshift(it); mark('work'); autoSave(); renderWork(); toast(t('w.tBack'),s);}
 function activate(id){ if(S.work.active){toast(t('w.tOneActive'));return;}
-  const s=snap(), it=detach(id); if(!it) return; S.work.active=it; it.started=todayKey(); autoSave(); renderWork(); toast(t('w.tActive'),s);}
+  const s=snap(), it=detach(id); if(!it) return; S.work.active=it; it.started=todayKey(); mark('work'); autoSave(); renderWork(); toast(t('w.tActive'),s);}
 function promote(){ if(S.work.active||!S.work.next.length) return; activate(S.work.next[0].id); }
 function ship(){ const a=S.work.active; if(!a) return; const s=snap();
-  S.shipped.unshift({id:a.id,text:a.text,done:a.done,date:todayKey()}); S.work.active=null; autoSave(); renderWork(); toast(t('w.tShipped'),s);}
-function kill(id){const s=snap(), it=detach(id); if(!it) return; S.killed.unshift(Object.assign({},it,{date:todayKey()})); autoSave(); renderWork(); toast(t('w.tKilled'),s);}
-function moveNext(i,d){const j=i+d; if(j<0||j>=S.work.next.length) return; const a=S.work.next; [a[i],a[j]]=[a[j],a[i]]; autoSave(); renderWork();}
-function setDone(v){ if(S.work.active){S.work.active.done=v; autoSave();} }
+  S.shipped.unshift({id:a.id,text:a.text,done:a.done,date:todayKey()}); S.work.active=null; mark('work','shipped'); autoSave(); renderWork(); toast(t('w.tShipped'),s);}
+function kill(id){const s=snap(), it=detach(id); if(!it) return; S.killed.unshift(Object.assign({},it,{date:todayKey()})); mark('work','killed'); autoSave(); renderWork(); toast(t('w.tKilled'),s);}
+function moveNext(i,d){const j=i+d; if(j<0||j>=S.work.next.length) return; const a=S.work.next; [a[i],a[j]]=[a[j],a[i]]; mark('work'); autoSave(); renderWork();}
+function setDone(v){ if(S.work.active){S.work.active.done=v; mark('work'); autoSave();} }
 
 function renderWork(){
   const a=S.work.active;
@@ -817,15 +907,15 @@ function weekEvidence(ref){
   const shipped=S.shipped.filter(x=>ks.includes(x.date)).length;
   return {days:past.length,show,blocks,starts,kept,promises,ur,ug,deb,dec,shipped};
 }
-function fri(f,v){S.draft[f]=v; autoSave();}
-function friArr(f,i,v){S.draft[f][i]=v; autoSave();}
-function setScore(p,v){S.draft.scores[p]=(S.draft.scores[p]===v?-1:v); autoSave(); renderFriday();}
+function fri(f,v){S.draft[f]=v; mark('draft'); autoSave();}
+function friArr(f,i,v){S.draft[f][i]=v; mark('draft'); autoSave();}
+function setScore(p,v){S.draft.scores[p]=(S.draft.scores[p]===v?-1:v); mark('draft'); autoSave(); renderFriday();}
 function closeReview(){
   const d=S.draft;
   if(Object.values(d.scores).some(v=>v<0)){toast(t('f.tScore'));return;}
   const s=snap(), ev=weekEvidence();
   S.reviews.unshift({id:uid(),date:todayKey(),week:keyOf(monday(new Date())),scores:Object.assign({},d.scores),wins:d.wins.slice(),adjust:d.adjust,next3:d.next3.slice(),evidence:ev});
-  S.draft={}; ensureState(); autoSave(); renderFriday(true); toast(t('f.tClosed'),s);
+  S.draft={}; ensureState(); mark('reviews','draft'); autoSave(); renderFriday(true); toast(t('f.tClosed'),s);
 }
 function renderFriday(force){
   const ev=weekEvidence(), d=S.draft;
@@ -894,8 +984,8 @@ function renderTools(){
 /* ---------- data ---------- */
 function exportJson(){const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='act001-'+todayKey()+'.json';a.click();URL.revokeObjectURL(a.href);}
 function importJson(e){const f=e.target.files[0]; if(!f) return; const r=new FileReader();
-  r.onload=()=>{try{const s=snap(); S=JSON.parse(r.result); ensureState(); save(); toast(t('x.imported'),s);}catch(err){toast(t('x.badJson'));}}; r.readAsText(f); e.target.value='';}
-function clearAll(){const s=snap(); S={}; ensureState(); save(); toast(t('x.cleared'),s);}
+  r.onload=()=>{try{const s=snap(), before=S; S=JSON.parse(r.result); ensureState(); markAllDiff(before); save(); toast(t('x.imported'),s);}catch(err){toast(t('x.badJson'));}}; r.readAsText(f); e.target.value='';}
+function clearAll(){const s=snap(); S={}; ensureState(); S.resetAt=Date.now(); SECS.forEach(x=>S.mt[x]=S.resetAt); save(); toast(t('x.cleared'),s);}
 
 /* ---------- render ---------- */
 function renderAll(force){
@@ -910,12 +1000,12 @@ LANG=LS.get(K.lang)||((navigator.language||'en').toLowerCase().startsWith('fr')?
 applyStatic();
 applyTheme(LS.get(K.theme)||'light');
 {const i=parseInt(LS.get(K.fs)||'2',10); applyFontSize(isNaN(i)?2:i);}
-document.getElementById('cid').value=LS.get(K.cid)||'';
+document.getElementById('cid').value=cid();
 urgeReset();
 showTab(LS.get(K.act)||'today');
 renderSync();
-if(token){ afterConnect(); }
-document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') renderAll(); });
+renderDriveUI();
+if(driveOn()){ if(tokenValid()) syncNow('resume'); else setSync('tap'); }
 {const bw=document.getElementById('boot-warn'); if(bw&&!bw.classList.contains('err')) bw.style.display='none';}
 </script>
 </body>
