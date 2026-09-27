@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F7F6F3">
 <title>act001 — Act more. Think less.</title>
+<script>
+/* boot diagnostics: shows any JS error on screen (useful on phones without a console) */
+window.__bootErr=function(msg){try{var b=document.getElementById('boot-warn');if(!b)return;b.style.display='block';b.className='boot err';
+b.innerHTML='<b>Erreur de chargement / Loading error</b><br><span class="mono small">'+String(msg).replace(/</g,'&lt;')+'</span><br><span class="small">Envoie une capture de ce message. / Send a screenshot of this message.</span>';}catch(e){}};
+window.addEventListener('error',function(e){window.__bootErr((e.message||'error')+(e.lineno?' (l.'+e.lineno+')':''));});
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -129,6 +135,9 @@ h3{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;
 .hist{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .mini{display:flex;gap:4px}
 .mini span{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-radius:6px;padding:2px 6px}
+
+.boot{margin:10px 16px 0;padding:12px 14px;border-radius:10px;background:var(--warn-soft);color:var(--warn);font-size:14px;line-height:1.4}
+.boot.err{background:var(--red-soft);color:var(--red)}
 @media (max-width:420px){ .stats{grid-template-columns:repeat(2,1fr)} h2{font-size:20px} }
 </style>
 </head>
@@ -146,6 +155,9 @@ h3{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;
   <button class="tab" data-tab="tools" data-i18n="tab.tools">Tools</button>
   <button class="tab" data-tab="settings" id="tab-settings-btn"><span aria-hidden="true">⚙︎</span> <span class="hide-sm" data-i18n="tab.settings">Settings</span></button>
 </nav>
+<div id="boot-warn" class="boot"><b>Chargement… / Loading…</b><br>
+<span class="small">Si ce message reste affiché, le JavaScript ne s’exécute pas : ouvre le fichier dans Chrome ou Safari, pas dans un aperçu (Drive, Fichiers, messagerie).<br>
+If this message stays, JavaScript is not running: open the file in Chrome or Safari, not in a preview (Drive, Files, chat app).</span></div>
 
 <div class="page">
   <!-- TODAY -->
@@ -464,7 +476,7 @@ const SS={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}}, se
 let S={};
 
 function setLang(l){ if(!LANGS.includes(l)) l='en'; const ch=l!==LANG; LANG=l; LS.set(K.lang,l); applyStatic(); renderAll(true); renderSync(); if(!uT) urgeReset(); if(ch) toast(t('x.lang')); }
-const APP_VERSION='act001 · v1.4 · 2026-09-27';
+const APP_VERSION='act001 · v1.5 · 2026-09-27';
 
 function blankDay(){return {start:false,promise:'',promiseKept:null,blocks:0,urgesR:0,urgesG:0,decisions:0,debrief1:'',debrief2:'',insist:'',letgo:''};}
 function ensureState(){
@@ -676,7 +688,7 @@ const FS_STEPS=[0.8,0.9,1.0,1.1,1.2,1.35,1.5];
 function applyFontSize(i){const s=FS_STEPS[i];const p=document.querySelector('.page');
   if(CSS.supports('zoom','1')) p.style.zoom=s; else {p.style.transformOrigin='top center';p.style.transform=`scale(${s})`;}
   LS.set(K.fs,i); document.getElementById('font-size-label').textContent=Math.round(s*100)+'%';}
-function fsStep(d){let i=parseInt(LS.get(K.fs)??2,10); if(isNaN(i)) i=2; applyFontSize(Math.max(0,Math.min(FS_STEPS.length-1,i+d)));}
+function fsStep(d){let i=parseInt(LS.get(K.fs)||'2',10); if(isNaN(i)) i=2; applyFontSize(Math.max(0,Math.min(FS_STEPS.length-1,i+d)));}
 function fsReset(){applyFontSize(2);}
 
 /* ---------- tabs ---------- */
@@ -896,13 +908,14 @@ load();
 LANG=LS.get(K.lang)||((navigator.language||'en').toLowerCase().startsWith('fr')?'fr':'en');
 applyStatic();
 applyTheme(LS.get(K.theme)||'light');
-{const i=parseInt(LS.get(K.fs)??2,10); applyFontSize(isNaN(i)?2:i);}
+{const i=parseInt(LS.get(K.fs)||'2',10); applyFontSize(isNaN(i)?2:i);}
 document.getElementById('cid').value=LS.get(K.cid)||'';
 urgeReset();
 showTab(LS.get(K.act)||'today');
 renderSync();
 if(token){ afterConnect(); }
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') renderAll(); });
+{const bw=document.getElementById('boot-warn'); if(bw&&!bw.classList.contains('err')) bw.style.display='none';}
 </script>
 </body>
 </html>
