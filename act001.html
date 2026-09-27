@@ -37,7 +37,6 @@ button{font:inherit;cursor:pointer;color:inherit}
 .spacer{flex:1}
 .sync{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}
 @media (max-width:520px){.brand span{display:none}.brand small{margin:0;font-size:14px;color:var(--text);font-weight:500}.tabs .tab{padding:8px 8px;font-size:13.5px}.tabs .tab .hide-sm{display:none}.tabs{padding:8px 6px;gap:2px}.header{gap:6px;padding:10px 12px}}
-#lang-btn{padding:0 8px;white-space:nowrap}
 .icon-btn{background:transparent;border:1px solid var(--line);border-radius:8px;min-width:36px;height:36px}
 .tabs{position:sticky;top:52px;z-index:99;background:var(--bg);display:flex;gap:4px;padding:8px 12px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
@@ -138,7 +137,6 @@ h3{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;
   <div class="brand"><span data-i18n="brand">Act more. Think less.</span><small>act001</small></div>
   <div class="spacer"></div>
   <span class="sync" id="sync">⚫ Local</span>
-  <button class="icon-btn mono" id="lang-btn" onclick="toggleLang()" aria-label="Language" style="font-size:12px">FR</button>
   <button class="icon-btn" id="theme-btn" onclick="toggleTheme()" aria-label="Theme">☀︎</button>
 </div>
 <nav class="tabs" id="tabs">
@@ -246,10 +244,12 @@ h3{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;
   <!-- SETTINGS -->
   <div id="tab-settings" class="section">
     <h2 data-i18n="s.title">Settings</h2>
-    <h3 data-i18n="s.lang">Language</h3>
-    <div class="card row wrap">
-      <button class="btn" id="lang-en" onclick="setLang('en')">English</button>
-      <button class="btn" id="lang-fr" onclick="setLang('fr')">Français</button>
+    <h3>🌐 Langue / Language</h3>
+    <div class="card">
+      <div class="row">
+        <button class="btn grow" id="lang-fr" onclick="setLang('fr')" style="min-height:48px">Français</button>
+        <button class="btn grow" id="lang-en" onclick="setLang('en')" style="min-height:48px">English</button>
+      </div>
     </div>
     <h3 data-i18n="s.drive">Google Drive sync</h3>
     <div class="card">
@@ -285,6 +285,7 @@ h3{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;
       <button class="btn danger" onclick="clearAll()" data-i18n="s.clear">Clear all data</button>
     </div>
     <p class="small muted" data-i18n="s.footer"></p>
+    <p class="small muted mono" id="app-version"></p>
   </div>
 </div>
 
@@ -448,12 +449,11 @@ function applyStatic(){
   document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n));
   document.querySelectorAll('[data-i18n-html]').forEach(el=>el.innerHTML=t(el.dataset.i18nHtml));
   document.querySelectorAll('[data-i18n-ph]').forEach(el=>el.placeholder=t(el.dataset.i18nPh));
-  document.getElementById('lang-btn').textContent='🌐 '+(LANG==='en'?'FR':'EN');
   document.getElementById('tab-settings-btn').setAttribute('aria-label',t('tab.settings'));
-  document.getElementById('lang-btn').title=LANG==='en'?'Passer en français':'Switch to English';
-  document.getElementById('lang-en').className='btn'+(LANG==='en'?' primary':'');
-  document.getElementById('lang-fr').className='btn'+(LANG==='fr'?' primary':'');
+  document.getElementById('lang-en').className='btn grow'+(LANG==='en'?' primary':'');
+  document.getElementById('lang-fr').className='btn grow'+(LANG==='fr'?' primary':'');
   document.getElementById('toast-undo').textContent=t('undo');
+  const v=document.getElementById('app-version'); if(v) v.textContent=APP_VERSION;
 }
 
 /* ---------- keys & state ---------- */
@@ -463,8 +463,8 @@ const LS={get(k){try{return localStorage.getItem(k)}catch(e){return null}}, set(
 const SS={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}}, set(k,v){try{sessionStorage.setItem(k,v)}catch(e){}}, del(k){try{sessionStorage.removeItem(k)}catch(e){}}};
 let S={};
 
-function setLang(l){ if(!LANGS.includes(l)) l='en'; LANG=l; LS.set(K.lang,l); applyStatic(); renderAll(true); renderSync(); if(!uT) urgeReset(); }
-function toggleLang(){ setLang(LANG==='en'?'fr':'en'); toast(t('x.lang')); }
+function setLang(l){ if(!LANGS.includes(l)) l='en'; const ch=l!==LANG; LANG=l; LS.set(K.lang,l); applyStatic(); renderAll(true); renderSync(); if(!uT) urgeReset(); if(ch) toast(t('x.lang')); }
+const APP_VERSION='act001 · v1.4 · 2026-09-27';
 
 function blankDay(){return {start:false,promise:'',promiseKept:null,blocks:0,urgesR:0,urgesG:0,decisions:0,debrief1:'',debrief2:'',insist:'',letgo:''};}
 function ensureState(){
