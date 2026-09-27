@@ -123,7 +123,7 @@ h3{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;
 .ring{height:8px;background:var(--line);border-radius:999px;overflow:hidden;margin:8px 0}
 .ring i{display:block;height:100%;background:var(--accent);width:0;transition:width .25s linear}
 
-.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:200;display:flex;gap:12px;align-items:center}
+.toast{width:max-content;max-width:calc(100vw - 32px);position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:200;display:flex;gap:12px;align-items:center}
 .toast.show{opacity:1;pointer-events:auto}
 .toast button{background:transparent;border:none;color:var(--gold);font-weight:500}
 .hist{display:flex;justify-content:space-between;align-items:center;gap:10px}
@@ -134,162 +134,335 @@ h3{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;
 </head>
 <body>
 <div class="header">
-  <div class="brand">Act more. Think less.<small>act001</small></div>
+  <div class="brand"><span data-i18n="brand">Act more. Think less.</span><small>act001</small></div>
   <div class="spacer"></div>
   <span class="sync" id="sync">⚫ Local</span>
+  <button class="icon-btn mono" id="lang-btn" onclick="toggleLang()" aria-label="Language" style="font-size:12px">FR</button>
   <button class="icon-btn" id="theme-btn" onclick="toggleTheme()" aria-label="Theme">☀︎</button>
 </div>
 <nav class="tabs" id="tabs">
-  <button class="tab active" data-tab="today">Today</button>
-  <button class="tab" data-tab="work">Work</button>
-  <button class="tab" data-tab="friday">Friday</button>
-  <button class="tab" data-tab="tools">Tools</button>
-  <button class="tab" data-tab="settings">Settings</button>
+  <button class="tab active" data-tab="today" data-i18n="tab.today">Today</button>
+  <button class="tab" data-tab="work" data-i18n="tab.work">Work</button>
+  <button class="tab" data-tab="friday" data-i18n="tab.friday">Friday</button>
+  <button class="tab" data-tab="tools" data-i18n="tab.tools">Tools</button>
+  <button class="tab" data-tab="settings" data-i18n="tab.settings">Settings</button>
 </nav>
 
 <div class="page">
   <!-- TODAY -->
   <div id="tab-today" class="section active">
-    <h2 id="today-title">Today</h2>
+    <h2 id="today-title"></h2>
     <p class="sub" id="today-sub"></p>
     <div id="today-banner"></div>
     <div class="card"><div class="week" id="week"></div></div>
 
-    <h3>Morning</h3>
+    <h3 data-i18n="h.morning">Morning</h3>
     <div class="card" id="morning"></div>
 
-    <h3>During the day</h3>
+    <h3 data-i18n="h.day">During the day</h3>
     <div class="card">
-      <div class="check"><div class="grow"><div class="lbl">25-minute blocks</div><div class="hint">Commit to one block, not the whole task.</div></div>
+      <div class="check"><div class="grow"><div class="lbl" data-i18n="c.blocks">25-minute blocks</div><div class="hint" data-i18n="c.blocksH"></div></div>
         <div class="counter"><button onclick="bump('blocks',-1)">−</button><span class="n" id="c-blocks">0</span><button onclick="bump('blocks',1)">+</button></div></div>
-      <div class="check"><div class="grow"><div class="lbl">Urges resisted</div><div class="hint">Surf 90 s, then 2 minutes of the real task.</div></div>
+      <div class="check"><div class="grow"><div class="lbl" data-i18n="c.urgesR"></div><div class="hint" data-i18n="c.urgesRH"></div></div>
         <div class="counter"><button onclick="bump('urgesR',-1)">−</button><span class="n" id="c-urgesR">0</span><button onclick="bump('urgesR',1)">+</button></div></div>
-      <div class="check"><div class="grow"><div class="lbl">Urges given in to</div><div class="hint">No judgment. Just count.</div></div>
+      <div class="check"><div class="grow"><div class="lbl" data-i18n="c.urgesG"></div><div class="hint" data-i18n="c.urgesGH"></div></div>
         <div class="counter"><button onclick="bump('urgesG',-1)">−</button><span class="n" id="c-urgesG">0</span><button onclick="bump('urgesG',1)">+</button></div></div>
-      <div class="check"><div class="grow"><div class="lbl">Decisions time-boxed</div><div class="hint">Minor 10 min · Big 1 day · Irreversible 1 week</div></div>
+      <div class="check"><div class="grow"><div class="lbl" data-i18n="c.dec"></div><div class="hint" data-i18n="c.decH"></div></div>
         <div class="counter"><button onclick="bump('decisions',-1)">−</button><span class="n" id="c-decisions">0</span><button onclick="bump('decisions',1)">+</button></div></div>
     </div>
 
-    <h3>Evening</h3>
+    <h3 data-i18n="h.evening">Evening</h3>
     <div class="card" id="evening"></div>
   </div>
 
   <!-- WORK -->
   <div id="tab-work" class="section">
-    <h2>Finish &amp; ship</h2>
-    <p class="sub">1 active + 2 queued. A new idea goes to the parking lot, never straight into work.</p>
+    <h2 data-i18n="w.title">Finish &amp; ship</h2>
+    <p class="sub" data-i18n="w.sub"></p>
     <div class="row" style="margin-bottom:14px">
-      <input id="idea-in" class="grow" placeholder="New idea → parking lot" onkeydown="if(event.key==='Enter')addIdea()">
-      <button class="btn primary" onclick="addIdea()">Park</button>
+      <input id="idea-in" class="grow" data-i18n-ph="w.ideaPh" onkeydown="if(event.key==='Enter')addIdea()">
+      <button class="btn primary" onclick="addIdea()" data-i18n="w.park">Park</button>
     </div>
-    <h3>Active</h3><div id="w-active"></div>
-    <h3>Next (max 2)</h3><div id="w-next"></div>
-    <h3>Parking lot</h3><div class="card" id="w-park"></div>
-    <h3>Shipped</h3><div class="card" id="w-shipped"></div>
+    <h3 data-i18n="w.hActive">Active</h3><div id="w-active"></div>
+    <h3 data-i18n="w.hNext">Next (max 2)</h3><div id="w-next"></div>
+    <h3 data-i18n="w.hPark">Parking lot</h3><div class="card" id="w-park"></div>
+    <h3 data-i18n="w.hShipped">Shipped</h3><div class="card" id="w-shipped"></div>
   </div>
 
   <!-- FRIDAY -->
   <div id="tab-friday" class="section">
-    <h2>Weekly command review</h2>
-    <p class="sub" id="fri-sub">20 minutes. Facts, not feelings. Change one thing.</p>
+    <h2 data-i18n="f.title">Weekly command review</h2>
+    <p class="sub" id="fri-sub"></p>
     <div class="stats" id="fri-stats"></div>
-    <h3>1 · Scoreboard (0–3)</h3>
+    <h3 data-i18n="f.h1">1 · Scoreboard (0–3)</h3>
     <div class="card" id="fri-scores"></div>
-    <p class="small muted" style="margin:-4px 0 0">0 = absent · 1 = some days · 2 = most days · 3 = every day</p>
-    <h3>2 · Three wins</h3>
+    <p class="small muted" style="margin:-4px 0 0" data-i18n="f.scale"></p>
+    <h3 data-i18n="f.h2">2 · Three wins</h3>
     <div class="card" id="fri-wins"></div>
-    <h3>3 · One adjustment</h3>
-    <div class="card"><textarea id="fri-adjust" rows="2" placeholder="The one tweak for next week" oninput="fri('adjust',this.value);grow(this)"></textarea></div>
-    <h3>4 · Next week's 3 priorities</h3>
+    <h3 data-i18n="f.h3">3 · One adjustment</h3>
+    <div class="card"><textarea id="fri-adjust" rows="2" data-i18n-ph="f.adjPh" oninput="fri('adjust',this.value);grow(this)"></textarea></div>
+    <h3 data-i18n="f.h4">4 · Next week's 3 priorities</h3>
     <div class="card" id="fri-next"></div>
-    <div class="row" style="margin-top:12px"><button class="btn primary grow" onclick="closeReview()">Close this week's review</button></div>
-    <h3>History</h3>
+    <div class="row" style="margin-top:12px"><button class="btn primary grow" id="close-review" onclick="closeReview()" data-i18n="f.close">Close this week's review</button></div>
+    <h3 data-i18n="f.hist">History</h3>
     <div class="card" id="fri-hist"></div>
   </div>
 
   <!-- TOOLS -->
   <div id="tab-tools" class="section">
-    <h2>In the moment</h2>
-    <p class="sub">Open the one you need, use it, get back to action.</p>
+    <h2 data-i18n="t.title">In the moment</h2>
+    <p class="sub" data-i18n="t.sub"></p>
 
     <div class="card">
-      <div class="lbl" style="font-weight:500">Urge surfing: 90 seconds</div>
+      <div style="font-weight:500" data-i18n="t.urge">Urge surfing: 90 seconds</div>
       <div class="timer" id="u-time">1:30</div>
       <div class="ring"><i id="u-bar"></i></div>
-      <p class="small muted" id="u-msg" style="text-align:center;margin:4px 0 10px">This is an urge, not a need.</p>
-      <div class="row" id="u-btns"><button class="btn primary grow" onclick="urgeStart()">Start 90 s</button></div>
+      <p class="small muted" id="u-msg" style="text-align:center;margin:4px 0 10px"></p>
+      <div class="row" id="u-btns"></div>
     </div>
 
     <div class="card">
-      <div style="font-weight:500">Decision time-box</div>
+      <div style="font-weight:500" data-i18n="t.tbox">Decision time-box</div>
       <div class="row wrap" style="margin:10px 0">
-        <button class="btn sm soft" onclick="tbox(10,'min')">Minor: 10 min</button>
-        <button class="btn sm soft" onclick="tbox(1,'day')">Big, reversible: 1 day</button>
-        <button class="btn sm soft" onclick="tbox(7,'day')">Irreversible: 1 week</button>
+        <button class="btn sm soft" id="tb-minor" onclick="tbox(10,'min')" data-i18n="t.tbMinor">Minor: 10 min</button>
+        <button class="btn sm soft" id="tb-big" onclick="tbox(1,'day')" data-i18n="t.tbBig">Big, reversible: 1 day</button>
+        <button class="btn sm soft" id="tb-irr" onclick="tbox(7,'day')" data-i18n="t.tbIrr">Irreversible: 1 week</button>
       </div>
-      <div id="tbox-out" class="small muted">Pick a type to get your deadline.</div>
+      <div id="tbox-out" class="small muted" data-i18n="t.tbPick"></div>
     </div>
 
     <div class="card">
-      <div style="font-weight:500">Insist or let go? 10-second check</div>
-      <p class="small muted" style="margin:6px 0 10px">Is my next attempt different from the last one?</p>
-      <div class="row"><button class="btn soft grow" onclick="il(true)">Yes</button><button class="btn warn grow" onclick="il(false)">No</button></div>
+      <div style="font-weight:500" data-i18n="t.il">Insist or let go? 10-second check</div>
+      <p class="small muted" style="margin:6px 0 10px" data-i18n="t.ilQ"></p>
+      <div class="row"><button class="btn soft grow" id="il-yes" onclick="il(true)" data-i18n="yes">Yes</button><button class="btn warn grow" id="il-no" onclick="il(false)" data-i18n="no">No</button></div>
       <div id="il-out" class="small" style="margin-top:10px"></div>
     </div>
 
-    <h3>The playbook</h3>
+    <h3 data-i18n="t.playbook">The playbook</h3>
     <div id="playbook"></div>
   </div>
 
   <!-- SETTINGS -->
   <div id="tab-settings" class="section">
-    <h2>Settings</h2>
-    <h3>Google Drive sync</h3>
+    <h2 data-i18n="s.title">Settings</h2>
+    <h3 data-i18n="s.lang">Language</h3>
+    <div class="card row wrap">
+      <button class="btn" id="lang-en" onclick="setLang('en')">English</button>
+      <button class="btn" id="lang-fr" onclick="setLang('fr')">Français</button>
+    </div>
+    <h3 data-i18n="s.drive">Google Drive sync</h3>
     <div class="card">
-      <p class="small muted" style="margin-top:0">Data is always saved on this device first. Drive keeps it in sync across devices (file <span class="mono">act001.json</span>).</p>
-      <label class="small muted">OAuth Client ID (same as your other apps)</label>
+      <p class="small muted" style="margin-top:0" data-i18n-html="s.driveInfo"></p>
+      <label class="small muted" data-i18n="s.cid">OAuth Client ID (same as your other apps)</label>
       <input id="cid" placeholder="xxxxxxxx.apps.googleusercontent.com" onchange="setCid(this.value)">
       <div class="row wrap" style="margin-top:10px">
-        <button class="btn primary" onclick="driveConnect()">Connect Drive</button>
-        <button class="btn" onclick="drivePull(true)">Pull now</button>
-        <button class="btn" onclick="drivePush(true)">Push now</button>
+        <button class="btn primary" onclick="driveConnect()" data-i18n="s.connect">Connect Drive</button>
+        <button class="btn" onclick="drivePull(true)" data-i18n="s.pull">Pull now</button>
+        <button class="btn" onclick="drivePush(true)" data-i18n="s.push">Push now</button>
       </div>
-      <p class="small muted" id="last-sync-line" style="margin:10px 0 0">Never synced on this device.</p>
+      <p class="small muted" id="last-sync-line" style="margin:10px 0 0"></p>
     </div>
-    <h3>Weekly backup</h3>
+    <h3 data-i18n="s.backup">Weekly backup</h3>
     <div class="card">
-      <p class="small muted" style="margin-top:0">Every Friday (or at the first sync after it), a dated copy is saved to the Drive folder <span class="mono">act001-backups</span>, for example <span class="mono">act001-backup-2026-10-02.json</span>. Old copies are kept; to restore one, download it and use Import JSON.</p>
-      <p class="small" id="backup-line" style="margin:0 0 10px">No backup yet.</p>
-      <button class="btn" onclick="backupNow()">Back up now</button>
+      <p class="small muted" style="margin-top:0" data-i18n-html="s.backupInfo"></p>
+      <p class="small" id="backup-line" style="margin:0 0 10px"></p>
+      <button class="btn" id="backup-now" onclick="backupNow()" data-i18n="s.backupNow">Back up now</button>
     </div>
-    <h3>Display</h3>
+    <h3 data-i18n="s.display">Display</h3>
     <div class="card row wrap">
       <button class="btn" onclick="fsStep(-1)">A−</button>
       <span class="mono" id="font-size-label">100%</span>
       <button class="btn" onclick="fsStep(1)">A+</button>
-      <button class="btn" onclick="fsReset()">Reset</button>
+      <button class="btn" onclick="fsReset()" data-i18n="s.reset">Reset</button>
       <span class="spacer"></span>
-      <button class="btn" onclick="toggleTheme()">Change theme</button>
+      <button class="btn" onclick="toggleTheme()" data-i18n="s.theme">Change theme</button>
     </div>
-    <h3>Data</h3>
+    <h3 data-i18n="s.data">Data</h3>
     <div class="card row wrap">
-      <button class="btn" onclick="exportJson()">Export JSON</button>
-      <label class="btn" style="display:inline-flex;align-items:center">Import JSON<input type="file" accept=".json,application/json" style="display:none" onchange="importJson(event)"></label>
-      <button class="btn danger" onclick="clearAll()">Clear all data</button>
+      <button class="btn" onclick="exportJson()" data-i18n="s.export">Export JSON</button>
+      <label class="btn" style="display:inline-flex;align-items:center"><span data-i18n="s.import">Import JSON</span><input type="file" accept=".json,application/json" style="display:none" onchange="importJson(event)"></label>
+      <button class="btn danger" onclick="clearAll()" data-i18n="s.clear">Clear all data</button>
     </div>
-    <p class="small muted">Deck: “Act more. Think less.”, 4 pillars · 5 tools · Friday review.</p>
+    <p class="small muted" data-i18n="s.footer"></p>
   </div>
 </div>
 
-<div class="toast" id="toast"><span id="toast-msg"></span><button id="toast-undo" style="display:none">Undo</button></div>
+<div class="toast" id="toast"><span id="toast-msg"></span><button id="toast-undo" style="display:none"></button></div>
 
 <script>
+/* ---------- i18n ---------- */
+const I18N={
+en:{
+ brand:'Act more. Think less.', yes:'Yes', no:'No', undo:'Undo',
+ 'tab.today':'Today','tab.work':'Work','tab.friday':'Friday','tab.tools':'Tools','tab.settings':'Settings',
+ 'h.morning':'Morning','h.day':'During the day','h.evening':'Evening',
+ 'c.blocks':'25-minute blocks','c.blocksH':'Commit to one block, not the whole task.',
+ 'c.urgesR':'Urges resisted','c.urgesRH':'Surf 90 s, then 2 minutes of the real task.',
+ 'c.urgesG':'Urges given in to','c.urgesGH':'No judgment. Just count.',
+ 'c.dec':'Decisions time-boxed','c.decH':'Minor 10 min · Big 1 day · Irreversible 1 week',
+ 'd.active':'Active project: <b>{x}</b>','d.noActive':'No active project yet.','d.pick':'Pick one →',
+ 'd.weekdays':['M','T','W','T','F','S','S'],
+ 'd.okBanner':'✓ Showed up today. That’s the win. Anything more is a bonus.',
+ 'd.missBanner':'<b>Never miss twice.</b> Yesterday was missed. Do the 2-minute version now; it still counts.',
+ 'd.goBanner':'Don’t think it through. Do the 2-minute start.',
+ 'd.start':'2-minute start on today’s #1 task','d.startH':'Shrink it until starting takes 2 minutes. Then start.',
+ 'd.promise':'One promise to myself today','d.promisePh':'e.g. 3 sets of push-ups before lunch',
+ 'd.kept':'Promise kept?','d.noPromise':'No promise set this morning.',
+ 'd.debrief':'2-line debrief','d.deb1':'What worked?','d.deb2':'What would I change tomorrow?',
+ 'd.il':'Insisted on / let go of','d.ilIns':'One thing I insisted on','d.ilLet':'One thing I let go of',
+ 'w.title':'Finish & ship','w.sub':'1 active + 2 queued. A new idea goes to the parking lot, never straight into work.',
+ 'w.ideaPh':'New idea → parking lot','w.park':'Park','w.hActive':'Active','w.hNext':'Next (max 2)','w.hPark':'Parking lot','w.hShipped':'Shipped',
+ 'w.tagActive':'ACTIVE','w.since':'since {x}','w.doneLbl':'Definition of done','w.donePh':'What does finished look like?',
+ 'w.ship':'Ship it','w.pause':'Pause → parking','w.kill':'Kill','w.promote':'Promote “{x}”','w.emptyActive':'Empty. Pick one from the parking lot.',
+ 'w.tagNext':'NEXT {x}','w.makeActive':'Make active','w.parkBtn':'Park','w.free':'Free slot','w.toNext':'→ Next',
+ 'w.parkEmpty':'Empty. Ideas you capture land here.','w.shipEmpty':'Nothing shipped yet. Aim: one thing every Friday.',
+ 'w.tParked':'Parked. It waits its turn.','w.tQueueFull':'Queue full (2). Finish or kill something first.','w.tQueued':'Queued',
+ 'w.tBack':'Back to parking lot','w.tOneActive':'One active project at a time. Ship or kill it first.','w.tActive':'Now active. Define “done” first.',
+ 'w.tShipped':'Shipped 🎯','w.tKilled':'Dropped on purpose',
+ 'f.title':'Weekly command review','f.sub':'20 minutes. Facts, not feelings. Change one thing.','f.lastAdj':'Last week’s adjustment: <b>{x}</b>',
+ 'f.h1':'1 · Scoreboard (0–3)','f.scale':'0 = absent · 1 = some days · 2 = most days · 3 = every day',
+ 'f.h2':'2 · Three wins','f.h3':'3 · One adjustment','f.adjPh':'The one tweak for next week','f.h4':'4 · Next week’s 3 priorities',
+ 'f.close':'Close this week’s review','f.hist':'History',
+ 'f.sShow':'days showed up','f.sBlocks':'25-min blocks','f.sKept':'promises kept','f.sShipped':'shipped',
+ 'f.p':[['1 · Action','Just start'],['2 · Discipline','Every day'],['3 · Improve','Experiment'],['4 · Self-respect','Promises kept']],
+ 'f.eA':'{a} starts · {b} blocks','f.eD':'{a} of {b} days showed up','f.eI':'{a} debriefs · {b} time-boxed decisions','f.eR':'{a}/{b} promises · {c} urges resisted, {d} given in',
+ 'f.winPh':'Win {x}, however small','f.nextPh':'Priority {x}, and block time for it',
+ 'f.tScore':'Score all 4 pillars first','f.tClosed':'Review closed. Set course for next week.',
+ 'f.weekOf':'Week of {x}','f.histEmpty':'Your first review closes a week. The bad weeks are the ones it’s for.','f.barsTitle':'Total score per week (max 12)',
+ 't.title':'In the moment','t.sub':'Open the one you need, use it, get back to action.',
+ 't.urge':'Urge surfing: 90 seconds','t.start90':'Start 90 s','t.cancel':'Cancel','t.resisted':'Resisted','t.gaveIn':'Gave in',
+ 't.u0':'This is an urge, not a need.','t.u1':'Breathe. This is an urge, not a need.','t.u2':'It’s rising. Just watch it.','t.u3':'Peak. It won’t last.','t.u4':'Passing. Pick your 2-minute action.','t.uDone':'Passed. Now: 2 minutes of the real task.',
+ 't.tRes':'Logged: resisted. Now 2 minutes of the real task.','t.tGave':'Logged. No judgment. Next one.',
+ 't.tbox':'Decision time-box','t.tbMinor':'Minor: 10 min','t.tbBig':'Big, reversible: 1 day','t.tbIrr':'Irreversible: 1 week','t.tbPick':'Pick a type to get your deadline.',
+ 't.tbOut':'<b style="color:var(--text)">Decide by {x}.</b> Stop gathering info then. Still unsure? Take the default option.','t.tbPre':' Add a 5-minute pre-mortem.',
+ 't.il':'Insist or let go? 10-second check','t.ilQ':'Is my next attempt different from the last one?',
+ 't.ilYes':'<b>Insist.</b> New attempt, new information. Go.',
+ 't.ilNo':'<b>Stop or change the approach.</b> Repeating the same move is stubbornness. Check: is it failing, or just hard? If only hard, insist.',
+ 't.playbook':'The playbook','t.trap':'Trap: ',
+ 's.title':'Settings','s.lang':'Language','s.drive':'Google Drive sync',
+ 's.driveInfo':'Data is always saved on this device first. Drive keeps it in sync across devices (file <span class="mono">act001.json</span>).',
+ 's.cid':'OAuth Client ID (same as your other apps)','s.connect':'Connect Drive','s.pull':'Pull now','s.push':'Push now',
+ 's.lastSync':'Last synced with Drive: {x}','s.never':'Never synced on this device.',
+ 's.backup':'Weekly backup','s.backupInfo':'Every Friday (or at the first sync after it), a dated copy is saved to the Drive folder <span class="mono">act001-backups</span>, e.g. <span class="mono">act001-backup-2026-10-02.json</span>. Old copies are kept; to restore one, download it and use Import JSON.',
+ 's.lastBackup':'Last weekly backup: {x}','s.noBackup':'No backup yet.','s.backupNow':'Back up now',
+ 's.display':'Display','s.reset':'Reset','s.theme':'Change theme','s.data':'Data','s.export':'Export JSON','s.import':'Import JSON','s.clear':'Clear all data',
+ 's.footer':'Deck: “Act more. Think less.”, 4 pillars · 5 tools · Friday review.',
+ 'sync.local':'⚫ Local','sync.pending':'🟡 Pending','sync.ok':'🟢 Synced {x}','sync.err':'🔴 Error','sync.reconnect':'🔴 Reconnect','sync.last':' · last {x}',
+ 'sync.tipLast':'Last synced with Drive: {x}','sync.tipNever':'Not synced with Drive yet','yesterday':'yesterday',
+ 'x.cidSaved':'Client ID saved','x.cidFirst':'Add your OAuth Client ID first','x.gisLoad':'Google library not loaded yet','x.connectFirst':'Connect Drive first',
+ 'x.noFile':'No file on Drive yet','x.pulled':'Pulled from Drive','x.pushed':'Pushed to Drive','x.connected':'Drive connected',
+ 'x.bkAuto':'Weekly backup saved to Drive','x.bkSaved':'Backup saved: {x}','x.bkFail':'Backup failed. Try again.',
+ 'x.imported':'Imported','x.badJson':'Invalid JSON file','x.cleared':'All data cleared','x.lang':'Language: English',
+ pb:[
+ ['Pillar 1','Action: Just start',['2-minute start: shrink the task, then start','Act before planning; plan only what action reveals','25-minute blocks: commit to one, not the whole task','Friday: review your Action/Thinking ratio'],'“I’m not ready yet” is fear dressed as preparation.'],
+ ['Pillar 2','Everyday: Build discipline',['2-minute floor on bad days: it still counts','Shape the environment: tools ready, friction removed','Anchor to an existing habit','Never miss twice'],'Waiting to feel like it.'],
+ ['Pillar 3','Learn & improve',['One 1% tweak per week','One experiment at a time, for a week','Daily 2-line debrief','Notice one meaningful small thing'],'Optimizing instead of acting.'],
+ ['Pillar 4','Self-respect',['One small promise to yourself, kept','Clear no, no over-justifying','Visible follow-through','Evening: did I act in a way I respect?'],'Seeking approval.'],
+ ['Tool 1','Decide faster',['Classify: reversible? stakes?','Set a deadline, stop gathering info','Default option if still unsure','Log it; reread in a month'],'Research as avoidance.'],
+ ['Tool 2','Insist or let go',['Insist on your own effort; let go of others’ choices','10-second check: is the next attempt different?','Two-strike rule with people','Time-box goals; decide on Friday'],'Letting go to avoid what’s hard.'],
+ ['Tool 3','Finish & ship',['1 active + 2 queued; ideas → parking lot','Define “done” before starting','Ship something every Friday','Close or kill one open loop weekly'],'Starting new to escape the boring middle.'],
+ ['Tool 4','Delay gratification',['Name it: an urge, not a need','Surf 90 seconds','Swap in 2 minutes of the real task','Reward after effort, never before'],'“Just this once” is the urge talking.'],
+ ['Tool 5','High standards, kind tone',['Coach voice with yourself','Standard or just preference?','State the need, then ask','Name what went right first'],'All-or-nothing thinking.']]
+},
+fr:{
+ brand:'Agir plus. Penser moins.', yes:'Oui', no:'Non', undo:'Annuler',
+ 'tab.today':'Aujourd’hui','tab.work':'Projets','tab.friday':'Vendredi','tab.tools':'Outils','tab.settings':'Réglages',
+ 'h.morning':'Matin','h.day':'Pendant la journée','h.evening':'Soir',
+ 'c.blocks':'Blocs de 25 minutes','c.blocksH':'S’engager sur un bloc, pas sur toute la tâche.',
+ 'c.urgesR':'Envies résistées','c.urgesRH':'Surfer 90 s, puis 2 minutes de la vraie tâche.',
+ 'c.urgesG':'Envies cédées','c.urgesGH':'Sans jugement. On compte, c’est tout.',
+ 'c.dec':'Décisions minutées','c.decH':'Mineure 10 min · Importante 1 jour · Irréversible 1 semaine',
+ 'd.active':'Projet actif : <b>{x}</b>','d.noActive':'Aucun projet actif.','d.pick':'En choisir un →',
+ 'd.weekdays':['L','M','M','J','V','S','D'],
+ 'd.okBanner':'✓ Présent aujourd’hui. C’est ça, la victoire. Le reste est du bonus.',
+ 'd.missBanner':'<b>Jamais deux fois de suite.</b> Hier a été manqué. Fais la version 2 minutes maintenant : elle compte.',
+ 'd.goBanner':'N’y réfléchis pas. Fais le démarrage de 2 minutes.',
+ 'd.start':'Démarrage de 2 minutes sur la tâche n°1','d.startH':'Réduis-la jusqu’à ce que démarrer prenne 2 minutes. Puis démarre.',
+ 'd.promise':'Une promesse à moi-même aujourd’hui','d.promisePh':'ex. 3 séries de pompes avant midi',
+ 'd.kept':'Promesse tenue ?','d.noPromise':'Aucune promesse ce matin.',
+ 'd.debrief':'Débrief en 2 lignes','d.deb1':'Qu’est-ce qui a marché ?','d.deb2':'Que changerais-je demain ?',
+ 'd.il':'Insisté / lâché prise','d.ilIns':'Une chose sur laquelle j’ai insisté','d.ilLet':'Une chose que j’ai lâchée',
+ 'w.title':'Finir & livrer','w.sub':'1 actif + 2 en file. Une nouvelle idée va au parking, jamais directement en production.',
+ 'w.ideaPh':'Nouvelle idée → parking','w.park':'Garer','w.hActive':'Actif','w.hNext':'Suivants (max 2)','w.hPark':'Parking d’idées','w.hShipped':'Livrés',
+ 'w.tagActive':'ACTIF','w.since':'depuis le {x}','w.doneLbl':'Définition de « terminé »','w.donePh':'À quoi ressemble le résultat fini ?',
+ 'w.ship':'Livrer','w.pause':'Pause → parking','w.kill':'Abandonner','w.promote':'Activer « {x} »','w.emptyActive':'Vide. Choisis-en un dans le parking.',
+ 'w.tagNext':'SUIVANT {x}','w.makeActive':'Rendre actif','w.parkBtn':'Garer','w.free':'Emplacement libre','w.toNext':'→ Suivant',
+ 'w.parkEmpty':'Vide. Les idées capturées arrivent ici.','w.shipEmpty':'Rien de livré pour l’instant. Objectif : une chose chaque vendredi.',
+ 'w.tParked':'Garé. Il attend son tour.','w.tQueueFull':'File pleine (2). Termine ou abandonne quelque chose d’abord.','w.tQueued':'Mis en file',
+ 'w.tBack':'Retour au parking','w.tOneActive':'Un seul projet actif à la fois. Livre-le ou abandonne-le d’abord.','w.tActive':'Actif. Définis d’abord « terminé ».',
+ 'w.tShipped':'Livré 🎯','w.tKilled':'Abandonné volontairement',
+ 'f.title':'Revue de commandement hebdo','f.sub':'20 minutes. Des faits, pas des ressentis. Changer une seule chose.','f.lastAdj':'Ajustement de la semaine dernière : <b>{x}</b>',
+ 'f.h1':'1 · Tableau de score (0–3)','f.scale':'0 = absent · 1 = certains jours · 2 = la plupart des jours · 3 = tous les jours',
+ 'f.h2':'2 · Trois victoires','f.h3':'3 · Un ajustement','f.adjPh':'Le seul ajustement pour la semaine prochaine','f.h4':'4 · Les 3 priorités de la semaine prochaine',
+ 'f.close':'Clôturer la revue de la semaine','f.hist':'Historique',
+ 'f.sShow':'jours présents','f.sBlocks':'blocs de 25 min','f.sKept':'promesses tenues','f.sShipped':'livrés',
+ 'f.p':[['1 · Action','Juste démarrer'],['2 · Discipline','Chaque jour'],['3 · Progrès','Expérimenter'],['4 · Respect de soi','Promesses tenues']],
+ 'f.eA':'{a} démarrages · {b} blocs','f.eD':'jours présents : {a}/{b}','f.eI':'{a} débriefs · {b} décisions minutées','f.eR':'{a}/{b} promesses · {c} envies résistées, {d} cédées',
+ 'f.winPh':'Victoire {x}, même petite','f.nextPh':'Priorité {x}, et bloque du temps pour elle',
+ 'f.tScore':'Note d’abord les 4 piliers','f.tClosed':'Revue clôturée. Cap sur la semaine prochaine.',
+ 'f.weekOf':'Semaine du {x}','f.histEmpty':'Ta première revue clôture une semaine. Les mauvaises semaines sont justement faites pour ça.','f.barsTitle':'Score total par semaine (max 12)',
+ 't.title':'Sur le moment','t.sub':'Ouvre celui dont tu as besoin, utilise-le, retourne à l’action.',
+ 't.urge':'Surfer l’envie : 90 secondes','t.start90':'Lancer 90 s','t.cancel':'Annuler','t.resisted':'Résisté','t.gaveIn':'Cédé',
+ 't.u0':'C’est une envie, pas un besoin.','t.u1':'Respire. C’est une envie, pas un besoin.','t.u2':'Elle monte. Observe-la, simplement.','t.u3':'Le pic. Il ne va pas durer.','t.u4':'Elle passe. Choisis ton action de 2 minutes.','t.uDone':'Passée. Maintenant : 2 minutes de la vraie tâche.',
+ 't.tRes':'Noté : résisté. Maintenant, 2 minutes de la vraie tâche.','t.tGave':'Noté. Sans jugement. À la prochaine.',
+ 't.tbox':'Décision minutée','t.tbMinor':'Mineure : 10 min','t.tbBig':'Importante, réversible : 1 jour','t.tbIrr':'Irréversible : 1 semaine','t.tbPick':'Choisis un type pour obtenir ton échéance.',
+ 't.tbOut':'<b style="color:var(--text)">Décide avant {x}.</b> Arrête alors de chercher des infos. Toujours incertain ? Prends l’option par défaut.','t.tbPre':' Ajoute un pré-mortem de 5 minutes.',
+ 't.il':'Insister ou lâcher prise ? Test de 10 secondes','t.ilQ':'Ma prochaine tentative est-elle différente de la précédente ?',
+ 't.ilYes':'<b>Insiste.</b> Nouvelle tentative, nouvelle information. Vas-y.',
+ 't.ilNo':'<b>Arrête ou change d’approche.</b> Répéter le même geste, c’est de l’entêtement. Vérifie : ça échoue, ou c’est juste difficile ? Si c’est juste difficile, insiste.',
+ 't.playbook':'Le guide','t.trap':'Piège : ',
+ 's.title':'Réglages','s.lang':'Langue','s.drive':'Synchronisation Google Drive',
+ 's.driveInfo':'Les données sont toujours enregistrées d’abord sur cet appareil. Drive les synchronise entre appareils (fichier <span class="mono">act001.json</span>).',
+ 's.cid':'Client ID OAuth (le même que pour tes autres apps)','s.connect':'Connecter Drive','s.pull':'Récupérer','s.push':'Envoyer',
+ 's.lastSync':'Dernière synchro Drive : {x}','s.never':'Jamais synchronisé sur cet appareil.',
+ 's.backup':'Sauvegarde hebdomadaire','s.backupInfo':'Chaque vendredi (ou à la première synchro qui suit), une copie datée est enregistrée dans le dossier Drive <span class="mono">act001-backups</span>, ex. <span class="mono">act001-backup-2026-10-02.json</span>. Les anciennes copies sont conservées ; pour en restaurer une, télécharge-la puis utilise Importer JSON.',
+ 's.lastBackup':'Dernière sauvegarde hebdo : {x}','s.noBackup':'Aucune sauvegarde pour l’instant.','s.backupNow':'Sauvegarder maintenant',
+ 's.display':'Affichage','s.reset':'Réinitialiser','s.theme':'Changer de thème','s.data':'Données','s.export':'Exporter JSON','s.import':'Importer JSON','s.clear':'Effacer toutes les données',
+ 's.footer':'Présentation : « Agir plus. Penser moins. », 4 piliers · 5 outils · revue du vendredi.',
+ 'sync.local':'⚫ Local','sync.pending':'🟡 En attente','sync.ok':'🟢 Synchro {x}','sync.err':'🔴 Erreur','sync.reconnect':'🔴 Reconnecter','sync.last':' · dernière {x}',
+ 'sync.tipLast':'Dernière synchro Drive : {x}','sync.tipNever':'Pas encore synchronisé avec Drive','yesterday':'hier',
+ 'x.cidSaved':'Client ID enregistré','x.cidFirst':'Ajoute d’abord ton Client ID OAuth','x.gisLoad':'Bibliothèque Google pas encore chargée','x.connectFirst':'Connecte d’abord Drive',
+ 'x.noFile':'Aucun fichier sur Drive pour l’instant','x.pulled':'Récupéré depuis Drive','x.pushed':'Envoyé vers Drive','x.connected':'Drive connecté',
+ 'x.bkAuto':'Sauvegarde hebdo enregistrée sur Drive','x.bkSaved':'Sauvegarde enregistrée : {x}','x.bkFail':'Échec de la sauvegarde. Réessaie.',
+ 'x.imported':'Importé','x.badJson':'Fichier JSON invalide','x.cleared':'Toutes les données ont été effacées','x.lang':'Langue : français',
+ pb:[
+ ['Pilier 1','Action : juste démarrer',['Démarrage de 2 minutes : réduis la tâche, puis démarre','Agir avant de planifier ; ne planifier que ce que l’action révèle','Blocs de 25 minutes : s’engager sur un, pas sur tout','Vendredi : revoir le ratio action/réflexion'],'« Je ne suis pas encore prêt », c’est la peur déguisée en préparation.'],
+ ['Pilier 2','Chaque jour : discipline',['Plancher de 2 minutes les mauvais jours : ça compte','Préparer l’environnement : outils prêts, friction supprimée','S’ancrer sur une habitude existante','Jamais deux fois de suite'],'Attendre d’en avoir envie.'],
+ ['Pilier 3','Apprendre & progresser',['Un ajustement de 1 % par semaine','Une expérience à la fois, pendant une semaine','Débrief quotidien en 2 lignes','Remarquer une petite chose qui a du sens'],'Optimiser au lieu d’agir.'],
+ ['Pilier 4','Respect de soi',['Une petite promesse à soi-même, tenue','Un non clair, sans se justifier','Tenir ses engagements, visiblement','Le soir : ai-je agi d’une façon que je respecte ?'],'Chercher l’approbation.'],
+ ['Outil 1','Décider plus vite',['Classer : réversible ? enjeux ?','Fixer une échéance, arrêter de chercher','Option par défaut si toujours incertain','La noter ; la relire dans un mois'],'La recherche comme évitement.'],
+ ['Outil 2','Insister ou lâcher prise',['Insister sur son propre effort ; lâcher les choix des autres','Test de 10 secondes : la tentative est-elle différente ?','Règle des deux essais avec les autres','Minuter ses objectifs ; décider le vendredi'],'Lâcher prise pour éviter ce qui est difficile.'],
+ ['Outil 3','Finir & livrer',['1 actif + 2 en file ; idées → parking','Définir « terminé » avant de commencer','Livrer quelque chose chaque vendredi','Fermer ou abandonner une boucle ouverte par semaine'],'Commencer du neuf pour fuir le milieu ennuyeux.'],
+ ['Outil 4','Différer la gratification',['La nommer : une envie, pas un besoin','Surfer 90 secondes','Remplacer par 2 minutes de la vraie tâche','La récompense après l’effort, jamais avant'],'« Juste pour cette fois », c’est l’envie qui parle.'],
+ ['Outil 5','Exigence haute, ton bienveillant',['Parler à soi-même comme un bon coach','Vrai standard ou simple préférence ?','Exprimer le besoin, puis demander','Nommer d’abord ce qui a bien marché'],'La pensée tout-ou-rien.']]
+}};
+const LANGS=['en','fr'];
+let LANG='en';
+function t(k,v){let s=(I18N[LANG]&&I18N[LANG][k]!==undefined)?I18N[LANG][k]:(I18N.en[k]!==undefined?I18N.en[k]:k);
+  if(typeof s==='string'&&v) s=s.replace(/\{(\w+)\}/g,(m,n)=>v[n]!==undefined?v[n]:m); return s;}
+const LOC=()=>LANG==='fr'?'fr-FR':'en-GB';
+function applyStatic(){
+  document.documentElement.lang=LANG;
+  document.title='act001 — '+t('brand');
+  document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n));
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>el.innerHTML=t(el.dataset.i18nHtml));
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>el.placeholder=t(el.dataset.i18nPh));
+  document.getElementById('lang-btn').textContent=LANG==='en'?'FR':'EN';
+  document.getElementById('lang-btn').title=LANG==='en'?'Passer en français':'Switch to English';
+  document.getElementById('lang-en').className='btn'+(LANG==='en'?' primary':'');
+  document.getElementById('lang-fr').className='btn'+(LANG==='fr'?' primary':'');
+  document.getElementById('toast-undo').textContent=t('undo');
+}
+
 /* ---------- keys & state ---------- */
 const APP='act001';
-const K={data:'td_v4_'+APP, act:'td_act_'+APP, undo:'td_undo_'+APP, theme:'td_theme_'+APP, fs:'td_fs_'+APP, cid:'td_cid_'+APP, tok:'td_tok_'+APP, last:'td_last_'+APP, bk:'td_bk_'+APP};
+const K={data:'td_v4_'+APP, act:'td_act_'+APP, undo:'td_undo_'+APP, theme:'td_theme_'+APP, fs:'td_fs_'+APP, cid:'td_cid_'+APP, tok:'td_tok_'+APP, last:'td_last_'+APP, bk:'td_bk_'+APP, lang:'td_lang_'+APP};
 const LS={get(k){try{return localStorage.getItem(k)}catch(e){return null}}, set(k,v){try{localStorage.setItem(k,v)}catch(e){}}, del(k){try{localStorage.removeItem(k)}catch(e){}}};
 const SS={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}}, set(k,v){try{sessionStorage.setItem(k,v)}catch(e){}}, del(k){try{sessionStorage.removeItem(k)}catch(e){}}};
 let S={};
+
+function setLang(l){ if(!LANGS.includes(l)) l='en'; LANG=l; LS.set(K.lang,l); applyStatic(); renderAll(true); renderSync(); if(!uT) urgeReset(); }
+function toggleLang(){ setLang(LANG==='en'?'fr':'en'); toast(t('x.lang')); }
 
 function blankDay(){return {start:false,promise:'',promiseKept:null,blocks:0,urgesR:0,urgesG:0,decisions:0,debrief1:'',debrief2:'',insist:'',letgo:''};}
 function ensureState(){
@@ -319,6 +492,8 @@ function ensureState(){
 const pad=n=>String(n).padStart(2,'0');
 const keyOf=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const todayKey=()=>keyOf(new Date());
+const fromKey=k=>{const [y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d,12);};
+const fmtKey=k=>k?fromKey(k).toLocaleDateString(LOC(),{day:'numeric',month:'short',year:'numeric'}):'';
 function monday(d){const x=new Date(d);x.setHours(12,0,0,0);const w=(x.getDay()+6)%7;x.setDate(x.getDate()-w);return x;}
 function weekDays(d){const m=monday(d);return [...Array(7)].map((_,i)=>{const x=new Date(m);x.setDate(m.getDate()+i);return x;});}
 function day(k){k=k||todayKey(); if(!S.days[k]) S.days[k]=blankDay(); return S.days[k];}
@@ -328,58 +503,52 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function grow(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
 
-/* ---------- save / sync ---------- */
+/* ---------- save / sync status ---------- */
 let saveTimer=null, dirty=false;
 function fmtWhen(ts){
   if(!ts) return '';
   const d=new Date(+ts), hm=pad(d.getHours())+':'+pad(d.getMinutes());
   if(keyOf(d)===todayKey()) return hm;
   const y=new Date(); y.setDate(y.getDate()-1);
-  if(keyOf(d)===keyOf(y)) return 'yesterday '+hm;
-  return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' '+hm;
+  if(keyOf(d)===keyOf(y)) return t('yesterday')+' '+hm;
+  return d.toLocaleDateString(LOC(),{day:'numeric',month:'short'})+' '+hm;
 }
-let syncState='⚫ Local';
-function setSync(s){
-  syncState=s;
-  if(s.startsWith('🟢')) LS.set(K.last,String(Date.now()));
-  renderSync();
-}
+let syncState='local';
+function setSync(s){ syncState=s; if(s==='ok') LS.set(K.last,String(Date.now())); renderSync(); }
 function renderSync(){
   const last=LS.get(K.last), el=document.getElementById('sync');
-  let txt=syncState;
-  if(syncState.startsWith('🟢')) txt='🟢 Synced '+fmtWhen(last);
-  else if(last) txt=syncState+' · last '+fmtWhen(last);
+  let txt = syncState==='ok' ? t('sync.ok',{x:fmtWhen(last)}) : t('sync.'+syncState)+(last?t('sync.last',{x:fmtWhen(last)}):'');
   el.textContent=txt;
-  el.title=last?'Last synced with Drive: '+new Date(+last).toLocaleString('en-GB'):'Not synced with Drive yet';
+  el.title=last?t('sync.tipLast',{x:new Date(+last).toLocaleString(LOC())}):t('sync.tipNever');
   const line=document.getElementById('last-sync-line');
-  if(line) line.textContent=last?'Last synced with Drive: '+new Date(+last).toLocaleString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'Never synced on this device.';
+  if(line) line.textContent=last?t('s.lastSync',{x:new Date(+last).toLocaleString(LOC(),{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}):t('s.never');
   const bl=document.getElementById('backup-line'), bk=LS.get(K.bk);
-  if(bl) bl.textContent=bk?'Last weekly backup: '+bk:'No backup yet.';
+  if(bl) bl.textContent=bk?t('s.lastBackup',{x:fmtKey(bk)}):t('s.noBackup');
 }
 setInterval(renderSync,60000);
 function saveLocal(){S.updated=Date.now(); LS.set(K.data,JSON.stringify(S));}
-function autoSave(){saveLocal(); if(token&&fileReady()){dirty=true;setSync('🟡 Pending');clearTimeout(saveTimer);saveTimer=setTimeout(()=>drivePush(false),2000);} else setSync('⚫ Local');}
-function save(){saveLocal(); renderAll(); if(token) drivePush(false);}
+function autoSave(){saveLocal(); if(token&&fileReady()){dirty=true;setSync('pending');clearTimeout(saveTimer);saveTimer=setTimeout(()=>drivePush(false),2000);} else if(!token) setSync('local');}
+function save(){saveLocal(); renderAll(true); if(token) drivePush(false);}
 function load(){try{S=JSON.parse(LS.get(K.data)||'{}')}catch(e){S={}} ensureState();}
 
 /* ---------- Drive ---------- */
 const SCOPE='https://www.googleapis.com/auth/drive.file', FILE='act001.json';
 let token=SS.get(K.tok)||null, tokenClient=null, fileId=null, lastRemote=0, pollTimer=null;
 const fileReady=()=>!!fileId;
-function setCid(v){LS.set(K.cid,v.trim()); tokenClient=null; toast('Client ID saved');}
+function setCid(v){LS.set(K.cid,v.trim()); tokenClient=null; toast(t('x.cidSaved'));}
 function driveConnect(){ // user gesture only
   const cid=LS.get(K.cid);
-  if(!cid){toast('Add your OAuth Client ID first');return;}
-  if(!window.google||!google.accounts||!google.accounts.oauth2){toast('Google library not loaded yet');return;}
+  if(!cid){toast(t('x.cidFirst'));return;}
+  if(!window.google||!google.accounts||!google.accounts.oauth2){toast(t('x.gisLoad'));return;}
   if(!tokenClient) tokenClient=google.accounts.oauth2.initTokenClient({client_id:cid,scope:SCOPE,callback:r=>{
-    if(r&&r.access_token){token=r.access_token;SS.set(K.tok,token);afterConnect();} else {setSync('🔴 Erreur');}
+    if(r&&r.access_token){token=r.access_token;SS.set(K.tok,token);afterConnect();} else {setSync('err');}
   }});
   tokenClient.requestAccessToken();
 }
 async function api(url,opt){
   opt=opt||{}; opt.headers=Object.assign({Authorization:'Bearer '+token},opt.headers||{});
   const r=await fetch(url,opt);
-  if(r.status===401){token=null;SS.del(K.tok);setSync('🔴 Reconnect');throw new Error('auth');}
+  if(r.status===401){token=null;SS.del(K.tok);setSync('reconnect');throw new Error('auth');}
   if(!r.ok) throw new Error('http '+r.status);
   return r;
 }
@@ -389,28 +558,28 @@ async function findFile(){
   const j=await r.json(); if(j.files&&j.files.length){fileId=j.files[0].id;return j.files[0];} return null;
 }
 async function afterConnect(){
-  try{ setSync('🟡 Pending');
+  try{ setSync('pending');
     const f=await findFile();
     if(f){ await drivePull(false); } else { await drivePush(false); }
-    startPoll(); toast('Drive connected');
-  }catch(e){ if(e.message!=='auth') setSync('🔴 Erreur'); }
+    startPoll(); toast(t('x.connected'));
+  }catch(e){ if(e.message!=='auth') setSync('err'); }
 }
 async function drivePull(manual){
-  if(!token){ if(manual) toast('Connect Drive first'); return; }
+  if(!token){ if(manual) toast(t('x.connectFirst')); return; }
   try{
-    if(!fileId&&!(await findFile())){ if(manual) toast('No file on Drive yet'); return; }
+    if(!fileId&&!(await findFile())){ if(manual) toast(t('x.noFile')); return; }
     const r=await api(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
     const remote=await r.json();
     if(manual || (remote.updated||0)>(S.updated||0)){
       if(document.activeElement&&/INPUT|TEXTAREA/.test(document.activeElement.tagName)&&!manual) return; // re-render guard
-      S=remote; ensureState(); LS.set(K.data,JSON.stringify(S)); renderAll();
+      S=remote; ensureState(); LS.set(K.data,JSON.stringify(S)); renderAll(true);
     }
-    lastRemote=S.updated; setSync('🟢 Sync ✓'); if(manual) toast('Pulled from Drive');
+    lastRemote=S.updated; setSync('ok'); if(manual) toast(t('x.pulled'));
     maybeBackup();
-  }catch(e){ if(e.message!=='auth') setSync('🔴 Erreur'); }
+  }catch(e){ if(e.message!=='auth') setSync('err'); }
 }
 async function drivePush(manual){
-  if(!token){ if(manual) toast('Connect Drive first'); return; }
+  if(!token){ if(manual) toast(t('x.connectFirst')); return; }
   try{
     const body=JSON.stringify(S);
     if(!fileId) await findFile();
@@ -419,9 +588,9 @@ async function drivePush(manual){
     } else {
       fileId=await createJson(FILE,body);
     }
-    dirty=false; lastRemote=S.updated; setSync('🟢 Sync ✓'); if(manual) toast('Pushed to Drive');
+    dirty=false; lastRemote=S.updated; setSync('ok'); if(manual) toast(t('x.pushed'));
     maybeBackup();
-  }catch(e){ if(e.message!=='auth') setSync('🔴 Erreur'); }
+  }catch(e){ if(e.message!=='auth') setSync('err'); }
 }
 async function createJson(name,body,parent){
   const meta={name,mimeType:'application/json'}; if(parent) meta.parents=[parent];
@@ -430,14 +599,12 @@ async function createJson(name,body,parent){
   const r=await api('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+b},body:mp});
   return (await r.json()).id;
 }
+function startPoll(){clearInterval(pollTimer); pollTimer=setInterval(()=>{ if(token&&!dirty&&document.visibilityState==='visible') drivePull(false); },60000);}
 
 /* ---------- weekly backup ---------- */
 const BK_FOLDER='act001-backups';
 let bkFolderId=null, bkBusy=false;
-function lastFridayKey(){ // most recent Friday on or before today
-  const d=new Date(); d.setHours(12,0,0,0);
-  const back=(d.getDay()-5+7)%7; d.setDate(d.getDate()-back); return keyOf(d);
-}
+function lastFridayKey(){const d=new Date(); d.setHours(12,0,0,0); d.setDate(d.getDate()-((d.getDay()-5+7)%7)); return keyOf(d);}
 async function driveFind(q){
   const r=await api(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q+' and trashed=false')}&fields=files(id,name)&spaces=drive`);
   const j=await r.json(); return (j.files&&j.files[0])||null;
@@ -460,43 +627,42 @@ async function writeBackup(dateKey){
 async function maybeBackup(){
   if(!token||bkBusy) return;
   const target=lastFridayKey();
-  if((LS.get(K.bk)||'')>=target) return; // this week's Friday backup already done
+  if((LS.get(K.bk)||'')>=target) return;
   bkBusy=true;
   try{
     const folder=await backupFolder();
     const ex=await driveFind(`name='act001-backup-${target}.json' and '${folder}' in parents`);
-    if(!ex){ await writeBackup(target); toast('Weekly backup saved to Drive'); }
+    if(!ex){ await writeBackup(target); toast(t('x.bkAuto')); }
     LS.set(K.bk,target); renderSync();
   }catch(e){ /* silent: retried at next sync */ }
   finally{ bkBusy=false; }
 }
 async function backupNow(){
-  if(!token){toast('Connect Drive first');return;}
+  if(!token){toast(t('x.connectFirst'));return;}
   try{ const k=todayKey(), name=await writeBackup(k);
-    if(k>=(LS.get(K.bk)||'')) LS.set(K.bk,k); renderSync(); toast('Backup saved: '+name);
-  }catch(e){ if(e.message!=='auth') toast('Backup failed. Try again.'); }
+    if(k>=(LS.get(K.bk)||'')) LS.set(K.bk,k); renderSync(); toast(t('x.bkSaved',{x:name}));
+  }catch(e){ if(e.message!=='auth') toast(t('x.bkFail')); }
 }
-function startPoll(){clearInterval(pollTimer); pollTimer=setInterval(()=>{ if(token&&!dirty&&document.visibilityState==='visible') drivePull(false); },60000);}
 
 /* ---------- toast & undo ---------- */
 let toastT=null, undoSnap=null;
 function toast(msg,undo){
-  const t=document.getElementById('toast'), u=document.getElementById('toast-undo');
+  const el=document.getElementById('toast'), u=document.getElementById('toast-undo');
   document.getElementById('toast-msg').textContent=msg;
-  if(undo){undoSnap=undo;u.style.display='';u.onclick=()=>{S=JSON.parse(undoSnap);ensureState();save();t.classList.remove('show');};}
+  if(undo){undoSnap=undo;u.style.display='';u.onclick=()=>{S=JSON.parse(undoSnap);ensureState();save();el.classList.remove('show');};}
   else u.style.display='none';
-  t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),4000);
+  el.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('show'),4000);
 }
 const snap=()=>JSON.stringify(S);
 
 /* ---------- theme & font ---------- */
 const THEMES=['light','sand','navy','dark'], THEME_ICONS={light:'☀︎',sand:'○',navy:'◑',dark:'☾'};
-function applyTheme(t){
-  document.documentElement.setAttribute('data-theme',t==='light'?'':t);
-  document.getElementById('theme-btn').textContent=THEME_ICONS[t]||'☀︎';
+function applyTheme(th){
+  document.documentElement.setAttribute('data-theme',th==='light'?'':th);
+  document.getElementById('theme-btn').textContent=THEME_ICONS[th]||'☀︎';
   const bg=getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
   document.querySelector('meta[name=theme-color]').setAttribute('content',bg);
-  LS.set(K.theme,t);
+  LS.set(K.theme,th);
 }
 function toggleTheme(){const c=LS.get(K.theme)||'light'; applyTheme(THEMES[(THEMES.indexOf(c)+1)%THEMES.length]);}
 const FS_STEPS=[0.8,0.9,1.0,1.1,1.2,1.35,1.5];
@@ -507,10 +673,10 @@ function fsStep(d){let i=parseInt(LS.get(K.fs)??2,10); if(isNaN(i)) i=2; applyFo
 function fsReset(){applyFontSize(2);}
 
 /* ---------- tabs ---------- */
-function showTab(t){
-  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
-  document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id==='tab-'+t));
-  LS.set(K.act,t); window.scrollTo(0,0); renderAll();
+function showTab(tb){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tb));
+  document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id==='tab-'+tb));
+  LS.set(K.act,tb); window.scrollTo(0,0); renderAll();
 }
 document.getElementById('tabs').addEventListener('click',e=>{const b=e.target.closest('.tab'); if(b) showTab(b.dataset.tab);});
 
@@ -522,50 +688,48 @@ function setField(f,v){day()[f]=v; autoSave();}
 
 function renderToday(){
   const now=new Date(), k=todayKey(), d=day(k);
-  document.getElementById('today-title').textContent=now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+  const title=now.toLocaleDateString(LOC(),{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('today-title').textContent=title.charAt(0).toUpperCase()+title.slice(1);
   const act=S.work.active?S.work.active.text:null;
-  document.getElementById('today-sub').innerHTML= act?`Active project: <b>${esc(act)}</b>`:`No active project yet. <a href="#" onclick="showTab('work');return false" style="color:var(--accent)">Pick one →</a>`;
+  document.getElementById('today-sub').innerHTML= act?t('d.active',{x:esc(act)}):`${t('d.noActive')} <a href="#" onclick="showTab('work');return false" style="color:var(--accent)">${t('d.pick')}</a>`;
 
-  // week strip
-  const labels=['M','T','W','T','F','S','S'];
+  const labels=t('d.weekdays'), f0=firstDay();
   document.getElementById('week').innerHTML=weekDays(now).map((x,i)=>{
-    const kk=keyOf(x), fut=kk>k, ok=showedUp(kk), isT=kk===k, pre=kk<firstDay();
+    const kk=keyOf(x), fut=kk>k, ok=showedUp(kk), isT=kk===k, pre=kk<f0;
     const cls=['day',ok?'ok':'',isT?'today':'',(fut||pre)?'future':'',(!ok&&!fut&&!isT&&!pre)?'miss':''].join(' ');
     return `<div class="${cls}"><b>${labels[i]}</b>${x.getDate()}</div>`;}).join('');
 
-  // banner: never miss twice
   const y=new Date(now); y.setDate(y.getDate()-1); const yk=keyOf(y);
-  const y2=new Date(now); y2.setDate(y2.getDate()-2);
   const hasHistory=Object.keys(S.days).some(kk=>kk<k);
   let b='';
-  if(showedUp(k)) b=`<div class="banner ok">✓ Showed up today. That's the win. Anything more is a bonus.</div>`;
-  else if(hasHistory&&!showedUp(yk)) b=`<div class="banner warn"><b>Never miss twice.</b> Yesterday was missed. Do the 2-minute version now; it still counts.</div>`;
-  else b=`<div class="banner dark">Don't think it through. Do the 2-minute start.</div>`;
+  if(showedUp(k)) b=`<div class="banner ok">${t('d.okBanner')}</div>`;
+  else if(hasHistory&&!showedUp(yk)) b=`<div class="banner warn">${t('d.missBanner')}</div>`;
+  else b=`<div class="banner dark">${t('d.goBanner')}</div>`;
   document.getElementById('today-banner').innerHTML=b;
 
   document.getElementById('morning').innerHTML=`
-    <div class="check"><button class="box ${d.start?'on':''}" onclick="toggle('start')" aria-label="2-minute start">${d.start?'✓':''}</button>
-      <div class="grow"><div class="lbl">2-minute start on today's #1 task</div><div class="hint">Shrink it until starting takes 2 minutes. Then start.</div></div></div>
-    <div class="check"><div class="box" style="border-style:dashed">◎</div>
-      <div class="grow"><div class="lbl">One promise to myself today</div>
-      <textarea rows="1" placeholder="e.g. 3 sets of push-ups before lunch" oninput="setField('promise',this.value);grow(this)">${esc(d.promise)}</textarea></div></div>`;
+    <div class="check"><button class="box ${d.start?'on':''}" onclick="toggle('start')" aria-label="${esc(t('d.start'))}">${d.start?'✓':''}</button>
+      <div class="grow"><div class="lbl">${t('d.start')}</div><div class="hint">${t('d.startH')}</div></div></div>
+    <div class="check"><div class="box" style="border-style:dashed;color:var(--muted)">◎</div>
+      <div class="grow"><div class="lbl">${t('d.promise')}</div>
+      <textarea rows="1" placeholder="${esc(t('d.promisePh'))}" oninput="setField('promise',this.value);grow(this)">${esc(d.promise)}</textarea></div></div>`;
 
   document.getElementById('evening').innerHTML=`
-    <div class="check"><div class="grow"><div class="lbl">Promise kept?</div><div class="hint">${d.promise?esc(d.promise):'No promise set this morning.'}</div></div>
-      <div class="row"><button class="btn sm ${d.promiseKept===true?'primary':''}" onclick="setKept(true)">Yes</button><button class="btn sm ${d.promiseKept===false?'warn':''}" onclick="setKept(false)">No</button></div></div>
-    <div class="check"><div class="grow"><div class="lbl">2-line debrief</div>
-      <textarea rows="1" placeholder="What worked?" oninput="setField('debrief1',this.value);grow(this)">${esc(d.debrief1)}</textarea>
-      <textarea rows="1" style="margin-top:6px" placeholder="What would I change tomorrow?" oninput="setField('debrief2',this.value);grow(this)">${esc(d.debrief2)}</textarea></div></div>
-    <div class="check"><div class="grow"><div class="lbl">Insisted on / let go of</div>
-      <textarea rows="1" placeholder="One thing I insisted on" oninput="setField('insist',this.value);grow(this)">${esc(d.insist)}</textarea>
-      <textarea rows="1" style="margin-top:6px" placeholder="One thing I let go of" oninput="setField('letgo',this.value);grow(this)">${esc(d.letgo)}</textarea></div></div>`;
+    <div class="check"><div class="grow"><div class="lbl">${t('d.kept')}</div><div class="hint">${d.promise?esc(d.promise):t('d.noPromise')}</div></div>
+      <div class="row"><button class="btn sm ${d.promiseKept===true?'primary':''}" onclick="setKept(true)">${t('yes')}</button><button class="btn sm ${d.promiseKept===false?'warn':''}" onclick="setKept(false)">${t('no')}</button></div></div>
+    <div class="check"><div class="grow"><div class="lbl">${t('d.debrief')}</div>
+      <textarea rows="1" placeholder="${esc(t('d.deb1'))}" oninput="setField('debrief1',this.value);grow(this)">${esc(d.debrief1)}</textarea>
+      <textarea rows="1" style="margin-top:6px" placeholder="${esc(t('d.deb2'))}" oninput="setField('debrief2',this.value);grow(this)">${esc(d.debrief2)}</textarea></div></div>
+    <div class="check"><div class="grow"><div class="lbl">${t('d.il')}</div>
+      <textarea rows="1" placeholder="${esc(t('d.ilIns'))}" oninput="setField('insist',this.value);grow(this)">${esc(d.insist)}</textarea>
+      <textarea rows="1" style="margin-top:6px" placeholder="${esc(t('d.ilLet'))}" oninput="setField('letgo',this.value);grow(this)">${esc(d.letgo)}</textarea></div></div>`;
   ['blocks','urgesR','urgesG','decisions'].forEach(f=>document.getElementById('c-'+f).textContent=d[f]);
   document.querySelectorAll('#tab-today textarea').forEach(grow);
 }
 
 /* ---------- WORK ---------- */
 function addIdea(){const i=document.getElementById('idea-in'); const v=i.value.trim(); if(!v) return;
-  S.work.parking.unshift({id:uid(),text:v,done:'',added:todayKey()}); i.value=''; autoSave(); renderWork(); toast('Parked. It waits its turn.');}
+  S.work.parking.unshift({id:uid(),text:v,done:'',added:todayKey()}); i.value=''; autoSave(); renderWork(); toast(t('w.tParked'));}
 function findAny(id){
   if(S.work.active&&S.work.active.id===id) return {item:S.work.active,where:'active'};
   let ix=S.work.next.findIndex(x=>x.id===id); if(ix>-1) return {item:S.work.next[ix],where:'next',ix};
@@ -574,15 +738,15 @@ function findAny(id){
 }
 function detach(id){const f=findAny(id); if(!f) return null;
   if(f.where==='active') S.work.active=null; else S.work[f.where].splice(f.ix,1); return f.item;}
-function toNext(id){ if(S.work.next.length>=2){toast('Queue full (2). Finish or kill something first.');return;}
-  const s=snap(), it=detach(id); if(!it) return; S.work.next.push(it); autoSave(); renderWork(); toast('Queued',s);}
-function toPark(id){const s=snap(), it=detach(id); if(!it) return; S.work.parking.unshift(it); autoSave(); renderWork(); toast('Back to parking lot',s);}
-function activate(id){ if(S.work.active){toast('One active project at a time. Ship or kill it first.');return;}
-  const s=snap(), it=detach(id); if(!it) return; S.work.active=it; it.started=todayKey(); autoSave(); renderWork(); toast('Now active. Define “done” first.',s);}
+function toNext(id){ if(S.work.next.length>=2){toast(t('w.tQueueFull'));return;}
+  const s=snap(), it=detach(id); if(!it) return; S.work.next.push(it); autoSave(); renderWork(); toast(t('w.tQueued'),s);}
+function toPark(id){const s=snap(), it=detach(id); if(!it) return; S.work.parking.unshift(it); autoSave(); renderWork(); toast(t('w.tBack'),s);}
+function activate(id){ if(S.work.active){toast(t('w.tOneActive'));return;}
+  const s=snap(), it=detach(id); if(!it) return; S.work.active=it; it.started=todayKey(); autoSave(); renderWork(); toast(t('w.tActive'),s);}
 function promote(){ if(S.work.active||!S.work.next.length) return; activate(S.work.next[0].id); }
 function ship(){ const a=S.work.active; if(!a) return; const s=snap();
-  S.shipped.unshift({id:a.id,text:a.text,done:a.done,date:todayKey()}); S.work.active=null; autoSave(); renderWork(); toast('Shipped 🎯',s);}
-function kill(id){const s=snap(), it=detach(id); if(!it) return; S.killed.unshift(Object.assign({},it,{date:todayKey()})); autoSave(); renderWork(); toast('Dropped on purpose',s);}
+  S.shipped.unshift({id:a.id,text:a.text,done:a.done,date:todayKey()}); S.work.active=null; autoSave(); renderWork(); toast(t('w.tShipped'),s);}
+function kill(id){const s=snap(), it=detach(id); if(!it) return; S.killed.unshift(Object.assign({},it,{date:todayKey()})); autoSave(); renderWork(); toast(t('w.tKilled'),s);}
 function moveNext(i,d){const j=i+d; if(j<0||j>=S.work.next.length) return; const a=S.work.next; [a[i],a[j]]=[a[j],a[i]]; autoSave(); renderWork();}
 function setDone(v){ if(S.work.active){S.work.active.done=v; autoSave();} }
 
@@ -590,43 +754,43 @@ function renderWork(){
   const a=S.work.active;
   document.getElementById('w-active').innerHTML = a ? `
     <div class="slot active">
-      <div class="row"><span class="tag a">ACTIVE</span><span class="small muted mono">since ${esc(a.started||'')}</span></div>
+      <div class="row"><span class="tag a">${t('w.tagActive')}</span><span class="small muted mono">${t('w.since',{x:fmtKey(a.started)})}</span></div>
       <div style="font-weight:500;font-size:17px;margin:8px 0">${esc(a.text)}</div>
-      <label class="small muted">Definition of done</label>
-      <textarea rows="1" placeholder="What does finished look like?" oninput="setDone(this.value);grow(this)">${esc(a.done||'')}</textarea>
+      <label class="small muted">${t('w.doneLbl')}</label>
+      <textarea rows="1" placeholder="${esc(t('w.donePh'))}" oninput="setDone(this.value);grow(this)">${esc(a.done||'')}</textarea>
       <div class="row wrap" style="margin-top:10px">
-        <button class="btn primary" onclick="ship()">Ship it</button>
-        <button class="btn" onclick="toPark('${a.id}')">Pause → parking</button>
-        <button class="btn danger" onclick="kill('${a.id}')">Kill</button>
+        <button class="btn primary" id="btn-ship" onclick="ship()">${t('w.ship')}</button>
+        <button class="btn" onclick="toPark('${a.id}')">${t('w.pause')}</button>
+        <button class="btn danger" onclick="kill('${a.id}')">${t('w.kill')}</button>
       </div></div>`
-    : `<div class="slot empty">${S.work.next.length?`<button class="btn primary" onclick="promote()">Promote “${esc(S.work.next[0].text)}”</button>`:'Empty. Pick one from the parking lot.'}</div>`;
+    : `<div class="slot empty">${S.work.next.length?`<button class="btn primary" onclick="promote()">${t('w.promote',{x:esc(S.work.next[0].text)})}</button>`:t('w.emptyActive')}</div>`;
 
   const nx=S.work.next;
   let h=nx.map((x,i)=>`<div class="slot"><div class="row">
-      <div class="grow"><span class="tag w">NEXT ${i+1}</span><div style="margin-top:6px">${esc(x.text)}</div></div>
+      <div class="grow"><span class="tag w">${t('w.tagNext',{x:i+1})}</span><div style="margin-top:6px">${esc(x.text)}</div></div>
       <div class="row" style="gap:4px"><button class="btn sm" onclick="moveNext(${i},-1)" aria-label="Up">↑</button><button class="btn sm" onclick="moveNext(${i},1)" aria-label="Down">↓</button></div></div>
-      <div class="row wrap" style="margin-top:8px">${!a?`<button class="btn sm primary" onclick="activate('${x.id}')">Make active</button>`:''}
-      <button class="btn sm" onclick="toPark('${x.id}')">Park</button><button class="btn sm danger" onclick="kill('${x.id}')">Kill</button></div></div>`).join('');
-  for(let i=nx.length;i<2;i++) h+=`<div class="slot empty small">Free slot</div>`;
+      <div class="row wrap" style="margin-top:8px">${!a?`<button class="btn sm primary act-btn" onclick="activate('${x.id}')">${t('w.makeActive')}</button>`:''}
+      <button class="btn sm" onclick="toPark('${x.id}')">${t('w.parkBtn')}</button><button class="btn sm danger" onclick="kill('${x.id}')">${t('w.kill')}</button></div></div>`).join('');
+  for(let i=nx.length;i<2;i++) h+=`<div class="slot empty small">${t('w.free')}</div>`;
   document.getElementById('w-next').innerHTML=h;
 
   const p=S.work.parking;
   document.getElementById('w-park').innerHTML = p.length ? p.map(x=>`<div class="item"><span class="t">${esc(x.text)}</span>
-      <button class="btn sm" onclick="toNext('${x.id}')" ${nx.length>=2?'disabled style="opacity:.4"':''}>→ Next</button>
-      <button class="btn sm danger" onclick="kill('${x.id}')" aria-label="Kill">×</button></div>`).join('')
-    : `<span class="small muted">Empty. Ideas you capture land here.</span>`;
+      <button class="btn sm next-btn" onclick="toNext('${x.id}')" ${nx.length>=2?'disabled style="opacity:.4"':''}>${t('w.toNext')}</button>
+      <button class="btn sm danger" onclick="kill('${x.id}')" aria-label="${esc(t('w.kill'))}">×</button></div>`).join('')
+    : `<span class="small muted">${t('w.parkEmpty')}</span>`;
 
   const sh=S.shipped;
-  document.getElementById('w-shipped').innerHTML = sh.length ? sh.slice(0,15).map(x=>`<div class="item"><span class="t">✓ ${esc(x.text)}</span><span class="mono small muted">${esc(x.date)}</span></div>`).join('')
-    : `<span class="small muted">Nothing shipped yet. Aim: one thing every Friday.</span>`;
+  document.getElementById('w-shipped').innerHTML = sh.length ? sh.slice(0,15).map(x=>`<div class="item"><span class="t">✓ ${esc(x.text)}</span><span class="mono small muted">${fmtKey(x.date)}</span></div>`).join('')
+    : `<span class="small muted">${t('w.shipEmpty')}</span>`;
   document.querySelectorAll('#tab-work textarea').forEach(grow);
 }
 
 /* ---------- FRIDAY ---------- */
-const PILLARS=[['a','1 · Action','Just start'],['d','2 · Discipline','Every day'],['i','3 · Improve','Experiment'],['r','4 · Self-respect','Promises kept']];
+const PK=['a','d','i','r'];
 function weekEvidence(ref){
-  const ks=weekDays(ref||new Date()).map(keyOf), t=todayKey();
-  const f0=firstDay(), past=ks.filter(k=>k<=t&&k>=f0);
+  const ks=weekDays(ref||new Date()).map(keyOf), td=todayKey(), f0=firstDay();
+  const past=ks.filter(k=>k<=td&&k>=f0);
   let show=0,blocks=0,starts=0,kept=0,promises=0,ur=0,ug=0,deb=0,dec=0;
   past.forEach(k=>{const d=S.days[k]; if(!d) return; if(showedUp(k)) show++; blocks+=d.blocks; if(d.start) starts++;
     if(d.promise) promises++; if(d.promiseKept===true) kept++; ur+=d.urgesR; ug+=d.urgesG; dec+=d.decisions; if(d.debrief1||d.debrief2) deb++;});
@@ -638,32 +802,36 @@ function friArr(f,i,v){S.draft[f][i]=v; autoSave();}
 function setScore(p,v){S.draft.scores[p]=(S.draft.scores[p]===v?-1:v); autoSave(); renderFriday();}
 function closeReview(){
   const d=S.draft;
-  if(Object.values(d.scores).some(v=>v<0)){toast('Score all 4 pillars first');return;}
+  if(Object.values(d.scores).some(v=>v<0)){toast(t('f.tScore'));return;}
   const s=snap(), ev=weekEvidence();
   S.reviews.unshift({id:uid(),date:todayKey(),week:keyOf(monday(new Date())),scores:Object.assign({},d.scores),wins:d.wins.slice(),adjust:d.adjust,next3:d.next3.slice(),evidence:ev});
-  S.draft={}; ensureState(); autoSave(); renderFriday(); toast('Review closed. Set course for next week.',s);
+  S.draft={}; ensureState(); autoSave(); renderFriday(true); toast(t('f.tClosed'),s);
 }
-function renderFriday(){
+function renderFriday(force){
   const ev=weekEvidence(), d=S.draft;
-  const st=[[`${ev.show}/${ev.days}`,'days showed up'],[ev.blocks,'25-min blocks'],[`${ev.kept}/${ev.promises}`,'promises kept'],[ev.shipped,'shipped']];
+  const st=[[`${ev.show}/${ev.days}`,t('f.sShow')],[ev.blocks,t('f.sBlocks')],[`${ev.kept}/${ev.promises}`,t('f.sKept')],[ev.shipped,t('f.sShipped')]];
   document.getElementById('fri-stats').innerHTML=st.map(x=>`<div class="stat"><div class="v">${x[0]}</div><div class="k">${x[1]}</div></div>`).join('');
-  const evid={a:`${ev.starts} starts · ${ev.blocks} blocks`, d:`${ev.show} of ${ev.days} days showed up`, i:`${ev.deb} debriefs · ${ev.dec} time-boxed decisions`, r:`${ev.kept}/${ev.promises} promises · ${ev.ur} urges resisted, ${ev.ug} given in`};
-  document.getElementById('fri-scores').innerHTML=PILLARS.map(([k,n,h])=>`<div class="pillar">
-      <div class="row"><div class="grow"><b style="font-weight:500">${n}</b> <span class="small muted">${h}</span></div></div>
+  const evid={a:t('f.eA',{a:ev.starts,b:ev.blocks}), d:t('f.eD',{a:ev.show,b:ev.days}), i:t('f.eI',{a:ev.deb,b:ev.dec}), r:t('f.eR',{a:ev.kept,b:ev.promises,c:ev.ur,d:ev.ug})};
+  const P=t('f.p');
+  document.getElementById('fri-scores').innerHTML=PK.map((k,ix)=>`<div class="pillar">
+      <div class="row"><div class="grow"><b style="font-weight:500">${P[ix][0]}</b> <span class="small muted">${P[ix][1]}</span></div></div>
       <div class="evidence" style="margin-bottom:6px">${evid[k]}</div>
       <div class="score">${[0,1,2,3].map(v=>`<button class="${d.scores[k]===v?'on':''}" onclick="setScore('${k}',${v})">${v}</button>`).join('')}</div></div>`).join('');
-  document.getElementById('fri-wins').innerHTML=d.wins.map((w,i)=>`<textarea rows="1" style="margin-top:${i?6:0}px" placeholder="Win ${i+1}, however small" oninput="friArr('wins',${i},this.value);grow(this)">${esc(w)}</textarea>`).join('');
-  document.getElementById('fri-next').innerHTML=d.next3.map((w,i)=>`<textarea rows="1" style="margin-top:${i?6:0}px" placeholder="Priority ${i+1}, and block time for it" oninput="friArr('next3',${i},this.value);grow(this)">${esc(w)}</textarea>`).join('');
+  const a=document.activeElement, editing=a&&a.closest&&a.closest('#fri-wins,#fri-next');
+  if(!editing||force){
+    document.getElementById('fri-wins').innerHTML=d.wins.map((w,i)=>`<textarea rows="1" style="margin-top:${i?6:0}px" placeholder="${esc(t('f.winPh',{x:i+1}))}" oninput="friArr('wins',${i},this.value);grow(this)">${esc(w)}</textarea>`).join('');
+    document.getElementById('fri-next').innerHTML=d.next3.map((w,i)=>`<textarea rows="1" style="margin-top:${i?6:0}px" placeholder="${esc(t('f.nextPh',{x:i+1}))}" oninput="friArr('next3',${i},this.value);grow(this)">${esc(w)}</textarea>`).join('');
+  }
   const adj=document.getElementById('fri-adjust'); if(document.activeElement!==adj) adj.value=d.adjust;
   const last=S.reviews[0];
-  document.getElementById('fri-sub').innerHTML = last&&last.adjust ? `Last week's adjustment: <b>${esc(last.adjust)}</b>` : '20 minutes. Facts, not feelings. Change one thing.';
+  document.getElementById('fri-sub').innerHTML = last&&last.adjust ? t('f.lastAdj',{x:esc(last.adjust)}) : t('f.sub');
   const R=S.reviews;
   document.getElementById('fri-hist').innerHTML = R.length ? `
-    <div class="bars" style="margin-bottom:10px" title="Total score per week (max 12)">${R.slice(0,12).reverse().map(r=>{const t=Object.values(r.scores).reduce((a,b)=>a+b,0);return `<span style="height:${Math.max(3,t/12*28)}px"></span>`}).join('')}</div>
-    ${R.slice(0,10).map(r=>{const t=Object.values(r.scores).reduce((a,b)=>a+b,0);return `<div class="item hist"><div class="grow"><div class="mono small">Week of ${esc(r.week)}</div>
+    <div class="bars" style="margin-bottom:10px" title="${esc(t('f.barsTitle'))}">${R.slice(0,12).reverse().map(r=>{const tt=Object.values(r.scores).reduce((x,y)=>x+y,0);return `<span style="height:${Math.max(3,tt/12*28)}px"></span>`}).join('')}</div>
+    ${R.slice(0,10).map(r=>{const tt=Object.values(r.scores).reduce((x,y)=>x+y,0);return `<div class="item hist"><div class="grow"><div class="mono small">${t('f.weekOf',{x:fmtKey(r.week)})}</div>
       <div class="small muted">${esc(r.adjust||'')}</div></div>
-      <div class="mini">${PILLARS.map(([k])=>`<span>${r.scores[k]}</span>`).join('')}</div><b class="mono">${t}/12</b></div>`}).join('')}`
-    : `<span class="small muted">Your first review closes a week. The bad weeks are the ones it's for.</span>`;
+      <div class="mini">${PK.map(k=>`<span>${r.scores[k]}</span>`).join('')}</div><b class="mono">${tt}/12</b></div>`}).join('')}`
+    : `<span class="small muted">${t('f.histEmpty')}</span>`;
   document.querySelectorAll('#tab-friday textarea').forEach(grow);
 }
 
@@ -671,68 +839,62 @@ function renderFriday(){
 let uT=null;
 function urgeStart(){
   clearInterval(uT); const total=90, t0=Date.now();
-  document.getElementById('u-btns').innerHTML=`<button class="btn grow" onclick="urgeStop()">Cancel</button>`;
-  const msgs=[[0,'Breathe. This is an urge, not a need.'],[30,'It’s rising. Just watch it.'],[55,'Peak. It won’t last.'],[75,'Passing. Pick your 2-minute action.']];
+  document.getElementById('u-btns').innerHTML=`<button class="btn grow" onclick="urgeStop()">${t('t.cancel')}</button>`;
+  const msgs=[[0,'t.u1'],[30,'t.u2'],[55,'t.u3'],[75,'t.u4']];
   uT=setInterval(()=>{const e=Math.min(total,(Date.now()-t0)/1000), r=Math.ceil(total-e);
     document.getElementById('u-time').textContent=Math.floor(r/60)+':'+pad(r%60);
     document.getElementById('u-bar').style.width=(e/total*100)+'%';
-    document.getElementById('u-msg').textContent=msgs.filter(m=>e>=m[0]).pop()[1];
-    if(e>=total){clearInterval(uT); document.getElementById('u-msg').textContent='Passed. Now: 2 minutes of the real task.';
-      document.getElementById('u-btns').innerHTML=`<button class="btn primary grow" onclick="urgeLog(true)">Resisted</button><button class="btn warn grow" onclick="urgeLog(false)">Gave in</button>`;}
+    document.getElementById('u-msg').textContent=t(msgs.filter(m=>e>=m[0]).pop()[1]);
+    if(e>=total){clearInterval(uT); uT=null; document.getElementById('u-msg').textContent=t('t.uDone');
+      document.getElementById('u-btns').innerHTML=`<button class="btn primary grow" onclick="urgeLog(true)">${t('t.resisted')}</button><button class="btn warn grow" onclick="urgeLog(false)">${t('t.gaveIn')}</button>`;}
   },250);
 }
-function urgeStop(){clearInterval(uT); urgeReset();}
+function urgeStop(){clearInterval(uT); uT=null; urgeReset();}
 function urgeReset(){document.getElementById('u-time').textContent='1:30';document.getElementById('u-bar').style.width='0';
-  document.getElementById('u-msg').textContent='This is an urge, not a need.';
-  document.getElementById('u-btns').innerHTML=`<button class="btn primary grow" onclick="urgeStart()">Start 90 s</button>`;}
-function urgeLog(ok){bump(ok?'urgesR':'urgesG',1); urgeReset(); toast(ok?'Logged: resisted. Now 2 minutes of the real task.':'Logged. No judgment. Next one.');}
+  document.getElementById('u-msg').textContent=t('t.u0');
+  document.getElementById('u-btns').innerHTML=`<button class="btn primary grow" onclick="urgeStart()">${t('t.start90')}</button>`;}
+function urgeLog(ok){bump(ok?'urgesR':'urgesG',1); urgeReset(); toast(ok?t('t.tRes'):t('t.tGave'));}
 function tbox(n,u){
   const d=new Date(); if(u==='min') d.setMinutes(d.getMinutes()+n); else d.setDate(d.getDate()+n);
-  const when=u==='min'?d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'});
+  const when=u==='min'?d.toLocaleTimeString(LOC(),{hour:'2-digit',minute:'2-digit'}):d.toLocaleDateString(LOC(),{weekday:'long',day:'numeric',month:'long'});
   bump('decisions',1);
-  document.getElementById('tbox-out').innerHTML=`<b style="color:var(--text)">Decide by ${when}.</b> Stop gathering info then. Still unsure? Take the default option.${n===7?' Add a 5-minute pre-mortem.':''}`;
+  document.getElementById('tbox-out').innerHTML=t('t.tbOut',{x:when})+(n===7?t('t.tbPre'):'');
 }
 function il(yes){
   document.getElementById('il-out').innerHTML= yes
-   ? `<div class="banner ok" style="margin:0"><b>Insist.</b> New attempt, new information. Go.</div>`
-   : `<div class="banner warn" style="margin:0"><b>Stop or change the approach.</b> Repeating the same move is stubbornness. Check: is it failing, or just hard? If only hard, insist.</div>`;
+   ? `<div class="banner ok" style="margin:0">${t('t.ilYes')}</div>`
+   : `<div class="banner warn" style="margin:0">${t('t.ilNo')}</div>`;
 }
-const PLAYBOOK=[
- ['Pillar 1','Action: Just start',['2-minute start: shrink the task, then start','Act before planning; plan only what action reveals','25-minute blocks: commit to one, not the whole task','Friday: review your Action/Thinking ratio'],'“I’m not ready yet” is fear dressed as preparation.'],
- ['Pillar 2','Everyday: Build discipline',['2-minute floor on bad days: it still counts','Shape the environment: tools ready, friction removed','Anchor to an existing habit','Never miss twice'],'Waiting to feel like it.'],
- ['Pillar 3','Learn & improve',['One 1% tweak per week','One experiment at a time, for a week','Daily 2-line debrief','Notice one meaningful small thing'],'Optimizing instead of acting.'],
- ['Pillar 4','Self-respect',['One small promise to yourself, kept','Clear no, no over-justifying','Visible follow-through','Evening: did I act in a way I respect?'],'Seeking approval.'],
- ['Tool 1','Decide faster',['Classify: reversible? stakes?','Set a deadline, stop gathering info','Default option if still unsure','Log it; reread in a month'],'Research as avoidance.'],
- ['Tool 2','Insist or let go',['Insist on your own effort; let go of others’ choices','10-second check: is the next attempt different?','Two-strike rule with people','Time-box goals; decide on Friday'],'Letting go to avoid what’s hard.'],
- ['Tool 3','Finish & ship',['1 active + 2 queued; ideas → parking lot','Define “done” before starting','Ship something every Friday','Close or kill one open loop weekly'],'Starting new to escape the boring middle.'],
- ['Tool 4','Delay gratification',['Name it: an urge, not a need','Surf 90 seconds','Swap in 2 minutes of the real task','Reward after effort, never before'],'“Just this once” is the urge talking.'],
- ['Tool 5','High standards, kind tone',['Coach voice with yourself','Standard or just preference?','State the need, then ask','Name what went right first'],'All-or-nothing thinking.']];
 function renderTools(){
-  document.getElementById('playbook').innerHTML=PLAYBOOK.map(([k,t,l,trap])=>`<details class="card tool"><summary><span class="tag ${k.startsWith('Pillar')?'a':'m'}">${k}</span>${t}</summary>
-    <ol>${l.map(x=>`<li>${x}</li>`).join('')}</ol><div class="trap">Trap: ${trap}</div></details>`).join('');
+  const PB=t('pb');
+  document.getElementById('playbook').innerHTML=PB.map(([k,ti,l,trap],ix)=>`<details class="card tool"><summary><span class="tag ${ix<4?'a':'m'}">${k}</span>${ti}</summary>
+    <ol>${l.map(x=>`<li>${x}</li>`).join('')}</ol><div class="trap">${t('t.trap')}${trap}</div></details>`).join('');
 }
 
 /* ---------- data ---------- */
 function exportJson(){const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='act001-'+todayKey()+'.json';a.click();URL.revokeObjectURL(a.href);}
 function importJson(e){const f=e.target.files[0]; if(!f) return; const r=new FileReader();
-  r.onload=()=>{try{const s=snap(); S=JSON.parse(r.result); ensureState(); save(); toast('Imported',s);}catch(err){toast('Invalid JSON file');}}; r.readAsText(f); e.target.value='';}
-function clearAll(){const s=snap(); S={}; ensureState(); save(); toast('All data cleared',s);}
+  r.onload=()=>{try{const s=snap(); S=JSON.parse(r.result); ensureState(); save(); toast(t('x.imported'),s);}catch(err){toast(t('x.badJson'));}}; r.readAsText(f); e.target.value='';}
+function clearAll(){const s=snap(); S={}; ensureState(); save(); toast(t('x.cleared'),s);}
 
 /* ---------- render ---------- */
-function renderAll(){
-  const a=document.activeElement; if(a&&/INPUT|TEXTAREA/.test(a.tagName)&&a.id!=='idea-in'&&a.id!=='cid') return; // re-render guard
-  renderToday(); renderWork(); renderFriday(); renderTools();
+function renderAll(force){
+  const a=document.activeElement;
+  if(!force&&a&&/INPUT|TEXTAREA/.test(a.tagName)&&a.id!=='idea-in'&&a.id!=='cid') return; // re-render guard
+  renderToday(); renderWork(); renderFriday(force); renderTools();
 }
 
 /* ---------- init ---------- */
 load();
+LANG=LS.get(K.lang)||((navigator.language||'en').toLowerCase().startsWith('fr')?'fr':'en');
+applyStatic();
 applyTheme(LS.get(K.theme)||'light');
 {const i=parseInt(LS.get(K.fs)??2,10); applyFontSize(isNaN(i)?2:i);}
 document.getElementById('cid').value=LS.get(K.cid)||'';
+urgeReset();
 showTab(LS.get(K.act)||'today');
 renderSync();
 if(token){ afterConnect(); }
-// refresh at midnight / when returning to the app
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') renderAll(); });
 </script>
 </body>
