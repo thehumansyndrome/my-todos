@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F7F6F3">
+<title>act001 — Act more. Think less.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root{
+  --bg:#F7F6F3; --card:#FFFFFF; --text:#1F1E1C; --muted:#6B6862; --line:#E6E3DC;
+  --accent:#2C6E49; --accent-soft:#E8F3EC; --accent-text:#FFFFFF;
+  --warn:#8A5A14; --warn-soft:#FBF1E1; --red:#B3261E; --red-soft:#FBEAEA; --gold:#C98A0B;
+  --radius:10px; --font:'Geist',system-ui,-apple-system,sans-serif; --mono:'Geist Mono',ui-monospace,monospace;
+}
+[data-theme="sand"]{ --bg:#F8F7FF; --card:#FFFFFF; --text:#221F33; --muted:#6C6880; --line:#E4E1F0; --accent-soft:#E6F1EA; }
+[data-theme="navy"]{ --bg:#161925; --card:#1E2231; --text:#E6E8EF; --muted:#9097AA; --line:#2C3244;
+  --accent:#4FA476; --accent-soft:#1D3328; --accent-text:#0E1A13; --warn:#E0B060; --warn-soft:#33291A; --red:#E57373; --red-soft:#3A1E1E; --gold:#F2C14E; }
+[data-theme="dark"]{ --bg:#111113; --card:#1A1A1D; --text:#EDEDED; --muted:#9A9AA0; --line:#2A2A2F;
+  --accent:#4FA476; --accent-soft:#18291F; --accent-text:#0E1A13; --warn:#E0B060; --warn-soft:#2E2414; --red:#E57373; --red-soft:#351B1B; --gold:#F2C14E; }
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-weight:400;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+input,textarea,select{background:var(--bg);color:var(--text);color-scheme:light;font:inherit;border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
+[data-theme="dark"] input,[data-theme="dark"] textarea,[data-theme="dark"] select,
+[data-theme="navy"] input,[data-theme="navy"] textarea,[data-theme="navy"] select{color-scheme:dark}
+textarea{resize:none;overflow:hidden;line-height:1.45}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)}
+button{font:inherit;cursor:pointer;color:inherit}
+
+.header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:10px 16px;height:52px}
+.brand{font-weight:500;letter-spacing:-.01em}
+.brand small{font-family:var(--mono);color:var(--muted);font-size:11px;margin-left:6px}
+.spacer{flex:1}
+.sync{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}
+@media (max-width:420px){.brand small{display:none}}
+.icon-btn{background:transparent;border:1px solid var(--line);border-radius:8px;min-width:36px;height:36px}
+.tabs{position:sticky;top:52px;z-index:99;background:var(--bg);display:flex;gap:4px;padding:8px 12px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{background:transparent;border:1px solid transparent;border-radius:999px;padding:8px 14px;min-height:40px;color:var(--muted);white-space:nowrap}
+.tab.active{background:var(--text);color:var(--bg)}
+
+.page{max-width:720px;margin:0 auto;padding:16px 16px 80px}
+.section{display:none}
+.section.active{display:block}
+h2{font-size:22px;font-weight:500;margin:4px 0 2px;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:0 0 16px;font-size:14px}
+h3{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:22px 0 8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:10px}
+.row{display:flex;align-items:center;gap:10px}
+.row.wrap{flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.muted{color:var(--muted)}
+.mono{font-family:var(--mono)}
+.small{font-size:13px}
+
+.check{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-top:1px solid var(--line);min-height:44px}
+.check:first-of-type{border-top:none}
+.box{flex:0 0 26px;height:26px;border-radius:7px;border:1.5px solid var(--line);background:transparent;display:grid;place-items:center;font-size:14px;color:var(--accent-text)}
+.box.on{background:var(--accent);border-color:var(--accent)}
+.check .lbl{font-weight:500}
+.check .hint{font-size:13px;color:var(--muted)}
+
+.counter{display:flex;align-items:center;gap:6px}
+.counter button{width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:transparent;font-size:18px}
+.counter .n{font-family:var(--mono);min-width:26px;text-align:center;font-size:18px}
+
+.btn{border:1px solid var(--line);background:transparent;border-radius:8px;padding:9px 14px;min-height:42px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-text);font-weight:500}
+.btn.soft{background:var(--accent-soft);border-color:transparent;color:var(--accent)}
+.btn.warn{color:var(--warn);border-color:var(--warn)}
+.btn.danger{color:var(--red);border-color:var(--red)}
+.btn.sm{min-height:36px;padding:6px 10px;font-size:13px}
+
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.day{border:1.5px solid var(--line);border-radius:8px;text-align:center;padding:6px 0;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.day b{display:block;font-family:var(--font);font-weight:500;font-size:13px}
+.day.ok{background:var(--accent);border-color:var(--accent);color:var(--accent-text)}
+.day.today{border-color:var(--text)}
+.day.miss{border-color:var(--red);color:var(--red)}
+.day.future{opacity:.45}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:10px}
+.stat .v{font-family:var(--mono);font-size:22px;font-weight:500}
+.stat .k{font-size:12px;color:var(--muted)}
+
+.banner{border-radius:var(--radius);padding:12px 14px;margin-bottom:10px;font-size:14px}
+.banner.warn{background:var(--warn-soft);color:var(--warn)}
+.banner.ok{background:var(--accent-soft);color:var(--accent)}
+.banner.dark{background:var(--text);color:var(--bg)}
+
+.slot{border:1.5px solid var(--line);border-radius:var(--radius);padding:12px;margin-bottom:8px;background:var(--card)}
+.slot.active{border-color:var(--accent)}
+.slot.empty{border-style:dashed;color:var(--muted);text-align:center}
+.tag{display:inline-block;font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:999px;border:1px solid currentColor;background:transparent}
+.tag.a{color:var(--accent)} .tag.w{color:var(--warn)} .tag.m{color:var(--muted)}
+.item{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:none}
+.item .t{flex:1;min-width:0;word-wrap:break-word}
+
+.score{display:flex;gap:6px}
+.score button{flex:1;height:44px;border-radius:8px;border:1px solid var(--line);background:transparent;font-family:var(--mono)}
+.score button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-text)}
+.pillar{margin-bottom:12px}
+.pillar .row{margin-bottom:6px}
+.evidence{font-size:12px;color:var(--muted);font-family:var(--mono)}
+.bars{display:flex;gap:3px;align-items:flex-end;height:28px}
+.bars span{width:10px;background:var(--accent);border-radius:2px 2px 0 0;opacity:.85}
+
+.tool summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;min-height:44px;font-weight:500}
+.tool summary::-webkit-details-marker{display:none}
+.tool summary::after{content:'+';margin-left:auto;color:var(--muted);font-family:var(--mono)}
+.tool[open] summary::after{content:'−'}
+.tool ol{margin:6px 0 4px;padding-left:20px}
+.tool li{margin:4px 0}
+.trap{font-size:13px;color:var(--warn);margin-top:8px}
+
+.timer{font-family:var(--mono);font-size:44px;text-align:center;margin:6px 0}
+.ring{height:8px;background:var(--line);border-radius:999px;overflow:hidden;margin:8px 0}
+.ring i{display:block;height:100%;background:var(--accent);width:0;transition:width .25s linear}
+
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:200;display:flex;gap:12px;align-items:center}
+.toast.show{opacity:1;pointer-events:auto}
+.toast button{background:transparent;border:none;color:var(--gold);font-weight:500}
+.hist{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.mini{display:flex;gap:4px}
+.mini span{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-radius:6px;padding:2px 6px}
+@media (max-width:420px){ .stats{grid-template-columns:repeat(2,1fr)} h2{font-size:20px} }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="brand">Act more. Think less.<small>act001</small></div>
+  <div class="spacer"></div>
+  <span class="sync" id="sync">⚫ Local</span>
+  <button class="icon-btn" id="theme-btn" onclick="toggleTheme()" aria-label="Theme">☀︎</button>
+</div>
+<nav class="tabs" id="tabs">
+  <button class="tab active" data-tab="today">Today</button>
+  <button class="tab" data-tab="work">Work</button>
+  <button class="tab" data-tab="friday">Friday</button>
+  <button class="tab" data-tab="tools">Tools</button>
+  <button class="tab" data-tab="settings">Settings</button>
+</nav>
+
+<div class="page">
+  <!-- TODAY -->
+  <div id="tab-today" class="section active">
+    <h2 id="today-title">Today</h2>
+    <p class="sub" id="today-sub"></p>
+    <div id="today-banner"></div>
+    <div class="card"><div class="week" id="week"></div></div>
+
+    <h3>Morning</h3>
+    <div class="card" id="morning"></div>
+
+    <h3>During the day</h3>
+    <div class="card">
+      <div class="check"><div class="grow"><div class="lbl">25-minute blocks</div><div class="hint">Commit to one block, not the whole task.</div></div>
+        <div class="counter"><button onclick="bump('blocks',-1)">−</button><span class="n" id="c-blocks">0</span><button onclick="bump('blocks',1)">+</button></div></div>
+      <div class="check"><div class="grow"><div class="lbl">Urges resisted</div><div class="hint">Surf 90 s, then 2 minutes of the real task.</div></div>
+        <div class="counter"><button onclick="bump('urgesR',-1)">−</button><span class="n" id="c-urgesR">0</span><button onclick="bump('urgesR',1)">+</button></div></div>
+      <div class="check"><div class="grow"><div class="lbl">Urges given in to</div><div class="hint">No judgment. Just count.</div></div>
+        <div class="counter"><button onclick="bump('urgesG',-1)">−</button><span class="n" id="c-urgesG">0</span><button onclick="bump('urgesG',1)">+</button></div></div>
+      <div class="check"><div class="grow"><div class="lbl">Decisions time-boxed</div><div class="hint">Minor 10 min · Big 1 day · Irreversible 1 week</div></div>
+        <div class="counter"><button onclick="bump('decisions',-1)">−</button><span class="n" id="c-decisions">0</span><button onclick="bump('decisions',1)">+</button></div></div>
+    </div>
+
+    <h3>Evening</h3>
+    <div class="card" id="evening"></div>
+  </div>
+
+  <!-- WORK -->
+  <div id="tab-work" class="section">
+    <h2>Finish &amp; ship</h2>
+    <p class="sub">1 active + 2 queued. A new idea goes to the parking lot, never straight into work.</p>
+    <div class="row" style="margin-bottom:14px">
+      <input id="idea-in" class="grow" placeholder="New idea → parking lot" onkeydown="if(event.key==='Enter')addIdea()">
+      <button class="btn primary" onclick="addIdea()">Park</button>
+    </div>
+    <h3>Active</h3><div id="w-active"></div>
+    <h3>Next (max 2)</h3><div id="w-next"></div>
+    <h3>Parking lot</h3><div class="card" id="w-park"></div>
+    <h3>Shipped</h3><div class="card" id="w-shipped"></div>
+  </div>
+
+  <!-- FRIDAY -->
+  <div id="tab-friday" class="section">
+    <h2>Weekly command review</h2>
+    <p class="sub" id="fri-sub">20 minutes. Facts, not feelings. Change one thing.</p>
+    <div class="stats" id="fri-stats"></div>
+    <h3>1 · Scoreboard (0–3)</h3>
+    <div class="card" id="fri-scores"></div>
+    <p class="small muted" style="margin:-4px 0 0">0 = absent · 1 = some days · 2 = most days · 3 = every day</p>
+    <h3>2 · Three wins</h3>
+    <div class="card" id="fri-wins"></div>
+    <h3>3 · One adjustment</h3>
+    <div class="card"><textarea id="fri-adjust" rows="2" placeholder="The one tweak for next week" oninput="fri('adjust',this.value);grow(this)"></textarea></div>
+    <h3>4 · Next week's 3 priorities</h3>
+    <div class="card" id="fri-next"></div>
+    <div class="row" style="margin-top:12px"><button class="btn primary grow" onclick="closeReview()">Close this week's review</button></div>
+    <h3>History</h3>
+    <div class="card" id="fri-hist"></div>
+  </div>
+
+  <!-- TOOLS -->
+  <div id="tab-tools" class="section">
+    <h2>In the moment</h2>
+    <p class="sub">Open the one you need, use it, get back to action.</p>
+
+    <div class="card">
+      <div class="lbl" style="font-weight:500">Urge surfing: 90 seconds</div>
+      <div class="timer" id="u-time">1:30</div>
+      <div class="ring"><i id="u-bar"></i></div>
+      <p class="small muted" id="u-msg" style="text-align:center;margin:4px 0 10px">This is an urge, not a need.</p>
+      <div class="row" id="u-btns"><button class="btn primary grow" onclick="urgeStart()">Start 90 s</button></div>
+    </div>
+
+    <div class="card">
+      <div style="font-weight:500">Decision time-box</div>
+      <div class="row wrap" style="margin:10px 0">
+        <button class="btn sm soft" onclick="tbox(10,'min')">Minor: 10 min</button>
+        <button class="btn sm soft" onclick="tbox(1,'day')">Big, reversible: 1 day</button>
+        <button class="btn sm soft" onclick="tbox(7,'day')">Irreversible: 1 week</button>
+      </div>
+      <div id="tbox-out" class="small muted">Pick a type to get your deadline.</div>
+    </div>
+
+    <div class="card">
+      <div style="font-weight:500">Insist or let go? 10-second check</div>
+      <p class="small muted" style="margin:6px 0 10px">Is my next attempt different from the last one?</p>
+      <div class="row"><button class="btn soft grow" onclick="il(true)">Yes</button><button class="btn warn grow" onclick="il(false)">No</button></div>
+      <div id="il-out" class="small" style="margin-top:10px"></div>
+    </div>
+
+    <h3>The playbook</h3>
+    <div id="playbook"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="tab-settings" class="section">
+    <h2>Settings</h2>
+    <h3>Google Drive sync</h3>
+    <div class="card">
+      <p class="small muted" style="margin-top:0">Data is always saved on this device first. Drive keeps it in sync across devices (file <span class="mono">act001.json</span>).</p>
+      <label class="small muted">OAuth Client ID (same as your other apps)</label>
+      <input id="cid" placeholder="xxxxxxxx.apps.googleusercontent.com" onchange="setCid(this.value)">
+      <div class="row wrap" style="margin-top:10px">
+        <button class="btn primary" onclick="driveConnect()">Connect Drive</button>
+        <button class="btn" onclick="drivePull(true)">Pull now</button>
+        <button class="btn" onclick="drivePush(true)">Push now</button>
+      </div>
+      <p class="small muted" id="last-sync-line" style="margin:10px 0 0">Never synced on this device.</p>
+    </div>
+    <h3>Weekly backup</h3>
+    <div class="card">
+      <p class="small muted" style="margin-top:0">Every Friday (or at the first sync after it), a dated copy is saved to the Drive folder <span class="mono">act001-backups</span>, for example <span class="mono">act001-backup-2026-10-02.json</span>. Old copies are kept; to restore one, download it and use Import JSON.</p>
+      <p class="small" id="backup-line" style="margin:0 0 10px">No backup yet.</p>
+      <button class="btn" onclick="backupNow()">Back up now</button>
+    </div>
+    <h3>Display</h3>
+    <div class="card row wrap">
+      <button class="btn" onclick="fsStep(-1)">A−</button>
+      <span class="mono" id="font-size-label">100%</span>
+      <button class="btn" onclick="fsStep(1)">A+</button>
+      <button class="btn" onclick="fsReset()">Reset</button>
+      <span class="spacer"></span>
+      <button class="btn" onclick="toggleTheme()">Change theme</button>
+    </div>
+    <h3>Data</h3>
+    <div class="card row wrap">
+      <button class="btn" onclick="exportJson()">Export JSON</button>
+      <label class="btn" style="display:inline-flex;align-items:center">Import JSON<input type="file" accept=".json,application/json" style="display:none" onchange="importJson(event)"></label>
+      <button class="btn danger" onclick="clearAll()">Clear all data</button>
+    </div>
+    <p class="small muted">Deck: “Act more. Think less.”, 4 pillars · 5 tools · Friday review.</p>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span id="toast-msg"></span><button id="toast-undo" style="display:none">Undo</button></div>
+
+<script>
+/* ---------- keys & state ---------- */
+const APP='act001';
+const K={data:'td_v4_'+APP, act:'td_act_'+APP, undo:'td_undo_'+APP, theme:'td_theme_'+APP, fs:'td_fs_'+APP, cid:'td_cid_'+APP, tok:'td_tok_'+APP, last:'td_last_'+APP, bk:'td_bk_'+APP};
+const LS={get(k){try{return localStorage.getItem(k)}catch(e){return null}}, set(k,v){try{localStorage.setItem(k,v)}catch(e){}}, del(k){try{localStorage.removeItem(k)}catch(e){}}};
+const SS={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}}, set(k,v){try{sessionStorage.setItem(k,v)}catch(e){}}, del(k){try{sessionStorage.removeItem(k)}catch(e){}}};
+let S={};
+
+function blankDay(){return {start:false,promise:'',promiseKept:null,blocks:0,urgesR:0,urgesG:0,decisions:0,debrief1:'',debrief2:'',insist:'',letgo:''};}
+function ensureState(){
+  if(!S||typeof S!=='object') S={};
+  if(!S.days||typeof S.days!=='object') S.days={};
+  Object.keys(S.days).forEach(k=>{S.days[k]=Object.assign(blankDay(),S.days[k]||{});});
+  if(!S.work||typeof S.work!=='object') S.work={};
+  if(S.work.active===undefined) S.work.active=null;
+  if(!Array.isArray(S.work.next)) S.work.next=[];
+  if(!Array.isArray(S.work.parking)) S.work.parking=[];
+  S.work.next=S.work.next.filter(Boolean).slice(0,2);
+  if(!Array.isArray(S.shipped)) S.shipped=[];
+  if(!Array.isArray(S.killed)) S.killed=[];
+  if(!Array.isArray(S.reviews)) S.reviews=[];
+  if(!S.draft||typeof S.draft!=='object') S.draft={};
+  const d=S.draft; if(!d.scores||typeof d.scores!=='object') d.scores={};
+  ['a','d','i','r'].forEach(p=>{if(typeof d.scores[p]!=='number') d.scores[p]=-1;});
+  if(!Array.isArray(d.wins)) d.wins=['','',''];
+  if(!Array.isArray(d.next3)) d.next3=['','',''];
+  while(d.wins.length<3) d.wins.push(''); while(d.next3.length<3) d.next3.push('');
+  if(typeof d.adjust!=='string') d.adjust='';
+  if(typeof S.updated!=='number') S.updated=0;
+  S.ver=1;
+}
+
+/* ---------- dates ---------- */
+const pad=n=>String(n).padStart(2,'0');
+const keyOf=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const todayKey=()=>keyOf(new Date());
+function monday(d){const x=new Date(d);x.setHours(12,0,0,0);const w=(x.getDay()+6)%7;x.setDate(x.getDate()-w);return x;}
+function weekDays(d){const m=monday(d);return [...Array(7)].map((_,i)=>{const x=new Date(m);x.setDate(m.getDate()+i);return x;});}
+function day(k){k=k||todayKey(); if(!S.days[k]) S.days[k]=blankDay(); return S.days[k];}
+function firstDay(){const ks=Object.keys(S.days).sort();return ks[0]||todayKey();}
+function showedUp(k){const d=S.days[k]; return !!(d&&(d.start||d.blocks>0));}
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function grow(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
+
+/* ---------- save / sync ---------- */
+let saveTimer=null, dirty=false;
+function fmtWhen(ts){
+  if(!ts) return '';
+  const d=new Date(+ts), hm=pad(d.getHours())+':'+pad(d.getMinutes());
+  if(keyOf(d)===todayKey()) return hm;
+  const y=new Date(); y.setDate(y.getDate()-1);
+  if(keyOf(d)===keyOf(y)) return 'yesterday '+hm;
+  return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' '+hm;
+}
+let syncState='⚫ Local';
+function setSync(s){
+  syncState=s;
+  if(s.startsWith('🟢')) LS.set(K.last,String(Date.now()));
+  renderSync();
+}
+function renderSync(){
+  const last=LS.get(K.last), el=document.getElementById('sync');
+  let txt=syncState;
+  if(syncState.startsWith('🟢')) txt='🟢 Synced '+fmtWhen(last);
+  else if(last) txt=syncState+' · last '+fmtWhen(last);
+  el.textContent=txt;
+  el.title=last?'Last synced with Drive: '+new Date(+last).toLocaleString('en-GB'):'Not synced with Drive yet';
+  const line=document.getElementById('last-sync-line');
+  if(line) line.textContent=last?'Last synced with Drive: '+new Date(+last).toLocaleString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'Never synced on this device.';
+  const bl=document.getElementById('backup-line'), bk=LS.get(K.bk);
+  if(bl) bl.textContent=bk?'Last weekly backup: '+bk:'No backup yet.';
+}
+setInterval(renderSync,60000);
+function saveLocal(){S.updated=Date.now(); LS.set(K.data,JSON.stringify(S));}
+function autoSave(){saveLocal(); if(token&&fileReady()){dirty=true;setSync('🟡 Pending');clearTimeout(saveTimer);saveTimer=setTimeout(()=>drivePush(false),2000);} else setSync('⚫ Local');}
+function save(){saveLocal(); renderAll(); if(token) drivePush(false);}
+function load(){try{S=JSON.parse(LS.get(K.data)||'{}')}catch(e){S={}} ensureState();}
+
+/* ---------- Drive ---------- */
+const SCOPE='https://www.googleapis.com/auth/drive.file', FILE='act001.json';
+let token=SS.get(K.tok)||null, tokenClient=null, fileId=null, lastRemote=0, pollTimer=null;
+const fileReady=()=>!!fileId;
+function setCid(v){LS.set(K.cid,v.trim()); tokenClient=null; toast('Client ID saved');}
+function driveConnect(){ // user gesture only
+  const cid=LS.get(K.cid);
+  if(!cid){toast('Add your OAuth Client ID first');return;}
+  if(!window.google||!google.accounts||!google.accounts.oauth2){toast('Google library not loaded yet');return;}
+  if(!tokenClient) tokenClient=google.accounts.oauth2.initTokenClient({client_id:cid,scope:SCOPE,callback:r=>{
+    if(r&&r.access_token){token=r.access_token;SS.set(K.tok,token);afterConnect();} else {setSync('🔴 Erreur');}
+  }});
+  tokenClient.requestAccessToken();
+}
+async function api(url,opt){
+  opt=opt||{}; opt.headers=Object.assign({Authorization:'Bearer '+token},opt.headers||{});
+  const r=await fetch(url,opt);
+  if(r.status===401){token=null;SS.del(K.tok);setSync('🔴 Reconnect');throw new Error('auth');}
+  if(!r.ok) throw new Error('http '+r.status);
+  return r;
+}
+async function findFile(){
+  const q=encodeURIComponent(`name='${FILE}' and trashed=false`);
+  const r=await api(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,modifiedTime)&spaces=drive`);
+  const j=await r.json(); if(j.files&&j.files.length){fileId=j.files[0].id;return j.files[0];} return null;
+}
+async function afterConnect(){
+  try{ setSync('🟡 Pending');
+    const f=await findFile();
+    if(f){ await drivePull(false); } else { await drivePush(false); }
+    startPoll(); toast('Drive connected');
+  }catch(e){ if(e.message!=='auth') setSync('🔴 Erreur'); }
+}
+async function drivePull(manual){
+  if(!token){ if(manual) toast('Connect Drive first'); return; }
+  try{
+    if(!fileId&&!(await findFile())){ if(manual) toast('No file on Drive yet'); return; }
+    const r=await api(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
+    const remote=await r.json();
+    if(manual || (remote.updated||0)>(S.updated||0)){
+      if(document.activeElement&&/INPUT|TEXTAREA/.test(document.activeElement.tagName)&&!manual) return; // re-render guard
+      S=remote; ensureState(); LS.set(K.data,JSON.stringify(S)); renderAll();
+    }
+    lastRemote=S.updated; setSync('🟢 Sync ✓'); if(manual) toast('Pulled from Drive');
+    maybeBackup();
+  }catch(e){ if(e.message!=='auth') setSync('🔴 Erreur'); }
+}
+async function drivePush(manual){
+  if(!token){ if(manual) toast('Connect Drive first'); return; }
+  try{
+    const body=JSON.stringify(S);
+    if(!fileId) await findFile();
+    if(fileId){
+      await api(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,{method:'PATCH',headers:{'Content-Type':'application/json'},body});
+    } else {
+      fileId=await createJson(FILE,body);
+    }
+    dirty=false; lastRemote=S.updated; setSync('🟢 Sync ✓'); if(manual) toast('Pushed to Drive');
+    maybeBackup();
+  }catch(e){ if(e.message!=='auth') setSync('🔴 Erreur'); }
+}
+async function createJson(name,body,parent){
+  const meta={name,mimeType:'application/json'}; if(parent) meta.parents=[parent];
+  const b='act001b'+Date.now();
+  const mp=`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${b}\r\nContent-Type: application/json\r\n\r\n${body}\r\n--${b}--`;
+  const r=await api('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+b},body:mp});
+  return (await r.json()).id;
+}
+
+/* ---------- weekly backup ---------- */
+const BK_FOLDER='act001-backups';
+let bkFolderId=null, bkBusy=false;
+function lastFridayKey(){ // most recent Friday on or before today
+  const d=new Date(); d.setHours(12,0,0,0);
+  const back=(d.getDay()-5+7)%7; d.setDate(d.getDate()-back); return keyOf(d);
+}
+async function driveFind(q){
+  const r=await api(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q+' and trashed=false')}&fields=files(id,name)&spaces=drive`);
+  const j=await r.json(); return (j.files&&j.files[0])||null;
+}
+async function backupFolder(){
+  if(bkFolderId) return bkFolderId;
+  const f=await driveFind(`name='${BK_FOLDER}' and mimeType='application/vnd.google-apps.folder'`);
+  if(f){ bkFolderId=f.id; return f.id; }
+  const r=await api('https://www.googleapis.com/drive/v3/files?fields=id',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name:BK_FOLDER,mimeType:'application/vnd.google-apps.folder'})});
+  bkFolderId=(await r.json()).id; return bkFolderId;
+}
+async function writeBackup(dateKey){
+  const folder=await backupFolder(), name=`act001-backup-${dateKey}.json`, body=JSON.stringify(S);
+  const ex=await driveFind(`name='${name}' and '${folder}' in parents`);
+  if(ex) await api(`https://www.googleapis.com/upload/drive/v3/files/${ex.id}?uploadType=media`,{method:'PATCH',headers:{'Content-Type':'application/json'},body});
+  else await createJson(name,body,folder);
+  return name;
+}
+async function maybeBackup(){
+  if(!token||bkBusy) return;
+  const target=lastFridayKey();
+  if((LS.get(K.bk)||'')>=target) return; // this week's Friday backup already done
+  bkBusy=true;
+  try{
+    const folder=await backupFolder();
+    const ex=await driveFind(`name='act001-backup-${target}.json' and '${folder}' in parents`);
+    if(!ex){ await writeBackup(target); toast('Weekly backup saved to Drive'); }
+    LS.set(K.bk,target); renderSync();
+  }catch(e){ /* silent: retried at next sync */ }
+  finally{ bkBusy=false; }
+}
+async function backupNow(){
+  if(!token){toast('Connect Drive first');return;}
+  try{ const k=todayKey(), name=await writeBackup(k);
+    if(k>=(LS.get(K.bk)||'')) LS.set(K.bk,k); renderSync(); toast('Backup saved: '+name);
+  }catch(e){ if(e.message!=='auth') toast('Backup failed. Try again.'); }
+}
+function startPoll(){clearInterval(pollTimer); pollTimer=setInterval(()=>{ if(token&&!dirty&&document.visibilityState==='visible') drivePull(false); },60000);}
+
+/* ---------- toast & undo ---------- */
+let toastT=null, undoSnap=null;
+function toast(msg,undo){
+  const t=document.getElementById('toast'), u=document.getElementById('toast-undo');
+  document.getElementById('toast-msg').textContent=msg;
+  if(undo){undoSnap=undo;u.style.display='';u.onclick=()=>{S=JSON.parse(undoSnap);ensureState();save();t.classList.remove('show');};}
+  else u.style.display='none';
+  t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),4000);
+}
+const snap=()=>JSON.stringify(S);
+
+/* ---------- theme & font ---------- */
+const THEMES=['light','sand','navy','dark'], THEME_ICONS={light:'☀︎',sand:'○',navy:'◑',dark:'☾'};
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t==='light'?'':t);
+  document.getElementById('theme-btn').textContent=THEME_ICONS[t]||'☀︎';
+  const bg=getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+  document.querySelector('meta[name=theme-color]').setAttribute('content',bg);
+  LS.set(K.theme,t);
+}
+function toggleTheme(){const c=LS.get(K.theme)||'light'; applyTheme(THEMES[(THEMES.indexOf(c)+1)%THEMES.length]);}
+const FS_STEPS=[0.8,0.9,1.0,1.1,1.2,1.35,1.5];
+function applyFontSize(i){const s=FS_STEPS[i];const p=document.querySelector('.page');
+  if(CSS.supports('zoom','1')) p.style.zoom=s; else {p.style.transformOrigin='top center';p.style.transform=`scale(${s})`;}
+  LS.set(K.fs,i); document.getElementById('font-size-label').textContent=Math.round(s*100)+'%';}
+function fsStep(d){let i=parseInt(LS.get(K.fs)??2,10); if(isNaN(i)) i=2; applyFontSize(Math.max(0,Math.min(FS_STEPS.length-1,i+d)));}
+function fsReset(){applyFontSize(2);}
+
+/* ---------- tabs ---------- */
+function showTab(t){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id==='tab-'+t));
+  LS.set(K.act,t); window.scrollTo(0,0); renderAll();
+}
+document.getElementById('tabs').addEventListener('click',e=>{const b=e.target.closest('.tab'); if(b) showTab(b.dataset.tab);});
+
+/* ---------- TODAY ---------- */
+function toggle(field){const d=day(); d[field]=!d[field]; autoSave(); renderToday();}
+function setKept(v){const d=day(); d.promiseKept=(d.promiseKept===v?null:v); autoSave(); renderToday();}
+function bump(f,n){const d=day(); d[f]=Math.max(0,(d[f]||0)+n); autoSave(); renderToday();}
+function setField(f,v){day()[f]=v; autoSave();}
+
+function renderToday(){
+  const now=new Date(), k=todayKey(), d=day(k);
+  document.getElementById('today-title').textContent=now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+  const act=S.work.active?S.work.active.text:null;
+  document.getElementById('today-sub').innerHTML= act?`Active project: <b>${esc(act)}</b>`:`No active project yet. <a href="#" onclick="showTab('work');return false" style="color:var(--accent)">Pick one →</a>`;
+
+  // week strip
+  const labels=['M','T','W','T','F','S','S'];
+  document.getElementById('week').innerHTML=weekDays(now).map((x,i)=>{
+    const kk=keyOf(x), fut=kk>k, ok=showedUp(kk), isT=kk===k, pre=kk<firstDay();
+    const cls=['day',ok?'ok':'',isT?'today':'',(fut||pre)?'future':'',(!ok&&!fut&&!isT&&!pre)?'miss':''].join(' ');
+    return `<div class="${cls}"><b>${labels[i]}</b>${x.getDate()}</div>`;}).join('');
+
+  // banner: never miss twice
+  const y=new Date(now); y.setDate(y.getDate()-1); const yk=keyOf(y);
+  const y2=new Date(now); y2.setDate(y2.getDate()-2);
+  const hasHistory=Object.keys(S.days).some(kk=>kk<k);
+  let b='';
+  if(showedUp(k)) b=`<div class="banner ok">✓ Showed up today. That's the win. Anything more is a bonus.</div>`;
+  else if(hasHistory&&!showedUp(yk)) b=`<div class="banner warn"><b>Never miss twice.</b> Yesterday was missed. Do the 2-minute version now; it still counts.</div>`;
+  else b=`<div class="banner dark">Don't think it through. Do the 2-minute start.</div>`;
+  document.getElementById('today-banner').innerHTML=b;
+
+  document.getElementById('morning').innerHTML=`
+    <div class="check"><button class="box ${d.start?'on':''}" onclick="toggle('start')" aria-label="2-minute start">${d.start?'✓':''}</button>
+      <div class="grow"><div class="lbl">2-minute start on today's #1 task</div><div class="hint">Shrink it until starting takes 2 minutes. Then start.</div></div></div>
+    <div class="check"><div class="box" style="border-style:dashed">◎</div>
+      <div class="grow"><div class="lbl">One promise to myself today</div>
+      <textarea rows="1" placeholder="e.g. 3 sets of push-ups before lunch" oninput="setField('promise',this.value);grow(this)">${esc(d.promise)}</textarea></div></div>`;
+
+  document.getElementById('evening').innerHTML=`
+    <div class="check"><div class="grow"><div class="lbl">Promise kept?</div><div class="hint">${d.promise?esc(d.promise):'No promise set this morning.'}</div></div>
+      <div class="row"><button class="btn sm ${d.promiseKept===true?'primary':''}" onclick="setKept(true)">Yes</button><button class="btn sm ${d.promiseKept===false?'warn':''}" onclick="setKept(false)">No</button></div></div>
+    <div class="check"><div class="grow"><div class="lbl">2-line debrief</div>
+      <textarea rows="1" placeholder="What worked?" oninput="setField('debrief1',this.value);grow(this)">${esc(d.debrief1)}</textarea>
+      <textarea rows="1" style="margin-top:6px" placeholder="What would I change tomorrow?" oninput="setField('debrief2',this.value);grow(this)">${esc(d.debrief2)}</textarea></div></div>
+    <div class="check"><div class="grow"><div class="lbl">Insisted on / let go of</div>
+      <textarea rows="1" placeholder="One thing I insisted on" oninput="setField('insist',this.value);grow(this)">${esc(d.insist)}</textarea>
+      <textarea rows="1" style="margin-top:6px" placeholder="One thing I let go of" oninput="setField('letgo',this.value);grow(this)">${esc(d.letgo)}</textarea></div></div>`;
+  ['blocks','urgesR','urgesG','decisions'].forEach(f=>document.getElementById('c-'+f).textContent=d[f]);
+  document.querySelectorAll('#tab-today textarea').forEach(grow);
+}
+
+/* ---------- WORK ---------- */
+function addIdea(){const i=document.getElementById('idea-in'); const v=i.value.trim(); if(!v) return;
+  S.work.parking.unshift({id:uid(),text:v,done:'',added:todayKey()}); i.value=''; autoSave(); renderWork(); toast('Parked. It waits its turn.');}
+function findAny(id){
+  if(S.work.active&&S.work.active.id===id) return {item:S.work.active,where:'active'};
+  let ix=S.work.next.findIndex(x=>x.id===id); if(ix>-1) return {item:S.work.next[ix],where:'next',ix};
+  ix=S.work.parking.findIndex(x=>x.id===id); if(ix>-1) return {item:S.work.parking[ix],where:'parking',ix};
+  return null;
+}
+function detach(id){const f=findAny(id); if(!f) return null;
+  if(f.where==='active') S.work.active=null; else S.work[f.where].splice(f.ix,1); return f.item;}
+function toNext(id){ if(S.work.next.length>=2){toast('Queue full (2). Finish or kill something first.');return;}
+  const s=snap(), it=detach(id); if(!it) return; S.work.next.push(it); autoSave(); renderWork(); toast('Queued',s);}
+function toPark(id){const s=snap(), it=detach(id); if(!it) return; S.work.parking.unshift(it); autoSave(); renderWork(); toast('Back to parking lot',s);}
+function activate(id){ if(S.work.active){toast('One active project at a time. Ship or kill it first.');return;}
+  const s=snap(), it=detach(id); if(!it) return; S.work.active=it; it.started=todayKey(); autoSave(); renderWork(); toast('Now active. Define “done” first.',s);}
+function promote(){ if(S.work.active||!S.work.next.length) return; activate(S.work.next[0].id); }
+function ship(){ const a=S.work.active; if(!a) return; const s=snap();
+  S.shipped.unshift({id:a.id,text:a.text,done:a.done,date:todayKey()}); S.work.active=null; autoSave(); renderWork(); toast('Shipped 🎯',s);}
+function kill(id){const s=snap(), it=detach(id); if(!it) return; S.killed.unshift(Object.assign({},it,{date:todayKey()})); autoSave(); renderWork(); toast('Dropped on purpose',s);}
+function moveNext(i,d){const j=i+d; if(j<0||j>=S.work.next.length) return; const a=S.work.next; [a[i],a[j]]=[a[j],a[i]]; autoSave(); renderWork();}
+function setDone(v){ if(S.work.active){S.work.active.done=v; autoSave();} }
+
+function renderWork(){
+  const a=S.work.active;
+  document.getElementById('w-active').innerHTML = a ? `
+    <div class="slot active">
+      <div class="row"><span class="tag a">ACTIVE</span><span class="small muted mono">since ${esc(a.started||'')}</span></div>
+      <div style="font-weight:500;font-size:17px;margin:8px 0">${esc(a.text)}</div>
+      <label class="small muted">Definition of done</label>
+      <textarea rows="1" placeholder="What does finished look like?" oninput="setDone(this.value);grow(this)">${esc(a.done||'')}</textarea>
+      <div class="row wrap" style="margin-top:10px">
+        <button class="btn primary" onclick="ship()">Ship it</button>
+        <button class="btn" onclick="toPark('${a.id}')">Pause → parking</button>
+        <button class="btn danger" onclick="kill('${a.id}')">Kill</button>
+      </div></div>`
+    : `<div class="slot empty">${S.work.next.length?`<button class="btn primary" onclick="promote()">Promote “${esc(S.work.next[0].text)}”</button>`:'Empty. Pick one from the parking lot.'}</div>`;
+
+  const nx=S.work.next;
+  let h=nx.map((x,i)=>`<div class="slot"><div class="row">
+      <div class="grow"><span class="tag w">NEXT ${i+1}</span><div style="margin-top:6px">${esc(x.text)}</div></div>
+      <div class="row" style="gap:4px"><button class="btn sm" onclick="moveNext(${i},-1)" aria-label="Up">↑</button><button class="btn sm" onclick="moveNext(${i},1)" aria-label="Down">↓</button></div></div>
+      <div class="row wrap" style="margin-top:8px">${!a?`<button class="btn sm primary" onclick="activate('${x.id}')">Make active</button>`:''}
+      <button class="btn sm" onclick="toPark('${x.id}')">Park</button><button class="btn sm danger" onclick="kill('${x.id}')">Kill</button></div></div>`).join('');
+  for(let i=nx.length;i<2;i++) h+=`<div class="slot empty small">Free slot</div>`;
+  document.getElementById('w-next').innerHTML=h;
+
+  const p=S.work.parking;
+  document.getElementById('w-park').innerHTML = p.length ? p.map(x=>`<div class="item"><span class="t">${esc(x.text)}</span>
+      <button class="btn sm" onclick="toNext('${x.id}')" ${nx.length>=2?'disabled style="opacity:.4"':''}>→ Next</button>
+      <button class="btn sm danger" onclick="kill('${x.id}')" aria-label="Kill">×</button></div>`).join('')
+    : `<span class="small muted">Empty. Ideas you capture land here.</span>`;
+
+  const sh=S.shipped;
+  document.getElementById('w-shipped').innerHTML = sh.length ? sh.slice(0,15).map(x=>`<div class="item"><span class="t">✓ ${esc(x.text)}</span><span class="mono small muted">${esc(x.date)}</span></div>`).join('')
+    : `<span class="small muted">Nothing shipped yet. Aim: one thing every Friday.</span>`;
+  document.querySelectorAll('#tab-work textarea').forEach(grow);
+}
+
+/* ---------- FRIDAY ---------- */
+const PILLARS=[['a','1 · Action','Just start'],['d','2 · Discipline','Every day'],['i','3 · Improve','Experiment'],['r','4 · Self-respect','Promises kept']];
+function weekEvidence(ref){
+  const ks=weekDays(ref||new Date()).map(keyOf), t=todayKey();
+  const f0=firstDay(), past=ks.filter(k=>k<=t&&k>=f0);
+  let show=0,blocks=0,starts=0,kept=0,promises=0,ur=0,ug=0,deb=0,dec=0;
+  past.forEach(k=>{const d=S.days[k]; if(!d) return; if(showedUp(k)) show++; blocks+=d.blocks; if(d.start) starts++;
+    if(d.promise) promises++; if(d.promiseKept===true) kept++; ur+=d.urgesR; ug+=d.urgesG; dec+=d.decisions; if(d.debrief1||d.debrief2) deb++;});
+  const shipped=S.shipped.filter(x=>ks.includes(x.date)).length;
+  return {days:past.length,show,blocks,starts,kept,promises,ur,ug,deb,dec,shipped};
+}
+function fri(f,v){S.draft[f]=v; autoSave();}
+function friArr(f,i,v){S.draft[f][i]=v; autoSave();}
+function setScore(p,v){S.draft.scores[p]=(S.draft.scores[p]===v?-1:v); autoSave(); renderFriday();}
+function closeReview(){
+  const d=S.draft;
+  if(Object.values(d.scores).some(v=>v<0)){toast('Score all 4 pillars first');return;}
+  const s=snap(), ev=weekEvidence();
+  S.reviews.unshift({id:uid(),date:todayKey(),week:keyOf(monday(new Date())),scores:Object.assign({},d.scores),wins:d.wins.slice(),adjust:d.adjust,next3:d.next3.slice(),evidence:ev});
+  S.draft={}; ensureState(); autoSave(); renderFriday(); toast('Review closed. Set course for next week.',s);
+}
+function renderFriday(){
+  const ev=weekEvidence(), d=S.draft;
+  const st=[[`${ev.show}/${ev.days}`,'days showed up'],[ev.blocks,'25-min blocks'],[`${ev.kept}/${ev.promises}`,'promises kept'],[ev.shipped,'shipped']];
+  document.getElementById('fri-stats').innerHTML=st.map(x=>`<div class="stat"><div class="v">${x[0]}</div><div class="k">${x[1]}</div></div>`).join('');
+  const evid={a:`${ev.starts} starts · ${ev.blocks} blocks`, d:`${ev.show} of ${ev.days} days showed up`, i:`${ev.deb} debriefs · ${ev.dec} time-boxed decisions`, r:`${ev.kept}/${ev.promises} promises · ${ev.ur} urges resisted, ${ev.ug} given in`};
+  document.getElementById('fri-scores').innerHTML=PILLARS.map(([k,n,h])=>`<div class="pillar">
+      <div class="row"><div class="grow"><b style="font-weight:500">${n}</b> <span class="small muted">${h}</span></div></div>
+      <div class="evidence" style="margin-bottom:6px">${evid[k]}</div>
+      <div class="score">${[0,1,2,3].map(v=>`<button class="${d.scores[k]===v?'on':''}" onclick="setScore('${k}',${v})">${v}</button>`).join('')}</div></div>`).join('');
+  document.getElementById('fri-wins').innerHTML=d.wins.map((w,i)=>`<textarea rows="1" style="margin-top:${i?6:0}px" placeholder="Win ${i+1}, however small" oninput="friArr('wins',${i},this.value);grow(this)">${esc(w)}</textarea>`).join('');
+  document.getElementById('fri-next').innerHTML=d.next3.map((w,i)=>`<textarea rows="1" style="margin-top:${i?6:0}px" placeholder="Priority ${i+1}, and block time for it" oninput="friArr('next3',${i},this.value);grow(this)">${esc(w)}</textarea>`).join('');
+  const adj=document.getElementById('fri-adjust'); if(document.activeElement!==adj) adj.value=d.adjust;
+  const last=S.reviews[0];
+  document.getElementById('fri-sub').innerHTML = last&&last.adjust ? `Last week's adjustment: <b>${esc(last.adjust)}</b>` : '20 minutes. Facts, not feelings. Change one thing.';
+  const R=S.reviews;
+  document.getElementById('fri-hist').innerHTML = R.length ? `
+    <div class="bars" style="margin-bottom:10px" title="Total score per week (max 12)">${R.slice(0,12).reverse().map(r=>{const t=Object.values(r.scores).reduce((a,b)=>a+b,0);return `<span style="height:${Math.max(3,t/12*28)}px"></span>`}).join('')}</div>
+    ${R.slice(0,10).map(r=>{const t=Object.values(r.scores).reduce((a,b)=>a+b,0);return `<div class="item hist"><div class="grow"><div class="mono small">Week of ${esc(r.week)}</div>
+      <div class="small muted">${esc(r.adjust||'')}</div></div>
+      <div class="mini">${PILLARS.map(([k])=>`<span>${r.scores[k]}</span>`).join('')}</div><b class="mono">${t}/12</b></div>`}).join('')}`
+    : `<span class="small muted">Your first review closes a week. The bad weeks are the ones it's for.</span>`;
+  document.querySelectorAll('#tab-friday textarea').forEach(grow);
+}
+
+/* ---------- TOOLS ---------- */
+let uT=null;
+function urgeStart(){
+  clearInterval(uT); const total=90, t0=Date.now();
+  document.getElementById('u-btns').innerHTML=`<button class="btn grow" onclick="urgeStop()">Cancel</button>`;
+  const msgs=[[0,'Breathe. This is an urge, not a need.'],[30,'It’s rising. Just watch it.'],[55,'Peak. It won’t last.'],[75,'Passing. Pick your 2-minute action.']];
+  uT=setInterval(()=>{const e=Math.min(total,(Date.now()-t0)/1000), r=Math.ceil(total-e);
+    document.getElementById('u-time').textContent=Math.floor(r/60)+':'+pad(r%60);
+    document.getElementById('u-bar').style.width=(e/total*100)+'%';
+    document.getElementById('u-msg').textContent=msgs.filter(m=>e>=m[0]).pop()[1];
+    if(e>=total){clearInterval(uT); document.getElementById('u-msg').textContent='Passed. Now: 2 minutes of the real task.';
+      document.getElementById('u-btns').innerHTML=`<button class="btn primary grow" onclick="urgeLog(true)">Resisted</button><button class="btn warn grow" onclick="urgeLog(false)">Gave in</button>`;}
+  },250);
+}
+function urgeStop(){clearInterval(uT); urgeReset();}
+function urgeReset(){document.getElementById('u-time').textContent='1:30';document.getElementById('u-bar').style.width='0';
+  document.getElementById('u-msg').textContent='This is an urge, not a need.';
+  document.getElementById('u-btns').innerHTML=`<button class="btn primary grow" onclick="urgeStart()">Start 90 s</button>`;}
+function urgeLog(ok){bump(ok?'urgesR':'urgesG',1); urgeReset(); toast(ok?'Logged: resisted. Now 2 minutes of the real task.':'Logged. No judgment. Next one.');}
+function tbox(n,u){
+  const d=new Date(); if(u==='min') d.setMinutes(d.getMinutes()+n); else d.setDate(d.getDate()+n);
+  const when=u==='min'?d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'});
+  bump('decisions',1);
+  document.getElementById('tbox-out').innerHTML=`<b style="color:var(--text)">Decide by ${when}.</b> Stop gathering info then. Still unsure? Take the default option.${n===7?' Add a 5-minute pre-mortem.':''}`;
+}
+function il(yes){
+  document.getElementById('il-out').innerHTML= yes
+   ? `<div class="banner ok" style="margin:0"><b>Insist.</b> New attempt, new information. Go.</div>`
+   : `<div class="banner warn" style="margin:0"><b>Stop or change the approach.</b> Repeating the same move is stubbornness. Check: is it failing, or just hard? If only hard, insist.</div>`;
+}
+const PLAYBOOK=[
+ ['Pillar 1','Action: Just start',['2-minute start: shrink the task, then start','Act before planning; plan only what action reveals','25-minute blocks: commit to one, not the whole task','Friday: review your Action/Thinking ratio'],'“I’m not ready yet” is fear dressed as preparation.'],
+ ['Pillar 2','Everyday: Build discipline',['2-minute floor on bad days: it still counts','Shape the environment: tools ready, friction removed','Anchor to an existing habit','Never miss twice'],'Waiting to feel like it.'],
+ ['Pillar 3','Learn & improve',['One 1% tweak per week','One experiment at a time, for a week','Daily 2-line debrief','Notice one meaningful small thing'],'Optimizing instead of acting.'],
+ ['Pillar 4','Self-respect',['One small promise to yourself, kept','Clear no, no over-justifying','Visible follow-through','Evening: did I act in a way I respect?'],'Seeking approval.'],
+ ['Tool 1','Decide faster',['Classify: reversible? stakes?','Set a deadline, stop gathering info','Default option if still unsure','Log it; reread in a month'],'Research as avoidance.'],
+ ['Tool 2','Insist or let go',['Insist on your own effort; let go of others’ choices','10-second check: is the next attempt different?','Two-strike rule with people','Time-box goals; decide on Friday'],'Letting go to avoid what’s hard.'],
+ ['Tool 3','Finish & ship',['1 active + 2 queued; ideas → parking lot','Define “done” before starting','Ship something every Friday','Close or kill one open loop weekly'],'Starting new to escape the boring middle.'],
+ ['Tool 4','Delay gratification',['Name it: an urge, not a need','Surf 90 seconds','Swap in 2 minutes of the real task','Reward after effort, never before'],'“Just this once” is the urge talking.'],
+ ['Tool 5','High standards, kind tone',['Coach voice with yourself','Standard or just preference?','State the need, then ask','Name what went right first'],'All-or-nothing thinking.']];
+function renderTools(){
+  document.getElementById('playbook').innerHTML=PLAYBOOK.map(([k,t,l,trap])=>`<details class="card tool"><summary><span class="tag ${k.startsWith('Pillar')?'a':'m'}">${k}</span>${t}</summary>
+    <ol>${l.map(x=>`<li>${x}</li>`).join('')}</ol><div class="trap">Trap: ${trap}</div></details>`).join('');
+}
+
+/* ---------- data ---------- */
+function exportJson(){const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='act001-'+todayKey()+'.json';a.click();URL.revokeObjectURL(a.href);}
+function importJson(e){const f=e.target.files[0]; if(!f) return; const r=new FileReader();
+  r.onload=()=>{try{const s=snap(); S=JSON.parse(r.result); ensureState(); save(); toast('Imported',s);}catch(err){toast('Invalid JSON file');}}; r.readAsText(f); e.target.value='';}
+function clearAll(){const s=snap(); S={}; ensureState(); save(); toast('All data cleared',s);}
+
+/* ---------- render ---------- */
+function renderAll(){
+  const a=document.activeElement; if(a&&/INPUT|TEXTAREA/.test(a.tagName)&&a.id!=='idea-in'&&a.id!=='cid') return; // re-render guard
+  renderToday(); renderWork(); renderFriday(); renderTools();
+}
+
+/* ---------- init ---------- */
+load();
+applyTheme(LS.get(K.theme)||'light');
+{const i=parseInt(LS.get(K.fs)??2,10); applyFontSize(isNaN(i)?2:i);}
+document.getElementById('cid').value=LS.get(K.cid)||'';
+showTab(LS.get(K.act)||'today');
+renderSync();
+if(token){ afterConnect(); }
+// refresh at midnight / when returning to the app
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') renderAll(); });
+</script>
+</body>
+</html>
