@@ -42,6 +42,9 @@ button{font:inherit;cursor:pointer;color:inherit}
 .ver{font-family:var(--mono);font-size:11px;color:var(--muted);font-weight:400}
 .brand small{font-family:var(--mono);color:var(--muted);font-size:11px;margin-left:6px}
 .spacer{flex:1}
+.lang-seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:0 0 auto;height:36px}
+.lang-seg button{background:transparent;border:0;min-width:34px;padding:0 6px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.lang-seg button.on{background:var(--text);color:var(--bg);font-weight:500}
 .sync{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}
 @media (max-width:520px){.brand > span{display:none}.brand small{margin:0;font-size:14px;color:var(--text);font-weight:500}.tabs .tab{padding:8px 8px;font-size:13.5px}.tabs .tab .hide-sm{display:none}.tabs{padding:8px 6px;gap:2px}.header{gap:6px;padding:10px 12px}}
 .icon-btn{background:transparent;border:1px solid var(--line);border-radius:8px;min-width:36px;height:36px}
@@ -151,9 +154,10 @@ h3{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;
 </head>
 <body>
 <div class="header">
-  <div class="brand"><span data-i18n="brand">Act more. Think less.</span><small>act001 <span class="ver">v1.8</span></small></div>
+  <div class="brand"><span data-i18n="brand">Act more. Think less.</span><small>act001 <span class="ver">v1.9</span></small></div>
   <div class="spacer"></div>
   <span class="sync" id="sync">⚫ Local</span>
+  <div class="lang-seg" role="group" aria-label="Langue / Language"><button id="hl-fr" onclick="setLang('fr')">FR</button><button id="hl-en" onclick="setLang('en')">EN</button></div>
   <button class="icon-btn" id="theme-btn" onclick="toggleTheme()" aria-label="Theme">☀︎</button>
 </div>
 <nav class="tabs" id="tabs">
@@ -319,7 +323,7 @@ If this message stays, JavaScript is not running: open the file in Chrome or Saf
       <button class="btn danger" onclick="clearAll()" data-i18n="s.clear">Clear all data</button>
     </div>
     <p class="small muted" data-i18n="s.footer"></p>
-    <p class="small muted mono" id="app-version">act001 · v1.8 · 2026-09-27</p>
+    <p class="small muted mono" id="app-version">act001 · v1.9 · 2026-09-27</p>
   </div>
 </div>
 
@@ -485,6 +489,8 @@ function applyStatic(){
   document.querySelectorAll('[data-i18n-ph]').forEach(el=>el.placeholder=t(el.dataset.i18nPh));
   document.getElementById('tab-settings-btn').setAttribute('aria-label',t('tab.settings'));
   document.getElementById('lang-en').className='btn grow'+(LANG==='en'?' primary':'');
+  document.getElementById('hl-fr').className=LANG==='fr'?'on':''; document.getElementById('hl-en').className=LANG==='en'?'on':'';
+  document.getElementById('hl-fr').setAttribute('aria-pressed',LANG==='fr'); document.getElementById('hl-en').setAttribute('aria-pressed',LANG==='en');
   document.getElementById('lang-fr').className='btn grow'+(LANG==='fr'?' primary':'');
   document.getElementById('toast-undo').textContent=t('undo');
   const v=document.getElementById('app-version'); if(v) v.textContent=APP_VERSION;
@@ -498,7 +504,7 @@ const SS={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}}, se
 let S={};
 
 function setLang(l){ if(!LANGS.includes(l)) l='en'; const ch=l!==LANG; LANG=l; LS.set(K.lang,l); applyStatic(); renderAll(true); renderSync(); if(!uT) urgeReset(); if(ch) toast(t('x.lang')); }
-const APP_VERSION='act001 · v1.8 · 2026-09-27';
+const APP_VERSION='act001 · v1.9 · 2026-09-27';
 
 function blankDay(){return {fmt:{},mt:0,start:false,promise:'',promiseKept:null,blocks:0,urgesR:0,urgesG:0,decisions:0,debrief1:'',debrief2:'',insist:'',letgo:''};}
 function ensureState(){
