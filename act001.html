@@ -155,7 +155,7 @@ h3{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;
 </head>
 <body>
 <div class="header">
-  <div class="brand"><span data-i18n="brand">Act more. Think less.</span><small>act001 <span class="ver">v2.2</span></small></div>
+  <div class="brand"><span data-i18n="brand">Act more. Think less.</span><small>act001 <span class="ver">v2.3</span></small></div>
   <div class="spacer"></div>
   <span class="sync" id="sync">⚫ Local</span>
   <div class="lang-seg" role="group" aria-label="Langue / Language"><button id="hl-fr" onclick="setLang('fr')">FR</button><button id="hl-en" onclick="setLang('en')">EN</button></div>
@@ -186,7 +186,7 @@ If this message stays, JavaScript is not running: open the file in Chrome or Saf
     <h3 data-i18n="h.day">During the day</h3>
     <div class="card focus" id="focus-card">
       <div class="fmode" id="f-mode"></div>
-      <div class="ftime" id="f-time">25:00</div>
+      <div class="ftime" id="f-time">15:00</div>
       <div class="ring"><i id="f-bar"></i></div>
       <p class="small muted" id="f-msg" style="margin:6px 0 10px"></p>
       <div class="row" id="f-btns"></div>
@@ -326,7 +326,7 @@ If this message stays, JavaScript is not running: open the file in Chrome or Saf
       <button class="btn danger" onclick="clearAll()" data-i18n="s.clear">Clear all data</button>
     </div>
     <p class="small muted" data-i18n="s.footer"></p>
-    <p class="small muted mono" id="app-version">act001 · v2.2 · 2026-09-28</p>
+    <p class="small muted mono" id="app-version">act001 · v2.3 · 2026-09-28</p>
   </div>
 </div>
 
@@ -507,7 +507,7 @@ const SS={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}}, se
 let S={};
 
 function setLang(l){ if(!LANGS.includes(l)) l='en'; const ch=l!==LANG; LANG=l; LS.set(K.lang,l); applyStatic(); renderAll(true); renderSync(); if(!uT) urgeReset(); if(ch) toast(t('x.lang')); }
-const APP_VERSION='act001 · v2.2 · 2026-09-28';
+const APP_VERSION='act001 · v2.3 · 2026-09-28';
 
 function blankDay(){return {fmt:{},mt:0,start:false,promise:'',promiseKept:null,blocks:0,tblocks:0,fmin:0,urgesR:0,urgesG:0,decisions:0,debrief1:'',debrief2:'',insist:'',letgo:''};}
 function ensureState(){
@@ -1008,9 +1008,9 @@ function renderFriday(force){
 /* ---------- FOCUS TIMER (15 or 25 min) ---------- */
 // Timer state is local to the device (not synced); the finished block is synced via the day counter.
 // Based on an end timestamp, so it survives screen lock, tab switches and reloads.
-// Focus length: 15 or 25 min (last choice remembered on this device). Break: 3 min after 15, 5 min after 25.
+// Focus length: 15 (default) or 25 min (last choice remembered on this device). Break: 3 min after 15, 5 min after 25.
 const DURS=[15,25];
-function focusMin(){ const v=parseInt(LS.get(K.fdur)||'25',10); return DURS.indexOf(v)>-1?v:25; }
+function focusMin(){ const v=parseInt(LS.get(K.fdur)||'15',10); return DURS.indexOf(v)>-1?v:15; }
 const breakMin=m=>m===15?3:5;
 let TM=null, audioCtx=null;
 try{ TM=JSON.parse(LS.get(K.timer)||'null'); }catch(e){ TM=null; }
@@ -1032,7 +1032,7 @@ function tmPause(){ if(!TM||!TM.end) return; TM.left=Math.max(0,TM.end-Date.now(
 function tmResume(){ if(!TM||TM.end) return; unlockAudio(); TM.end=Date.now()+TM.left; TM.left=null; tmSave(); renderTimer(); }
 function tmReset(){ TM=null; tmSave(); renderTimer(); }
 function tmFinish(){
-  const wasFocus=TM.mode==='focus', mins=TM.min||Math.round((TM.dur||0)/60000)||25;
+  const wasFocus=TM.mode==='focus', mins=TM.min||Math.round((TM.dur||0)/60000)||15;
   TM={mode:wasFocus?'done':'brkdone'}; tmSave();
   if(wasFocus){ const dd=day(); dd.tblocks=(dd.tblocks||0)+1; markF('tblocks'); dd.fmin=(dd.fmin||0)+mins; markF('fmin'); bump('blocks',1); toast(t('fo.tDone',{x:mins})); } else toast(t('fo.tBreak'));
   chime(); renderTimer();
