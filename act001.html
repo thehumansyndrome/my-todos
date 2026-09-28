@@ -155,7 +155,7 @@ h3{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;
 </head>
 <body>
 <div class="header">
-  <div class="brand"><span data-i18n="brand">Act more. Think less.</span><small>act001 <span class="ver">v2.1</span></small></div>
+  <div class="brand"><span data-i18n="brand">Act more. Think less.</span><small>act001 <span class="ver">v2.2</span></small></div>
   <div class="spacer"></div>
   <span class="sync" id="sync">⚫ Local</span>
   <div class="lang-seg" role="group" aria-label="Langue / Language"><button id="hl-fr" onclick="setLang('fr')">FR</button><button id="hl-en" onclick="setLang('en')">EN</button></div>
@@ -192,7 +192,7 @@ If this message stays, JavaScript is not running: open the file in Chrome or Saf
       <div class="row" id="f-btns"></div>
     </div>
     <div class="card">
-      <div class="check"><div class="grow"><div class="lbl" data-i18n="c.blocks">25-minute blocks</div><div class="hint" data-i18n="c.blocksH"></div></div>
+      <div class="check"><div class="grow"><div class="lbl" data-i18n="c.blocks">Focus blocks</div><div class="hint" data-i18n="c.blocksH"></div></div>
         <div class="counter"><button onclick="bump('blocks',-1)">−</button><span class="n" id="c-blocks">0</span><button onclick="bump('blocks',1)">+</button></div></div>
       <div class="check"><div class="grow"><div class="lbl" data-i18n="c.urgesR"></div><div class="hint" data-i18n="c.urgesRH"></div></div>
         <div class="counter"><button onclick="bump('urgesR',-1)">−</button><span class="n" id="c-urgesR">0</span><button onclick="bump('urgesR',1)">+</button></div></div>
@@ -326,7 +326,7 @@ If this message stays, JavaScript is not running: open the file in Chrome or Saf
       <button class="btn danger" onclick="clearAll()" data-i18n="s.clear">Clear all data</button>
     </div>
     <p class="small muted" data-i18n="s.footer"></p>
-    <p class="small muted mono" id="app-version">act001 · v2.1 · 2026-09-28</p>
+    <p class="small muted mono" id="app-version">act001 · v2.2 · 2026-09-28</p>
   </div>
 </div>
 
@@ -339,7 +339,7 @@ en:{
  brand:'Act more. Think less.', yes:'Yes', no:'No', undo:'Undo',
  'tab.today':'Today','tab.work':'Work','tab.friday':'Friday','tab.tools':'Tools','tab.settings':'Settings',
  'h.morning':'Morning','h.day':'During the day','h.evening':'Evening',
- 'c.blocks':'25-minute blocks','fo.focus':'Focus block','fo.break':'Break','fo.ready':'One block. Not the whole task.','fo.running':'Stay on the one task. Nothing else.','fo.paused':'Paused.','fo.doneMsg':'Block done ✓ It\u2019s counted.','fo.breakMsg':'Stand up, breathe, drink water.','fo.breakDone':'Break over. Ready for the next block?','fo.start':'Start 25 min','fo.pause':'Pause','fo.resume':'Resume','fo.reset':'Reset','fo.startBreak':'Break 5 min','fo.next':'Next block','fo.tDone':'25 minutes done: +1 block','fo.tBreak':'Break over','c.blocksH':'Commit to one block, not the whole task.',
+ 'c.blocks':'Focus blocks','fo.focus':'Focus block','fo.break':'Break','fo.ready':'One block. Not the whole task.','fo.running':'Stay on the one task. Nothing else.','fo.paused':'Paused.','fo.doneMsg':'Block done ✓ It\u2019s counted.','fo.breakMsg':'Stand up, breathe, drink water.','fo.breakDone':'Break over. Ready for the next block?','fo.start':'Start','fo.startN':'{x} min','fo.pick':'Pick 15 min (reading) or 25 min.','fo.pause':'Pause','fo.resume':'Resume','fo.reset':'Reset','fo.startBreak':'Break {x} min','fo.next':'Next block ({x} min)','fo.tDone':'{x} minutes done: +1 block','fo.tBreak':'Break over','c.blocksH':'15 or 25 min. One block, not the whole task.',
  'c.urgesR':'Urges resisted','c.urgesRH':'Surf 90 s, then 2 minutes of the real task.',
  'c.urgesG':'Urges given in to','c.urgesGH':'No judgment. Just count.',
  'c.dec':'Decisions time-boxed','c.decH':'Minor 10 min · Big 1 day · Irreversible 1 week',
@@ -366,9 +366,9 @@ en:{
  'f.h1':'1 · Scoreboard (0–3)','f.scale':'0 = absent · 1 = some days · 2 = most days · 3 = every day',
  'f.h2':'2 · Three wins','f.h3':'3 · One adjustment','f.adjPh':'The one tweak for next week','f.h4':'4 · Next week’s 3 priorities',
  'f.close':'Close this week’s review','f.hist':'History',
- 'f.sShow':'days showed up','f.sBlocks':'25-min blocks','f.sKept':'promises kept','f.sShipped':'shipped',
+ 'f.sShow':'days showed up','f.sBlocks':'focus blocks','f.sKept':'promises kept','f.sShipped':'shipped',
  'f.p':[['1 · Action','Just start'],['2 · Discipline','Every day'],['3 · Improve','Experiment'],['4 · Self-respect','Promises kept']],
- 'f.eA':'{a} starts · {b} blocks','f.eAt':' ({x} with the timer)','f.sug':'Suggested: {x} ({a} blocks over {b} days, target 1/day)','f.apply':'Apply','f.hStreak':'Promises kept','f.streak':'current streak','f.best':'best','f.days':'days','f.legend':'✓ kept · ✗ not kept · ? to answer · – no promise','f.eD':'{a} of {b} days showed up','f.eI':'{a} debriefs · {b} time-boxed decisions','f.eR':'{a}/{b} promises · {c} urges resisted, {d} given in',
+ 'f.eA':'{a} starts · {b} blocks','f.eAt':' ({x} with the timer · {m} min)','f.sug':'Suggested: {x} ({a} blocks over {b} days, target 1/day)','f.apply':'Apply','f.hStreak':'Promises kept','f.streak':'current streak','f.best':'best','f.days':'days','f.legend':'✓ kept · ✗ not kept · ? to answer · – no promise','f.eD':'{a} of {b} days showed up','f.eI':'{a} debriefs · {b} time-boxed decisions','f.eR':'{a}/{b} promises · {c} urges resisted, {d} given in',
  'f.winPh':'Win {x}, however small','f.nextPh':'Priority {x}, and block time for it',
  'f.tScore':'Score all 4 pillars first','f.tClosed':'Review closed. Set course for next week.',
  'f.weekOf':'Week of {x}','f.histEmpty':'Your first review closes a week. The bad weeks are the ones it’s for.','f.barsTitle':'Total score per week (max 12)',
@@ -397,7 +397,7 @@ en:{
  'x.bkAuto':'Weekly backup saved to Drive','x.bkSaved':'Backup saved: {x}','x.bkFail':'Backup failed. Try again.',
  'x.imported':'Imported','x.badJson':'Invalid JSON file','x.cleared':'All data cleared','x.lang':'Language: English',
  pb:[
- ['Pillar 1','Action: Just start',['2-minute start: shrink the task, then start','Act before planning; plan only what action reveals','25-minute blocks: commit to one, not the whole task','Friday: review your Action/Thinking ratio'],'“I’m not ready yet” is fear dressed as preparation.'],
+ ['Pillar 1','Action: Just start',['2-minute start: shrink the task, then start','Act before planning; plan only what action reveals','15 or 25-minute blocks: commit to one, not the whole task','Friday: review your Action/Thinking ratio'],'“I’m not ready yet” is fear dressed as preparation.'],
  ['Pillar 2','Everyday: Build discipline',['2-minute floor on bad days: it still counts','Shape the environment: tools ready, friction removed','Anchor to an existing habit','Never miss twice'],'Waiting to feel like it.'],
  ['Pillar 3','Learn & improve',['One 1% tweak per week','One experiment at a time, for a week','Daily 2-line debrief','Notice one meaningful small thing'],'Optimizing instead of acting.'],
  ['Pillar 4','Self-respect',['One small promise to yourself, kept','Clear no, no over-justifying','Visible follow-through','Evening: did I act in a way I respect?'],'Seeking approval.'],
@@ -411,7 +411,7 @@ fr:{
  brand:'Agir plus. Penser moins.', yes:'Oui', no:'Non', undo:'Annuler',
  'tab.today':'Aujourd’hui','tab.work':'Projets','tab.friday':'Vendredi','tab.tools':'Outils','tab.settings':'Réglages',
  'h.morning':'Matin','h.day':'Pendant la journée','h.evening':'Soir',
- 'c.blocks':'Blocs de 25 minutes','fo.focus':'Bloc de concentration','fo.break':'Pause','fo.ready':'Un seul bloc. Pas toute la tâche.','fo.running':'Reste sur cette seule tâche. Rien d\u2019autre.','fo.paused':'En pause.','fo.doneMsg':'Bloc terminé ✓ Il est comptabilisé.','fo.breakMsg':'Lève-toi, respire, bois de l\u2019eau.','fo.breakDone':'Pause terminée. Prêt pour le bloc suivant ?','fo.start':'Lancer 25 min','fo.pause':'Pause','fo.resume':'Reprendre','fo.reset':'Réinitialiser','fo.startBreak':'Pause 5 min','fo.next':'Bloc suivant','fo.tDone':'25 minutes terminées : +1 bloc','fo.tBreak':'Pause terminée','c.blocksH':'S’engager sur un bloc, pas sur toute la tâche.',
+ 'c.blocks':'Blocs de concentration','fo.focus':'Bloc de concentration','fo.break':'Pause','fo.ready':'Un seul bloc. Pas toute la tâche.','fo.running':'Reste sur cette seule tâche. Rien d\u2019autre.','fo.paused':'En pause.','fo.doneMsg':'Bloc terminé ✓ Il est comptabilisé.','fo.breakMsg':'Lève-toi, respire, bois de l\u2019eau.','fo.breakDone':'Pause terminée. Prêt pour le bloc suivant ?','fo.start':'Lancer','fo.startN':'{x} min','fo.pick':'Choisis 15 min (lecture) ou 25 min.','fo.pause':'Pause','fo.resume':'Reprendre','fo.reset':'Réinitialiser','fo.startBreak':'Pause {x} min','fo.next':'Bloc suivant ({x} min)','fo.tDone':'{x} minutes terminées : +1 bloc','fo.tBreak':'Pause terminée','c.blocksH':'15 ou 25 min. Un seul bloc, pas toute la tâche.',
  'c.urgesR':'Envies résistées','c.urgesRH':'Surfer 90 s, puis 2 minutes de la vraie tâche.',
  'c.urgesG':'Envies cédées','c.urgesGH':'Sans jugement. On compte, c’est tout.',
  'c.dec':'Décisions minutées','c.decH':'Mineure 10 min · Importante 1 jour · Irréversible 1 semaine',
@@ -438,9 +438,9 @@ fr:{
  'f.h1':'1 · Tableau de score (0–3)','f.scale':'0 = absent · 1 = certains jours · 2 = la plupart des jours · 3 = tous les jours',
  'f.h2':'2 · Trois victoires','f.h3':'3 · Un ajustement','f.adjPh':'Le seul ajustement pour la semaine prochaine','f.h4':'4 · Les 3 priorités de la semaine prochaine',
  'f.close':'Clôturer la revue de la semaine','f.hist':'Historique',
- 'f.sShow':'jours présents','f.sBlocks':'blocs de 25 min','f.sKept':'promesses tenues','f.sShipped':'livrés',
+ 'f.sShow':'jours présents','f.sBlocks':'blocs de concentration','f.sKept':'promesses tenues','f.sShipped':'livrés',
  'f.p':[['1 · Action','Juste démarrer'],['2 · Discipline','Chaque jour'],['3 · Progrès','Expérimenter'],['4 · Respect de soi','Promesses tenues']],
- 'f.eA':'{a} démarrages · {b} blocs','f.eAt':' (dont {x} avec le minuteur)','f.sug':'Suggestion : {x} ({a} blocs sur {b} jours, objectif 1/jour)','f.apply':'Appliquer','f.hStreak':'Promesses tenues','f.streak':'série en cours','f.best':'record','f.days':'jours','f.legend':'✓ tenue · ✗ non tenue · ? à répondre · – pas de promesse','f.eD':'jours présents : {a}/{b}','f.eI':'{a} débriefs · {b} décisions minutées','f.eR':'{a}/{b} promesses · {c} envies résistées, {d} cédées',
+ 'f.eA':'{a} démarrages · {b} blocs','f.eAt':' (dont {x} avec le minuteur · {m} min)','f.sug':'Suggestion : {x} ({a} blocs sur {b} jours, objectif 1/jour)','f.apply':'Appliquer','f.hStreak':'Promesses tenues','f.streak':'série en cours','f.best':'record','f.days':'jours','f.legend':'✓ tenue · ✗ non tenue · ? à répondre · – pas de promesse','f.eD':'jours présents : {a}/{b}','f.eI':'{a} débriefs · {b} décisions minutées','f.eR':'{a}/{b} promesses · {c} envies résistées, {d} cédées',
  'f.winPh':'Victoire {x}, même petite','f.nextPh':'Priorité {x}, et bloque du temps pour elle',
  'f.tScore':'Note d’abord les 4 piliers','f.tClosed':'Revue clôturée. Cap sur la semaine prochaine.',
  'f.weekOf':'Semaine du {x}','f.histEmpty':'Ta première revue clôture une semaine. Les mauvaises semaines sont justement faites pour ça.','f.barsTitle':'Score total par semaine (max 12)',
@@ -501,15 +501,15 @@ function applyStatic(){
 
 /* ---------- keys & state ---------- */
 const APP='act001';
-const K={data:'td_v4_'+APP, act:'td_act_'+APP, undo:'td_undo_'+APP, theme:'td_theme_'+APP, fs:'td_fs_'+APP, cid:'td_cid_'+APP, tok:'td_tok_'+APP, last:'td_last_'+APP, bk:'td_bk_'+APP, lang:'td_lang_'+APP, on:'td_drive_'+APP, ver:'td_dver_'+APP, timer:'td_timer_'+APP};
+const K={data:'td_v4_'+APP, act:'td_act_'+APP, undo:'td_undo_'+APP, theme:'td_theme_'+APP, fs:'td_fs_'+APP, cid:'td_cid_'+APP, tok:'td_tok_'+APP, last:'td_last_'+APP, bk:'td_bk_'+APP, lang:'td_lang_'+APP, on:'td_drive_'+APP, ver:'td_dver_'+APP, timer:'td_timer_'+APP, fdur:'td_fdur_'+APP};
 const LS={get(k){try{return localStorage.getItem(k)}catch(e){return null}}, set(k,v){try{localStorage.setItem(k,v)}catch(e){}}, del(k){try{localStorage.removeItem(k)}catch(e){}}};
 const SS={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}}, set(k,v){try{sessionStorage.setItem(k,v)}catch(e){}}, del(k){try{sessionStorage.removeItem(k)}catch(e){}}};
 let S={};
 
 function setLang(l){ if(!LANGS.includes(l)) l='en'; const ch=l!==LANG; LANG=l; LS.set(K.lang,l); applyStatic(); renderAll(true); renderSync(); if(!uT) urgeReset(); if(ch) toast(t('x.lang')); }
-const APP_VERSION='act001 · v2.1 · 2026-09-28';
+const APP_VERSION='act001 · v2.2 · 2026-09-28';
 
-function blankDay(){return {fmt:{},mt:0,start:false,promise:'',promiseKept:null,blocks:0,tblocks:0,urgesR:0,urgesG:0,decisions:0,debrief1:'',debrief2:'',insist:'',letgo:''};}
+function blankDay(){return {fmt:{},mt:0,start:false,promise:'',promiseKept:null,blocks:0,tblocks:0,fmin:0,urgesR:0,urgesG:0,decisions:0,debrief1:'',debrief2:'',insist:'',letgo:''};}
 function ensureState(){
   if(!S||typeof S!=='object') S={};
   if(!S.days||typeof S.days!=='object') S.days={};
@@ -932,11 +932,11 @@ const PK=['a','d','i','r'];
 function weekEvidence(ref){
   const ks=weekDays(ref||new Date()).map(keyOf), td=todayKey(), f0=firstDay();
   const past=ks.filter(k=>k<=td&&k>=f0);
-  let show=0,blocks=0,tblocks=0,starts=0,kept=0,promises=0,ur=0,ug=0,deb=0,dec=0;
-  past.forEach(k=>{const d=S.days[k]; if(!d) return; if(showedUp(k)) show++; blocks+=d.blocks; tblocks+=Math.min(d.tblocks||0,d.blocks||0); if(d.start) starts++;
+  let show=0,blocks=0,tblocks=0,fmin=0,starts=0,kept=0,promises=0,ur=0,ug=0,deb=0,dec=0;
+  past.forEach(k=>{const d=S.days[k]; if(!d) return; if(showedUp(k)) show++; blocks+=d.blocks; tblocks+=Math.min(d.tblocks||0,d.blocks||0); fmin+=(d.fmin||0); if(d.start) starts++;
     if(d.promise&&k<td) promises++; if(d.promiseKept===true) kept++; ur+=d.urgesR; ug+=d.urgesG; dec+=d.decisions; if(d.debrief1||d.debrief2) deb++;});
   const shipped=S.shipped.filter(x=>ks.includes(x.date)).length;
-  return {days:past.length,show,blocks,tblocks,starts,kept,promises,ur,ug,deb,dec,shipped};
+  return {days:past.length,show,blocks,tblocks,fmin,starts,kept,promises,ur,ug,deb,dec,shipped};
 }
 // Action pillar suggestion: average 25-min blocks per elapsed day (target = 1 per day)
 function actionSuggest(ev){ if(!ev.days) return null; const r=ev.blocks/ev.days; return r<=0?0:(r<0.5?1:(r<1?2:3)); }
@@ -968,7 +968,7 @@ function renderFriday(force){
   const st=[[`${ev.show}/${ev.days}`,t('f.sShow')],[ev.blocks,t('f.sBlocks')],[`${ev.kept}/${ev.promises}`,t('f.sKept')],[ev.shipped,t('f.sShipped')]];
   document.getElementById('fri-stats').innerHTML=st.map(x=>`<div class="stat"><div class="v">${x[0]}</div><div class="k">${x[1]}</div></div>`).join('');
   const sug=actionSuggest(ev);
-  const evid={a:t('f.eA',{a:ev.starts,b:ev.blocks})+(ev.tblocks?t('f.eAt',{x:ev.tblocks}):''), d:t('f.eD',{a:ev.show,b:ev.days}), i:t('f.eI',{a:ev.deb,b:ev.dec}), r:t('f.eR',{a:ev.kept,b:ev.promises,c:ev.ur,d:ev.ug})};
+  const evid={a:t('f.eA',{a:ev.starts,b:ev.blocks})+(ev.tblocks?t('f.eAt',{x:ev.tblocks,m:ev.fmin}):''), d:t('f.eD',{a:ev.show,b:ev.days}), i:t('f.eI',{a:ev.deb,b:ev.dec}), r:t('f.eR',{a:ev.kept,b:ev.promises,c:ev.ur,d:ev.ug})};
   const P=t('f.p');
   document.getElementById('fri-scores').innerHTML=PK.map((k,ix)=>`<div class="pillar">
       <div class="row"><div class="grow"><b style="font-weight:500">${P[ix][0]}</b> <span class="small muted">${P[ix][1]}</span></div></div>
@@ -1005,10 +1005,13 @@ function renderFriday(force){
   document.querySelectorAll('#tab-friday textarea').forEach(grow);
 }
 
-/* ---------- FOCUS TIMER (25 min) ---------- */
+/* ---------- FOCUS TIMER (15 or 25 min) ---------- */
 // Timer state is local to the device (not synced); the finished block is synced via the day counter.
 // Based on an end timestamp, so it survives screen lock, tab switches and reloads.
-const FOCUS_MS=25*60*1000, BREAK_MS=5*60*1000;
+// Focus length: 15 or 25 min (last choice remembered on this device). Break: 3 min after 15, 5 min after 25.
+const DURS=[15,25];
+function focusMin(){ const v=parseInt(LS.get(K.fdur)||'25',10); return DURS.indexOf(v)>-1?v:25; }
+const breakMin=m=>m===15?3:5;
 let TM=null, audioCtx=null;
 try{ TM=JSON.parse(LS.get(K.timer)||'null'); }catch(e){ TM=null; }
 function tmSave(){ if(TM) LS.set(K.timer,JSON.stringify(TM)); else LS.del(K.timer); }
@@ -1022,14 +1025,16 @@ function chime(){
   }catch(e){}
   try{ if(navigator.vibrate) navigator.vibrate([200,100,200]); }catch(e){}
 }
-function tmStart(mode){ unlockAudio(); const dur=mode==='focus'?FOCUS_MS:BREAK_MS; TM={mode,dur,end:Date.now()+dur,left:null}; tmSave(); renderTimer(); }
+function tmStart(mode,min){ unlockAudio();
+  if(mode==='focus'){ if(min){ LS.set(K.fdur,String(min)); } min=focusMin(); } else { min=breakMin(focusMin()); }
+  const dur=min*60000; TM={mode,dur,min,end:Date.now()+dur,left:null}; tmSave(); renderTimer(); }
 function tmPause(){ if(!TM||!TM.end) return; TM.left=Math.max(0,TM.end-Date.now()); TM.end=null; tmSave(); renderTimer(); }
 function tmResume(){ if(!TM||TM.end) return; unlockAudio(); TM.end=Date.now()+TM.left; TM.left=null; tmSave(); renderTimer(); }
 function tmReset(){ TM=null; tmSave(); renderTimer(); }
 function tmFinish(){
-  const wasFocus=TM.mode==='focus';
+  const wasFocus=TM.mode==='focus', mins=TM.min||Math.round((TM.dur||0)/60000)||25;
   TM={mode:wasFocus?'done':'brkdone'}; tmSave();
-  if(wasFocus){ const dd=day(); dd.tblocks=(dd.tblocks||0)+1; markF('tblocks'); bump('blocks',1); toast(t('fo.tDone')); } else toast(t('fo.tBreak'));
+  if(wasFocus){ const dd=day(); dd.tblocks=(dd.tblocks||0)+1; markF('tblocks'); dd.fmin=(dd.fmin||0)+mins; markF('fmin'); bump('blocks',1); toast(t('fo.tDone',{x:mins})); } else toast(t('fo.tBreak'));
   chime(); renderTimer();
 }
 function tmTick(){ if(TM&&TM.end&&Date.now()>=TM.end) tmFinish(); else if(TM&&TM.end) renderTimer(true); }
@@ -1037,7 +1042,8 @@ const mmss=ms=>{ const s=Math.max(0,Math.ceil(ms/1000)); return pad(Math.floor(s
 function renderTimer(light){
   const card=document.getElementById('focus-card'); if(!card) return;
   const tm=document.getElementById('f-time'), bar=document.getElementById('f-bar');
-  let left=FOCUS_MS, dur=FOCUS_MS, mode='focus', state='idle';
+  const fm=focusMin();
+  let left=fm*60000, dur=fm*60000, mode='focus', state='idle';
   if(TM){ mode=TM.mode;
     if(mode==='done'||mode==='brkdone'){ state=mode; left=0; dur=1; }
     else { dur=TM.dur; left=TM.end?TM.end-Date.now():TM.left; state=TM.end?'run':'paused'; } }
@@ -1050,14 +1056,14 @@ function renderTimer(light){
   if(light) return;
   document.getElementById('f-mode').textContent=isBreak?t('fo.break'):t('fo.focus');
   const msg={idle:'fo.ready',run:isBreak?'fo.breakMsg':'fo.running',paused:'fo.paused',done:'fo.doneMsg',brkdone:'fo.breakDone'}[state];
-  document.getElementById('f-msg').textContent=t(msg);
-  const B=(fn,key,cls)=>`<button class="btn grow ${cls||''}" onclick="${fn}">${t(key)}</button>`;
+  document.getElementById('f-msg').textContent=t(msg)+(state==='idle'?' '+t('fo.pick'):'');
+  const B=(fn,key,cls,v)=>`<button class="btn grow ${cls||''}" onclick="${fn}">${t(key,v)}</button>`;
   let h='';
-  if(state==='idle') h=B("tmStart('focus')",'fo.start','primary');
+  if(state==='idle') h=DURS.map(m=>B(`tmStart('focus',${m})`,'fo.startN',m===fm?'primary':'',{x:m})).join('');
   else if(state==='run') h=B('tmPause()','fo.pause')+B('tmReset()','fo.reset');
   else if(state==='paused') h=B('tmResume()','fo.resume','primary')+B('tmReset()','fo.reset');
-  else if(state==='done') h=B("tmStart('break')",'fo.startBreak','soft')+B("tmStart('focus')",'fo.next','primary');
-  else h=B("tmStart('focus')",'fo.next','primary')+B('tmReset()','fo.reset');
+  else if(state==='done') h=B("tmStart('break')",'fo.startBreak','soft',{x:breakMin(fm)})+B("tmStart('focus')",'fo.next','primary',{x:fm});
+  else h=B("tmStart('focus')",'fo.next','primary',{x:fm})+B('tmReset()','fo.reset');
   document.getElementById('f-btns').innerHTML=h;
 }
 setInterval(tmTick,500);
