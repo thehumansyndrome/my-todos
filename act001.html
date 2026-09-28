@@ -154,7 +154,7 @@ h3{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;
 </head>
 <body>
 <div class="header">
-  <div class="brand"><span data-i18n="brand">Act more. Think less.</span><small>act001 <span class="ver">v1.9</span></small></div>
+  <div class="brand"><span data-i18n="brand">Act more. Think less.</span><small>act001 <span class="ver">v2.0</span></small></div>
   <div class="spacer"></div>
   <span class="sync" id="sync">⚫ Local</span>
   <div class="lang-seg" role="group" aria-label="Langue / Language"><button id="hl-fr" onclick="setLang('fr')">FR</button><button id="hl-en" onclick="setLang('en')">EN</button></div>
@@ -323,7 +323,7 @@ If this message stays, JavaScript is not running: open the file in Chrome or Saf
       <button class="btn danger" onclick="clearAll()" data-i18n="s.clear">Clear all data</button>
     </div>
     <p class="small muted" data-i18n="s.footer"></p>
-    <p class="small muted mono" id="app-version">act001 · v1.9 · 2026-09-27</p>
+    <p class="small muted mono" id="app-version">act001 · v2.0 · 2026-09-28</p>
   </div>
 </div>
 
@@ -347,7 +347,7 @@ en:{
  'd.goBanner':'Don’t think it through. Do the 2-minute start.',
  'd.start':'2-minute start on today’s #1 task','d.startH':'Shrink it until starting takes 2 minutes. Then start.',
  'd.promise':'One promise to myself today','d.promisePh':'e.g. 3 sets of push-ups before lunch',
- 'd.kept':'Promise kept?','d.noPromise':'No promise set this morning.',
+ 'd.kept':'Yesterday\u2019s promise: kept?','d.keptOn':'Promise of {x}: kept?','d.noPromise':'No promise set this morning.','d.keptHint':'Answer honestly. It counts in Friday\u2019s review.',
  'd.debrief':'2-line debrief','d.deb1':'What worked?','d.deb2':'What would I change tomorrow?',
  'd.il':'Insisted on / let go of','d.ilIns':'One thing I insisted on','d.ilLet':'One thing I let go of',
  'w.title':'Finish & ship','w.sub':'1 active + 2 queued. A new idea goes to the parking lot, never straight into work.',
@@ -419,7 +419,7 @@ fr:{
  'd.goBanner':'N’y réfléchis pas. Fais le démarrage de 2 minutes.',
  'd.start':'Démarrage de 2 minutes sur la tâche n°1','d.startH':'Réduis-la jusqu’à ce que démarrer prenne 2 minutes. Puis démarre.',
  'd.promise':'Une promesse à moi-même aujourd’hui','d.promisePh':'ex. 3 séries de pompes avant midi',
- 'd.kept':'Promesse tenue ?','d.noPromise':'Aucune promesse ce matin.',
+ 'd.kept':'Promesse d\u2019hier : tenue ?','d.keptOn':'Promesse du {x} : tenue ?','d.noPromise':'Aucune promesse ce matin.','d.keptHint':'Réponds honnêtement. C\u2019est compté dans la revue du vendredi.',
  'd.debrief':'Débrief en 2 lignes','d.deb1':'Qu’est-ce qui a marché ?','d.deb2':'Que changerais-je demain ?',
  'd.il':'Insisté / lâché prise','d.ilIns':'Une chose sur laquelle j’ai insisté','d.ilLet':'Une chose que j’ai lâchée',
  'w.title':'Finir & livrer','w.sub':'1 actif + 2 en file. Une nouvelle idée va au parking, jamais directement en production.',
@@ -504,7 +504,7 @@ const SS={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}}, se
 let S={};
 
 function setLang(l){ if(!LANGS.includes(l)) l='en'; const ch=l!==LANG; LANG=l; LS.set(K.lang,l); applyStatic(); renderAll(true); renderSync(); if(!uT) urgeReset(); if(ch) toast(t('x.lang')); }
-const APP_VERSION='act001 · v1.9 · 2026-09-27';
+const APP_VERSION='act001 · v2.0 · 2026-09-28';
 
 function blankDay(){return {fmt:{},mt:0,start:false,promise:'',promiseKept:null,blocks:0,urgesR:0,urgesG:0,decisions:0,debrief1:'',debrief2:'',insist:'',letgo:''};}
 function ensureState(){
@@ -579,7 +579,7 @@ window.addEventListener('resize',()=>renderSync());
 /* ---------- change tracking (for merge) ---------- */
 const SECS=['work','shipped','killed','reviews','draft'];
 function mark(){ const n=Date.now(); for(const s of arguments) S.mt[s]=n; }
-function markF(f){ const d=day(), n=Date.now(); d.mt=n; if(!d.fmt||typeof d.fmt!=='object') d.fmt={}; d.fmt[f]=n; }
+function markF(f,k){ const d=day(k), n=Date.now(); d.mt=n; if(!d.fmt||typeof d.fmt!=='object') d.fmt={}; d.fmt[f]=n; }
 function markAllDiff(before){ // after undo/import: everything that differs counts as a new change
   const n=Date.now(); SECS.forEach(s=>{ if(JSON.stringify(before[s])!==JSON.stringify(S[s])) S.mt[s]=n; });
   Object.keys(S.days).forEach(k=>{ const d=S.days[k]; if(JSON.stringify((before.days||{})[k])!==JSON.stringify(d)){ d.mt=n; d.fmt=d.fmt||{}; Object.keys(blankDay()).forEach(f=>{ if(f!=='fmt'&&f!=='mt') d.fmt[f]=n; }); } });
@@ -812,7 +812,10 @@ document.getElementById('tabs').addEventListener('click',e=>{const b=e.target.cl
 
 /* ---------- TODAY ---------- */
 function toggle(field){const d=day(); d[field]=!d[field]; markF(field); autoSave(); renderToday();}
-function setKept(v){const d=day(); d.promiseKept=(d.promiseKept===v?null:v); markF('promiseKept'); autoSave(); renderToday();}
+function setKept(k,v){const d=day(k); d.promiseKept=(d.promiseKept===v?null:v); markF('promiseKept',k); autoSave(); renderToday();}
+// most recent earlier day (max 7 days back) that has a promise
+function prevPromiseDay(){ const td=todayKey(), lim=new Date(); lim.setDate(lim.getDate()-7); const lk=keyOf(lim);
+  const ks=Object.keys(S.days).filter(k=>k<td&&k>=lk&&S.days[k].promise&&String(S.days[k].promise).trim()).sort(); return ks.length?ks[ks.length-1]:null; }
 function bump(f,n){const d=day(); d[f]=Math.max(0,(d[f]||0)+n); markF(f); autoSave(); renderToday();}
 function setField(f,v){day()[f]=v; markF(f); autoSave();}
 
@@ -837,7 +840,14 @@ function renderToday(){
   else b=`<div class="banner dark">${t('d.goBanner')}</div>`;
   document.getElementById('today-banner').innerHTML=b;
 
-  document.getElementById('morning').innerHTML=`
+  const pk=prevPromiseDay(), pd=pk?S.days[pk]:null;
+  const keptBlock = pd ? `
+    <div class="check"><div class="box" style="border-style:dashed;color:var(--muted)">↺</div>
+      <div class="grow"><div class="lbl">${pk===yk?t('d.kept'):t('d.keptOn',{x:fromKey(pk).toLocaleDateString(LOC(),{weekday:'long',day:'numeric',month:'long'})})}</div>
+      <div class="hint">${LANG==='fr'?'« '+esc(pd.promise)+' »':'“'+esc(pd.promise)+'”'}</div>
+      <div class="row" style="margin-top:8px"><button class="btn sm grow ${pd.promiseKept===true?'primary':''}" onclick="setKept('${pk}',true)">${t('yes')}</button><button class="btn sm grow ${pd.promiseKept===false?'warn':''}" onclick="setKept('${pk}',false)">${t('no')}</button></div>
+      ${pd.promiseKept==null?`<div class="hint" style="margin-top:6px">${t('d.keptHint')}</div>`:''}</div></div>` : '';
+  document.getElementById('morning').innerHTML=keptBlock+`
     <div class="check"><button class="box ${d.start?'on':''}" onclick="toggle('start')" aria-label="${esc(t('d.start'))}">${d.start?'✓':''}</button>
       <div class="grow"><div class="lbl">${t('d.start')}</div><div class="hint">${t('d.startH')}</div></div></div>
     <div class="check"><div class="box" style="border-style:dashed;color:var(--muted)">◎</div>
@@ -845,8 +855,6 @@ function renderToday(){
       <textarea rows="1" placeholder="${esc(t('d.promisePh'))}" oninput="setField('promise',this.value);grow(this)">${esc(d.promise)}</textarea></div></div>`;
 
   document.getElementById('evening').innerHTML=`
-    <div class="check"><div class="grow"><div class="lbl">${t('d.kept')}</div><div class="hint">${d.promise?esc(d.promise):t('d.noPromise')}</div></div>
-      <div class="row"><button class="btn sm ${d.promiseKept===true?'primary':''}" onclick="setKept(true)">${t('yes')}</button><button class="btn sm ${d.promiseKept===false?'warn':''}" onclick="setKept(false)">${t('no')}</button></div></div>
     <div class="check"><div class="grow"><div class="lbl">${t('d.debrief')}</div>
       <textarea rows="1" placeholder="${esc(t('d.deb1'))}" oninput="setField('debrief1',this.value);grow(this)">${esc(d.debrief1)}</textarea>
       <textarea rows="1" style="margin-top:6px" placeholder="${esc(t('d.deb2'))}" oninput="setField('debrief2',this.value);grow(this)">${esc(d.debrief2)}</textarea></div></div>
@@ -923,7 +931,7 @@ function weekEvidence(ref){
   const past=ks.filter(k=>k<=td&&k>=f0);
   let show=0,blocks=0,starts=0,kept=0,promises=0,ur=0,ug=0,deb=0,dec=0;
   past.forEach(k=>{const d=S.days[k]; if(!d) return; if(showedUp(k)) show++; blocks+=d.blocks; if(d.start) starts++;
-    if(d.promise) promises++; if(d.promiseKept===true) kept++; ur+=d.urgesR; ug+=d.urgesG; dec+=d.decisions; if(d.debrief1||d.debrief2) deb++;});
+    if(d.promise&&k<td) promises++; if(d.promiseKept===true) kept++; ur+=d.urgesR; ug+=d.urgesG; dec+=d.decisions; if(d.debrief1||d.debrief2) deb++;});
   const shipped=S.shipped.filter(x=>ks.includes(x.date)).length;
   return {days:past.length,show,blocks,starts,kept,promises,ur,ug,deb,dec,shipped};
 }
