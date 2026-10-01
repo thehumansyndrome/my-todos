@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>diag001 — Assessments RGPD & IA Act</title>
+<title>diag001</title>
 <script>window.addEventListener('error',function(e){var b=document.getElementById('boot');if(b){b.style.display='block';b.style.background='#C0392B';b.style.color='#fff';b.textContent='Erreur JavaScript : '+(e.message||'?')+' (ligne '+(e.lineno||'?')+')';}});</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -85,22 +85,27 @@ th{color:var(--muted);font-weight:500}
 pre.pr{white-space:pre-wrap;background:var(--soft);border-radius:8px;padding:10px;font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;margin:6px 0}
 .verdict{font-size:20px;font-weight:600;margin:4px 0}
 .ver{font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:var(--muted);font-weight:400}
-@media (max-width:520px){.header h1 span.sub{display:none}#sync{font-size:12px}}
+.btn.grow{flex:1 1 0}
+.chk{display:flex;align-items:center;gap:8px;min-height:44px}.chk input{width:auto;min-height:0}
+.lg{display:inline-block;vertical-align:middle;margin-right:6px}.lg-band{width:22px;height:10px;border-radius:3px;background:var(--soft);border:1px solid var(--border)}.lg-mean{width:2px;height:14px;background:var(--muted)}.lg-dot{width:12px;height:12px;border-radius:50%;background:var(--accent)}
+td.mono{white-space:nowrap}.tab .ts{display:none}
+@media (max-width:520px){.tab .tl{display:none}.tab .ts{display:inline}.tab{padding:12px 6px;font-size:13px}.tabs{padding:0 4px;gap:0}.header h1 span.sub{display:none}#sync{font-size:12px}}
 @media print{.header,.tabs,.noprint,#toast{display:none!important}body{background:#fff;color:#000}.card{border:none;padding:0}.page{max-width:none;padding:0;zoom:1!important}}
 </style>
 </head>
 <body>
 <div id="boot">Chargement… / Loading… — si ce message reste affiché, JavaScript ne s'exécute pas : ouvrez le fichier dans Chrome ou Safari, pas dans un aperçu.</div>
 <div class="header">
-  <h1>diag001 <span class="sub">· Assessments RGPD & IA Act</span> <small class="ver">v2.1</small></h1>
-  <span id="sync" class="small muted" title="État de synchronisation">⚫ Local</span>
-  <button class="btn sm ghost" id="drive-btn" onclick="driveConnect()">Drive</button>
-  <button class="btn sm ghost" id="theme-btn" onclick="toggleTheme()">☀︎</button>
+  <h1>diag001 <span class="sub">· <span data-i18n="app.sub">Assessments RGPD & IA Act</span></span> <small class="ver">v3.0</small></h1>
+  <span id="sync" class="small muted" data-i18n-title="h.sync">⚫ Local</span>
+  <button class="btn sm ghost" id="drive-btn" onclick="driveConnect()" data-i18n="h.drive">Drive</button>
+  <button class="btn sm ghost" id="theme-btn" onclick="toggleTheme()" data-i18n-title="h.theme">☀︎</button>
 </div>
 <div class="tabs" id="tabs"></div>
 <div class="page">
   <div id="tab-dossiers" class="section active"></div>
   <div id="tab-quest" class="section"></div>
+  <div id="tab-bench" class="section"></div>
   <div id="tab-hist" class="section"></div>
   <div id="tab-res" class="section"></div>
   <div id="tab-prop" class="section"></div>
@@ -109,46 +114,28 @@ pre.pr{white-space:pre-wrap;background:var(--soft);border-radius:8px;padding:10p
 <div id="toast"><span id="toast-t"></span><button id="toast-b"></button></div>
 
 <script>
-/* ============ RÉFÉRENTIEL ============ */
-const SIZES={P:{l:'PME',d:'< 250 salariés'},M:{l:'Moyenne / ETI',d:'250 – 5 000 salariés'},G:{l:'Grande entreprise',d:'> 5 000 salariés / groupe'}};
+/* ============ RÉFÉRENTIEL — tailles, domaines (FR / EN) ============ */
+const SIZES={P:{fr:['PME','< 250 salariés'],en:['SME','< 250 employees']},M:{fr:['Moyenne / ETI','250 – 5 000 salariés'],en:['Mid-size','250 – 5,000 employees']},G:{fr:['Grande entreprise','> 5 000 salariés / groupe'],en:['Large enterprise','> 5,000 employees / group']}};
 const DOMS={
- R1:['RGPD','Gouvernance & accountability','Gouvernance'],R2:['RGPD','Registre & cartographie','Registre'],R3:['RGPD','Licéité & principes','Licéité'],
- R4:['RGPD','Transparence & droits des personnes','Droits'],R5:['RGPD','Sous-traitance & transferts','Tiers'],R6:['RGPD','Sécurité des données','Sécurité'],
- R7:['RGPD','Violations de données','Violations'],R8:['RGPD','Privacy by design, AIPD & culture','PbD / AIPD'],
- A1:['IA','Gouvernance de l\'IA','Gouvernance'],A2:['IA','Qualification & classification des systèmes','Classification'],A3:['IA','Maîtrise de l\'IA & usages internes','Usages'],
- A4:['IA','Transparence (art. 50)','Transparence'],A5:['IA','Obligations du déployeur — haut risque','Déployeur HR'],A6:['IA','Obligations du fournisseur — haut risque','Fournisseur HR'],
- A7:['IA','Tiers, GPAI & données','Tiers / GPAI'],
- Q1:['AIPD','Qualification RGPD — critères du CEPD (WP248)','Critères'],Q2:['AIPD','Qualification AI Act','AI Act']};
-/* Qualification AIPD / AI Act — [id, domaine, tailles, poids, énoncé, référence, action si « Oui »] */
-const AIPDQ=[
-['q0','Q1','PMG',1,"Le traitement porte sur des données personnelles.","RGPD art. 4","Si « Non » : hors RGPD, pas d'AIPD."],
-['c1','Q1','PMG',1,"Évaluation ou notation, y compris profilage et prédiction.","WP248 — critère 1","Compter le critère."],
-['c2','Q1','PMG',1,"Décision automatisée avec effet juridique ou effet similaire significatif.","WP248 — critère 2 ; RGPD art. 22","Compter le critère ; vérifier l'art. 22."],
-['c3','Q1','PMG',1,"Surveillance systématique des personnes.","WP248 — critère 3","Compter le critère."],
-['c4','Q1','PMG',1,"Données sensibles ou à caractère hautement personnel.","WP248 — critère 4 ; RGPD art. 9-10","Compter le critère."],
-['c5','Q1','PMG',1,"Traitement à grande échelle.","WP248 — critère 5","Compter le critère."],
-['c6','Q1','PMG',1,"Croisement ou combinaison de jeux de données.","WP248 — critère 6","Compter le critère."],
-['c7','Q1','PMG',1,"Personnes vulnérables (salariés, mineurs, patients, personnes âgées…).","WP248 — critère 7","Compter le critère."],
-['c8','Q1','PMG',1,"Usage innovant ou nouvelle solution technologique (l'IA en relève souvent).","WP248 — critère 8","Compter le critère."],
-['c9','Q1','PMG',1,"Le traitement peut empêcher d'exercer un droit ou d'accéder à un service ou un contrat.","WP248 — critère 9","Compter le critère."],
-['s1','Q2','PMG',1,"Le système est un système d'IA au sens de l'AI Act.","AI Act art. 3","Si « Non » : AI Act non applicable à ce système."],
-['s2','Q2','PMG',1,"Le système relève d'une pratique interdite.","AI Act art. 5","Arrêt du projet."],
-['s3','Q2','PMG',1,"Le système est à haut risque (annexe III : crédit, RH, assurance, éducation, services essentiels…).","AI Act art. 6 ; annexe III","Exigences haut risque au 2 déc. 2027."],
-['s4','Q2','PMG',1,"Le système interagit avec des personnes ou génère du contenu (chatbot, synthèse, deepfake).","AI Act art. 50","Obligations de transparence (en vigueur)."],
-['s5','Q2','PMG',1,"Le client est un déployeur soumis à la FRIA (organisme public ou service public, notation de crédit, tarification assurance vie / santé).","AI Act art. 27","Réaliser une FRIA articulée avec l'AIPD."],
-['s6','Q2','PMG',1,"Le client est fournisseur du système (et non seulement déployeur).","AI Act art. 3, 16, 26","Obligations du fournisseur (documentation, conformité)."]];
-const AIPD_STEPS=[['P0','Qualification'],['P1','Collecte (questionnaire projet)'],['P2','Description du traitement'],['P3','Principes fondamentaux'],['P4','Scénarios de risque'],['P5','Mesures et plan d\'action'],['P6','Synthèse et avis DPO'],['P7','Relecture adverse et contrôle qualité']];
-const PROMPTS={
-pre:"Tu es un expert en protection des données (RGPD, lignes directrices CEPD, doctrine CNIL) et en AI Act. Tu assistes un DPO qui reste seul responsable des conclusions.\nRègles : cite l'article ou la source de chaque affirmation juridique ; signale toute incertitude ; ne fixe jamais seul un niveau de risque final ; si une information manque, liste-la en question au lieu de l'inventer. Réponds en français.",
-P0:"Voici la description d'un projet : [description].\n1. Pour chacun des 9 critères du CEPD (WP248), indique s'il est rempli, non rempli ou incertain, avec ta justification.\n2. Conclus : AIPD requise, recommandée ou non requise.\n3. AI Act : est-ce un système d'IA (art. 3) ? Le client est-il fournisseur ou déployeur ? Le système relève-t-il de l'art. 5, de l'annexe III, de l'art. 50 ou de l'art. 27 ?\n4. Liste les informations manquantes pour conclure.\nFormat : un tableau par volet, puis une conclusion de 3 lignes.",
-P1:"À partir du questionnaire type ci-dessous et de la description du projet [description], produis un questionnaire adapté : supprime les questions sans objet, reformule les autres dans le vocabulaire du métier, ajoute au plus 5 questions propres à ce cas d'usage. Signale pour chaque question ajoutée le risque qu'elle permet d'évaluer.\n[questionnaire type]",
-P2:"À partir des réponses au questionnaire [réponses], rédige la partie 1 de l'AIPD : finalité, responsable et sous-traitants, personnes concernées, catégories de données, flux (source, stockage, destinataires, transferts), durées de conservation, rôle du système d'IA. Phrases courtes, un tableau pour les flux. Marque [À CONFIRMER] chaque point déduit et non affirmé dans les réponses.",
-P3:"Sur la base de la description validée [partie 1], analyse : base légale (art. 6, et art. 9 si données sensibles), minimisation, exactitude, durées de conservation, information des personnes (art. 13-14), exercice des droits (art. 15 à 22, dont art. 22 sur les décisions automatisées), sous-traitance (art. 28), transferts (chapitre V). Pour chaque point : conforme, à améliorer ou non conforme, avec la justification et la mesure proposée. Ne tranche pas les points juridiquement discutables : présente les options.",
-P4:"Pour ce traitement [parties 1 et 2], propose les scénarios de risque selon la méthode CNIL : accès illégitime, modification non désirée, disparition des données. Ajoute les risques propres à l'IA du catalogue fourni [catalogue]. Pour chaque scénario : source de risque, menace, impact sur les personnes, mesures existantes, et une cotation INDICATIVE de gravité et de vraisemblance (1 à 4) avec sa justification. Termine par les 3 scénarios qui te semblent prioritaires et pourquoi.",
-P5:"Pour chaque scénario retenu [scénarios validés], propose des mesures : techniques, organisationnelles, contractuelles. Indique l'effet attendu sur la gravité ou la vraisemblance, un porteur type (métier, IT, sécurité, juridique) et une difficulté de mise en œuvre (faible, moyenne, forte). Présente le tout en tableau, trié par réduction de risque attendue.",
-P6:"À partir de l'AIPD complète [AIPD], rédige : 1) une synthèse d'une page pour la direction (enjeu, risques résiduels, décisions attendues) ; 2) un projet d'avis du DPO structuré en : constats, risques résiduels, conditions, recommandation (favorable, favorable sous conditions, défavorable). Le projet d'avis est un brouillon : signale les points où le DPO doit trancher.",
-P7:"Tu es maintenant un contrôleur de la CNIL qui relit cette AIPD [AIPD] pour y trouver des faiblesses. Liste : affirmations non étayées, risques omis, mesures vagues ou non vérifiables, incohérences entre parties, références juridiques douteuses. Classe-les par gravité. Ne propose pas de réécriture, seulement les constats."};
-/* [id, domaine, tailles, poids(1-3), énoncé, référence, action si « Non » (mise en place), action si « Partiel » (mise à niveau)] */
+ R1:['RGPD',['Gouvernance & accountability','Gouvernance'],['Governance & accountability','Governance']],
+ R2:['RGPD',['Registre & cartographie','Registre'],['Record & mapping','Record']],
+ R3:['RGPD',['Licéité & principes','Licéité'],['Lawfulness & principles','Lawfulness']],
+ R4:['RGPD',['Transparence & droits des personnes','Droits'],['Transparency & data subject rights','Rights']],
+ R5:['RGPD',['Sous-traitance & transferts','Tiers'],['Processors & transfers','Third parties']],
+ R6:['RGPD',['Sécurité des données','Sécurité'],['Data security','Security']],
+ R7:['RGPD',['Violations de données','Violations'],['Data breaches','Breaches']],
+ R8:['RGPD',['Privacy by design, AIPD & culture','PbD / AIPD'],['Privacy by design, DPIA & culture','PbD / DPIA']],
+ A1:['IA',['Gouvernance de l’IA','Gouvernance'],['AI governance','Governance']],
+ A2:['IA',['Qualification & classification des systèmes','Classification'],['System qualification & classification','Classification']],
+ A3:['IA',['Maîtrise de l’IA & usages internes','Usages'],['AI literacy & internal use','Usage']],
+ A4:['IA',['Transparence (art. 50)','Transparence'],['Transparency (art. 50)','Transparency']],
+ A5:['IA',['Obligations du déployeur — haut risque','Déployeur HR'],['Deployer obligations — high-risk','Deployer HR']],
+ A6:['IA',['Obligations du fournisseur — haut risque','Fournisseur HR'],['Provider obligations — high-risk','Provider HR']],
+ A7:['IA',['Tiers, GPAI & données','Tiers / GPAI'],['Third parties, GPAI & data','Third parties / GPAI']],
+ Q1:['AIPD',['Qualification RGPD — critères du CEPD (WP248)','Critères'],['GDPR qualification — EDPB criteria (WP248)','Criteria']],
+ Q2:['AIPD',['Qualification AI Act','AI Act'],['AI Act qualification','AI Act']]};
+
+/* [id, domaine, tailles, poids(1-3), énoncé FR, référence FR, action FR si « Non », action FR si « Partiel »] — traductions EN dans EN_Q */
 const FLASH=[
 ["f1", "R1", "PMG", 3, "Un DPO (ou à défaut un référent protection des données) est désigné, identifié en interne et dispose de temps et de moyens.", "RGPD art. 37-39", "Désigner un DPO/référent, formaliser sa lettre de mission et le déclarer à la CNIL.", "Consolider le rôle du DPO/référent : lettre de mission, temps dédié, moyens et accès direct à la direction."],
 ["f2", "R1", "PMG", 2, "Les collaborateurs manipulant des données personnelles sont sensibilisés ou formés régulièrement.", "RGPD art. 39.1.b", "Déployer un module de sensibilisation annuel + sessions ciblées (RH, marketing, IT).", "Étendre la sensibilisation aux populations non couvertes, la rendre annuelle et suivre les taux de complétion."],
@@ -268,23 +255,208 @@ const FIN=[
 ["a704", "A7", "PMG", 3, "L'utilisation de données personnelles pour entraîner ou affiner des modèles repose sur une base légale et une information adaptées.", "RGPD art. 5, 6, 14 ; recommandations CNIL IA", "Documenter base légale et information pour les jeux d'entraînement.", "Compléter la base légale et l'information pour les jeux d'entraînement restants."],
 ["a705", "A7", "PMG", 3, "Les décisions entièrement automatisées produisant des effets significatifs sont identifiées et encadrées.", "RGPD art. 22", "Recenser les décisions automatisées et garantir l'intervention humaine.", "Compléter le recensement des décisions automatisées et garantir l'intervention humaine."],
 ["a706", "A7", "PMG", 2, "Les SIA traitant des données personnelles font l'objet d'une AIPD intégrant les risques propres à l'IA.", "RGPD art. 35 ; recommandations CNIL IA", "Enrichir la méthode AIPD d'un volet IA.", "Étendre le volet IA à toutes les AIPD des systèmes concernés."]];
-const OPTS={flash:[['Non',0,'c0'],['Partiel',.5,'c1'],['Oui',1,'c3'],['N/A',null,'cna']],
-            fin:[['Non conforme',0,'c0'],['Partiel',.5,'c1'],['Conforme',1,'c3'],['N/A',null,'cna']],
-            aipd:[['Oui',1,'c2'],['Incertain',.5,'c1'],['Non',0,'c3']]};
-const TYPES={flash:'Diagnostic flash',fin:'Diagnostic fin',aipd:'Qualification AIPD / AI Act'};
+const EN_Q={"f1": ["A DPO (or failing that, a data protection lead) is appointed, known internally, and has time and resources.", "Appoint a DPO/lead, formalise their mission letter and register them with the CNIL.", "Consolidate the DPO/lead role: mission letter, dedicated time, resources and direct access to senior management."], "f2": ["Staff handling personal data receive regular awareness or training.", "Roll out an annual awareness module plus targeted sessions (HR, marketing, IT).", "Extend awareness to uncovered populations, make it annual and track completion rates."], "f3": ["Compliance is steered: committee, indicators, reporting to management, control plan.", "Set up a governance committee and a quarterly compliance dashboard.", "Complete the steering: missing indicators, formal committee frequency and regular reporting to management."], "f4": ["A network of relays covers subsidiaries / business lines and intra-group responsibilities are formalised.", "Build a relay network and intra-group agreements (joint controllership, internal processing).", "Fill the gaps in the relay network and formalise intra-group responsibilities that are still implicit."], "f5": ["The record of processing activities exists, is complete and was updated less than 12 months ago.", "Build or refresh the record through business workshops; set up an annual review.", "Add the missing processing activities to the record and set up a managed annual review."], "f6": ["Each processing activity has a documented legal basis and a defined, enforced retention period (purge).", "Establish the legal basis and retention reference; schedule purges.", "Document the missing legal bases and retention periods, then check purges are actually run."], "f7": ["Individuals are informed (notices, privacy policy) at every collection point.", "Audit collection points and harmonise privacy notices.", "Fix uncovered or incomplete collection points and harmonise existing notices."], "f8": ["A procedure handles rights requests within one month, with traceability.", "Formalise the procedure, a single entry point and a request log.", "Strengthen the existing procedure: single entry point, identity check, deadline tracking and log."], "f9": ["Website / app cookies and trackers comply with consent (refusing as easy as accepting).", "Audit trackers and configure a compliant CMP.", "Fix CMP gaps (easy refusal, trackers set before consent, duration) and re-audit."], "f10": ["Processors are listed and their contracts include Article 28 clauses.", "Inventory processors and regularise contracts (DPA).", "Complete the processor inventory and regularise first the contracts lacking Article 28 clauses."], "f11": ["Transfers outside the EU are identified and framed (adequacy, SCCs, transfer impact assessment).", "Map transfers, sign SCCs and document TIAs.", "Complete the transfer map and document the missing SCCs and TIAs."], "f12": ["Security measures proportionate to risks are in place (access rights, encryption, backups, logging).", "Run a risk analysis and a security plan aligned with the CNIL security guide.", "Close the identified security gaps (access, encryption, backups, logging) based on the risk analysis."], "f13": ["A breach management procedure allows notifying the CNIL within 72 hours, and a breach register is kept.", "Write the procedure and register, and test them through a crisis exercise.", "Complete the procedure (criteria, decision path, templates), keep the register and test it through an exercise."], "f14": ["High-risk processing activities are covered by a DPIA.", "List processing subject to DPIA and carry out the missing assessments.", "Carry out the missing DPIAs and update outdated ones."], "f15": ["Data protection is built into projects from the design stage (privacy by design).", "Add a privacy milestone to the project methodology and procurement.", "Make the privacy milestone systematic and binding in the project methodology and procurement."], "f16": ["An inventory of AI systems and use cases exists (bought, built, embedded, generative AI, shadow AI).", "Launch an AI system inventory and create an AI register.", "Complete the inventory (embedded AI, shadow AI, generative AI) and keep it continuously updated."], "f17": ["An AI lead and an AI governance body are identified (with DPO, CISO, legal, business).", "Appoint an AI lead and set up an AI governance committee.", "Formalise the AI lead's mandate and the committee charter, and ensure all key functions attend."], "f18": ["An AI management system (ISO/IEC 42001 type) is in place or planned.", "Scope an AI management system and connect it with existing ISMS / QMS.", "Structure the AI management system project: scope, roadmap and links with ISMS and QMS."], "f19": ["For each system, the company's role is qualified (provider, deployer, importer, distributor).", "Qualify the role for each system and record the rationale.", "Qualify the role of the remaining systems and document the rationale for each."], "f20": ["Systems are classified by risk level (prohibited, high-risk, transparency, minimal).", "Apply a classification grid and document Article 6.3 exemptions.", "Classify the remaining systems and document Article 6.3 exemptions."], "f21": ["The absence of prohibited practices has been checked (social scoring, manipulation, emotion recognition at work…).", "Screen every use case against Article 5 and stop prohibited uses.", "Extend Article 5 screening to all use cases and record the conclusions."], "f22": ["An AI literacy programme trains staff according to their role.", "Roll out an AI training path per population.", "Extend AI training to uncovered populations and tailor it to roles (users, overseers, decision-makers)."], "f23": ["A charter / policy governs generative AI use (confidential data, approved tools, verification).", "Publish a generative AI charter and a list of approved tools.", "Complete the charter (approved tools, forbidden data, human verification) and have everyone accept it."], "f24": ["Transparency obligations are handled: notice of AI interaction, labelling of generated content, deepfakes.", "List chatbots and synthetic content and deploy notices and labelling.", "Cover the remaining chatbots and synthetic content and check the quality of notices and labelling."], "f25": ["For deployed high-risk systems: human oversight, log retention, information of individuals, FRIA where required.", "Build the deployer compliance plan by end 2027.", "Complete the missing deployer obligations (oversight, logs, information, FRIA) before December 2027."], "f26": ["If the company develops or places high-risk systems on the market: provider requirements are anticipated (otherwise N/A).", "Run a provider gap analysis and plan the conformity assessment.", "Complete the provider gap analysis and plan the requirements not yet covered."], "f27": ["Contracts with AI vendors cover documentation, AI Act compliance, intellectual property and data reuse.", "Add standard AI clauses to procurement and renegotiate key contracts.", "Extend AI clauses to existing contracts and new purchases."], "f28": ["GDPR / AI interplay is handled: legal basis for training data, DPIA, automated decision-making.", "Cover each AI system processing personal data with a DPIA including the AI dimension.", "Extend the AI-aware DPIA to all AI systems processing personal data and document training legal bases."], "r101": ["DPO appointed where required, contact details published and notified to the CNIL.", "Appoint and register the DPO.", "Publish the DPO's contact details and check the CNIL notification."], "r102": ["The DPO is involved early, independent, free of conflicts of interest, with sufficient resources.", "Formalise the DPO's mission letter and budget.", "Strengthen the DPO's independence and resources, and involve them early in every project."], "r103": ["A data protection policy approved by management is circulated.", "Draft the general policy and have it approved.", "Update the policy, have it approved by management and circulate it to all."], "r104": ["Roles and responsibilities (business, IT, relays) are defined.", "Establish a data protection RACI.", "Complete the RACI for uncovered roles and communicate it."], "r105": ["An annual report and indicators are presented to management.", "Set up an annual DPO report and KPIs.", "Formalise the annual report and complete the indicators presented to management."], "r106": ["A compliance control / audit plan is executed.", "Define a multi-year control plan.", "Run the control plan regularly and track corrective actions."], "r107": ["Group governance is formalised: entities, joint responsibilities, relays per subsidiary.", "Formalise intra-group agreements and the relay network.", "Formalise the missing intra-group agreements and complete the relay network per subsidiary."], "r108": ["A training / awareness programme is deployed and tracked.", "Roll out a training plan with completion tracking.", "Extend training to uncovered populations and track completion."], "r201": ["Controller's record complete (purposes, categories, recipients, retention, security).", "Complete the record.", "Complete the missing fields of the record (recipients, retention, security measures)."], "r202": ["Processor's record kept for activities carried out on behalf of clients.", "Create the processor record.", "Complete the processor record for all activities carried out on behalf of clients."], "r203": ["A process keeps the record up to date (new projects, periodic review).", "Set up an annual review and a project trigger.", "Make updates systematic: mandatory project trigger and recorded annual review."], "r204": ["The map of applications and data flows is linked to the record.", "Link the record with the CMDB / IT map.", "Link the remaining applications and flows to the record."], "r205": ["Sensitive and criminal-offence data are identified with their applicable exception.", "List sensitive data and justify the exception.", "Complete the inventory of sensitive data and document the applicable exception for each."], "r301": ["The legal basis of each processing activity is determined and documented.", "Document legal bases in the record.", "Document the missing legal bases and correct inappropriate ones."], "r302": ["Consent, where it is the legal basis, is free, specific, informed, provable and withdrawable.", "Review consent journeys and keep proof.", "Fix non-compliant consent journeys and set up proof retention."], "r303": ["Legitimate interests are backed by a written balancing test.", "Write the balancing tests (LIA).", "Write the missing balancing tests and review insufficient ones."], "r304": ["Only necessary data is collected (data minimisation).", "Review forms and mandatory fields.", "Remove the remaining unnecessary fields and review mandatory fields."], "r305": ["Retention periods are defined and purging / archiving is effective in systems.", "Build the retention reference and automate purges.", "Complete the retention reference and make purges effective in all systems."], "r306": ["Data reuse is subject to a purpose-compatibility test.", "Introduce a compatibility test for any new use.", "Apply the compatibility test to all new reuses."], "r401": ["Privacy notices are complete at every collection point (direct and indirect).", "Upgrade privacy notices.", "Complete incomplete notices and cover indirect collection."], "r402": ["Employees and candidates are informed of HR processing.", "Issue an HR privacy notice.", "Complete HR information (candidates, monitoring tools, new processing)."], "r403": ["The rights-request procedure is operational: channel, identity check, one-month deadline, log.", "Formalise and tool the procedure.", "Complete the procedure (identity check, deadline, log) and test it."], "r404": ["Systems technically allow access, erasure, restriction and portability.", "Check technical capability per application.", "Close the technical limits identified on the applications concerned."], "r405": ["Cookies and trackers: prior consent, equally easy refusal, proof, 6-month duration recommended.", "Audit and reconfigure the CMP.", "Fix CMP gaps and check proof retention."], "r406": ["Direct marketing complies with opt-in / opt-out rules and objection lists.", "Review marketing rules and objection handling.", "Fix non-compliant campaigns and make objection handling reliable."], "r501": ["An inventory of processors and sub-processors is kept.", "Draw up the processor inventory.", "Complete the inventory, including sub-processors."], "r502": ["Contracts include all mandatory clauses of Article 28.3.", "Regularise contracts with a standard DPA.", "Add the missing clauses to existing contracts with a standard DPA."], "r503": ["Processors are assessed before contracting and then monitored (questionnaires, audits).", "Set up graduated third-party due diligence.", "Make processor assessments systematic and introduce periodic checks."], "r504": ["Transfers outside the EU are mapped, including remote access and cloud hosting.", "Map transfers.", "Complete the transfer map (remote access, cloud, support)."], "r505": ["Each transfer relies on a valid tool (adequacy, 2021 SCCs, BCRs) with a transfer impact assessment.", "Sign SCCs and document TIAs.", "Document the missing TIAs and update pre-2021 SCCs."], "r506": ["BCRs or an equivalent intra-group framework govern internal transfers.", "Assess the case for BCRs.", "Formalise the existing intra-group framework or launch a BCR project."], "r601": ["A risk analysis underpins security measures; an information security policy exists.", "Carry out the risk analysis and formalise the security policy.", "Update the risk analysis and complete the security policy."], "r602": ["Access management: least privilege, periodic review, strong authentication on sensitive access.", "Set up access reviews and MFA.", "Introduce regular access reviews and extend MFA to the remaining sensitive access."], "r603": ["Encryption of endpoints, flows and sensitive databases; pseudonymisation where relevant.", "Deploy encryption at rest and in transit.", "Extend encryption to endpoints, flows and databases not yet covered."], "r604": ["Logging of data access and monitoring of security events.", "Enable and use access logs.", "Extend logging to the remaining applications and organise its review."], "r605": ["Tested backups and a business continuity / recovery plan.", "Test restores and formalise the BCP/DRP.", "Test restores regularly and complete the BCP/DRP."], "r606": ["Regular penetration tests and security audits, with patch follow-up.", "Plan pentests and vulnerability management.", "Make tests regular and formalise patch follow-up."], "r701": ["Procedure for detecting, qualifying and escalating data breaches.", "Write the procedure and qualification grid.", "Complete the procedure: qualification grid, escalation path and responsibilities."], "r702": ["A breach register is kept, including non-notified breaches.", "Create the breach register.", "Complete the register, including non-notified breaches."], "r703": ["Ability to notify the CNIL within 72 hours and inform individuals in case of high risk.", "Prepare notification templates and a decision path.", "Prepare the missing notification templates and test the 72-hour deadline."], "r704": ["Processors are contractually required to alert without delay.", "Add the alert clause to contracts.", "Add the alert clause to contracts that lack it."], "r705": ["Crisis exercises include a data breach scenario.", "Organise an annual exercise.", "Add the data breach scenario to existing crisis exercises."], "r801": ["Project methodology and procurement include a data protection milestone from the design stage.", "Add a privacy-by-design checklist.", "Make the privacy-by-design milestone mandatory and check its application."], "r802": ["Criteria identify processing subject to DPIA (CNIL lists, 9 EDPB criteria).", "Formalise the DPIA trigger grid.", "Complete the trigger grid with the CNIL list and the 9 EDPB criteria."], "r803": ["Required DPIAs are carried out, approved and reviewed.", "Carry out the missing DPIAs.", "Carry out the missing DPIAs and schedule the review of existing ones."], "r804": ["The DPO's opinion is sought and recorded; the CNIL is consulted if residual risk remains high.", "Record the DPO's opinion in each DPIA.", "Record the DPO's opinion systematically and formalise the CNIL consultation criterion."], "r805": ["Default settings are the most protective (privacy by default).", "Review default settings.", "Review the default settings of the remaining applications."], "a101": ["An AI compliance lead is appointed with a clear mandate.", "Appoint an AI lead.", "Formalise the AI lead's mandate, scope and resources."], "a102": ["An AI governance committee brings together DPO, CISO, legal, data and business.", "Set up the committee and its charter.", "Formalise the committee charter and bring in the missing functions."], "a103": ["An AI policy approved by management sets principles, risk appetite and prohibitions.", "Draft the AI policy.", "Complete the policy (risk appetite, prohibitions) and have it approved by management."], "a104": ["An AI system register lists all use cases (built, bought, embedded).", "Create the AI system register.", "Complete the register (embedded AI, bought AI, shadow AI) and keep it updated."], "a105": ["Every new use case goes through a validation (intake) process before go-live.", "Set up an intake process for use cases.", "Make the intake process mandatory for every new use case."], "a106": ["An AI management system (ISO/IEC 42001) is deployed or planned.", "Scope an AI management system project.", "Structure the AI management system project: scope, schedule and owners."], "a201": ["Each tool is assessed against the definition of an \"AI system\".", "Apply an AI system qualification test.", "Apply the qualification test to the remaining tools and record the conclusions."], "a202": ["The role (provider, deployer, importer, distributor) is determined per system.", "Qualify and record the role.", "Qualify the role of the remaining systems and record the rationale."], "a203": ["Each use case is screened against prohibited practices.", "Run the Article 5 screening and stop prohibited uses.", "Extend Article 5 screening to the remaining use cases."], "a204": ["High-risk classification is carried out (Annex I regulated products, Annex III use cases).", "Classify systems with the Annex I / III grid.", "Complete the classification of the remaining systems against Annexes I and III."], "a205": ["Any Article 6.3 exemption is documented.", "Document exemption assessments.", "Document the exemptions not yet recorded."], "a206": ["The risk of being requalified as provider (own brand, substantial modification, change of purpose) is controlled.", "Govern modifications and white-labelling.", "Complete the governance of substantial modifications and white-label uses."], "a301": ["An AI literacy programme tailored to populations is deployed and tracked.", "Roll out the AI literacy path.", "Extend the path to uncovered populations and track completion."], "a302": ["A generative AI usage charter is circulated and accepted.", "Publish the generative AI charter.", "Complete the charter and have all users accept it."], "a303": ["A list of approved AI tools exists; shadow AI is detected and handled.", "Build the tool catalogue and usage controls.", "Complete the tool catalogue and set up shadow AI detection."], "a304": ["Confidential and personal data entered into AI tools is controlled (settings, no reuse for training).", "Configure enterprise plans and input rules.", "Extend enterprise plans and input rules to all tools in use."], "a401": ["Individuals are informed when they interact with an AI system (chatbots, voicebots).", "Add the AI interaction notice.", "Add the AI interaction notice to the remaining chatbots and voicebots."], "a402": ["As provider: synthetic content is marked in a machine-readable format.", "Implement marking / watermarking.", "Extend marking to uncovered synthetic content."], "a403": ["Individuals exposed to emotion recognition or biometric categorisation are informed.", "Inform and check lawfulness (Article 5).", "Complete the information of exposed individuals and check lawfulness under Article 5."], "a404": ["Deepfakes and AI-generated texts of public interest are disclosed as such.", "Define editorial labelling rules.", "Apply labelling rules to all relevant content."], "a501": ["High-risk systems are used in accordance with the provider's instructions.", "Collect instructions and formalise conditions of use.", "Collect the missing instructions and formalise the remaining conditions of use."], "a502": ["Human oversight is assigned to competent, trained people with the necessary authority.", "Appoint and train human overseers.", "Complete the appointment and training of overseers and clarify their authority."], "a503": ["Relevance and representativeness of input data under the deployer's control are ensured.", "Set up quality checks on input data.", "Extend quality checks to uncovered input data."], "a504": ["Operation is monitored; risks and serious incidents are reported to the provider and the authority.", "Define the monitoring and reporting process.", "Complete the monitoring process and formalise incident reporting."], "a505": ["Automatically generated logs are kept for at least six months.", "Configure log retention.", "Extend six-month log retention to the remaining systems."], "a506": ["Worker representatives and affected employees are informed before workplace deployment.", "Consult the works council and inform employees.", "Complete information and works council consultation on the remaining systems."], "a507": ["Individuals subject to decisions assisted by an Annex III system are informed and can obtain an explanation.", "Organise information and the right to explanation.", "Complete the information of individuals and make the right to explanation operational."], "a508": ["A fundamental rights impact assessment (FRIA) is carried out where required; the DPIA relies on the provider's documentation.", "Design a FRIA template linked with the DPIA.", "Complete the FRIA template and link it with the DPIA on the remaining systems."], "a601": ["A risk management system covers the whole life cycle.", "Set up the AI risk management process.", "Extend risk management to all life-cycle phases."], "a602": ["Governance of training, validation and test data (quality, bias, representativeness).", "Formalise data set governance.", "Complete data set governance (bias, representativeness, traceability)."], "a603": ["Technical documentation (Annex IV) and automatic event logging.", "Produce the technical documentation and enable logging.", "Complete the missing technical documentation and logging."], "a604": ["Instructions for use and a design that enables human oversight.", "Write the instructions and specify human oversight measures.", "Complete the instructions and human oversight measures."], "a605": ["Accuracy, robustness and cybersecurity are specified, tested and measured.", "Define metrics and test campaigns.", "Complete the metrics and extend test campaigns."], "a606": ["A quality management system is documented.", "Extend the QMS to AI requirements.", "Add the missing AI requirements to the QMS."], "a607": ["Conformity assessment, EU declaration, CE marking and registration in the EU database.", "Plan the conformity assessment path.", "Complete the conformity path (EU declaration, CE marking, registration)."], "a608": ["Post-market monitoring and serious incident notification.", "Build the post-market monitoring plan.", "Complete the post-market monitoring plan and the notification path."], "a701": ["Contracts with AI vendors contain dedicated clauses (compliance, documentation, audit, IP, data).", "Roll out standard AI clauses.", "Extend AI clauses to existing contracts."], "a702": ["Documentation from providers of integrated general-purpose AI models is obtained and used.", "Require GPAI documentation from vendors.", "Obtain the missing GPAI documentation and use it in the risk analysis."], "a703": ["If the company provides a GPAI model: technical documentation, copyright policy, training data summary (otherwise N/A).", "Apply the GPAI code of practice.", "Complete the missing items (documentation, copyright policy, data summary)."], "a704": ["Using personal data to train or fine-tune models relies on a legal basis and appropriate information.", "Document legal basis and information for training data sets.", "Complete the legal basis and information for the remaining training data sets."], "a705": ["Fully automated decisions with significant effects are identified and governed.", "List automated decisions and guarantee human intervention.", "Complete the list of automated decisions and guarantee human intervention."], "a706": ["AI systems processing personal data undergo a DPIA covering AI-specific risks.", "Add an AI component to the DPIA method.", "Extend the AI component to all DPIAs of the systems concerned."]};
+const AIPDQ=[
+['q0','Q1','PMG',1,"Le traitement porte sur des données personnelles.","RGPD art. 4","Si « Non » : hors RGPD, pas d'AIPD."],
+['c1','Q1','PMG',1,"Évaluation ou notation, y compris profilage et prédiction.","WP248 — critère 1","Compter le critère."],
+['c2','Q1','PMG',1,"Décision automatisée avec effet juridique ou effet similaire significatif.","WP248 — critère 2 ; RGPD art. 22","Compter le critère ; vérifier l'art. 22."],
+['c3','Q1','PMG',1,"Surveillance systématique des personnes.","WP248 — critère 3","Compter le critère."],
+['c4','Q1','PMG',1,"Données sensibles ou à caractère hautement personnel.","WP248 — critère 4 ; RGPD art. 9-10","Compter le critère."],
+['c5','Q1','PMG',1,"Traitement à grande échelle.","WP248 — critère 5","Compter le critère."],
+['c6','Q1','PMG',1,"Croisement ou combinaison de jeux de données.","WP248 — critère 6","Compter le critère."],
+['c7','Q1','PMG',1,"Personnes vulnérables (salariés, mineurs, patients, personnes âgées…).","WP248 — critère 7","Compter le critère."],
+['c8','Q1','PMG',1,"Usage innovant ou nouvelle solution technologique (l'IA en relève souvent).","WP248 — critère 8","Compter le critère."],
+['c9','Q1','PMG',1,"Le traitement peut empêcher d'exercer un droit ou d'accéder à un service ou un contrat.","WP248 — critère 9","Compter le critère."],
+['s1','Q2','PMG',1,"Le système est un système d'IA au sens de l'AI Act.","AI Act art. 3","Si « Non » : AI Act non applicable à ce système."],
+['s2','Q2','PMG',1,"Le système relève d'une pratique interdite.","AI Act art. 5","Arrêt du projet."],
+['s3','Q2','PMG',1,"Le système est à haut risque (annexe III : crédit, RH, assurance, éducation, services essentiels…).","AI Act art. 6 ; annexe III","Exigences haut risque au 2 déc. 2027."],
+['s4','Q2','PMG',1,"Le système interagit avec des personnes ou génère du contenu (chatbot, synthèse, deepfake).","AI Act art. 50","Obligations de transparence (en vigueur)."],
+['s5','Q2','PMG',1,"Le client est un déployeur soumis à la FRIA (organisme public ou service public, notation de crédit, tarification assurance vie / santé).","AI Act art. 27","Réaliser une FRIA articulée avec l'AIPD."],
+['s6','Q2','PMG',1,"Le client est fournisseur du système (et non seulement déployeur).","AI Act art. 3, 16, 26","Obligations du fournisseur (documentation, conformité)."]];
+const AIPD_STEPS=[['P0','Qualification'],['P1','Collecte (questionnaire projet)'],['P2','Description du traitement'],['P3','Principes fondamentaux'],['P4','Scénarios de risque'],['P5','Mesures et plan d\'action'],['P6','Synthèse et avis DPO'],['P7','Relecture adverse et contrôle qualité']];
+const PROMPTS={
+pre:"Tu es un expert en protection des données (RGPD, lignes directrices CEPD, doctrine CNIL) et en AI Act. Tu assistes un DPO qui reste seul responsable des conclusions.\nRègles : cite l'article ou la source de chaque affirmation juridique ; signale toute incertitude ; ne fixe jamais seul un niveau de risque final ; si une information manque, liste-la en question au lieu de l'inventer. Réponds en français.",
+P0:"Voici la description d'un projet : [description].\n1. Pour chacun des 9 critères du CEPD (WP248), indique s'il est rempli, non rempli ou incertain, avec ta justification.\n2. Conclus : AIPD requise, recommandée ou non requise.\n3. AI Act : est-ce un système d'IA (art. 3) ? Le client est-il fournisseur ou déployeur ? Le système relève-t-il de l'art. 5, de l'annexe III, de l'art. 50 ou de l'art. 27 ?\n4. Liste les informations manquantes pour conclure.\nFormat : un tableau par volet, puis une conclusion de 3 lignes.",
+P1:"À partir du questionnaire type ci-dessous et de la description du projet [description], produis un questionnaire adapté : supprime les questions sans objet, reformule les autres dans le vocabulaire du métier, ajoute au plus 5 questions propres à ce cas d'usage. Signale pour chaque question ajoutée le risque qu'elle permet d'évaluer.\n[questionnaire type]",
+P2:"À partir des réponses au questionnaire [réponses], rédige la partie 1 de l'AIPD : finalité, responsable et sous-traitants, personnes concernées, catégories de données, flux (source, stockage, destinataires, transferts), durées de conservation, rôle du système d'IA. Phrases courtes, un tableau pour les flux. Marque [À CONFIRMER] chaque point déduit et non affirmé dans les réponses.",
+P3:"Sur la base de la description validée [partie 1], analyse : base légale (art. 6, et art. 9 si données sensibles), minimisation, exactitude, durées de conservation, information des personnes (art. 13-14), exercice des droits (art. 15 à 22, dont art. 22 sur les décisions automatisées), sous-traitance (art. 28), transferts (chapitre V). Pour chaque point : conforme, à améliorer ou non conforme, avec la justification et la mesure proposée. Ne tranche pas les points juridiquement discutables : présente les options.",
+P4:"Pour ce traitement [parties 1 et 2], propose les scénarios de risque selon la méthode CNIL : accès illégitime, modification non désirée, disparition des données. Ajoute les risques propres à l'IA du catalogue fourni [catalogue]. Pour chaque scénario : source de risque, menace, impact sur les personnes, mesures existantes, et une cotation INDICATIVE de gravité et de vraisemblance (1 à 4) avec sa justification. Termine par les 3 scénarios qui te semblent prioritaires et pourquoi.",
+P5:"Pour chaque scénario retenu [scénarios validés], propose des mesures : techniques, organisationnelles, contractuelles. Indique l'effet attendu sur la gravité ou la vraisemblance, un porteur type (métier, IT, sécurité, juridique) et une difficulté de mise en œuvre (faible, moyenne, forte). Présente le tout en tableau, trié par réduction de risque attendue.",
+P6:"À partir de l'AIPD complète [AIPD], rédige : 1) une synthèse d'une page pour la direction (enjeu, risques résiduels, décisions attendues) ; 2) un projet d'avis du DPO structuré en : constats, risques résiduels, conditions, recommandation (favorable, favorable sous conditions, défavorable). Le projet d'avis est un brouillon : signale les points où le DPO doit trancher.",
+P7:"Tu es maintenant un contrôleur de la CNIL qui relit cette AIPD [AIPD] pour y trouver des faiblesses. Liste : affirmations non étayées, risques omis, mesures vagues ou non vérifiables, incohérences entre parties, références juridiques douteuses. Classe-les par gravité. Ne propose pas de réécriture, seulement les constats."};
+/* [id, domaine, tailles, poids(1-3), énoncé, référence, action si « Non » (mise en place), action si « Partiel » (mise à niveau)] */
+
+
+const AIPD_EN={
+q0:["The processing involves personal data.","GDPR art. 4"],
+c1:["Evaluation or scoring, including profiling and prediction.","WP248 — criterion 1"],
+c2:["Automated decision-making with legal or similarly significant effect.","WP248 — criterion 2; GDPR art. 22"],
+c3:["Systematic monitoring of individuals.","WP248 — criterion 3"],
+c4:["Sensitive data or data of a highly personal nature.","WP248 — criterion 4; GDPR art. 9-10"],
+c5:["Large-scale processing.","WP248 — criterion 5"],
+c6:["Matching or combining data sets.","WP248 — criterion 6"],
+c7:["Vulnerable data subjects (employees, minors, patients, elderly people…).","WP248 — criterion 7"],
+c8:["Innovative use or new technological solution (AI often qualifies).","WP248 — criterion 8"],
+c9:["The processing may prevent individuals from exercising a right or accessing a service or contract.","WP248 — criterion 9"],
+s1:["The system is an AI system within the meaning of the AI Act.","AI Act art. 3"],
+s2:["The system falls under a prohibited practice.","AI Act art. 5"],
+s3:["The system is high-risk (Annex III: credit, HR, insurance, education, essential services…).","AI Act art. 6; Annex III"],
+s4:["The system interacts with people or generates content (chatbot, synthesis, deepfake).","AI Act art. 50"],
+s5:["The client is a deployer subject to a FRIA (public body or public service, credit scoring, life / health insurance pricing).","AI Act art. 27"],
+s6:["The client is the provider of the system (not only a deployer).","AI Act art. 3, 16, 26"]};
+const AIPD_STEPS_EN=['Qualification','Collection (project questionnaire)','Processing description','Fundamental principles','Risk scenarios','Measures and action plan','Summary and DPO opinion','Adversarial review and quality check'];
+const PROMPTS_EN={
+pre:"You are an expert in data protection (GDPR, EDPB guidelines, CNIL doctrine) and the AI Act. You assist a DPO who remains solely responsible for the conclusions.\nRules: cite the article or source for every legal statement; flag any uncertainty; never set a final risk level on your own; if information is missing, list it as a question instead of inventing it. Answer in English.",
+P0:"Here is a project description: [description].\n1. For each of the 9 EDPB criteria (WP248), state whether it is met, not met or uncertain, with your reasoning.\n2. Conclude: DPIA required, recommended or not required.\n3. AI Act: is it an AI system (art. 3)? Is the client provider or deployer? Does the system fall under art. 5, Annex III, art. 50 or art. 27?\n4. List the information missing to conclude.\nFormat: one table per part, then a 3-line conclusion.",
+P1:"From the standard questionnaire below and the project description [description], produce a tailored questionnaire: remove irrelevant questions, rephrase the others in business vocabulary, add at most 5 questions specific to this use case. For each added question, state the risk it helps assess.\n[standard questionnaire]",
+P2:"From the questionnaire answers [answers], write part 1 of the DPIA: purpose, controller and processors, data subjects, data categories, flows (source, storage, recipients, transfers), retention periods, role of the AI system. Short sentences, a table for flows. Mark [TO CONFIRM] every point that is inferred rather than stated in the answers.",
+P3:"Based on the validated description [part 1], analyse: legal basis (art. 6, and art. 9 for sensitive data), minimisation, accuracy, retention, information of individuals (art. 13-14), exercise of rights (art. 15 to 22, including art. 22 on automated decisions), processors (art. 28), transfers (chapter V). For each point: compliant, to improve or non-compliant, with reasoning and a proposed measure. Do not settle legally debatable points: present the options.",
+P4:"For this processing [parts 1 and 2], propose risk scenarios following the CNIL method: illegitimate access, unwanted modification, data loss. Add the AI-specific risks from the catalogue provided [catalogue]. For each scenario: risk source, threat, impact on individuals, existing measures, and an INDICATIVE rating of severity and likelihood (1 to 4) with its reasoning. End with the 3 scenarios you consider priorities and why.",
+P5:"For each retained scenario [validated scenarios], propose measures: technical, organisational, contractual. State the expected effect on severity or likelihood, a typical owner (business, IT, security, legal) and an implementation difficulty (low, medium, high). Present everything as a table sorted by expected risk reduction.",
+P6:"From the complete DPIA [DPIA], write: 1) a one-page summary for management (stakes, residual risks, decisions expected); 2) a draft DPO opinion structured as: findings, residual risks, conditions, recommendation (favourable, favourable with conditions, unfavourable). The draft opinion is a draft: flag the points the DPO must decide.",
+P7:"You are now a CNIL inspector reviewing this DPIA [DPIA] to find weaknesses. List: unsupported statements, missing risks, vague or unverifiable measures, inconsistencies between parts, doubtful legal references. Rank them by severity. Do not propose rewrites, only findings."};
+const CAL=[
+['2025-02-02',['Pratiques interdites (art. 5) et maîtrise de l’IA (art. 4)','Prohibited practices (art. 5) and AI literacy (art. 4)'],'in'],
+['2025-08-02',['Modèles d’IA à usage général (GPAI), gouvernance, sanctions','General-purpose AI models (GPAI), governance, penalties'],'in'],
+['2026-08-02',['Transparence art. 50 (art. 50.2 : nouveaux systèmes)','Transparency art. 50 (art. 50.2: new systems)'],'in'],
+['2026-12-02',['Art. 50.2 pour les systèmes déjà sur le marché ; nouvelles pratiques interdites','Art. 50.2 for systems already on the market; new prohibited practices'],'next'],
+['2027-12-02',['Systèmes à haut risque de l’annexe III (report — règl. (UE) 2026/1744)','Annex III high-risk systems (postponed — Reg. (EU) 2026/1744)'],'next'],
+['2028-08-02',['Systèmes à haut risque intégrés à des produits réglementés (annexe I)','High-risk systems embedded in regulated products (Annex I)'],'next']];
+const OPTS={flash:[['o.no',0,'c0'],['o.partial',.5,'c1'],['o.yes',1,'c3'],['o.na',null,'cna']],
+            fin:[['o.nc',0,'c0'],['o.partial',.5,'c1'],['o.c',1,'c3'],['o.na',null,'cna']],
+            aipd:[['o.yes',1,'c2'],['o.unsure',.5,'c1'],['o.no',0,'c3']]};
 const TBADGE={flash:'b-rgpd',fin:'b-ia',aipd:'b-aipd'};
-const CAL=[['2 fév. 2025','Pratiques interdites (art. 5) et maîtrise de l\'IA (art. 4)','En vigueur'],
-['2 août 2025','Modèles d\'IA à usage général (GPAI), gouvernance, sanctions','En vigueur'],
-['2 août 2026','Transparence art. 50 (art. 50.2 : nouveaux systèmes)','En vigueur'],
-['2 déc. 2026','Art. 50.2 pour les systèmes déjà sur le marché ; nouvelles pratiques interdites','À venir'],
-['2 déc. 2027','Systèmes à haut risque de l\'annexe III (report — règl. (UE) 2026/1744)','À venir'],
-['2 août 2028','Systèmes à haut risque intégrés à des produits réglementés (annexe I)','À venir']];
+
+/* ============ I18N ============ */
+const I18N={
+fr:{'app.sub':'Assessments RGPD & IA Act','h.drive':'Drive','h.sync':'État de synchronisation','h.theme':'Thème',
+'sync.loc':'⚫ Local','sync.pend':'🟡 En attente','sync.ok':'🟢 Sync ✓','sync.err':'🔴 Erreur',
+'tab.audits':'Audits','tab.quest':'Questionnaire','tab.res':'Résultats','tab.bench':'Baseline','tab.hist':'Historique','tab.prop':'Proposition','tab.set':'⚙︎','tab.auditsS':'Audits','tab.questS':'Quest.','tab.resS':'Résult.','tab.benchS':'Base','tab.histS':'Hist.','tab.propS':'Propal','tab.setS':'⚙︎',
+'type.flash':'Diagnostic flash','type.fin':'Diagnostic fin','type.aipd':'Qualification AIPD / AI Act',
+'st.open':'En cours','st.closed':'Clôturé',
+'o.no':'Non','o.partial':'Partiel','o.yes':'Oui','o.na':'N/A','o.nc':'Non conforme','o.c':'Conforme','o.unsure':'Incertain',
+'reg.RGPD':'RGPD','reg.IA':'IA Act','reg.AIPD':'AIPD',
+'poc':'<b>POC</b> — n’utilisez que des données fictives ou des codes clients pseudonymisés. Aucun résultat d’audit réel d’un client ne doit être stocké sur un Drive personnel.',
+'a.new':'Nouvel audit','a.client':'Code client pseudonymisé *','a.sector':'Secteur d’activité','a.auditor':'Auditeur','a.scope':'Périmètre (entité, système, traitement)',
+'a.optFlash':'Diagnostic flash — maturité (≈ 20 min)','a.optFin':'Diagnostic fin — conformité par contrôle','a.optAipd':'Qualification AIPD / AI Act + kit AIPD assistée',
+'a.create':'Créer','a.hint':'Le référentiel s’adapte à la taille. La qualification AIPD porte sur un traitement ou un système d’IA précis : renseignez-le dans le périmètre.',
+'a.list':'Audits ({n})','a.none':'Aucun audit pour l’instant.','a.demoHidden':'{n} audit(s) de démonstration masqué(s)','a.showDemo':'Afficher la démo','a.hideDemo':'Masquer la démo',
+'a.noSector':'Secteur non renseigné','a.answers':'{a}/{t} réponses','a.archived':'☁ archivé le {d}','a.scopeL':'Périmètre : {x}',
+'a.open':'Ouvrir','a.toFin':'→ Diag. fin','a.reaudit':'Ré-auditer','a.reauditT':'Nouvel audit à partir de celui-ci','a.close':'Clôturer','a.reopen':'Rouvrir','a.archive':'☁ Archiver','a.del':'Suppr.',
+'a.crit':'{n} critère(s) CEPD','a.demo':'démo',
+'arch.h':'Archives Google Drive','arch.p':'Chaque audit archivé est stocké dans le dossier {f} de votre Drive : un fichier JSON (données complètes, réimportables) et un rapport Markdown.',
+'arch.list':'Lister les archives','arch.listC':'Connecter Drive et lister','arch.all':'☁ Archiver tous les audits','arch.reading':'Lecture du dossier…','arch.file':'Fichier','arch.mod':'Modifié','arch.present':'présent','arch.restore':'Restaurer','arch.none':'Aucune archive pour l’instant.','arch.fail':'Lecture impossible ({e}).',
+'q.none':'Aucun audit ouvert.','q.goto':'Créer ou ouvrir un audit','q.closedBan':'Audit clôturé le {d} : lecture seule.','q.all':'Tout','q.todo':'Non répondus','q.domNA':'Domaine N/A','q.crit':' · critique',
+'q.note':'+ note / preuve','q.noteE':'Note ✎','q.notePh':'Constat, preuve, commentaire…','q.empty':'Rien à afficher avec ce filtre.','q.toRes':'Voir les résultats →','q.toAipd':'Voir la qualification et le kit AIPD →','q.prog':'{a} / {t} réponses',
+'r.h':'{c} — {t}','r.hFlash':'maturité flash','r.hFin':'conformité détaillée','r.answers':'{a}/{t} réponses','r.plan':'Plan d’action priorisé ({n} écart(s))',
+'r.planHint':'P1 = contrôle critique non couvert · P2 = critique partiel ou important non couvert · P3 = amélioration. L’action dépend de la réponse : « Non » appelle une mise en place, « Partiel » une mise à niveau.',
+'r.prio':'Prio','r.text':'Texte','r.gap':'Écart constaté','r.action':'Action recommandée','r.noGap':'Aucun écart identifié à ce stade.',
+'r.kind0':'Mise en place','r.kind1':'Mise à niveau',
+'r.cal':'Calendrier d’application de l’IA Act','r.calIn':'En vigueur','r.calNext':'À venir','r.calNote':'Calendrier tel que modifié par le règlement (UE) 2026/1744 (« omnibus IA »), en vigueur depuis le 27 juillet 2026. À revérifier avant chaque restitution client.',
+'r.export':'Exporter le rapport (.md)','r.print':'Imprimer / PDF','r.archive':'☁ Archiver sur Drive','r.toProp':'Générer la proposition →',
+'r.base':'Baseline ({n} organisations{s}) : moyenne {m} % · {p}','r.baseSize':', même taille','r.baseNone':'Baseline : pas encore assez d’audits comparables (minimum {k}).',
+'r.pctTop':'meilleur que {x} % des organisations',
+'lvl.f1':'Niveau 1 · Initial','lvl.f2':'Niveau 2 · Émergent','lvl.f3':'Niveau 3 · Défini','lvl.f4':'Niveau 4 · Maîtrisé','lvl.f5':'Niveau 5 · Optimisé',
+'lvl.n1':'Non-conformités majeures','lvl.n2':'Conformité partielle','lvl.n3':'Conformité avancée','lvl.n4':'Conforme',
+'ai.h':'{c} — qualification AIPD / AI Act','ai.rgpd':'Volet RGPD','ai.act':'Volet AI Act','ai.critL':'{c} critère(s) rempli(s) sur 9 · {u} incertain(s) · règle : deux critères ou plus rendent en général l’AIPD nécessaire (WP248).',
+'ai.out':'Hors AI Act','ai.noFlag':'Aucune obligation spécifique identifiée à ce stade (ou questions non répondues).',
+'ai.v0':'Hors RGPD — pas d’AIPD','ai.v1':'AIPD requise','ai.v2':'AIPD probable — lever les incertitudes','ai.v3':'AIPD recommandée','ai.v4':'AIPD non requise a priori — documenter',
+'ai.f.ban':'Pratique interdite','ai.f.banD':'Arrêt du projet (art. 5)','ai.f.hr':'Haut risque','ai.f.hrD':'Exigences applicables au 2 déc. 2027 (annexe III)','ai.f.tr':'Transparence','ai.f.trD':'Art. 50, en vigueur','ai.f.fria':'FRIA','ai.f.friaD':'Art. 27, à articuler avec l’AIPD','ai.f.prov':'Fournisseur','ai.f.provD':'Obligations du fournisseur (art. 16)',
+'ai.kit':'Kit AIPD assistée par IA — avancement {d}/{t}','ai.kitP':'Collez d’abord le préambule dans l’outil IA <b>validé par le client</b>, puis le prompt de l’étape. L’IA rédige les premiers jets ; le DPO qualifie, arbitre et signe.',
+'ai.pre':'Copier le préambule','ai.copyP':'Copier le prompt','ai.todo':'À faire','ai.doing':'En cours','ai.done':'Fait','ai.grid':'Grille de contrôle avant livraison',
+'ai.g':['Chaque fait est confirmé par le questionnaire ou un entretien','Aucun point [À CONFIRMER] ne subsiste','Chaque article cité est vérifié dans le texte','Gravité et vraisemblance fixées par le DPO et le métier','Mesures précises, datées, avec porteur nommé','Constats de la relecture adverse (P7) traités','Aucune donnée réelle passée par un outil non autorisé','Avis du DPO rédigé et signé par lui'],
+'ai.exp':'Exporter (.md)',
+'b.h':'Baseline — où se situe le client ?','b.p':'Moyenne des audits comparables : un audit par organisation (le plus récent), au moins 50 % de questions répondues. Le client comparé est exclu de sa propre baseline.',
+'b.type':'Type de diagnostic','b.size':'Taille','b.sector':'Secteur','b.all':'Toutes','b.allS':'Tous','b.open':'Inclure les audits en cours','b.cmp':'Audit à positionner','b.cmpNone':'— aucun —',
+'b.n':'Organisations dans l’échantillon','b.mean':'Moyenne','b.med':'médiane {m} % · P25–P75 : {a}–{b} %','b.small':'Échantillon de {n} organisation(s) : en dessous de {k}, la baseline est indicative et ne doit pas être présentée au client.',
+'b.empty':'Aucun audit comparable avec ces filtres. Clôturez des audits, ou chargez la démonstration dans les réglages pour tester.',
+'b.dom':'Domaine','b.client':'Client','b.delta':'Écart','b.rank':'Rang','b.chart':'Score du client face à la baseline, par domaine','b.lgBand':'P25–P75','b.lgMean':'Moyenne','b.lgClient':'Client',
+'b.read':'Lecture : la bande grise couvre la moitié centrale des organisations, le trait la moyenne, le point le client.','b.demoN':'dont {n} audit(s) de démonstration',
+'b.rep':'Positionnement par rapport à la baseline','b.repN':'Baseline : {n} organisations comparables ({t}{s}).',
+'h.h':'Historique par client','h.p':'Évolution des scores entre audits du même type. Le delta compare chaque audit au précédent du même type.','h.date':'Date','h.type':'Type','h.scope':'Périmètre',
+'p.custom':'Proposition personnalisée pour <b>{c}</b> à partir de l’audit ouvert.','p.generic':'Proposition type générique — ouvrez un audit pour la personnaliser.','p.hint':'Charges et TJM modifiables dans les réglages.','p.copy':'Copier (Markdown)','p.dl':'Télécharger .md',
+'s.lang':'🌐 Langue / Language','s.offer':'Offre commerciale','s.vendor':'Société émettrice','s.tjm':'TJM moyen (€ HT) — hypothèse à ajuster','s.days':'Charge (jours)','s.daysNote':'Valeurs par défaut indicatives : à caler sur votre grille tarifaire.',
+'s.disp':'Affichage','s.reset':'Réinitialiser','s.data':'Données','s.exp':'Exporter JSON','s.imp':'Importer JSON','s.wipe':'Tout effacer','s.wipeQ':'Effacer tous les audits ?',
+'s.demo':'Données de démonstration','s.demoP':'Charge 40 audits fictifs (20 flash, 20 fin), clôturés et marqués « démo », pour tester la baseline. Ils sont exclus des archives Drive.','s.demoLoad':'Charger la démonstration','s.demoDel':'Supprimer la démonstration','s.demoN':'{n} audit(s) de démonstration présents.',
+'s.drive':'Google Drive','s.cid':'Client ID OAuth (prérempli avec celui de vos autres apps)','s.driveP':'Synchronisation de travail : {f}. Archives d’audit : dossier {d}. Portée {s} : l’app ne voit que les fichiers qu’elle a créés.','s.conn':'Connecter Drive','s.reconn':'Reconnecter Drive',
+'t.cliReq':'Code client requis','t.finFor':'Diagnostic fin créé pour {c}','t.dup':'Nouvel audit créé à partir du précédent : mettez à jour les réponses','t.closedNoDrive':'Audit clôturé — connectez Drive pour l’archiver','t.reopened':'Audit rouvert',
+'t.deleted':'Audit supprimé (l’archive Drive est conservée)','t.undo':'Annuler','t.locked':'Audit clôturé — rouvrez-le pour le modifier','t.domNA':'Domaine marqué non applicable','t.copied':'Copié',
+'t.archived':'Audit archivé dans {f}','t.archFail':'Archivage impossible ({e})','t.archN':'{n} audit(s) archivé(s)','t.restored':'Audit restauré : {c}','t.restFail':'Restauration impossible ({e})','t.badArch':'Archive invalide',
+'t.imp':'Import réussi','t.badFile':'Fichier invalide','t.cid':'Renseignez le Client ID OAuth','t.gis':'Librairie Google non chargée','t.demoOk':'{n} audits de démonstration chargés','t.demoDel':'Démonstration supprimée','t.demoArch':'Les audits de démonstration ne sont pas archivés'},
+en:{'app.sub':'GDPR & AI Act assessments','h.drive':'Drive','h.sync':'Sync status','h.theme':'Theme',
+'sync.loc':'⚫ Local','sync.pend':'🟡 Pending','sync.ok':'🟢 Sync ✓','sync.err':'🔴 Error',
+'tab.audits':'Audits','tab.quest':'Questionnaire','tab.res':'Results','tab.bench':'Baseline','tab.hist':'History','tab.prop':'Proposal','tab.set':'⚙︎','tab.auditsS':'Audits','tab.questS':'Quest.','tab.resS':'Results','tab.benchS':'Base','tab.histS':'Hist.','tab.propS':'Prop.','tab.setS':'⚙︎',
+'type.flash':'Flash assessment','type.fin':'Detailed assessment','type.aipd':'DPIA / AI Act qualification',
+'st.open':'In progress','st.closed':'Closed',
+'o.no':'No','o.partial':'Partial','o.yes':'Yes','o.na':'N/A','o.nc':'Non-compliant','o.c':'Compliant','o.unsure':'Unsure',
+'reg.RGPD':'GDPR','reg.IA':'AI Act','reg.AIPD':'DPIA',
+'poc':'<b>POC</b> — use only fictitious data or pseudonymised client codes. No real client audit result should be stored on a personal Drive.',
+'a.new':'New audit','a.client':'Pseudonymised client code *','a.sector':'Industry','a.auditor':'Auditor','a.scope':'Scope (entity, system, processing)',
+'a.optFlash':'Flash assessment — maturity (≈ 20 min)','a.optFin':'Detailed assessment — control by control','a.optAipd':'DPIA / AI Act qualification + AI-assisted DPIA kit',
+'a.create':'Create','a.hint':'The question set adapts to company size. The DPIA qualification covers one specific processing or AI system: enter it as the scope.',
+'a.list':'Audits ({n})','a.none':'No audits yet.','a.demoHidden':'{n} demo audit(s) hidden','a.showDemo':'Show demo','a.hideDemo':'Hide demo',
+'a.noSector':'Industry not specified','a.answers':'{a}/{t} answers','a.archived':'☁ archived on {d}','a.scopeL':'Scope: {x}',
+'a.open':'Open','a.toFin':'→ Detailed','a.reaudit':'Re-audit','a.reauditT':'New audit based on this one','a.close':'Close','a.reopen':'Reopen','a.archive':'☁ Archive','a.del':'Delete',
+'a.crit':'{n} EDPB criteria','a.demo':'demo',
+'arch.h':'Google Drive archives','arch.p':'Each archived audit is stored in the {f} folder of your Drive: a JSON file (complete, re-importable data) and a Markdown report.',
+'arch.list':'List archives','arch.listC':'Connect Drive and list','arch.all':'☁ Archive all audits','arch.reading':'Reading folder…','arch.file':'File','arch.mod':'Modified','arch.present':'present','arch.restore':'Restore','arch.none':'No archives yet.','arch.fail':'Could not read ({e}).',
+'q.none':'No audit open.','q.goto':'Create or open an audit','q.closedBan':'Audit closed on {d}: read-only.','q.all':'All','q.todo':'Unanswered','q.domNA':'Domain N/A','q.crit':' · critical',
+'q.note':'+ note / evidence','q.noteE':'Note ✎','q.notePh':'Finding, evidence, comment…','q.empty':'Nothing to show with this filter.','q.toRes':'See results →','q.toAipd':'See qualification and DPIA kit →','q.prog':'{a} / {t} answers',
+'r.h':'{c} — {t}','r.hFlash':'flash maturity','r.hFin':'detailed compliance','r.answers':'{a}/{t} answers','r.plan':'Prioritised action plan ({n} gap(s))',
+'r.planHint':'P1 = critical control not covered · P2 = critical partially covered or important not covered · P3 = improvement. The action depends on the answer: "No" calls for implementation, "Partial" for an upgrade.',
+'r.prio':'Prio','r.text':'Law','r.gap':'Gap found','r.action':'Recommended action','r.noGap':'No gap identified so far.',
+'r.kind0':'Implement','r.kind1':'Upgrade',
+'r.cal':'AI Act application timeline','r.calIn':'In force','r.calNext':'Upcoming','r.calNote':'Timeline as amended by Regulation (EU) 2026/1744 ("AI omnibus"), in force since 27 July 2026. Re-check before each client presentation.',
+'r.export':'Export report (.md)','r.print':'Print / PDF','r.archive':'☁ Archive to Drive','r.toProp':'Generate proposal →',
+'r.base':'Baseline ({n} organisations{s}): mean {m}% · {p}','r.baseSize':', same size','r.baseNone':'Baseline: not enough comparable audits yet (minimum {k}).',
+'r.pctTop':'better than {x}% of organisations',
+'lvl.f1':'Level 1 · Initial','lvl.f2':'Level 2 · Emerging','lvl.f3':'Level 3 · Defined','lvl.f4':'Level 4 · Managed','lvl.f5':'Level 5 · Optimised',
+'lvl.n1':'Major non-compliance','lvl.n2':'Partial compliance','lvl.n3':'Advanced compliance','lvl.n4':'Compliant',
+'ai.h':'{c} — DPIA / AI Act qualification','ai.rgpd':'GDPR part','ai.act':'AI Act part','ai.critL':'{c} of 9 criteria met · {u} unsure · rule: two or more criteria generally make a DPIA necessary (WP248).',
+'ai.out':'Outside the AI Act','ai.noFlag':'No specific obligation identified so far (or questions unanswered).',
+'ai.v0':'Outside GDPR — no DPIA','ai.v1':'DPIA required','ai.v2':'DPIA likely — resolve uncertainties','ai.v3':'DPIA recommended','ai.v4':'DPIA not required a priori — document it',
+'ai.f.ban':'Prohibited practice','ai.f.banD':'Stop the project (art. 5)','ai.f.hr':'High-risk','ai.f.hrD':'Requirements apply from 2 Dec 2027 (Annex III)','ai.f.tr':'Transparency','ai.f.trD':'Art. 50, in force','ai.f.fria':'FRIA','ai.f.friaD':'Art. 27, to be linked with the DPIA','ai.f.prov':'Provider','ai.f.provD':'Provider obligations (art. 16)',
+'ai.kit':'AI-assisted DPIA kit — progress {d}/{t}','ai.kitP':'First paste the preamble into the AI tool <b>approved by the client</b>, then the step prompt. AI drafts; the DPO qualifies, decides and signs.',
+'ai.pre':'Copy preamble','ai.copyP':'Copy prompt','ai.todo':'To do','ai.doing':'In progress','ai.done':'Done','ai.grid':'Quality check before delivery',
+'ai.g':['Every fact is confirmed by the questionnaire or an interview','No [TO CONFIRM] point remains','Every article cited is checked against the text','Severity and likelihood set by the DPO and the business','Measures are precise, dated, with a named owner','Findings of the adversarial review (P7) are addressed','No real data went through an unapproved tool','The DPO opinion is written and signed by the DPO'],
+'ai.exp':'Export (.md)',
+'b.h':'Baseline — where does the client stand?','b.p':'Average of comparable audits: one audit per organisation (the latest), at least 50% of questions answered. The client being compared is excluded from its own baseline.',
+'b.type':'Assessment type','b.size':'Size','b.sector':'Industry','b.all':'All','b.allS':'All','b.open':'Include audits in progress','b.cmp':'Audit to position','b.cmpNone':'— none —',
+'b.n':'Organisations in the sample','b.mean':'Mean','b.med':'median {m}% · P25–P75: {a}–{b}%','b.small':'Sample of {n} organisation(s): below {k}, the baseline is indicative only and should not be shown to the client.',
+'b.empty':'No comparable audit with these filters. Close audits, or load the demo data in settings to try it out.',
+'b.dom':'Domain','b.client':'Client','b.delta':'Gap','b.rank':'Rank','b.chart':'Client score against the baseline, by domain','b.lgBand':'P25–P75','b.lgMean':'Mean','b.lgClient':'Client',
+'b.read':'How to read: the grey band covers the middle half of organisations, the line is the mean, the dot is the client.','b.demoN':'including {n} demo audit(s)',
+'b.rep':'Positioning against the baseline','b.repN':'Baseline: {n} comparable organisations ({t}{s}).',
+'h.h':'History by client','h.p':'Score changes between audits of the same type. The delta compares each audit with the previous one of the same type.','h.date':'Date','h.type':'Type','h.scope':'Scope',
+'p.custom':'Proposal tailored for <b>{c}</b> from the open audit.','p.generic':'Generic proposal template — open an audit to tailor it.','p.hint':'Effort and day rate can be changed in settings.','p.copy':'Copy (Markdown)','p.dl':'Download .md',
+'s.lang':'🌐 Langue / Language','s.offer':'Commercial offer','s.vendor':'Issuing company','s.tjm':'Average day rate (€ excl. VAT) — assumption to adjust','s.days':'Effort (days)','s.daysNote':'Indicative defaults: align them with your rate card.',
+'s.disp':'Display','s.reset':'Reset','s.data':'Data','s.exp':'Export JSON','s.imp':'Import JSON','s.wipe':'Delete all','s.wipeQ':'Delete all audits?',
+'s.demo':'Demo data','s.demoP':'Loads 40 fictitious audits (20 flash, 20 detailed), closed and tagged "demo", to try the baseline. They are excluded from Drive archives.','s.demoLoad':'Load demo','s.demoDel':'Remove demo','s.demoN':'{n} demo audit(s) present.',
+'s.drive':'Google Drive','s.cid':'OAuth Client ID (prefilled with your other apps’ ID)','s.driveP':'Working sync: {f}. Audit archives: folder {d}. Scope {s}: the app only sees files it created.','s.conn':'Connect Drive','s.reconn':'Reconnect Drive',
+'t.cliReq':'Client code required','t.finFor':'Detailed assessment created for {c}','t.dup':'New audit created from the previous one: update the answers','t.closedNoDrive':'Audit closed — connect Drive to archive it','t.reopened':'Audit reopened',
+'t.deleted':'Audit deleted (the Drive archive is kept)','t.undo':'Undo','t.locked':'Audit closed — reopen it to edit','t.domNA':'Domain marked not applicable','t.copied':'Copied',
+'t.archived':'Audit archived in {f}','t.archFail':'Archiving failed ({e})','t.archN':'{n} audit(s) archived','t.restored':'Audit restored: {c}','t.restFail':'Restore failed ({e})','t.badArch':'Invalid archive',
+'t.imp':'Import successful','t.badFile':'Invalid file','t.cid':'Enter the OAuth Client ID','t.gis':'Google library not loaded','t.demoOk':'{n} demo audits loaded','t.demoDel':'Demo removed','t.demoArch':'Demo audits are not archived'}};
+let LANG='fr';
+function t(k,v){let s=(I18N[LANG]&&I18N[LANG][k]!==undefined)?I18N[LANG][k]:(I18N.fr[k]!==undefined?I18N.fr[k]:k);
+  if(typeof s==='string'&&v)s=s.replace(/\{(\w+)\}/g,function(m,n){return v[n]!==undefined?v[n]:m;});return s;}
+const LOC=()=>LANG==='fr'?'fr-FR':'en-GB';
+const fdate=x=>new Date(x).toLocaleDateString(LOC());
+const sizeL=k=>SIZES[k][LANG][0],sizeD=k=>SIZES[k][LANG][1];
+const domN=k=>DOMS[k][LANG==='en'?2:1][0],domS=k=>DOMS[k][LANG==='en'?2:1][1],regL=r=>t('reg.'+r);
+const typeL=x=>t('type.'+x);
+const REF_EN=[['recommandations CNIL IA','CNIL AI recommendations'],['recommandation CNIL journalisation','CNIL logging recommendation'],['recommandation CNIL','CNIL recommendation'],['guide sécurité CNIL','CNIL security guide'],['lignes directrices CNIL','CNIL guidelines'],['lignes directrices de la Commission','Commission guidelines'],['Bonne pratique','Good practice'],['bonne pratique','good practice'],['annexes I et III','Annexes I and III'],['(annexe III)','(Annex III)'],['portée revue par le règl. 2026/1744 — à vérifier','scope revised by Reg. 2026/1744 — to be checked'],['applicable depuis le','applicable since'],['systèmes déjà sur le marché :','systems already on the market:'],['depuis le','since'],['Code du travail','French Labour Code'],['CJUE','CJEU'],['RGPD','GDPR'],[' fév. ',' Feb '],[' août ',' Aug '],[' déc. ',' Dec '],[' ; ','; ']];
+function qText(q){if(LANG==='en'){if(EN_Q[q[0]])return EN_Q[q[0]][0];if(AIPD_EN[q[0]])return AIPD_EN[q[0]][0];}return q[4];}
+function qRef(q){if(LANG!=='en')return q[5];if(AIPD_EN[q[0]])return AIPD_EN[q[0]][1];let s=q[5];REF_EN.forEach(function(p){s=s.split(p[0]).join(p[1]);});return s;}
+function qAct(q,v){if(LANG==='en'&&EN_Q[q[0]])return v===0?EN_Q[q[0]][1]:EN_Q[q[0]][2];return v===0?q[6]:(q[7]||q[6]);}
+const stepL=i=>LANG==='en'?AIPD_STEPS_EN[i]:AIPD_STEPS[i][1];
+const promptOf=k=>(LANG==='en'?PROMPTS_EN:PROMPTS)[k];
 
 /* ============ ÉTAT ============ */
-const APP='diag001',VER='v2.1',VDATE='2026-10-01',LK='td_v4_'+APP,TK='td_theme_'+APP,FK='td_fs_'+APP,TOKK='td_tok_'+APP,CIDK='td_cid_'+APP;
-const DEF_CID='962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com',FOLDER=APP+'-audits';
+const APP='diag001',VER='v3.0',VDATE='2026-10-01',LK='td_v4_'+APP,TK='td_theme_'+APP,FK='td_fs_'+APP,TOKK='td_tok_'+APP,CIDK='td_cid_'+APP,LANG_KEY='td_lang_'+APP;
+const DEF_CID='962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com',FOLDER=APP+'-audits',MINB=5,MINB_RES=3;
 const cidGet=()=>localStorage.getItem(CIDK)||DEF_CID;
-let S={},cur=null,qFilter='all',lastDel=null,tab='dossiers';
+let S={},cur=null,qFilter='all',lastDel=null,tab='dossiers',BF={type:'flash',size:'all',sector:'all',open:false,cmp:''};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
@@ -292,238 +464,354 @@ function ensureState(){
   if(!S||typeof S!=='object')S={};
   if(!Array.isArray(S.diags))S.diags=[];
   S.diags.forEach(d=>{if(!d.answers||typeof d.answers!=='object')d.answers={};if(!SIZES[d.size])d.size='M';if(!OPTS[d.type])d.type='flash';if(!d.id)d.id=uid();
-    if(d.status!=='closed')d.status='open';if(typeof d.auditor!=='string')d.auditor='';if(typeof d.scope!=='string')d.scope='';
-    if(!d.steps||typeof d.steps!=='object')d.steps={};
-    if(d.scale!==3){if(d.type==='flash'){const M=[0,1,1,2,3];Object.keys(d.answers).forEach(k=>{const a=d.answers[k];if(a&&a.i!=null&&M[a.i]!==undefined)a.i=M[a.i];});}d.scale=3;}if(!d.drive||typeof d.drive!=='object')d.drive={};if(!d.date)d.date=Date.now();});
+    if(d.status!=='closed')d.status='open';if(typeof d.auditor!=='string')d.auditor='';if(typeof d.scope!=='string')d.scope='';if(typeof d.sector!=='string')d.sector='';if(typeof d.client!=='string')d.client='?';
+    if(!d.steps||typeof d.steps!=='object')d.steps={};if(!d.drive||typeof d.drive!=='object')d.drive={};if(!d.date)d.date=Date.now();
+    if(d.scale!==3){if(d.type==='flash'){const M=[0,1,1,2,3];Object.keys(d.answers).forEach(k=>{const a=d.answers[k];if(a&&a.i!=null&&M[a.i]!==undefined)a.i=M[a.i];});}d.scale=3;}});
   const st=S.settings=S.settings&&typeof S.settings==='object'?S.settings:{};
   if(!st.vendor)st.vendor='Sogeti';
   if(typeof st.tjm!=='number')st.tjm=1000;
   if(!st.days)st.days={};
   if(!st.days.flash)st.days.flash={P:1,M:2,G:3};
   if(!st.days.fin)st.days.fin={P:6,M:12,G:25};
+  if(typeof st.showDemo!=='boolean')st.showDemo=false;
+  if(typeof st.auditor!=='string')st.auditor='';
   if(!S.updated)S.updated=0;
   if(cur&&!S.diags.find(d=>d.id===cur))cur=null;
 }
 function load(){try{S=JSON.parse(localStorage.getItem(LK))||{}}catch(e){S={}}ensureState();}
 let saveT=null;
 function autoSave(){S.updated=Date.now();try{localStorage.setItem(LK,JSON.stringify(S))}catch(e){}
-  if(tok){setSync('pend');clearTimeout(saveT);saveT=setTimeout(drivePush,2000);}}
+  if(tok){setSync('pend');clearTimeout(saveT);saveT=setTimeout(function(){saveT=null;drivePush();},2000);}}
 function getD(){return S.diags.find(d=>d.id===cur)||null}
-function qs(d){return (d.type==='fin'?FIN:d.type==='aipd'?AIPDQ:FLASH).filter(q=>q[2].includes(d.size))}
-function locked(d){if(d&&d.status==='closed'){toast('Audit clôturé — rouvrez-le pour le modifier');return true;}return false;}
+function qs(d){return (d.type==='fin'?FIN:d.type==='aipd'?AIPDQ:FLASH).filter(q=>q[2].indexOf(d.size)>=0)}
+function locked(d){if(d&&d.status==='closed'){toast(t('t.locked'));return true;}return false;}
+const optL=(d,i)=>t(OPTS[d.type][i][0]);
 
 /* ============ SCORING ============ */
-function val(d,q){const a=d.answers[q[0]];if(!a||a.i==null)return undefined;return OPTS[d.type][a.i][1];}
+function val(d,q){const a=d.answers[q[0]];if(!a||a.i==null)return undefined;const o=OPTS[d.type][a.i];return o?o[1]:undefined;}
 function score(d,filter){let num=0,den=0,ans=0,tot=0;
   qs(d).filter(filter).forEach(q=>{tot++;const v=val(d,q);if(v===undefined)return;ans++;if(v===null)return;num+=v*q[3];den+=q[3];});
-  return {pct:den?Math.round(num/den*100):null,ans,tot};}
+  return {pct:den?Math.round(num/den*100):null,ans:ans,tot:tot};}
 const byReg=r=>q=>DOMS[q[1]][0]===r, byDom=k=>q=>q[1]===k;
 function level(d,p){if(p==null)return '—';
-  if(d.type==='flash')return p<20?'Niveau 1 · Initial':p<40?'Niveau 2 · Émergent':p<60?'Niveau 3 · Défini':p<80?'Niveau 4 · Maîtrisé':'Niveau 5 · Optimisé';
-  return p<50?'Non-conformités majeures':p<75?'Conformité partielle':p<90?'Conformité avancée':'Conforme';}
+  if(d.type==='flash')return t(p<20?'lvl.f1':p<40?'lvl.f2':p<60?'lvl.f3':p<80?'lvl.f4':'lvl.f5');
+  return t(p<50?'lvl.n1':p<75?'lvl.n2':p<90?'lvl.n3':'lvl.n4');}
 function col(p){return p==null?'var(--muted)':p<40?'var(--red)':p<70?'var(--amber)':'var(--green)'}
 function gaps(d){return qs(d).map(q=>{const v=val(d,q);if(v==null||v>=1)return null;
-  const w=q[3],p=(w===3&&v===0)?1:((w===3)||(w===2&&v===0))?2:3;return {q,v,p,g:w*(1-v),a:v===0?q[6]:(q[7]||q[6]),k:v===0?'Mise en place':'Mise à niveau'};}).filter(Boolean).sort((a,b)=>a.p-b.p||b.g-a.g);}
+  const w=q[3],p=(w===3&&v===0)?1:((w===3)||(w===2&&v===0))?2:3;return {q:q,v:v,p:p,g:w*(1-v),a:qAct(q,v),k:t(v===0?'r.kind0':'r.kind1')};}).filter(Boolean).sort((a,b)=>a.p-b.p||b.g-a.g);}
+const domsOf=(d,reg)=>Object.keys(DOMS).filter(k=>DOMS[k][0]===reg&&qs(d).some(byDom(k)));
+
+/* ============ BASELINE ============ */
+const ck=d=>String(d.client||'').trim().toLowerCase();
+const normS=x=>String(x||'').trim().toLowerCase();
+function completion(d){const s=score(d,()=>true);return s.tot?s.ans/s.tot:0;}
+function quant(a,p){if(!a.length)return null;const s=a.slice().sort((x,y)=>x-y),i=(s.length-1)*p,lo=Math.floor(i),hi=Math.ceil(i);return Math.round(s[lo]+(s[hi]-s[lo])*(i-lo));}
+function stat(a){if(!a.length)return null;const m=a.reduce((x,y)=>x+y,0)/a.length;return {n:a.length,mean:Math.round(m),med:quant(a,.5),p25:quant(a,.25),p75:quant(a,.75),min:Math.min.apply(null,a),max:Math.max.apply(null,a),vals:a};}
+function rankOf(v,a){if(v==null||!a||!a.length)return null;let below=0,eq=0;a.forEach(x=>{if(x<v)below++;else if(x===v)eq++;});return Math.round((below+eq/2)/a.length*100);}
+function baseline(o){const by={};
+  S.diags.forEach(d=>{if(d.type!==o.type)return;if(!o.open&&d.status!=='closed')return;if(o.size&&o.size!=='all'&&d.size!==o.size)return;
+    if(o.sector&&o.sector!=='all'&&normS(d.sector)!==o.sector)return;if(o.excl&&ck(d)===o.excl)return;if(completion(d)<.5)return;
+    const k=ck(d);if(!by[k]||by[k].date<d.date)by[k]=d;});
+  const L=Object.keys(by).map(k=>by[k]);const res={n:L.length,demo:L.filter(d=>d.demo).length,g:{},dom:{}};
+  ['RGPD','IA'].forEach(r=>{res.g[r]=stat(L.map(d=>score(d,byReg(r)).pct).filter(x=>x!=null));});
+  Object.keys(DOMS).forEach(k=>{if(DOMS[k][0]==='AIPD')return;res.dom[k]=stat(L.map(d=>qs(d).some(byDom(k))?score(d,byDom(k)).pct:null).filter(x=>x!=null));});
+  return res;}
+function baseFor(d){if(!d||d.type==='aipd')return null;let b=baseline({type:d.type,size:d.size,excl:ck(d)}),same=true;
+  if(b.n<MINB_RES){b=baseline({type:d.type,excl:ck(d)});same=false;}return b.n>=MINB_RES?{b:b,same:same}:null;}
 
 /* ============ NAVIGATION ============ */
-const TABS=[['dossiers','Audits'],['quest','Questionnaire'],['res','Résultats'],['hist','Historique'],['prop','Proposition'],['set','⚙︎ Réglages']];
-function go(t){tab=t;$('tabs').innerHTML=TABS.map(x=>`<button class="tab ${x[0]===t?'active':''}" onclick="go('${x[0]}')">${x[1]}</button>`).join('');
-  document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id==='tab-'+t));
-  ({dossiers:renderDossiers,quest:renderQuest,res:renderRes,hist:renderHist,prop:renderProp,set:renderSet})[t]();window.scrollTo(0,0);}
-function renderAll(){const a=document.activeElement;if(a&&/TEXTAREA|INPUT/.test(a.tagName))return;go(tab);}
-function noDossier(){return `<div class="empty">Aucun dossier ouvert.<br><br><button class="btn primary" onclick="go('dossiers')">Créer ou ouvrir un dossier</button></div>`}
+const TABS=['dossiers','quest','res','bench','hist','prop','set'],TABK={dossiers:'tab.audits',quest:'tab.quest',res:'tab.res',bench:'tab.bench',hist:'tab.hist',prop:'tab.prop',set:'tab.set'};
+function go(x){tab=x;$('tabs').innerHTML=TABS.map(k=>`<button class="tab ${k===x?'active':''}" onclick="go('${k}')"><span class="tl">${t(TABK[k])}</span><span class="ts">${t(TABK[k]+'S')}</span></button>`).join('');
+  document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id==='tab-'+x));
+  ({dossiers:renderDossiers,quest:renderQuest,res:renderRes,bench:renderBench,hist:renderHist,prop:renderProp,set:renderSet})[x]();window.scrollTo(0,0);}
+function renderAll(force){const a=document.activeElement;if(!force&&a&&/TEXTAREA|INPUT/.test(a.tagName))return;go(tab);}
+function noDossier(){return `<div class="empty">${t('q.none')}<br><br><button class="btn primary" onclick="go('dossiers')">${t('q.goto')}</button></div>`}
+function applyStatic(){document.documentElement.lang=LANG;document.title='diag001 — '+t('app.sub');
+  document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=t(el.getAttribute('data-i18n'));});
+  document.querySelectorAll('[data-i18n-title]').forEach(el=>{el.title=t(el.getAttribute('data-i18n-title'));el.setAttribute('aria-label',el.title);});
+  setSync(syncCode);}
+function setLang(l){LANG=l;try{localStorage.setItem(LANG_KEY,l)}catch(e){}applyStatic();renderAll(true);}
 
-/* ============ DOSSIERS ============ */
-function sumD(d){if(d.type==='aipd'){const q=aipdQual(d);return `<b>${esc(q.verdict)}</b> · ${q.crit} critère${q.crit>1?'s':''} CEPD${q.flags.length?' · '+q.flags.map(f=>esc(f[0])).join(', '):''}`;}
-  const r=score(d,byReg('RGPD')),i=score(d,byReg('IA'));return `RGPD <b style="color:${col(r.pct)}">${r.pct==null?'—':r.pct+' %'}</b> · IA Act <b style="color:${col(i.pct)}">${i.pct==null?'—':i.pct+' %'}</b>`;}
-function dCard(d){const s=score(d,()=>true),dr=d.drive&&d.drive.at?`<span class="small muted"> · ☁ archivé le ${new Date(d.drive.at).toLocaleDateString('fr-FR')}</span>`:'';
-  return `<div class="card"><div class="row" style="align-items:center"><div style="flex:3 1 220px"><h3>${esc(d.client)}</h3>
-    <span class="badge b-size">${SIZES[d.size].l}</span><span class="badge ${TBADGE[d.type]}">${TYPES[d.type]}</span><span class="badge ${d.status==='closed'?'b-closed':'b-open'}">${d.status==='closed'?'Clôturé':'En cours'}</span>
-    <div class="small muted" style="margin-top:6px">${esc(d.sector||'Secteur non renseigné')} · ${new Date(d.date).toLocaleDateString('fr-FR')}${d.auditor?' · '+esc(d.auditor):''} · ${s.ans}/${s.tot} réponses${dr}</div>
-    ${d.scope?`<div class="small" style="margin-top:4px">Périmètre : ${esc(d.scope)}</div>`:''}
+/* ============ AUDITS ============ */
+function sumD(d){if(d.type==='aipd'){const q=aipdQual(d);return `<b>${esc(q.verdict)}</b> · ${t('a.crit',{n:q.crit})}${q.flags.length?' · '+q.flags.map(f=>esc(f[0])).join(', '):''}`;}
+  const r=score(d,byReg('RGPD')),i=score(d,byReg('IA'));return `${regL('RGPD')} <b style="color:${col(r.pct)}">${r.pct==null?'—':r.pct+' %'}</b> · ${regL('IA')} <b style="color:${col(i.pct)}">${i.pct==null?'—':i.pct+' %'}</b>`;}
+function dCard(d){const s=score(d,()=>true),dr=d.drive&&d.drive.at?`<span class="small muted"> · ${t('a.archived',{d:fdate(d.drive.at)})}</span>`:'';
+  return `<div class="card"><div class="row" style="align-items:center"><div style="flex:3 1 220px"><h3>${esc(d.client)}${d.demo?` <span class="badge b-closed">${t('a.demo')}</span>`:''}</h3>
+    <span class="badge b-size">${sizeL(d.size)}</span><span class="badge ${TBADGE[d.type]}">${typeL(d.type)}</span><span class="badge ${d.status==='closed'?'b-closed':'b-open'}">${t('st.'+d.status)}</span>
+    <div class="small muted" style="margin-top:6px">${esc(d.sector||t('a.noSector'))} · ${fdate(d.date)}${d.auditor?' · '+esc(d.auditor):''} · ${t('a.answers',{a:s.ans,t:s.tot})}${dr}</div>
+    ${d.scope?`<div class="small" style="margin-top:4px">${t('a.scopeL',{x:esc(d.scope)})}</div>`:''}
     <div class="small" style="margin-top:4px">${sumD(d)}</div></div>
-    <div class="row" style="flex:1 1 220px;justify-content:flex-end"><button class="btn sm primary" onclick="openD('${d.id}')">Ouvrir</button>
-    ${d.type==='flash'?`<button class="btn sm" onclick="toFin('${d.id}')">→ Diag. fin</button>`:''}
-    <button class="btn sm" onclick="dupD('${d.id}')" title="Nouvel audit à partir de celui-ci">Ré-auditer</button>
-    ${d.status==='closed'?`<button class="btn sm" onclick="reopenD('${d.id}')">Rouvrir</button>`:`<button class="btn sm" onclick="closeD('${d.id}')">Clôturer</button>`}
-    <button class="btn sm" onclick="archiveD('${d.id}')">☁ Archiver</button>
-    <button class="btn sm danger" onclick="delD('${d.id}')">Suppr.</button></div></div></div>`;}
-function renderDossiers(){
-  const list=S.diags.slice().sort((a,b)=>b.date-a.date).map(dCard).join('');
-  $('tab-dossiers').innerHTML=`<div class="poc"><b>POC</b> — n'utilisez que des données fictives ou des codes clients pseudonymisés. Aucun résultat d'audit réel d'un client ne doit être stocké sur un Drive personnel.</div>
-    <h2>Nouvel audit</h2><div class="card"><div class="row">
-    <input id="n-client" placeholder="Code client pseudonymisé *"><input id="n-sector" placeholder="Secteur d'activité"></div>
-    <div class="row" style="margin-top:8px"><input id="n-auditor" placeholder="Auditeur" value="${esc(S.settings.auditor||'')}"><input id="n-scope" placeholder="Périmètre (entité, système, traitement)"></div>
-    <div class="row" style="margin-top:8px"><select id="n-size">${Object.keys(SIZES).map(k=>`<option value="${k}" ${k==='M'?'selected':''}>${SIZES[k].l} (${SIZES[k].d})</option>`).join('')}</select>
-    <select id="n-type"><option value="flash">Diagnostic flash — maturité (≈ 20 min)</option><option value="fin">Diagnostic fin — conformité par contrôle</option><option value="aipd">Qualification AIPD / AI Act + kit AIPD assistée</option></select>
-    <button class="btn primary" onclick="addD()">Créer</button></div>
-    <p class="small muted" style="margin-top:8px">Le référentiel s'adapte à la taille. La qualification AIPD s'applique à un traitement ou un système d'IA précis : renseignez-le dans le périmètre.</p></div>
-    <h2>Audits (${S.diags.length})</h2>${list||'<div class="empty">Aucun audit pour l\'instant.</div>'}
-    <h2>Archives Google Drive</h2><div class="card"><p class="small muted">Chaque audit archivé est stocké dans le dossier <span class="mono">${FOLDER}</span> de votre Drive : un fichier JSON (données complètes, réimportables) et un rapport Markdown.</p>
-    <div class="row" style="margin-top:8px"><button class="btn" onclick="listArchives()">${tok?'Lister les archives':'Connecter Drive et lister'}</button><button class="btn" onclick="archiveAll()">☁ Archiver tous les audits</button></div><div id="arch" style="margin-top:10px"></div></div>`;}
-function addD(){const c=$('n-client').value.trim();if(!c){toast('Code client requis');return;}
+    <div class="row" style="flex:1 1 220px;justify-content:flex-end"><button class="btn sm primary" onclick="openD('${d.id}')">${t('a.open')}</button>
+    ${d.type==='flash'?`<button class="btn sm" onclick="toFin('${d.id}')">${t('a.toFin')}</button>`:''}
+    <button class="btn sm" onclick="dupD('${d.id}')" title="${esc(t('a.reauditT'))}">${t('a.reaudit')}</button>
+    ${d.status==='closed'?`<button class="btn sm" onclick="reopenD('${d.id}')">${t('a.reopen')}</button>`:`<button class="btn sm" onclick="closeD('${d.id}')">${t('a.close')}</button>`}
+    ${d.demo?'':`<button class="btn sm" onclick="archiveD('${d.id}')">${t('a.archive')}</button>`}
+    <button class="btn sm danger" onclick="delD('${d.id}')">${t('a.del')}</button></div></div></div>`;}
+function renderDossiers(){const vis=S.diags.filter(d=>S.settings.showDemo||!d.demo),nd=S.diags.length-vis.length,demoN=S.diags.filter(d=>d.demo).length;
+  const list=vis.slice().sort((a,b)=>b.date-a.date).map(dCard).join('');
+  $('tab-dossiers').innerHTML=`<div class="poc">${t('poc')}</div>
+    <h2>${t('a.new')}</h2><div class="card"><div class="row">
+    <input id="n-client" placeholder="${esc(t('a.client'))}"><input id="n-sector" placeholder="${esc(t('a.sector'))}"></div>
+    <div class="row" style="margin-top:8px"><input id="n-auditor" placeholder="${esc(t('a.auditor'))}" value="${esc(S.settings.auditor||'')}"><input id="n-scope" placeholder="${esc(t('a.scope'))}"></div>
+    <div class="row" style="margin-top:8px"><select id="n-size">${Object.keys(SIZES).map(k=>`<option value="${k}" ${k==='M'?'selected':''}>${sizeL(k)} (${sizeD(k)})</option>`).join('')}</select>
+    <select id="n-type"><option value="flash">${t('a.optFlash')}</option><option value="fin">${t('a.optFin')}</option><option value="aipd">${t('a.optAipd')}</option></select>
+    <button class="btn primary" onclick="addD()">${t('a.create')}</button></div>
+    <p class="small muted" style="margin-top:8px">${t('a.hint')}</p></div>
+    <div class="row" style="align-items:center;margin-top:18px"><h2 style="flex:1 1 auto;margin:0">${t('a.list',{n:vis.length})}</h2>
+    ${demoN?`<button class="btn sm ghost" onclick="S.settings.showDemo=!S.settings.showDemo;autoSave();renderDossiers()">${S.settings.showDemo?t('a.hideDemo'):t('a.showDemo')}</button>`:''}</div>
+    ${nd?`<p class="small muted" style="margin:6px 0">${t('a.demoHidden',{n:nd})}</p>`:''}
+    ${list||`<div class="empty">${t('a.none')}</div>`}
+    <h2>${t('arch.h')}</h2><div class="card"><p class="small muted">${t('arch.p',{f:'<span class="mono">'+FOLDER+'</span>'})}</p>
+    <div class="row" style="margin-top:8px"><button class="btn" onclick="listArchives()">${tok?t('arch.list'):t('arch.listC')}</button><button class="btn" onclick="archiveAll()">${t('arch.all')}</button></div><div id="arch" style="margin-top:10px"></div></div>`;}
+function newD(o){return {id:uid(),client:o.client,sector:o.sector||'',size:o.size,type:o.type,date:Date.now(),answers:{},scale:3,status:'open',auditor:o.auditor||'',scope:o.scope||'',steps:{},drive:{}};}
+function addD(){const c=$('n-client').value.trim();if(!c){toast(t('t.cliReq'));return;}
   const au=$('n-auditor').value.trim();S.settings.auditor=au;
-  const d={id:uid(),client:c,sector:$('n-sector').value.trim(),size:$('n-size').value,type:$('n-type').value,date:Date.now(),answers:{},scale:3,status:'open',auditor:au,scope:$('n-scope').value.trim(),steps:{},drive:{}};
+  const d=newD({client:c,sector:$('n-sector').value.trim(),size:$('n-size').value,type:$('n-type').value,auditor:au,scope:$('n-scope').value.trim()});
   S.diags.push(d);cur=d.id;autoSave();go('quest');}
 function openD(id){cur=id;go('quest');}
-function toFin(id){const o=S.diags.find(d=>d.id===id);if(!o)return;const d={id:uid(),client:o.client,sector:o.sector,size:o.size,type:'fin',date:Date.now(),answers:{},scale:3,status:'open',auditor:o.auditor,scope:o.scope,steps:{},drive:{}};
-  S.diags.push(d);cur=d.id;autoSave();go('quest');toast('Diagnostic fin créé pour '+o.client);}
-function dupD(id){const o=S.diags.find(d=>d.id===id);if(!o)return;const d=JSON.parse(JSON.stringify(o));d.id=uid();d.date=Date.now();d.status='open';d.drive={};d.closedAt=null;d.from=o.id;
-  S.diags.push(d);cur=d.id;autoSave();go('quest');toast('Nouvel audit créé à partir du précédent : mettez à jour les réponses');}
+function toFin(id){const o=S.diags.find(d=>d.id===id);if(!o)return;const d=newD({client:o.client,sector:o.sector,size:o.size,type:'fin',auditor:o.auditor,scope:o.scope});
+  S.diags.push(d);cur=d.id;autoSave();go('quest');toast(t('t.finFor',{c:o.client}));}
+function dupD(id){const o=S.diags.find(d=>d.id===id);if(!o)return;const d=JSON.parse(JSON.stringify(o));d.id=uid();d.date=Date.now();d.status='open';d.drive={};d.closedAt=null;d.from=o.id;delete d.demo;
+  S.diags.push(d);cur=d.id;autoSave();go('quest');toast(t('t.dup'));}
 function closeD(id){const d=S.diags.find(x=>x.id===id);if(!d)return;d.status='closed';d.closedAt=Date.now();autoSave();renderAll();
-  if(tok)archiveD(id);else toast('Audit clôturé — connectez Drive pour l\'archiver');}
-function reopenD(id){const d=S.diags.find(x=>x.id===id);if(!d)return;d.status='open';autoSave();renderAll();toast('Audit rouvert');}
+  if(d.demo)return;if(tok)archiveD(id);else toast(t('t.closedNoDrive'));}
+function reopenD(id){const d=S.diags.find(x=>x.id===id);if(!d)return;d.status='open';autoSave();renderAll();toast(t('t.reopened'));}
 function delD(id){const i=S.diags.findIndex(d=>d.id===id);if(i<0)return;lastDel=S.diags.splice(i,1)[0];if(cur===id)cur=null;autoSave();renderDossiers();
-  toast('Audit supprimé (l\'archive Drive est conservée)','Annuler',()=>{if(lastDel){S.diags.push(lastDel);lastDel=null;autoSave();renderDossiers();}});}
+  toast(t('t.deleted'),t('t.undo'),()=>{if(lastDel){S.diags.push(lastDel);lastDel=null;autoSave();renderDossiers();}});}
 
 /* ============ HISTORIQUE ============ */
-function renderHist(){const by={};S.diags.forEach(d=>{const k=d.client.trim().toLowerCase();(by[k]=by[k]||[]).push(d);});
+function renderHist(){const by={};S.diags.forEach(d=>{if(d.demo&&!S.settings.showDemo)return;const k=ck(d);(by[k]=by[k]||[]).push(d);});
   const keys=Object.keys(by).sort();
-  if(!keys.length){$('tab-hist').innerHTML='<div class="empty">Aucun audit pour l\'instant.</div>';return;}
+  if(!keys.length){$('tab-hist').innerHTML=`<div class="empty">${t('a.none')}</div>`;return;}
   const pct=(d,r)=>d.type==='aipd'?null:score(d,byReg(r)).pct;
   const fmt=(v,prev)=>{if(v==null)return '—';let x=v+' %';if(prev!=null){const dl=v-prev;if(dl)x+=` <span class="${dl>0?'delta-up':'delta-dn'}">${dl>0?'▲':'▼'} ${Math.abs(dl)}</span>`;}return x;};
-  $('tab-hist').innerHTML=`<h2>Historique par client</h2><p class="small muted">Évolution des scores entre audits du même type. Le delta compare chaque audit au précédent du même type.</p>`+keys.map(k=>{
+  $('tab-hist').innerHTML=`<h2>${t('h.h')}</h2><p class="small muted">${t('h.p')}</p>`+keys.map(k=>{
     const L=by[k].slice().sort((a,b)=>a.date-b.date),last={};
     const rows=L.map(d=>{const r=pct(d,'RGPD'),i=pct(d,'IA'),pv=last[d.type]||{};last[d.type]={r:r,i:i};
-      return `<tr><td class="mono">${new Date(d.date).toLocaleDateString('fr-FR')}</td><td><span class="badge ${TBADGE[d.type]}">${TYPES[d.type]}</span></td><td>${d.type==='aipd'?esc(aipdQual(d).verdict):fmt(r,pv.r)}</td><td>${d.type==='aipd'?'':fmt(i,pv.i)}</td><td class="w small">${esc(d.scope||'')}</td><td><button class="btn sm" onclick="openD('${d.id}')">Ouvrir</button></td></tr>`;}).join('');
-    return `<div class="card"><h3>${esc(L[0].client)}</h3><div class="tw"><table class="hist"><thead><tr><th>Date</th><th>Type</th><th>RGPD</th><th>IA Act</th><th>Périmètre</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></div>`;}).join('');}
+      return `<tr><td class="mono">${fdate(d.date)}</td><td><span class="badge ${TBADGE[d.type]}">${typeL(d.type)}</span></td><td>${d.type==='aipd'?esc(aipdQual(d).verdict):fmt(r,pv.r)}</td><td>${d.type==='aipd'?'':fmt(i,pv.i)}</td><td class="w small">${esc(d.scope||'')}</td><td><button class="btn sm" onclick="openD('${d.id}')">${t('a.open')}</button></td></tr>`;}).join('');
+    return `<div class="card"><h3>${esc(L[0].client)}</h3><div class="tw"><table class="hist"><thead><tr><th>${t('h.date')}</th><th>${t('h.type')}</th><th>${regL('RGPD')}</th><th>${regL('IA')}</th><th>${t('h.scope')}</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></div>`;}).join('');}
 
 /* ============ QUESTIONNAIRE ============ */
 function renderQuest(){const d=getD();if(!d){$('tab-quest').innerHTML=noDossier();return;}
   const all=qs(d),show=all.filter(q=>qFilter==='all'||(qFilter==='todo'?!(d.answers[q[0]]&&d.answers[q[0]].i!=null):DOMS[q[1]][0]===qFilter));
-  let html=`<h2>${esc(d.client)}</h2><span class="badge b-size">${SIZES[d.size].l}</span><span class="badge ${TBADGE[d.type]}">${TYPES[d.type]}</span><span class="badge ${d.status==='closed'?'b-closed':'b-open'}">${d.status==='closed'?'Clôturé':'En cours'}</span>
-  ${d.status==='closed'?`<div class="poc" style="margin-top:10px">Audit clôturé le ${new Date(d.closedAt||d.date).toLocaleDateString('fr-FR')} : lecture seule. <button class="btn sm" onclick="reopenD('${d.id}')">Rouvrir</button></div>`:''}
-  <div class="row" style="margin-top:10px"><label class="small">Auditeur<input value="${esc(d.auditor)}" onchange="setMeta('auditor',this.value)"></label><label class="small">Périmètre<input value="${esc(d.scope)}" onchange="setMeta('scope',this.value)"></label></div>
+  const pills=d.type==='aipd'?[['all','q.all'],['todo','q.todo']]:[['all','q.all'],['RGPD','reg.RGPD'],['IA','reg.IA'],['todo','q.todo']];
+  let html=`<h2>${esc(d.client)}</h2><span class="badge b-size">${sizeL(d.size)}</span><span class="badge ${TBADGE[d.type]}">${typeL(d.type)}</span><span class="badge ${d.status==='closed'?'b-closed':'b-open'}">${t('st.'+d.status)}</span>
+  ${d.status==='closed'?`<div class="poc" style="margin-top:10px">${t('q.closedBan',{d:fdate(d.closedAt||d.date)})} <button class="btn sm" onclick="reopenD('${d.id}')">${t('a.reopen')}</button></div>`:''}
+  <div class="row" style="margin-top:10px"><label class="small">${t('a.auditor')}<input value="${esc(d.auditor)}" onchange="setMeta('auditor',this.value)"></label><label class="small">${t('h.scope')}<input value="${esc(d.scope)}" onchange="setMeta('scope',this.value)"></label></div>
   <div class="progress"><div id="pg"></div></div><div class="small muted" id="pg-t"></div>
-  <div class="pills">${(d.type==='aipd'?[['all','Tout'],['todo','Non répondus']]:[['all','Tout'],['RGPD','RGPD'],['IA','IA Act'],['todo','Non répondus']]).map(p=>`<button class="pill ${qFilter===p[0]?'on':''}" onclick="qFilter='${p[0]}';renderQuest()">${p[1]}</button>`).join('')}</div>`;
-  let last='';show.forEach(q=>{if(q[1]!==last){last=q[1];const dm=DOMS[last];
-    html+=`<div class="dom"><h3><span class="badge ${dm[0]==='IA'?'b-ia':dm[0]==='AIPD'?'b-aipd':'b-rgpd'}">${dm[0]==='IA'?'IA Act':dm[0]}</span>${esc(dm[1])}</h3>${d.type==='aipd'?'':`<button class="btn sm ghost" onclick="domNA('${last}')">Domaine N/A</button>`}</div>`;}
+  <div class="pills">${pills.map(p=>`<button class="pill ${qFilter===p[0]?'on':''}" onclick="qFilter='${p[0]}';renderQuest()">${t(p[1])}</button>`).join('')}</div>`;
+  let last='';show.forEach(q=>{if(q[1]!==last){last=q[1];const r=DOMS[last][0];
+    html+=`<div class="dom"><h3><span class="badge ${r==='IA'?'b-ia':r==='AIPD'?'b-aipd':'b-rgpd'}">${regL(r)}</span>${esc(domN(last))}</h3>${d.type==='aipd'?'':`<button class="btn sm ghost" onclick="domNA('${last}')">${t('q.domNA')}</button>`}</div>`;}
     const a=d.answers[q[0]]||{};
-    html+=`<div class="card q ${a.i!=null?'done':''}" id="q-${q[0]}" style="margin-top:8px"><p>${esc(q[4])}</p><span class="mono muted">${esc(q[5])}${q[3]===3?' · critique':''}</span>
-    <div class="opts">${OPTS[d.type].map((o,i)=>`<button class="opt ${a.i===i?'sel '+o[2]:''}" data-c="${o[2]}" onclick="setAns('${q[0]}',${i})">${o[0]}</button>`).join('')}</div>
-    <button class="link" onclick="this.nextElementSibling.classList.toggle('open')">${a.n?'Note ✎':'+ note / preuve'}</button>
-    <textarea class="note-t ${a.n?'open':''}" placeholder="Constat, preuve, commentaire…" oninput="setNote('${q[0]}',this.value)">${esc(a.n||'')}</textarea></div>`;});
-  if(!show.length)html+='<div class="empty">Rien à afficher avec ce filtre.</div>';
-  html+=`<div class="row noprint" style="margin-top:18px"><button class="btn primary" onclick="go('res')">${d.type==='aipd'?'Voir la qualification et le kit AIPD →':'Voir les résultats →'}</button></div>`;
+    html+=`<div class="card q ${a.i!=null?'done':''}" id="q-${q[0]}" style="margin-top:8px"><p>${esc(qText(q))}</p><span class="mono muted">${esc(qRef(q))}${q[3]===3&&d.type!=='aipd'?t('q.crit'):''}</span>
+    <div class="opts">${OPTS[d.type].map((o,i)=>`<button class="opt ${a.i===i?'sel '+o[2]:''}" data-c="${o[2]}" onclick="setAns('${q[0]}',${i})">${t(o[0])}</button>`).join('')}</div>
+    <button class="link" onclick="this.nextElementSibling.classList.toggle('open')">${a.n?t('q.noteE'):t('q.note')}</button>
+    <textarea class="note-t ${a.n?'open':''}" placeholder="${esc(t('q.notePh'))}" oninput="setNote('${q[0]}',this.value)">${esc(a.n||'')}</textarea></div>`;});
+  if(!show.length)html+=`<div class="empty">${t('q.empty')}</div>`;
+  html+=`<div class="row noprint" style="margin-top:18px"><button class="btn primary" onclick="go('res')">${d.type==='aipd'?t('q.toAipd'):t('q.toRes')}</button></div>`;
   $('tab-quest').innerHTML=html;updProg();}
-function updProg(){const d=getD();if(!d||!$('pg'))return;const s=score(d,()=>true);$('pg').style.width=(s.tot?s.ans/s.tot*100:0)+'%';$('pg-t').textContent=`${s.ans} / ${s.tot} réponses`;}
+function updProg(){const d=getD();if(!d||!$('pg'))return;const s=score(d,()=>true);$('pg').style.width=(s.tot?s.ans/s.tot*100:0)+'%';$('pg-t').textContent=t('q.prog',{a:s.ans,t:s.tot});}
 function setAns(id,i){const d=getD();if(!d||locked(d))return;const a=d.answers[id]=d.answers[id]||{};a.i=(a.i===i?null:i);
-  const el=$('q-'+id);if(el){el.classList.toggle('done',a.i!=null);el.querySelectorAll('.opt').forEach((b,k)=>{b.className='opt'+(k===a.i?' sel '+b.dataset.c:'');});}
+  const el=$('q-'+id);if(el){el.classList.toggle('done',a.i!=null);el.querySelectorAll('.opt').forEach((b,k)=>{b.className='opt'+(k===a.i?' sel '+b.getAttribute('data-c'):'');});}
   updProg();autoSave();}
 function setMeta(k,v){const d=getD();if(!d||locked(d))return;d[k]=v.trim();autoSave();}
 function setNote(id,v){const d=getD();if(!d||locked(d))return;(d.answers[id]=d.answers[id]||{}).n=v;autoSave();}
-function domNA(k){const d=getD();if(!d||locked(d))return;const na=OPTS[d.type].length-1;qs(d).filter(byDom(k)).forEach(q=>{(d.answers[q[0]]=d.answers[q[0]]||{}).i=na;});autoSave();renderQuest();toast('Domaine marqué non applicable');}
+function domNA(k){const d=getD();if(!d||locked(d))return;const na=OPTS[d.type].length-1;qs(d).filter(byDom(k)).forEach(q=>{(d.answers[q[0]]=d.answers[q[0]]||{}).i=na;});autoSave();renderQuest();toast(t('t.domNA'));}
 
 /* ============ RÉSULTATS ============ */
-function radar(d,reg){const ks=Object.keys(DOMS).filter(k=>DOMS[k][0]===reg&&qs(d).some(byDom(k))),n=ks.length,c=160,R=110;
+function radar(d,reg){const ks=domsOf(d,reg),n=ks.length,c=160,R=110;if(n<3)return '';
   const pt=(i,r)=>{const a=-Math.PI/2+i*2*Math.PI/n;return [c+r*Math.cos(a),c+r*Math.sin(a)];};
   let g='';[.25,.5,.75,1].forEach(f=>{g+=`<polygon points="${ks.map((_,i)=>pt(i,R*f).join(',')).join(' ')}" fill="none" stroke="var(--border)"/>`;});
   const vals=ks.map(k=>score(d,byDom(k)).pct);
   ks.forEach((k,i)=>{const e=pt(i,R),l=pt(i,R+16),an=Math.abs(l[0]-c)<8?'middle':l[0]>c?'start':'end';
-    g+=`<line x1="${c}" y1="${c}" x2="${e[0]}" y2="${e[1]}" stroke="var(--border)"/><text x="${l[0]}" y="${l[1]+4}" text-anchor="${an}" font-size="11" fill="var(--muted)">${esc(DOMS[k][2])}</text>`;});
+    g+=`<line x1="${c}" y1="${c}" x2="${e[0]}" y2="${e[1]}" stroke="var(--border)"/><text x="${l[0]}" y="${l[1]+4}" text-anchor="${an}" font-size="11" fill="var(--muted)">${esc(domS(k))}</text>`;});
   const colr=reg==='IA'?'var(--violet)':'var(--blue)';
   g+=`<polygon points="${vals.map((v,i)=>pt(i,R*(v||0)/100).join(',')).join(' ')}" fill="${colr}" fill-opacity=".18" stroke="${colr}" stroke-width="2"/>`;
-  return `<svg viewBox="-90 -10 500 340" style="width:100%;max-width:440px;display:block;margin:0 auto" role="img" aria-label="Radar ${reg}">${g}</svg>`;}
-function aipdQual(d){const v=id=>{const a=d.answers[id];return a&&a.i!=null?OPTS.aipd[a.i][0]:null;};
-  const crit=['c1','c2','c3','c4','c5','c6','c7','c8','c9'].filter(k=>v(k)==='Oui').length,unc=['c1','c2','c3','c4','c5','c6','c7','c8','c9'].filter(k=>v(k)==='Incertain').length;
-  let verdict;if(v('q0')==='Non')verdict='Hors RGPD — pas d\'AIPD';else if(crit>=2)verdict='AIPD requise';else if(crit+unc>=2)verdict='AIPD probable — lever les incertitudes';else if(crit===1)verdict='AIPD recommandée';else verdict='AIPD non requise a priori — documenter';
-  const flags=[];if(v('s1')!=='Non'){if(v('s2')==='Oui')flags.push(['Pratique interdite','Arrêt du projet (art. 5)']);if(v('s3')==='Oui')flags.push(['Haut risque','Exigences applicables au 2 déc. 2027 (annexe III)']);if(v('s4')==='Oui')flags.push(['Transparence','Art. 50, en vigueur']);if(v('s5')==='Oui')flags.push(['FRIA','Art. 27, à articuler avec l\'AIPD']);if(v('s6')==='Oui')flags.push(['Fournisseur','Obligations du fournisseur (art. 16)']);}
-  return {verdict:verdict,crit:crit,unc:unc,flags:flags,ai:v('s1')};}
-function setStep(k,st){const d=getD();if(!d||locked(d))return;d.steps[k]=st;autoSave();renderRes();}
-function renderAipd(d){const q=aipdQual(d),sc=q.verdict.indexOf('requise')>=0&&q.verdict.indexOf('non')<0?'var(--red)':q.verdict.indexOf('probable')>=0||q.verdict.indexOf('recommandée')>=0?'var(--amber)':'var(--green)';
-  const steps=AIPD_STEPS.map(s=>{const st=d.steps[s[0]]||'todo';return `<div class="step"><span class="n"><b class="mono">${s[0]}</b> · ${esc(s[1])}</span>${[['todo','À faire'],['doing','En cours'],['done','Fait']].map(o=>`<button class="st ${o[0]} ${st===o[0]?'on':''}" onclick="setStep('${s[0]}','${o[0]}')">${o[1]}</button>`).join('')}<button class="btn sm" onclick="copyTxt(PROMPTS.${s[0]})">Copier le prompt</button></div>`;}).join('');
-  const done=AIPD_STEPS.filter(s=>d.steps[s[0]]==='done').length;
-  $('tab-res').innerHTML=`<h2>${esc(d.client)} — qualification AIPD / AI Act</h2>${d.scope?`<p class="small muted">Périmètre : ${esc(d.scope)}</p>`:''}
-  <div class="scores"><div class="card"><h3>Volet RGPD</h3><div class="verdict" style="color:${sc}">${esc(q.verdict)}</div><div class="small muted">${q.crit} critère${q.crit>1?'s':''} rempli${q.crit>1?'s':''} sur 9 · ${q.unc} incertain${q.unc>1?'s':''} · règle : deux critères ou plus rendent en général l'AIPD nécessaire (WP248).</div></div>
-  <div class="card"><h3>Volet AI Act</h3>${q.ai==='Non'?'<div class="verdict">Hors AI Act</div>':q.flags.length?q.flags.map(f=>`<div style="margin:6px 0"><span class="badge b-p1">${esc(f[0])}</span> <span class="small">${esc(f[1])}</span></div>`).join(''):'<div class="small muted">Aucune obligation spécifique identifiée à ce stade (ou questions non répondues).</div>'}</div></div>
-  <div class="card"><h3>Kit AIPD assistée par IA — avancement ${done}/${AIPD_STEPS.length}</h3><p class="small muted">Collez d'abord le préambule dans l'outil IA <b>validé par le client</b>, puis le prompt de l'étape. L'IA rédige les premiers jets ; le DPO qualifie, arbitre et signe.</p>
-  <div class="row noprint" style="margin:8px 0"><button class="btn primary" onclick="copyTxt(PROMPTS.pre)">Copier le préambule</button></div><div class="steps">${steps}</div></div>
-  <div class="card"><h3>Grille de contrôle avant livraison</h3><ul class="small" style="margin-left:18px">${['Chaque fait est confirmé par le questionnaire ou un entretien','Aucun point [À CONFIRMER] ne subsiste','Chaque article cité est vérifié dans le texte','Gravité et vraisemblance fixées par le DPO et le métier','Mesures précises, datées, avec porteur nommé','Constats de la relecture adverse (P7) traités','Aucune donnée réelle passée par un outil non autorisé','Avis du DPO rédigé et signé par lui'].map(x=>`<li>${x}</li>`).join('')}</ul></div>
-  <div class="row noprint"><button class="btn" onclick="dl('${APP}-qualification.md',buildReport(getD()))">Exporter (.md)</button><button class="btn" onclick="window.print()">Imprimer / PDF</button><button class="btn" onclick="archiveD('${d.id}')">☁ Archiver sur Drive</button></div>`;}
+  return `<svg viewBox="-90 -10 500 340" style="width:100%;max-width:440px;display:block;margin:0 auto" role="img" aria-label="Radar ${regL(reg)}">${g}</svg>`;}
+function baseLine(d,reg,p){const bf=baseFor(d);if(!bf)return `<div class="small muted" style="margin-top:4px">${t('r.baseNone',{k:MINB_RES})}</div>`;const s=bf.b.g[reg];if(!s)return '';
+  const rk=rankOf(p,s.vals);return `<div class="small" style="margin-top:4px">${t('r.base',{n:bf.b.n,s:bf.same?t('r.baseSize'):'',m:s.mean,p:rk==null?'—':t('r.pctTop',{x:rk})})}</div>`;}
 function renderRes(){const d=getD();if(!d){$('tab-res').innerHTML=noDossier();return;}
   if(d.type==='aipd'){renderAipd(d);return;}
-  const blk=(reg,lab)=>{const s=score(d,byReg(reg));const bars=Object.keys(DOMS).filter(k=>DOMS[k][0]===reg&&qs(d).some(byDom(k))).map(k=>{const p=score(d,byDom(k)).pct;
-    return `<div class="bar"><span class="l">${esc(DOMS[k][1])}</span><span class="t"><div style="width:${p||0}%;background:${col(p)}"></div></span><span class="v mono">${p==null?'n/a':p+'%'}</span></div>`}).join('');
-    return `<div class="card"><h3>${lab}</h3><div class="big" style="color:${col(s.pct)}">${s.pct==null?'—':s.pct+' %'}</div><div class="small muted">${level(d,s.pct)} · ${s.ans}/${s.tot} réponses</div>${radar(d,reg)}${bars}</div>`};
-  const gp=gaps(d),rows=gp.slice(0,d.type==='fin'?60:15).map(x=>`<tr><td><span class="badge b-p${x.p}">P${x.p}</span></td><td>${esc(DOMS[x.q[1]][0]==='IA'?'IA Act':'RGPD')}</td><td>${esc(x.q[4])}<div class="mono muted">${esc(x.q[5])}</div></td><td><span class="small muted">${x.k}</span><br>${esc(x.a)}</td></tr>`).join('');
-  $('tab-res').innerHTML=`<h2>${esc(d.client)} — ${d.type==='fin'?'conformité détaillée':'maturité flash'}</h2>
-  <div class="scores">${blk('RGPD','RGPD')}${blk('IA','IA Act')}</div>
-  <div class="card"><h3>Plan d'action priorisé (${gp.length} écart${gp.length>1?'s':''})</h3><p class="small muted">P1 = contrôle critique non couvert · P2 = critique partiel ou important non couvert · P3 = amélioration. L'action dépend de la réponse : « Non » appelle une mise en place, « Partiel » une mise à niveau.</p>
-  <div class="tw"><table><thead><tr><th>Prio</th><th>Texte</th><th>Écart constaté</th><th>Action recommandée</th></tr></thead><tbody>${rows||'<tr><td colspan="4" class="muted">Aucun écart identifié à ce stade.</td></tr>'}</tbody></table></div></div>
-  <div class="card"><h3>Calendrier d'application de l'IA Act</h3><div class="tw"><table><tbody>${CAL.map(c=>`<tr><td class="mono">${c[0]}</td><td>${esc(c[1])}</td><td><span class="badge ${c[2]==='En vigueur'?'b-p1':'b-p2'}">${c[2]}</span></td></tr>`).join('')}</tbody></table></div>
-  <p class="small muted" style="margin-top:6px">Calendrier tel que modifié par le règlement (UE) 2026/1744 (« omnibus IA »), en vigueur depuis le 27 juillet 2026. À revérifier avant chaque restitution client.</p></div>
-  <div class="row noprint"><button class="btn" onclick="dl('${APP}-rapport.md',buildReport(getD()))">Exporter le rapport (.md)</button><button class="btn" onclick="window.print()">Imprimer / PDF</button><button class="btn" onclick="archiveD('${d.id}')">☁ Archiver sur Drive</button><button class="btn primary" onclick="go('prop')">Générer la proposition →</button></div>`;}
-function buildReport(d){if(d.type==='aipd'){const q=aipdQual(d);let m=`# Qualification AIPD / AI Act — ${d.client}\n\n- Périmètre : ${d.scope||'n/c'}\n- Auditeur : ${d.auditor||'n/c'}\n- Date : ${new Date(d.date).toLocaleDateString('fr-FR')}\n- Statut : ${d.status==='closed'?'clôturé':'en cours'}\n\n## Conclusion\n\n- RGPD : **${q.verdict}** (${q.crit} critère(s) CEPD rempli(s), ${q.unc} incertain(s))\n- AI Act : ${q.ai==='Non'?'hors champ':q.flags.length?q.flags.map(f=>f[0]+' — '+f[1]).join(' ; '):'aucune obligation spécifique identifiée'}\n\n## Réponses\n\n| Question | Réponse | Référence | Note |\n|---|---|---|---|\n`;
-    qs(d).forEach(x=>{const a=d.answers[x[0]]||{};m+=`| ${x[4]} | ${a.i!=null?OPTS.aipd[a.i][0]:'—'} | ${x[5]} | ${(a.n||'').replace(/\n/g,' ')} |\n`;});
-    m+=`\n## Avancement du kit AIPD\n\n`;AIPD_STEPS.forEach(s=>{m+=`- ${s[0]} ${s[1]} : ${({todo:'à faire',doing:'en cours',done:'fait'})[d.steps[s[0]]||'todo']}\n`;});return m;}
-  const r=score(d,byReg('RGPD')),i=score(d,byReg('IA'));let m=`# Rapport de diagnostic ${d.type==='fin'?'de conformité':'flash de maturité'} — ${d.client}\n\n- Taille : ${SIZES[d.size].l}\n- Secteur : ${d.sector||'n/c'}\n- Date : ${new Date(d.date).toLocaleDateString('fr-FR')}\n- Périmètre : ${d.scope||'n/c'}\n- Auditeur : ${d.auditor||'n/c'}\n- Statut : ${d.status==='closed'?'clôturé':'en cours'}\n\n## Synthèse\n\n| Référentiel | Score | Appréciation |\n|---|---|---|\n| RGPD | ${r.pct==null?'—':r.pct+' %'} | ${level(d,r.pct)} |\n| IA Act | ${i.pct==null?'—':i.pct+' %'} | ${level(d,i.pct)} |\n\n## Scores par domaine\n\n| Domaine | Score |\n|---|---|\n`;
-  Object.keys(DOMS).forEach(k=>{if(qs(d).some(byDom(k))){const p=score(d,byDom(k)).pct;m+=`| ${DOMS[k][0]} — ${DOMS[k][1]} | ${p==null?'n/a':p+' %'} |\n`;}});
-  m+=`\n## Plan d'action priorisé\n\n| Prio | Référence | Écart | Type | Action |\n|---|---|---|---|---|\n`;gaps(d).forEach(x=>{m+=`| P${x.p} | ${x.q[5]} | ${x.q[4]} | ${x.k} | ${x.a} |\n`;});
-  const notes=qs(d).filter(q=>d.answers[q[0]]&&d.answers[q[0]].n);if(notes.length){m+=`\n## Constats et preuves\n\n`;notes.forEach(q=>{m+=`- **${q[5]}** — ${d.answers[q[0]].n.replace(/\n/g,' ')}\n`;});}
+  const blk=reg=>{const s=score(d,byReg(reg));const bars=domsOf(d,reg).map(k=>{const p=score(d,byDom(k)).pct;
+    return `<div class="bar"><span class="l">${esc(domN(k))}</span><span class="t"><div style="width:${p||0}%;background:${col(p)}"></div></span><span class="v mono">${p==null?'n/a':p+'%'}</span></div>`}).join('');
+    return `<div class="card"><h3>${regL(reg)}</h3><div class="big" style="color:${col(s.pct)}">${s.pct==null?'—':s.pct+' %'}</div><div class="small muted">${level(d,s.pct)} · ${t('r.answers',{a:s.ans,t:s.tot})}</div>${baseLine(d,reg,s.pct)}${radar(d,reg)}${bars}</div>`};
+  const gp=gaps(d),rows=gp.slice(0,d.type==='fin'?60:15).map(x=>`<tr><td><span class="badge b-p${x.p}">P${x.p}</span></td><td>${esc(regL(DOMS[x.q[1]][0]))}</td><td>${esc(qText(x.q))}<div class="mono muted">${esc(qRef(x.q))}</div></td><td><span class="small muted">${x.k}</span><br>${esc(x.a)}</td></tr>`).join('');
+  $('tab-res').innerHTML=`<h2>${t('r.h',{c:esc(d.client),t:t(d.type==='fin'?'r.hFin':'r.hFlash')})}</h2>
+  <div class="scores">${blk('RGPD')}${blk('IA')}</div>
+  <div class="card"><h3>${t('r.plan',{n:gp.length})}</h3><p class="small muted">${t('r.planHint')}</p>
+  <div class="tw"><table><thead><tr><th>${t('r.prio')}</th><th>${t('r.text')}</th><th>${t('r.gap')}</th><th>${t('r.action')}</th></tr></thead><tbody>${rows||`<tr><td colspan="4" class="muted">${t('r.noGap')}</td></tr>`}</tbody></table></div></div>
+  <div class="card"><h3>${t('r.cal')}</h3><div class="tw"><table><tbody>${CAL.map(c=>`<tr><td class="mono">${fdate(c[0])}</td><td>${esc(c[1][LANG==='en'?1:0])}</td><td><span class="badge ${c[2]==='in'?'b-p1':'b-p2'}">${t(c[2]==='in'?'r.calIn':'r.calNext')}</span></td></tr>`).join('')}</tbody></table></div>
+  <p class="small muted" style="margin-top:6px">${t('r.calNote')}</p></div>
+  <div class="row noprint"><button class="btn" onclick="dl('${APP}-report-'+LANG+'.md',buildReport(getD()))">${t('r.export')}</button><button class="btn" onclick="window.print()">${t('r.print')}</button><button class="btn" onclick="BF.type=getD().type;BF.cmp=getD().id;go('bench')">${t('tab.bench')} →</button>${d.demo?'':`<button class="btn" onclick="archiveD('${d.id}')">${t('r.archive')}</button>`}<button class="btn primary" onclick="go('prop')">${t('r.toProp')}</button></div>`;}
+function aipdQual(d){const v=id=>{const a=d.answers[id];return a&&a.i!=null?OPTS.aipd[a.i][0]:null;};const C=['c1','c2','c3','c4','c5','c6','c7','c8','c9'];
+  const crit=C.filter(k=>v(k)==='o.yes').length,unc=C.filter(k=>v(k)==='o.unsure').length;
+  let vk;if(v('q0')==='o.no')vk='ai.v0';else if(crit>=2)vk='ai.v1';else if(crit+unc>=2)vk='ai.v2';else if(crit===1)vk='ai.v3';else vk='ai.v4';
+  const flags=[];if(v('s1')!=='o.no'){if(v('s2')==='o.yes')flags.push([t('ai.f.ban'),t('ai.f.banD')]);if(v('s3')==='o.yes')flags.push([t('ai.f.hr'),t('ai.f.hrD')]);if(v('s4')==='o.yes')flags.push([t('ai.f.tr'),t('ai.f.trD')]);if(v('s5')==='o.yes')flags.push([t('ai.f.fria'),t('ai.f.friaD')]);if(v('s6')==='o.yes')flags.push([t('ai.f.prov'),t('ai.f.provD')]);}
+  return {vk:vk,verdict:t(vk),crit:crit,unc:unc,flags:flags,ai:v('s1')==='o.no'?'no':v('s1')?'yes':null};}
+function setStep(k,st){const d=getD();if(!d||locked(d))return;d.steps[k]=st;autoSave();renderRes();}
+function renderAipd(d){const q=aipdQual(d),sc=q.vk==='ai.v1'?'var(--red)':(q.vk==='ai.v2'||q.vk==='ai.v3')?'var(--amber)':'var(--green)';
+  const steps=AIPD_STEPS.map((s,i)=>{const st=d.steps[s[0]]||'todo';return `<div class="step"><span class="n"><b class="mono">${s[0]}</b> · ${esc(stepL(i))}</span>${['todo','doing','done'].map(o=>`<button class="st ${o} ${st===o?'on':''}" onclick="setStep('${s[0]}','${o}')">${t('ai.'+o)}</button>`).join('')}<button class="btn sm" onclick="copyTxt(promptOf('${s[0]}'))">${t('ai.copyP')}</button></div>`;}).join('');
+  const done=AIPD_STEPS.filter(s=>d.steps[s[0]]==='done').length;
+  $('tab-res').innerHTML=`<h2>${t('ai.h',{c:esc(d.client)})}</h2>${d.scope?`<p class="small muted">${t('a.scopeL',{x:esc(d.scope)})}</p>`:''}
+  <div class="scores"><div class="card"><h3>${t('ai.rgpd')}</h3><div class="verdict" style="color:${sc}">${esc(q.verdict)}</div><div class="small muted">${t('ai.critL',{c:q.crit,u:q.unc})}</div></div>
+  <div class="card"><h3>${t('ai.act')}</h3>${q.ai==='no'?`<div class="verdict">${t('ai.out')}</div>`:q.flags.length?q.flags.map(f=>`<div style="margin:6px 0"><span class="badge b-p1">${esc(f[0])}</span> <span class="small">${esc(f[1])}</span></div>`).join(''):`<div class="small muted">${t('ai.noFlag')}</div>`}</div></div>
+  <div class="card"><h3>${t('ai.kit',{d:done,t:AIPD_STEPS.length})}</h3><p class="small muted">${t('ai.kitP')}</p>
+  <div class="row noprint" style="margin:8px 0"><button class="btn primary" onclick="copyTxt(promptOf('pre'))">${t('ai.pre')}</button></div><div class="steps">${steps}</div></div>
+  <div class="card"><h3>${t('ai.grid')}</h3><ul class="small" style="margin-left:18px">${t('ai.g').map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>
+  <div class="row noprint"><button class="btn" onclick="dl('${APP}-qualification-'+LANG+'.md',buildReport(getD()))">${t('ai.exp')}</button><button class="btn" onclick="window.print()">${t('r.print')}</button>${d.demo?'':`<button class="btn" onclick="archiveD('${d.id}')">${t('r.archive')}</button>`}</div>`;}
+
+/* ============ BASELINE (onglet) ============ */
+function benchChart(rows){const nar=(window.innerWidth||1000)<600,W=nar?380:720,L=nar?150:240,R=nar?44:60,H0=44,rh=nar?30:34,fs=nar?11:12,cut=nar?17:34,X=v=>L+(W-L-R)*v/100,h=H0+rows.length*rh+30;
+  let g=`<text x="0" y="16" font-size="13" font-weight="600" fill="var(--text)">${esc(t('b.chart'))}</text>`;
+  (nar?[0,50,100]:[0,25,50,75,100]).forEach(v=>{g+=`<line x1="${X(v)}" x2="${X(v)}" y1="${H0-8}" y2="${h-30}" stroke="var(--border)"/><text x="${X(v)}" y="${h-14}" text-anchor="middle" font-size="11" fill="var(--muted)">${v} %</text>`;});
+  rows.forEach((r,i)=>{const y=H0+i*rh+rh/2,s=r.s;
+    g+=`<text x="${L-10}" y="${y+4}" text-anchor="end" font-size="${fs}" fill="var(--text)"><title>${esc(r.l)}</title>${esc(r.l.length>cut?r.l.slice(0,cut-1)+'…':r.l)}</text>`;
+    if(s){g+=`<rect x="${X(s.p25)}" y="${y-7}" width="${Math.max(2,X(s.p75)-X(s.p25))}" height="14" rx="3" fill="var(--soft)" stroke="var(--border)"/><line x1="${X(s.mean)}" x2="${X(s.mean)}" y1="${y-11}" y2="${y+11}" stroke="var(--muted)" stroke-width="2"/>`;}
+    if(r.v!=null){g+=`<circle cx="${X(r.v)}" cy="${y}" r="6" fill="var(--accent)" stroke="var(--card)" stroke-width="2"/><text x="${W-R+8}" y="${y+4}" font-size="${fs}" font-family="Geist Mono,monospace" fill="var(--text)">${r.v} %</text>`;}});
+  return `<svg viewBox="0 0 ${W} ${h}" style="width:100%;display:block" role="img" aria-label="${esc(t('b.chart'))}">${g}</svg>
+  <div class="small muted" style="display:flex;gap:16px;flex-wrap:wrap;margin-top:6px"><span><span class="lg lg-band"></span>${t('b.lgBand')}</span><span><span class="lg lg-mean"></span>${t('b.lgMean')}</span><span><span class="lg lg-dot"></span>${t('b.lgClient')}</span></div>`;}
+function renderBench(){if(BF.type==='aipd')BF.type='flash';
+  const cands=S.diags.filter(d=>d.type===BF.type&&(!d.demo||S.settings.showDemo)).sort((a,b)=>b.date-a.date);
+  if(BF.cmp&&!cands.some(d=>d.id===BF.cmp))BF.cmp='';
+  const cd=BF.cmp?S.diags.find(d=>d.id===BF.cmp):null;
+  const b=baseline({type:BF.type,size:BF.size,sector:BF.sector,open:BF.open,excl:cd?ck(cd):null});
+  const sectors={};S.diags.forEach(d=>{if(d.sector)sectors[normS(d.sector)]=d.sector;});
+  const sel=(id,opts,v,fn)=>`<select id="${id}" onchange="${fn}">${opts.map(o=>`<option value="${esc(o[0])}" ${o[0]===v?'selected':''}>${esc(o[1])}</option>`).join('')}</select>`;
+  let html=`<h2>${t('b.h')}</h2><p class="small muted">${t('b.p')}</p><div class="card"><div class="row">
+   <label class="small">${t('b.type')}${sel('bf-type',[['flash',typeL('flash')],['fin',typeL('fin')]],BF.type,"BF.type=this.value;BF.cmp='';renderBench()")}</label>
+   <label class="small">${t('b.size')}${sel('bf-size',[['all',t('b.all')]].concat(Object.keys(SIZES).map(k=>[k,sizeL(k)])),BF.size,'BF.size=this.value;renderBench()')}</label>
+   <label class="small">${t('b.sector')}${sel('bf-sec',[['all',t('b.allS')]].concat(Object.keys(sectors).sort().map(k=>[k,sectors[k]])),BF.sector,'BF.sector=this.value;renderBench()')}</label></div>
+   <div class="row" style="margin-top:8px;align-items:end"><label class="small" style="flex:2 1 240px">${t('b.cmp')}${sel('bf-cmp',[['',t('b.cmpNone')]].concat(cands.map(d=>[d.id,d.client+' · '+fdate(d.date)+' · '+t('st.'+d.status)])),BF.cmp,'BF.cmp=this.value;renderBench()')}</label>
+   <label class="small chk" style="flex:1 1 200px"><input type="checkbox" ${BF.open?'checked':''} onchange="BF.open=this.checked;renderBench()"> ${t('b.open')}</label></div></div>`;
+  if(!b.n){$('tab-bench').innerHTML=html+`<div class="empty">${t('b.empty')}</div>`;return;}
+  if(b.n<MINB)html+=`<div class="poc">${t('b.small',{n:b.n,k:MINB})}</div>`;
+  const gcard=reg=>{const s=b.g[reg];if(!s)return '';const v=cd?score(cd,byReg(reg)).pct:null,rk=rankOf(v,s.vals);
+    return `<div class="card"><h3>${regL(reg)}</h3><div class="big">${s.mean} %</div><div class="small muted">${t('b.mean')} · ${t('b.med',{m:s.med,a:s.p25,b:s.p75})}</div>
+    ${cd&&v!=null?`<div style="margin-top:8px"><b style="color:${col(v)}">${esc(cd.client)}${LANG==='fr'?' : ':': '}${v}${LANG==='fr'?' %':'%'}</b> <span class="${v-s.mean>=0?'delta-up':'delta-dn'}">${v-s.mean>=0?'▲ +':'▼ '}${v-s.mean}</span><div class="small muted">${rk==null?'':t('r.pctTop',{x:rk})}</div></div>`:''}</div>`;};
+  html+=`<div class="scores"><div class="card"><h3>${t('b.n')}</h3><div class="big">${b.n}</div><div class="small muted">${b.demo?t('b.demoN',{n:b.demo}):''}</div></div>${gcard('RGPD')}${gcard('IA')}</div>`;
+  const ks=Object.keys(DOMS).filter(k=>DOMS[k][0]!=='AIPD'&&b.dom[k]);
+  const rows=ks.map(k=>({k:k,l:domN(k),s:b.dom[k],v:cd&&qs(cd).some(byDom(k))?score(cd,byDom(k)).pct:null}));
+  html+=`<div class="card">${benchChart(rows)}<p class="small muted" style="margin-top:6px">${t('b.read')}</p></div>`;
+  html+=`<div class="card"><div class="tw"><table><thead><tr><th>${t('b.dom')}</th><th>${t('b.mean')}</th><th>P25–P75</th>${cd?`<th>${t('b.client')}</th><th>${t('b.delta')}</th><th>${t('b.rank')}</th>`:''}</tr></thead><tbody>${rows.map(r=>{const dl=r.v==null?null:r.v-r.s.mean,rk=rankOf(r.v,r.s.vals);
+    return `<tr><td><span class="badge ${DOMS[r.k][0]==='IA'?'b-ia':'b-rgpd'}">${regL(DOMS[r.k][0])}</span> ${esc(r.l)}</td><td class="mono">${r.s.mean} %</td><td class="mono">${r.s.p25}–${r.s.p75} %</td>${cd?`<td class="mono">${r.v==null?'—':r.v+' %'}</td><td class="mono ${dl==null?'':dl>=0?'delta-up':'delta-dn'}">${dl==null?'—':(dl>0?'+':'')+dl}</td><td class="small">${rk==null?'—':t('r.pctTop',{x:rk})}</td>`:''}</tr>`;}).join('')}</tbody></table></div></div>`;
+  $('tab-bench').innerHTML=html;}
+
+/* ============ RAPPORT ============ */
+function baseReport(d){const bf=baseFor(d);if(!bf)return '';const b=bf.b,fr=LANG==='fr';
+  let m=`\n## ${t('b.rep')}\n\n${t('b.repN',{n:b.n,t:typeL(d.type),s:bf.same?t('r.baseSize'):''})}\n\n| ${t('b.dom')} | ${t('b.client')} | ${t('b.mean')} | P25–P75 | ${t('b.delta')} |\n|---|---|---|---|---|\n`;
+  ['RGPD','IA'].forEach(r=>{const s=b.g[r],v=score(d,byReg(r)).pct;if(s)m+=`| **${regL(r)} — ${fr?'global':'overall'}** | ${v==null?'—':v+' %'} | ${s.mean} % | ${s.p25}–${s.p75} % | ${v==null?'—':(v-s.mean>0?'+':'')+(v-s.mean)} |\n`;});
+  Object.keys(DOMS).forEach(k=>{const s=b.dom[k];if(!s||!qs(d).some(byDom(k)))return;const v=score(d,byDom(k)).pct;m+=`| ${domN(k)} | ${v==null?'—':v+' %'} | ${s.mean} % | ${s.p25}–${s.p75} % | ${v==null?'—':(v-s.mean>0?'+':'')+(v-s.mean)} |\n`;});
+  if(b.n<MINB)m+=`\n> ${t('b.small',{n:b.n,k:MINB})}\n`;return m;}
+function buildReport(d){const fr=LANG==='fr',st=t('st.'+d.status);
+  if(d.type==='aipd'){const q=aipdQual(d);let m=fr?`# Qualification AIPD / AI Act — ${d.client}\n\n- Périmètre : ${d.scope||'n/c'}\n- Auditeur : ${d.auditor||'n/c'}\n- Date : ${fdate(d.date)}\n- Statut : ${st}\n\n## Conclusion\n\n- RGPD : **${q.verdict}** (${q.crit} critère(s) CEPD rempli(s), ${q.unc} incertain(s))\n- AI Act : `:`# DPIA / AI Act qualification — ${d.client}\n\n- Scope: ${d.scope||'n/a'}\n- Auditor: ${d.auditor||'n/a'}\n- Date: ${fdate(d.date)}\n- Status: ${st}\n\n## Conclusion\n\n- GDPR: **${q.verdict}** (${q.crit} EDPB criteria met, ${q.unc} unsure)\n- AI Act: `;
+    m+=(q.ai==='no'?t('ai.out'):q.flags.length?q.flags.map(f=>f[0]+' — '+f[1]).join(' ; '):t('ai.noFlag'))+`\n\n## ${fr?'Réponses':'Answers'}\n\n| Question | ${fr?'Réponse':'Answer'} | ${fr?'Référence':'Reference'} | Note |\n|---|---|---|---|\n`;
+    qs(d).forEach(x=>{const a=d.answers[x[0]]||{};m+=`| ${qText(x)} | ${a.i!=null?optL(d,a.i):'—'} | ${qRef(x)} | ${(a.n||'').replace(/\n/g,' ')} |\n`;});
+    m+=`\n## ${fr?'Avancement du kit AIPD':'DPIA kit progress'}\n\n`;AIPD_STEPS.forEach((s,i)=>{m+=`- ${s[0]} ${stepL(i)} : ${t('ai.'+(d.steps[s[0]]||'todo'))}\n`;});return m;}
+  const r=score(d,byReg('RGPD')),i=score(d,byReg('IA'));
+  let m=fr?`# Rapport de diagnostic ${d.type==='fin'?'de conformité':'flash de maturité'} — ${d.client}\n\n- Taille : ${sizeL(d.size)}\n- Secteur : ${d.sector||'n/c'}\n- Date : ${fdate(d.date)}\n- Périmètre : ${d.scope||'n/c'}\n- Auditeur : ${d.auditor||'n/c'}\n- Statut : ${st}\n\n## Synthèse\n\n| Référentiel | Score | Appréciation |\n|---|---|---|\n`
+    :`# ${d.type==='fin'?'Compliance assessment':'Flash maturity assessment'} report — ${d.client}\n\n- Size: ${sizeL(d.size)}\n- Industry: ${d.sector||'n/a'}\n- Date: ${fdate(d.date)}\n- Scope: ${d.scope||'n/a'}\n- Auditor: ${d.auditor||'n/a'}\n- Status: ${st}\n\n## Summary\n\n| Framework | Score | Rating |\n|---|---|---|\n`;
+  m+=`| ${regL('RGPD')} | ${r.pct==null?'—':r.pct+' %'} | ${level(d,r.pct)} |\n| ${regL('IA')} | ${i.pct==null?'—':i.pct+' %'} | ${level(d,i.pct)} |\n\n## ${fr?'Scores par domaine':'Scores by domain'}\n\n| ${t('b.dom')} | Score |\n|---|---|\n`;
+  Object.keys(DOMS).forEach(k=>{if(qs(d).some(byDom(k))){const p=score(d,byDom(k)).pct;m+=`| ${regL(DOMS[k][0])} — ${domN(k)} | ${p==null?'n/a':p+' %'} |\n`;}});
+  m+=baseReport(d);
+  m+=`\n## ${fr?'Plan d’action priorisé':'Prioritised action plan'}\n\n| Prio | ${fr?'Référence':'Reference'} | ${t('r.gap')} | Type | Action |\n|---|---|---|---|---|\n`;gaps(d).forEach(x=>{m+=`| P${x.p} | ${qRef(x.q)} | ${qText(x.q)} | ${x.k} | ${x.a} |\n`;});
+  const notes=qs(d).filter(q=>d.answers[q[0]]&&d.answers[q[0]].n);if(notes.length){m+=`\n## ${fr?'Constats et preuves':'Findings and evidence'}\n\n`;notes.forEach(q=>{m+=`- **${qRef(q)}** — ${d.answers[q[0]].n.replace(/\n/g,' ')}\n`;});}
   return m;}
 
 /* ============ PROPOSITION ============ */
-const eur=n=>Math.round(n).toLocaleString('fr-FR')+' € HT';
-function buildProposal(d){const st=S.settings,sz=d?d.size:'M',cl=d?d.client:'[Client]',V=st.vendor,df=st.days.flash[sz],dn=st.days.fin[sz];
+const eur=n=>Math.round(n).toLocaleString(LOC())+(LANG==='fr'?' € HT':' € excl. VAT');
+function buildProposal(d){return LANG==='en'?buildProposalEN(d):buildProposalFR(d);}
+function propCtx(d){if(!d||d.type==='aipd')return null;const r=score(d,byReg('RGPD')).pct,i=score(d,byReg('IA')).pct;if(r==null&&i==null)return null;
+  return {r:r,i:i,g:gaps(d).filter(x=>x.p===1).slice(0,5),bf:baseFor(d)};}
+function buildProposalFR(d){const st=S.settings,sz=d?d.size:'M',cl=d?d.client:'[Client]',V=st.vendor,df=st.days.flash[sz],dn=st.days.fin[sz];
   const plan={P:'2 à 3 semaines',M:'4 à 6 semaines',G:'8 à 10 semaines'}[sz],itw={P:'4 à 6',M:'8 à 12',G:'15 à 25'}[sz];
-  let ctx='';if(d&&d.type!=='aipd'){const r=score(d,byReg('RGPD')).pct,i=score(d,byReg('IA')).pct,g=gaps(d).filter(x=>x.p===1).slice(0,5);
-    if(r!=null||i!=null){ctx=`\n## 2. Ce que révèle le ${d.type==='fin'?'diagnostic':'diagnostic flash'} déjà réalisé\n\n- Score RGPD : **${r==null?'n/c':r+' %'}** (${level(d,r)})\n- Score IA Act : **${i==null?'n/c':i+' %'}** (${level(d,i)})\n`;
-      if(g.length){ctx+=`\nÉcarts critiques identifiés :\n\n`+g.map(x=>`- ${x.q[4]} *(${x.q[5]})*`).join('\n')+'\n';}}}
-  return `# Proposition — Diagnostic de conformité RGPD & IA Act\n\n**Pour :** ${cl} (${SIZES[sz].l})\n**Par :** ${V}\n**Date :** ${new Date().toLocaleDateString('fr-FR')} — validité 60 jours\n
+  const c=propCtx(d);let ctx='';
+  if(c){ctx=`\n## 2. Ce que révèle le ${d.type==='fin'?'diagnostic':'diagnostic flash'} déjà réalisé\n\n- Score RGPD : **${c.r==null?'n/c':c.r+' %'}** (${level(d,c.r)})\n- Score IA Act : **${c.i==null?'n/c':c.i+' %'}** (${level(d,c.i)})\n`;
+    if(c.bf){const b=c.bf.b;ctx+=`- Par rapport à ${b.n} organisations comparables : moyenne RGPD ${b.g.RGPD?b.g.RGPD.mean+' %':'n/c'}, moyenne IA Act ${b.g.IA?b.g.IA.mean+' %':'n/c'}\n`;}
+    if(c.g.length){ctx+=`\nÉcarts critiques identifiés :\n\n`+c.g.map(x=>`- ${qText(x.q)} *(${qRef(x.q)})*`).join('\n')+'\n';}}
+  const n=k=>ctx?k+1:k;
+  return `# Proposition — Diagnostic de conformité RGPD & IA Act\n\n**Pour :** ${cl} (${sizeL(sz)})\n**Par :** ${V}\n**Date :** ${fdate(Date.now())} — validité 60 jours\n
 ## 1. Contexte et enjeux\n\n- Le RGPD est pleinement contrôlé par la CNIL : sanctions jusqu'à 20 M€ ou 4 % du chiffre d'affaires mondial.\n- Le règlement européen sur l'IA s'applique par vagues : pratiques interdites depuis février 2025, transparence (art. 50) depuis août 2026, systèmes à haut risque au 2 décembre 2027. Sanctions jusqu'à 35 M€ ou 7 % du chiffre d'affaires mondial.\n- Les deux textes se recouvrent : tout système d'IA traitant des données personnelles relève des deux régimes. Les traiter ensemble évite de payer deux fois la cartographie, la gouvernance et les analyses d'impact.\n- Pour ${cl}, l'enjeu est de savoir **où il se situe, ce qui est urgent et combien cela coûte**, avant d'engager un programme.\n${ctx}
-## ${ctx?3:2}. Notre offre en trois paliers\n\n### Palier 1 — Diagnostic flash de maturité\n\n- 1 atelier de 2 heures avec DPO / DSI / juridique, questionnaire adapté à la taille de l'entreprise\n- Livrables : score de maturité RGPD et IA Act, radar par domaine, 10 écarts prioritaires, restitution d'une heure\n- Charge : **${df} j** — délai : 1 semaine\n\n### Palier 2 — Diagnostic fin de conformité\n\n- Revue documentaire (registre, politiques, contrats, AIPD, inventaire IA)\n- ${itw} entretiens métiers et IT\n- Évaluation contrôle par contrôle sur 8 domaines RGPD et 7 domaines IA Act, avec preuves\n- Classification des systèmes d'IA (interdit / haut risque / transparence / minimal) et qualification du rôle (fournisseur / déployeur)\n- Livrables : rapport de conformité, cartographie des risques, plan d'action priorisé P1/P2/P3 chiffré, feuille de route 12 mois, synthèse COMEX\n- Charge : **${dn} j** — délai : ${plan}\n\n### Palier 3 — Accompagnement à la remédiation (optionnel)\n\n- Mise à niveau du registre, AIPD / FRIA, contrats, procédures\n- Mise en place de la gouvernance IA : registre des systèmes, comité, charte IA générative, formation\n- DPO ou AI Compliance Officer à temps partagé\n- Charge définie à l'issue du palier 2, en régie ou au forfait\n
-## ${ctx?4:3}. Démarche\n\n| Étape | Contenu | Résultat |\n|---|---|---|\n| Cadrage | Périmètre, interlocuteurs, collecte documentaire | Plan d'intervention |\n| Analyse | Entretiens, revue des preuves, cotation | Grille de contrôles renseignée |\n| Consolidation | Scoring, priorisation, chiffrage | Plan d'action |\n| Restitution | Comité de pilotage + synthèse direction | Décision de lancement |\n
-## ${ctx?5:4}. Budget\n\n| Palier | Charge | Montant |\n|---|---|---|\n| 1 — Diagnostic flash | ${df} j | ${eur(df*st.tjm)} |\n| 2 — Diagnostic fin | ${dn} j | ${eur(dn*st.tjm)} |\n| 3 — Remédiation | selon plan d'action | sur devis |\n\nLe palier 1 est déduit du palier 2 en cas d'enchaînement sous 3 mois.\n
-## ${ctx?6:5}. Équipe\n\n- Un directeur de mission, expert protection des données et gouvernance de l'IA\n- Un ou deux consultants conformité (RGPD / IA Act)\n- Un expert cybersécurité mobilisé sur le domaine sécurité\n
-## ${ctx?7:6}. Prérequis côté ${cl}\n\n- Un sponsor et un interlocuteur unique (DPO, RSSI ou juridique)\n- Mise à disposition des documents existants sous 5 jours ouvrés\n- Disponibilité des interlocuteurs pour les entretiens\n
-## ${ctx?8:7}. Pourquoi ${V}\n\n- Une grille unique RGPD + IA Act, calibrée par taille d'entreprise : pas de sur-qualité pour une PME, pas d'angle mort pour un groupe\n- Un résultat actionnable : chaque écart est relié à un article, une priorité et une action\n- La capacité d'enchaîner sur la remédiation technique (sécurité, data, IA) sans changer d'interlocuteur\n
-## ${ctx?9:8}. Prochaines étapes\n\n- Échange de 30 minutes pour valider le périmètre\n- Signature et planification de l'atelier flash sous 2 semaines\n- Restitution et décision sur le palier 2\n`;}
-function md2html(m){const L=m.split('\n');let h='',ul=false,tb=false;const inl=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\*(.+?)\*/g,'<i>$1</i>');
-  const close=()=>{if(ul){h+='</ul>';ul=false;}if(tb){h+='</tbody></table></div>';tb=false;}};
-  L.forEach(l=>{if(/^\|/.test(l)){if(/^\|[-| ]+\|$/.test(l))return;const c=l.split('|').slice(1,-1).map(x=>x.trim());
-      if(!tb){close();h+='<div class="tw"><table><thead><tr>'+c.map(x=>'<th>'+inl(x)+'</th>').join('')+'</tr></thead><tbody>';tb=true;}else h+='<tr>'+c.map(x=>'<td>'+inl(x)+'</td>').join('')+'</tr>';return;}
-    if(/^- /.test(l)){if(!ul){close();h+='<ul>';ul=true;}h+='<li>'+inl(l.slice(2))+'</li>';return;}
-    close();const m3=l.match(/^(#{1,3}) (.*)/);if(m3)h+=`<h${m3[1].length}>${inl(m3[2])}</h${m3[1].length}>`;else if(l.trim())h+='<p>'+inl(l)+'</p>';});
-  close();return h;}
+## ${n(2)}. Notre offre en trois paliers\n\n### Palier 1 — Diagnostic flash de maturité\n\n- 1 atelier de 2 heures avec DPO / DSI / juridique, questionnaire adapté à la taille de l'entreprise\n- Livrables : score de maturité RGPD et IA Act, positionnement par rapport aux organisations comparables, radar par domaine, 10 écarts prioritaires, restitution d'une heure\n- Charge : **${df} j** — délai : 1 semaine\n\n### Palier 2 — Diagnostic fin de conformité\n\n- Revue documentaire (registre, politiques, contrats, AIPD, inventaire IA)\n- ${itw} entretiens métiers et IT\n- Évaluation contrôle par contrôle sur 8 domaines RGPD et 7 domaines IA Act, avec preuves\n- Classification des systèmes d'IA (interdit / haut risque / transparence / minimal) et qualification du rôle (fournisseur / déployeur)\n- Livrables : rapport de conformité, cartographie des risques, plan d'action priorisé P1/P2/P3 chiffré, feuille de route 12 mois, synthèse COMEX\n- Charge : **${dn} j** — délai : ${plan}\n\n### Palier 3 — Accompagnement à la remédiation (optionnel)\n\n- Mise à niveau du registre, AIPD / FRIA, contrats, procédures\n- Mise en place de la gouvernance IA : registre des systèmes, comité, charte IA générative, formation\n- DPO ou AI Compliance Officer à temps partagé\n- Charge définie à l'issue du palier 2, en régie ou au forfait\n
+## ${n(3)}. Démarche\n\n| Étape | Contenu | Résultat |\n|---|---|---|\n| Cadrage | Périmètre, interlocuteurs, collecte documentaire | Plan d'intervention |\n| Analyse | Entretiens, revue des preuves, cotation | Grille de contrôles renseignée |\n| Consolidation | Scoring, priorisation, chiffrage | Plan d'action |\n| Restitution | Comité de pilotage + synthèse direction | Décision de lancement |\n
+## ${n(4)}. Budget\n\n| Palier | Charge | Montant |\n|---|---|---|\n| 1 — Diagnostic flash | ${df} j | ${eur(df*st.tjm)} |\n| 2 — Diagnostic fin | ${dn} j | ${eur(dn*st.tjm)} |\n| 3 — Remédiation | selon plan d'action | sur devis |\n\nLe palier 1 est déduit du palier 2 en cas d'enchaînement sous 3 mois.\n
+## ${n(5)}. Équipe\n\n- Un directeur de mission, expert protection des données et gouvernance de l'IA\n- Un ou deux consultants conformité (RGPD / IA Act)\n- Un expert cybersécurité mobilisé sur le domaine sécurité\n
+## ${n(6)}. Prérequis côté ${cl}\n\n- Un sponsor et un interlocuteur unique (DPO, RSSI ou juridique)\n- Mise à disposition des documents existants sous 5 jours ouvrés\n- Disponibilité des interlocuteurs pour les entretiens\n
+## ${n(7)}. Pourquoi ${V}\n\n- Une grille unique RGPD + IA Act, calibrée par taille d'entreprise : pas de sur-qualité pour une PME, pas d'angle mort pour un groupe\n- Un résultat actionnable : chaque écart reçoit une priorité et une action graduée (mise en place ou mise à niveau)\n- Un positionnement par rapport aux organisations comparables déjà évaluées\n- La capacité d'enchaîner sur la remédiation technique (sécurité, data, IA) sans changer d'interlocuteur\n
+## ${n(8)}. Prochaines étapes\n\n- Échange de 30 minutes pour valider le périmètre\n- Signature et planification de l'atelier flash sous 2 semaines\n- Restitution et décision sur le palier 2\n`;}
+function buildProposalEN(d){const st=S.settings,sz=d?d.size:'M',cl=d?d.client:'[Client]',V=st.vendor,df=st.days.flash[sz],dn=st.days.fin[sz];
+  const plan={P:'2 to 3 weeks',M:'4 to 6 weeks',G:'8 to 10 weeks'}[sz],itw={P:'4 to 6',M:'8 to 12',G:'15 to 25'}[sz];
+  const c=propCtx(d);let ctx='';
+  if(c){ctx=`\n## 2. What the ${d.type==='fin'?'assessment':'flash assessment'} already shows\n\n- GDPR score: **${c.r==null?'n/a':c.r+'%'}** (${level(d,c.r)})\n- AI Act score: **${c.i==null?'n/a':c.i+'%'}** (${level(d,c.i)})\n`;
+    if(c.bf){const b=c.bf.b;ctx+=`- Compared with ${b.n} comparable organisations: GDPR mean ${b.g.RGPD?b.g.RGPD.mean+'%':'n/a'}, AI Act mean ${b.g.IA?b.g.IA.mean+'%':'n/a'}\n`;}
+    if(c.g.length){ctx+=`\nCritical gaps identified:\n\n`+c.g.map(x=>`- ${qText(x.q)} *(${qRef(x.q)})*`).join('\n')+'\n';}}
+  const n=k=>ctx?k+1:k;
+  return `# Proposal — GDPR & AI Act compliance assessment\n\n**For:** ${cl} (${sizeL(sz)})\n**By:** ${V}\n**Date:** ${fdate(Date.now())} — valid for 60 days\n
+## 1. Context and stakes\n\n- The GDPR is fully enforced by data protection authorities: fines up to €20M or 4% of worldwide turnover.\n- The EU AI Act applies in waves: prohibited practices since February 2025, transparency (art. 50) since August 2026, high-risk systems on 2 December 2027. Fines up to €35M or 7% of worldwide turnover.\n- The two texts overlap: any AI system processing personal data falls under both regimes. Handling them together avoids paying twice for mapping, governance and impact assessments.\n- For ${cl}, the question is **where it stands, what is urgent and what it will cost**, before launching a programme.\n${ctx}
+## ${n(2)}. Our three-tier offer\n\n### Tier 1 — Flash maturity assessment\n\n- One 2-hour workshop with DPO / CIO / legal, questionnaire tailored to company size\n- Deliverables: GDPR and AI Act maturity scores, positioning against comparable organisations, radar by domain, 10 priority gaps, one-hour debrief\n- Effort: **${df} d** — lead time: 1 week\n\n### Tier 2 — Detailed compliance assessment\n\n- Document review (record, policies, contracts, DPIAs, AI inventory)\n- ${itw} business and IT interviews\n- Control-by-control assessment across 8 GDPR and 7 AI Act domains, with evidence\n- AI system classification (prohibited / high-risk / transparency / minimal) and role qualification (provider / deployer)\n- Deliverables: compliance report, risk map, prioritised and costed P1/P2/P3 action plan, 12-month roadmap, executive summary\n- Effort: **${dn} d** — lead time: ${plan}\n\n### Tier 3 — Remediation support (optional)\n\n- Upgrade of the record, DPIAs / FRIAs, contracts, procedures\n- AI governance set-up: system register, committee, generative AI charter, training\n- Part-time DPO or AI Compliance Officer\n- Effort defined after tier 2, time-and-materials or fixed price\n
+## ${n(3)}. Approach\n\n| Step | Content | Outcome |\n|---|---|---|\n| Scoping | Scope, contacts, document collection | Engagement plan |\n| Analysis | Interviews, evidence review, scoring | Completed control grid |\n| Consolidation | Scoring, prioritisation, costing | Action plan |\n| Debrief | Steering committee + executive summary | Go decision |\n
+## ${n(4)}. Budget\n\n| Tier | Effort | Amount |\n|---|---|---|\n| 1 — Flash assessment | ${df} d | ${eur(df*st.tjm)} |\n| 2 — Detailed assessment | ${dn} d | ${eur(dn*st.tjm)} |\n| 3 — Remediation | per action plan | on quote |\n\nTier 1 is deducted from tier 2 if ordered within 3 months.\n
+## ${n(5)}. Team\n\n- An engagement director, expert in data protection and AI governance\n- One or two compliance consultants (GDPR / AI Act)\n- A cybersecurity expert for the security domain\n
+## ${n(6)}. Prerequisites for ${cl}\n\n- A sponsor and a single point of contact (DPO, CISO or legal)\n- Existing documents shared within 5 working days\n- Availability of interviewees\n
+## ${n(7)}. Why ${V}\n\n- A single GDPR + AI Act grid, calibrated by company size: no over-engineering for an SME, no blind spot for a group\n- An actionable result: each gap gets a priority and a graded action (implement or upgrade)\n- Positioning against comparable organisations already assessed\n- The ability to move on to technical remediation (security, data, AI) with the same team\n
+## ${n(8)}. Next steps\n\n- 30-minute call to validate the scope\n- Signature and scheduling of the flash workshop within 2 weeks\n- Debrief and decision on tier 2\n`;}
+function md2html(m){const Ls=m.split('\n');let h='',ul=false,tb=false;const inl=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\*(.+?)\*/g,'<i>$1</i>');
+  Ls.forEach(l=>{if(/^\|/.test(l)){if(/^\|[-| ]+\|$/.test(l))return;const c=l.split('|').slice(1,-1).map(x=>x.trim());if(!tb){h+='<div class="tw"><table><thead><tr>'+c.map(x=>'<th>'+inl(x)+'</th>').join('')+'</tr></thead><tbody>';tb=true;}else h+='<tr>'+c.map(x=>'<td>'+inl(x)+'</td>').join('')+'</tr>';return;}
+    if(tb){h+='</tbody></table></div>';tb=false;}
+    if(/^- /.test(l)){if(!ul){h+='<ul>';ul=true;}h+='<li>'+inl(l.slice(2))+'</li>';return;}if(ul){h+='</ul>';ul=false;}
+    if(/^### /.test(l))h+='<h3>'+inl(l.slice(4))+'</h3>';else if(/^## /.test(l))h+='<h2>'+inl(l.slice(3))+'</h2>';else if(/^# /.test(l))h+='<h1>'+inl(l.slice(2))+'</h1>';else if(/^> /.test(l))h+='<p class="muted">'+inl(l.slice(2))+'</p>';else if(l.trim())h+='<p>'+inl(l)+'</p>';});
+  if(tb)h+='</tbody></table></div>';if(ul)h+='</ul>';return h;}
 function renderProp(){const d=getD(),m=buildProposal(d);
-  $('tab-prop').innerHTML=`<div class="row noprint" style="margin-bottom:12px;align-items:center"><span class="small muted" style="flex:3 1 200px">${d?'Proposition personnalisée pour <b>'+esc(d.client)+'</b> à partir du dossier ouvert.':'Proposition type générique — ouvrez un dossier pour la personnaliser.'} Charges et TJM modifiables dans Réglages.</span>
-  <button class="btn" onclick="copyTxt(buildProposal(getD()))">Copier (Markdown)</button><button class="btn" onclick="dl('proposition-rgpd-ia-act.md',buildProposal(getD()))">Télécharger .md</button><button class="btn" onclick="window.print()">Imprimer / PDF</button></div>
+  $('tab-prop').innerHTML=`<div class="row noprint" style="margin-bottom:12px;align-items:center"><span class="small muted" style="flex:3 1 200px">${d?t('p.custom',{c:esc(d.client)}):t('p.generic')} ${t('p.hint')}</span>
+  <button class="btn" onclick="copyTxt(buildProposal(getD()))">${t('p.copy')}</button><button class="btn" onclick="dl('proposal-gdpr-ai-act-'+LANG+'.md',buildProposal(getD()))">${t('p.dl')}</button><button class="btn" onclick="window.print()">${t('r.print')}</button></div>
   <div class="card doc">${md2html(m)}</div>`;}
 
 /* ============ RÉGLAGES ============ */
 const FS=[.8,.9,1,1.1,1.2,1.35,1.5];
-function applyFS(i){i=Math.max(0,Math.min(FS.length-1,i));document.querySelector('.page').style.zoom=FS[i];localStorage.setItem(FK,i);const l=$('fs-l');if(l)l.textContent=Math.round(FS[i]*100)+'%';}
-const fsIdx=()=>{const v=parseInt(localStorage.getItem(FK));return isNaN(v)?2:v;};
-function renderSet(){const st=S.settings,num=(k,z)=>`<input type="number" min="0" step="0.5" value="${st.days[k][z]}" onchange="S.settings.days.${k}.${z}=parseFloat(this.value)||0;autoSave()">`;
-  $('tab-set').innerHTML=`<h2>Offre commerciale</h2><div class="card"><div class="row"><label class="small">Société émettrice<input value="${esc(st.vendor)}" onchange="S.settings.vendor=this.value.trim()||'Sogeti';autoSave()"></label>
-  <label class="small">TJM moyen (€ HT) — hypothèse à ajuster<input type="number" min="0" step="50" value="${st.tjm}" onchange="S.settings.tjm=parseFloat(this.value)||0;autoSave()"></label></div>
-  <div class="tw" style="margin-top:10px"><table><thead><tr><th>Charge (jours)</th><th>PME</th><th>Moyenne / ETI</th><th>Grande</th></tr></thead><tbody>
-  <tr><td>Diagnostic flash</td><td>${num('flash','P')}</td><td>${num('flash','M')}</td><td>${num('flash','G')}</td></tr>
-  <tr><td>Diagnostic fin</td><td>${num('fin','P')}</td><td>${num('fin','M')}</td><td>${num('fin','G')}</td></tr></tbody></table></div>
-  <p class="small muted" style="margin-top:6px">Valeurs par défaut indicatives : à caler sur votre grille tarifaire.</p></div>
-  <h2>Affichage</h2><div class="card"><div class="row" style="align-items:center"><button class="btn" onclick="applyFS(fsIdx()-1)">A−</button><span id="fs-l" class="mono" style="text-align:center">${Math.round(FS[fsIdx()]*100)}%</span><button class="btn" onclick="applyFS(fsIdx()+1)">A+</button><button class="btn ghost" onclick="applyFS(2)">Reset</button></div></div>
-  <h2>Données</h2><div class="card"><div class="row"><button class="btn" onclick="dl('${APP}.json',JSON.stringify(S,null,2))">Exporter JSON</button>
-  <button class="btn" onclick="$('imp').click()">Importer JSON</button><input type="file" id="imp" accept=".json" style="display:none" onchange="impJSON(this)">
-  <button class="btn danger" onclick="if(confirm('Effacer tous les dossiers ?')){S.diags=[];cur=null;autoSave();go('dossiers');}">Tout effacer</button></div></div>
-  <h2>Google Drive</h2><div class="card"><label class="small">Client ID OAuth (prérempli avec celui de vos autres apps)<input id="cid" placeholder="xxxxxxxx.apps.googleusercontent.com" value="${esc(cidGet())}" onchange="localStorage.setItem(CIDK,this.value.trim())"></label>
-  <p class="small muted" style="margin-top:6px">Synchronisation de travail : <span class="mono">${APP}.json</span>. Archives d'audit : dossier <span class="mono">${FOLDER}</span>. Portée <span class="mono">drive.file</span> : l'app ne voit que les fichiers qu'elle a créés.</p>
-  <div class="row" style="margin-top:8px"><button class="btn" onclick="driveConnect()">${tok?'Reconnecter Drive':'Connecter Drive'}</button></div></div>
-  <p class="small muted" style="text-align:center;margin-top:18px">${APP} · <span class="ver">v2.1</span> · ${VDATE}</p>`;}
-function impJSON(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{S=JSON.parse(r.result);ensureState();autoSave();go('dossiers');toast('Import réussi');}catch(e){toast('Fichier invalide');}};r.readAsText(f);}
+function applyFS(i){i=Math.max(0,Math.min(FS.length-1,i));const pg=document.querySelector('.page');if(window.CSS&&CSS.supports&&CSS.supports('zoom','1'))pg.style.zoom=FS[i];else{pg.style.transformOrigin='top center';pg.style.transform='scale('+FS[i]+')';}try{localStorage.setItem(FK,i)}catch(e){}const l=$('fs-l');if(l)l.textContent=Math.round(FS[i]*100)+'%';}
+const fsIdx=()=>{const v=parseInt(localStorage.getItem(FK)||'2',10);return isNaN(v)?2:v;};
+function renderSet(){const st=S.settings,num=(k,z)=>`<input type="number" min="0" step="0.5" value="${st.days[k][z]}" onchange="S.settings.days.${k}.${z}=parseFloat(this.value)||0;autoSave()">`,dn=S.diags.filter(d=>d.demo).length;
+  $('tab-set').innerHTML=`<div class="card"><h3>${t('s.lang')}</h3><div class="row"><button id="lang-fr" class="btn grow ${LANG==='fr'?'primary':''}" onclick="setLang('fr')">Français</button><button id="lang-en" class="btn grow ${LANG==='en'?'primary':''}" onclick="setLang('en')">English</button></div></div>
+  <h2>${t('s.offer')}</h2><div class="card"><div class="row"><label class="small">${t('s.vendor')}<input value="${esc(st.vendor)}" onchange="S.settings.vendor=this.value.trim()||'Sogeti';autoSave()"></label>
+  <label class="small">${t('s.tjm')}<input type="number" min="0" step="50" value="${st.tjm}" onchange="S.settings.tjm=parseFloat(this.value)||0;autoSave()"></label></div>
+  <div class="tw" style="margin-top:10px"><table><thead><tr><th>${t('s.days')}</th>${Object.keys(SIZES).map(k=>`<th>${sizeL(k)}</th>`).join('')}</tr></thead><tbody>
+  <tr><td>${typeL('flash')}</td><td>${num('flash','P')}</td><td>${num('flash','M')}</td><td>${num('flash','G')}</td></tr>
+  <tr><td>${typeL('fin')}</td><td>${num('fin','P')}</td><td>${num('fin','M')}</td><td>${num('fin','G')}</td></tr></tbody></table></div>
+  <p class="small muted" style="margin-top:6px">${t('s.daysNote')}</p></div>
+  <h2>${t('s.demo')}</h2><div class="card"><p class="small muted">${t('s.demoP')}</p>${dn?`<p class="small" style="margin-top:6px">${t('s.demoN',{n:dn})}</p>`:''}
+  <div class="row" style="margin-top:8px"><button class="btn" onclick="loadDemo()">${t('s.demoLoad')}</button>${dn?`<button class="btn danger" onclick="delDemo()">${t('s.demoDel')}</button>`:''}</div></div>
+  <h2>${t('s.disp')}</h2><div class="card"><div class="row" style="align-items:center"><button class="btn" onclick="applyFS(fsIdx()-1)">A−</button><span id="fs-l" class="mono" style="text-align:center">${Math.round(FS[fsIdx()]*100)}%</span><button class="btn" onclick="applyFS(fsIdx()+1)">A+</button><button class="btn ghost" onclick="applyFS(2)">${t('s.reset')}</button></div></div>
+  <h2>${t('s.data')}</h2><div class="card"><div class="row"><button class="btn" onclick="dl('${APP}.json',JSON.stringify(S,null,2))">${t('s.exp')}</button>
+  <button class="btn" onclick="$('imp').click()">${t('s.imp')}</button><input type="file" id="imp" accept=".json" style="display:none" onchange="impJSON(this)">
+  <button class="btn danger" onclick="if(confirm(t('s.wipeQ'))){S.diags=[];cur=null;autoSave();go('dossiers');}">${t('s.wipe')}</button></div></div>
+  <h2>${t('s.drive')}</h2><div class="card"><label class="small">${t('s.cid')}<input id="cid" placeholder="xxxxxxxx.apps.googleusercontent.com" value="${esc(cidGet())}" onchange="localStorage.setItem(CIDK,this.value.trim())"></label>
+  <p class="small muted" style="margin-top:6px">${t('s.driveP',{f:'<span class="mono">'+APP+'.json</span>',d:'<span class="mono">'+FOLDER+'</span>',s:'<span class="mono">drive.file</span>'})}</p>
+  <div class="row" style="margin-top:8px"><button class="btn" onclick="driveConnect()">${tok?t('s.reconn'):t('s.conn')}</button></div></div>
+  <p class="small muted" style="text-align:center;margin-top:18px">${APP} · <span class="ver">v3.0</span> · ${VDATE}</p>`;}
+function impJSON(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{S=JSON.parse(r.result);ensureState();autoSave();go('dossiers');toast(t('t.imp'));}catch(e){toast(t('t.badFile'));}};r.readAsText(f);}
+
+/* ============ DÉMONSTRATION ============ */
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let x=Math.imul(seed^seed>>>15,1|seed);x=x+Math.imul(x^x>>>7,61|x)^x;return((x^x>>>14)>>>0)/4294967296;};}
+function loadDemo(){S.diags=S.diags.filter(d=>!d.demo);const R=rng(42),secs=['Banque','Assurance','Industrie','Distribution','Santé','Services','Secteur public'],sz=['P','M','M','G'];let n=0;
+  for(let i=1;i<=20;i++){const m=.25+R()*.6,size=sz[Math.floor(R()*sz.length)],sector=secs[Math.floor(R()*secs.length)],code='DEMO-'+(i<10?'0':'')+i;
+    ['flash','fin'].forEach(type=>{const d=newD({client:code,sector:sector,size:size,type:type,auditor:'Demo'});d.demo=true;d.status='closed';d.date=Date.now()-Math.floor(R()*330)*864e5;d.closedAt=d.date;
+      const dm={};qs(d).forEach(q=>{if(dm[q[1]]===undefined)dm[q[1]]=Math.min(.95,Math.max(.05,m+(R()-.5)*.4));const p=dm[q[1]],r=R(),last=OPTS[type].length-1;
+        d.answers[q[0]]={i:r<.04?last:r<p*.7?2:r<p*.7+.3?1:0};});S.diags.push(d);n++;});}
+  S.settings.showDemo=true;autoSave();renderAll(true);toast(t('t.demoOk',{n:n}));}
+function delDemo(){S.diags=S.diags.filter(d=>!d.demo);if(cur&&!getD())cur=null;autoSave();renderAll(true);toast(t('t.demoDel'));}
 
 /* ============ UTILITAIRES ============ */
-let toastT;function toast(t,b,fn){$('toast-t').textContent=t;const bt=$('toast-b');bt.textContent=b||'';bt.onclick=()=>{fn&&fn();$('toast').style.display='none';};$('toast').style.display='flex';clearTimeout(toastT);toastT=setTimeout(()=>$('toast').style.display='none',b?6000:2500);}
+let toastT;function toast(x,b,fn){$('toast-t').textContent=x;const bt=$('toast-b');bt.textContent=b||'';bt.onclick=()=>{if(fn)fn();$('toast').style.display='none';};$('toast').style.display='flex';clearTimeout(toastT);toastT=setTimeout(()=>{$('toast').style.display='none';},b?6000:2500);}
 function dl(name,txt){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain;charset=utf-8'}));a.download=name;document.body.appendChild(a);a.click();a.remove();}
-function copyTxt(t){(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('Copié')).catch(()=>{const x=document.createElement('textarea');x.value=t;document.body.appendChild(x);x.select();document.execCommand('copy');x.remove();toast('Copié');});}
+function copyTxt(x){(navigator.clipboard?navigator.clipboard.writeText(x):Promise.reject()).then(()=>toast(t('t.copied'))).catch(()=>{const e=document.createElement('textarea');e.value=x;document.body.appendChild(e);e.select();document.execCommand('copy');e.remove();toast(t('t.copied'));});}
 const THEMES=['light','sand','navy','dark'],TI={light:'☀︎',sand:'○',navy:'◑',dark:'☾'};
-function applyTheme(t){document.documentElement.setAttribute('data-theme',t==='light'?'':t);$('theme-btn').textContent=TI[t]||'☀︎';localStorage.setItem(TK,t);}
+function applyTheme(x){document.documentElement.setAttribute('data-theme',x==='light'?'':x);$('theme-btn').textContent=TI[x]||'☀︎';try{localStorage.setItem(TK,x)}catch(e){}}
 function toggleTheme(){const c=localStorage.getItem(TK)||'light';applyTheme(THEMES[(THEMES.indexOf(c)+1)%THEMES.length]);}
 
 /* ============ GOOGLE DRIVE ============ */
-let tok=sessionStorage.getItem(TOKK)||null,fileId=null;
-function setSync(s){$('sync').textContent={loc:'⚫ Local',pend:'🟡 En attente',ok:'🟢 Sync ✓',err:'🔴 Erreur'}[s];}
-function driveConnect(after){const cid=cidGet();if(!cid){go('set');toast('Renseignez le Client ID OAuth');return;}
-  if(!(window.google&&google.accounts)){toast('Librairie Google non chargée');return;}
+let tok=sessionStorage.getItem(TOKK)||null,fileId=null,syncCode='loc';
+function setSync(s){syncCode=s;$('sync').textContent=t('sync.'+s);}
+function driveConnect(after){const cid=cidGet();if(!cid){go('set');toast(t('t.cid'));return;}
+  if(!(window.google&&google.accounts)){toast(t('t.gis'));return;}
   google.accounts.oauth2.initTokenClient({client_id:cid,scope:'https://www.googleapis.com/auth/drive.file',callback:r=>{if(r&&r.access_token){tok=r.access_token;sessionStorage.setItem(TOKK,tok);drivePull();if(typeof after==='function')after();}else setSync('err');}}).requestAccessToken();}
 async function dfetch(u,o){o=o||{};const r=await fetch(u,Object.assign({},o,{headers:Object.assign({Authorization:'Bearer '+tok},o.headers||{})}));
   if(r.status===401){tok=null;sessionStorage.removeItem(TOKK);throw new Error('401');}if(!r.ok)throw new Error(r.status);return r;}
@@ -535,11 +823,9 @@ async function drivePull(){if(!tok)return;try{if(await findFile()){const r=await
 async function drivePush(){if(!tok)return;try{const body=JSON.stringify(S);
     if(!(await findFile())){const b='x'+uid(),meta=JSON.stringify({name:APP+'.json',mimeType:'application/json'});
       const r=await dfetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+b},
-        body:`--${b}\r\nContent-Type: application/json\r\n\r\n${meta}\r\n--${b}\r\nContent-Type: application/json\r\n\r\n${body}\r\n--${b}--`});fileId=(await r.json()).id;}
-    else await dfetch('https://www.googleapis.com/upload/drive/v3/files/'+fileId+'?uploadType=media',{method:'PATCH',headers:{'Content-Type':'application/json'},body});
+        body:'--'+b+'\r\nContent-Type: application/json\r\n\r\n'+meta+'\r\n--'+b+'\r\nContent-Type: application/json\r\n\r\n'+body+'\r\n--'+b+'--'});fileId=(await r.json()).id;}
+    else await dfetch('https://www.googleapis.com/upload/drive/v3/files/'+fileId+'?uploadType=media',{method:'PATCH',headers:{'Content-Type':'application/json'},body:body});
     setSync('ok');}catch(e){setSync('err');}}
-
-/* ============ ARCHIVES D'AUDIT (un JSON + un rapport par audit) ============ */
 let folderId=null;
 async function ensureFolder(){if(folderId)return folderId;
   const r=await dfetch("https://www.googleapis.com/drive/v3/files?q="+encodeURIComponent("name='"+FOLDER+"' and mimeType='application/vnd.google-apps.folder' and trashed=false")+"&fields=files(id)");
@@ -551,33 +837,37 @@ async function upsert(name,body,mime,id){if(id){try{await dfetch('https://www.go
   const r=await dfetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+b},
     body:'--'+b+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+meta+'\r\n--'+b+'\r\nContent-Type: '+mime+'\r\n\r\n'+body+'\r\n--'+b+'--'});return (await r.json()).id;}
 const slug=x=>String(x||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||'audit';
-function auditPayload(d){const o={schema:'diag001-audit/1',app:APP,version:VER,exportedAt:new Date().toISOString(),audit:d};
+function auditPayload(d){const o={schema:'diag001-audit/1',app:APP,version:VER,lang:LANG,exportedAt:new Date().toISOString(),audit:d};
   if(d.type==='aipd')o.qualification=aipdQual(d);else{o.scores={rgpd:score(d,byReg('RGPD')).pct,ia:score(d,byReg('IA')).pct,domaines:{}};
     Object.keys(DOMS).forEach(k=>{if(qs(d).some(byDom(k)))o.scores.domaines[k]=score(d,byDom(k)).pct;});
-    o.ecarts=gaps(d).map(x=>({id:x.q[0],priorite:'P'+x.p,reference:x.q[5],ecart:x.q[4],reponse:x.v===0?'non':'partiel',type:x.k,action:x.a}));}
+    const bf=baseFor(d);if(bf)o.baseline={n:bf.b.n,memeTaille:bf.same,rgpd:bf.b.g.RGPD?bf.b.g.RGPD.mean:null,ia:bf.b.g.IA?bf.b.g.IA.mean:null};
+    o.ecarts=gaps(d).map(x=>({id:x.q[0],priorite:'P'+x.p,reference:x.q[5],ecart:x.q[4],reponse:x.v===0?'non':'partiel',type:x.v===0?'mise_en_place':'mise_a_niveau',action:x.v===0?x.q[6]:x.q[7]}));}
   return o;}
-async function archiveD(id,silent){const d=S.diags.find(x=>x.id===id);if(!d)return;if(!tok){driveConnect(function(){archiveD(id);});return;}
+async function archiveD(id,silent){const d=S.diags.find(x=>x.id===id);if(!d)return;if(d.demo){if(!silent)toast(t('t.demoArch'));return false;}if(!tok){driveConnect(function(){archiveD(id);});return;}
   try{setSync('pend');const base='audit-'+slug(d.client)+'-'+d.type+'-'+new Date(d.date).toISOString().slice(0,10)+'-'+d.id;
     d.drive.json=await upsert(base+'.json',JSON.stringify(auditPayload(d),null,2),'application/json',d.drive.json);
     d.drive.md=await upsert(base+'.md',buildReport(d),'text/markdown',d.drive.md);
-    d.drive.at=Date.now();autoSave();setSync('ok');if(!silent){toast('Audit archivé dans '+FOLDER);renderAll();}return true;}
-  catch(e){setSync('err');if(!silent)toast('Archivage impossible ('+e.message+')');return false;}}
-async function archiveAll(){if(!tok){driveConnect(archiveAll);return;}let ok=0;for(let i=0;i<S.diags.length;i++){if(await archiveD(S.diags[i].id,true))ok++;}toast(ok+' audit(s) archivé(s)');renderAll();}
-async function listArchives(){if(!tok){driveConnect(listArchives);return;}const box=$('arch');if(!box)return;box.innerHTML='<p class="small muted">Lecture du dossier…</p>';
+    d.drive.at=Date.now();autoSave();setSync('ok');if(!silent){toast(t('t.archived',{f:FOLDER}));renderAll();}return true;}
+  catch(e){setSync('err');if(!silent)toast(t('t.archFail',{e:e.message}));return false;}}
+async function archiveAll(){if(!tok){driveConnect(archiveAll);return;}let ok=0;const L=S.diags.filter(d=>!d.demo);for(let i=0;i<L.length;i++){if(await archiveD(L[i].id,true))ok++;}toast(t('t.archN',{n:ok}));renderAll();}
+async function listArchives(){if(!tok){driveConnect(listArchives);return;}const box=$('arch');if(!box)return;box.innerHTML=`<p class="small muted">${t('arch.reading')}</p>`;
   try{const f=await ensureFolder();const r=await dfetch("https://www.googleapis.com/drive/v3/files?q="+encodeURIComponent("'"+f+"' in parents and trashed=false and mimeType='application/json'")+"&orderBy=modifiedTime desc&pageSize=100&fields=files(id,name,modifiedTime)");
     const j=await r.json(),L=j.files||[];
-    box.innerHTML=L.length?`<div class="tw"><table><thead><tr><th>Fichier</th><th>Modifié</th><th></th></tr></thead><tbody>${L.map(x=>{const known=S.diags.some(d=>d.drive&&d.drive.json===x.id);
-      return `<tr><td class="mono">${esc(x.name)}</td><td class="mono">${new Date(x.modifiedTime).toLocaleDateString('fr-FR')}</td><td>${known?'<span class="small muted">présent</span>':`<button class="btn sm" onclick="restoreArchive('${x.id}')">Restaurer</button>`}</td></tr>`;}).join('')}</tbody></table></div>`:'<p class="small muted">Aucune archive pour l\'instant.</p>';}
-  catch(e){box.innerHTML='<p class="small muted">Lecture impossible ('+esc(e.message)+').</p>';}}
+    box.innerHTML=L.length?`<div class="tw"><table><thead><tr><th>${t('arch.file')}</th><th>${t('arch.mod')}</th><th></th></tr></thead><tbody>${L.map(x=>{const known=S.diags.some(d=>d.drive&&d.drive.json===x.id);
+      return `<tr><td class="mono">${esc(x.name)}</td><td class="mono">${fdate(x.modifiedTime)}</td><td>${known?`<span class="small muted">${t('arch.present')}</span>`:`<button class="btn sm" onclick="restoreArchive('${x.id}')">${t('arch.restore')}</button>`}</td></tr>`;}).join('')}</tbody></table></div>`:`<p class="small muted">${t('arch.none')}</p>`;}
+  catch(e){box.innerHTML=`<p class="small muted">${t('arch.fail',{e:esc(e.message)})}</p>`;}}
 async function restoreArchive(fid){try{const r=await dfetch('https://www.googleapis.com/drive/v3/files/'+fid+'?alt=media');const j=await r.json();
-  if(!j||!j.audit||!j.audit.id){toast('Archive invalide');return;}const a=j.audit;a.drive=a.drive||{};a.drive.json=fid;
-  const i=S.diags.findIndex(d=>d.id===a.id);if(i>=0)S.diags[i]=a;else S.diags.push(a);ensureState();autoSave();renderAll();toast('Audit restauré : '+a.client);}
-  catch(e){toast('Restauration impossible ('+e.message+')');}}
-setInterval(()=>{if(tok&&!saveT)drivePull();else if(tok&&$('sync').textContent.startsWith('🟢'))drivePull();},60000);
+  if(!j||!j.audit||!j.audit.id){toast(t('t.badArch'));return;}const a=j.audit;a.drive=a.drive||{};a.drive.json=fid;
+  const i=S.diags.findIndex(d=>d.id===a.id);if(i>=0)S.diags[i]=a;else S.diags.push(a);ensureState();autoSave();renderAll();toast(t('t.restored',{c:a.client}));}
+  catch(e){toast(t('t.restFail',{e:e.message}));}}
+setInterval(()=>{if(tok&&!saveT)drivePull();},60000);
+let rsT=null;window.addEventListener('resize',function(){clearTimeout(rsT);rsT=setTimeout(function(){if(tab==='bench'){const a=document.activeElement;if(!(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName)))renderBench();}},250);});
 
 /* ============ INIT ============ */
-load();applyTheme(localStorage.getItem(TK)||'light');applyFS(fsIdx());go('dossiers');if(tok)drivePull();
+LANG=localStorage.getItem(LANG_KEY)||((navigator.language||'fr').toLowerCase().indexOf('fr')===0?'fr':'en');
+load();applyTheme(localStorage.getItem(TK)||'light');applyStatic();applyFS(fsIdx());go('dossiers');if(tok)drivePull();
 $('boot').style.display='none';
+
 </script>
 </body>
 </html>
