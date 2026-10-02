@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>pcm001</title>
+<script>
+window.addEventListener('error', function (e) {
+  var b = document.getElementById('boot-err');
+  if (!b) return;
+  b.style.display = 'block';
+  b.textContent = 'JS error: ' + (e.message || e) + (e.lineno ? ' (line ' + e.lineno + ')' : '');
+});
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F7F6F3; --card:#FFFFFF; --text:#1F1E1C; --muted:#6B6862; --border:#E4E1DA; --soft:#EFEDE7;
+  --accent:#C96442; --accent-text:#FFFFFF; --green:#2E7D4F; --red:#B3392F; --card-fade:#FFFFFF;
+  --t-emp:#C2410C; --t-tra:#1D4ED8; --t-per:#7C3AED; --t-rev:#92400E; --t-pro:#A16207; --t-reb:#BE123C;
+}
+[data-theme="sand"]{ --bg:#F8F7FF; --card:#FFFFFF; --text:#22213A; --muted:#6C6A86; --border:#E3E1F2; --soft:#EFEEFA; --card-fade:#FFFFFF; }
+[data-theme="navy"]{ --bg:#161925; --card:#1F2333; --text:#E6E8F0; --muted:#9AA0B4; --border:#2E3347; --soft:#262B3D; --accent:#E08A68; --accent-text:#161925; --green:#5FBF84; --red:#E57373; --card-fade:#1F2333;
+  --t-emp:#FB923C; --t-tra:#60A5FA; --t-per:#A78BFA; --t-rev:#D6A26B; --t-pro:#FACC15; --t-reb:#FB7185; }
+[data-theme="dark"]{ --bg:#111113; --card:#1A1A1D; --text:#ECEBE8; --muted:#9C9A95; --border:#2B2B2F; --soft:#222226; --accent:#E08A68; --accent-text:#111113; --green:#5FBF84; --red:#E57373; --card-fade:#1A1A1D;
+  --t-emp:#FB923C; --t-tra:#60A5FA; --t-per:#A78BFA; --t-rev:#D6A26B; --t-pro:#FACC15; --t-reb:#FB7185; }
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text)}
+body{font-family:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif;font-weight:400;font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+button{font-family:inherit;font-size:inherit;color:inherit;cursor:pointer}
+input,textarea,select{font-family:inherit;font-size:15px;background:var(--bg);color:var(--text);color-scheme:light;border:1px solid var(--border);border-radius:8px;padding:10px 12px;width:100%}
+[data-theme="dark"] input,[data-theme="dark"] textarea,[data-theme="dark"] select,
+[data-theme="navy"] input,[data-theme="navy"] textarea,[data-theme="navy"] select{color-scheme:dark}
+textarea{resize:vertical;min-height:80px;line-height:1.45}
+#boot{display:block;padding:14px 16px;background:var(--soft);color:var(--muted);font-size:13px;text-align:center}
+#boot-err{display:none;padding:12px 16px;background:#B3392F;color:#fff;font-size:13px;font-family:'Geist Mono',monospace}
+
+.header{position:sticky;top:0;z-index:100;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;padding:10px 16px;height:52px}
+.brand{font-weight:500;font-size:16px;white-space:nowrap}
+.brand small{font-family:'Geist Mono',monospace;font-size:11px;color:var(--muted);font-weight:400;margin-left:4px}
+.brand .long{color:var(--muted);font-weight:400;margin-left:6px}
+.sync{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap;background:none;border:none;padding:6px}
+.iconbtn{background:none;border:1px solid var(--border);border-radius:8px;min-width:40px;height:36px;font-size:15px}
+.tabs{position:sticky;top:52px;z-index:99;background:var(--bg);border-bottom:1px solid var(--border);display:flex;gap:2px;padding:0 10px;overflow-x:auto}
+.tab{background:none;border:none;border-bottom:2px solid transparent;padding:12px 10px;color:var(--muted);white-space:nowrap;min-height:44px}
+.tab.active{color:var(--text);border-bottom-color:var(--accent);font-weight:500}
+.page{max-width:760px;margin:0 auto;padding:16px 16px 80px}
+.section{display:none}
+.section.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
+.card h2{font-size:17px;font-weight:500;margin-bottom:8px}
+.card h3{font-size:15px;font-weight:500;margin:14px 0 6px}
+.card h3:first-child{margin-top:0}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.grow{flex:1}
+.btn{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-height:44px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-text);font-weight:500}
+.btn.danger{color:var(--red);border-color:var(--red);background:transparent}
+.btn.ghost{background:transparent}
+.btn:disabled{opacity:.45;cursor:default}
+.lede{font-size:14px;color:var(--muted);margin-bottom:12px}
+.pill{display:inline-block;border:1px solid currentColor;border-radius:999px;padding:1px 9px;font-size:12px;font-weight:500;background:transparent;white-space:nowrap}
+.tag{display:inline-block;font-size:11px;font-family:'Geist Mono',monospace;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:0 6px;margin-left:6px}
+ul.clean{list-style:none}
+ul.clean li{padding:4px 0 4px 16px;position:relative}
+ul.clean li::before{content:'';position:absolute;left:2px;top:12px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.kv{display:grid;grid-template-columns:130px 1fr;gap:6px 12px;font-size:14px}
+.kv dt{color:var(--muted)}
+@media (max-width:520px){.kv{grid-template-columns:1fr}.kv dt{margin-top:6px}}
+
+/* test */
+.progress{height:4px;background:var(--soft);border-radius:2px;overflow:hidden;margin:6px 0 14px}
+.progress span{display:block;height:100%;background:var(--accent)}
+.q{font-size:17px;font-weight:500;margin-bottom:12px}
+.opt{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;min-height:48px}
+.opt .rank{flex:0 0 26px;height:26px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Geist Mono',monospace;font-size:12px;color:var(--muted)}
+.opt.r1{border-color:var(--accent)}
+.opt.r1 .rank{background:var(--accent);border-color:var(--accent);color:var(--accent-text)}
+.opt.r2{border-color:var(--muted)}
+.opt.r2 .rank{border-color:var(--text);color:var(--text)}
+
+/* building */
+.bld{display:flex;flex-direction:column;gap:4px;margin:8px 0 4px}
+.floor{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--bg)}
+.floor .n{font-family:'Geist Mono',monospace;font-size:12px;color:var(--muted);width:16px}
+.floor .nm{width:120px;font-weight:500}
+.floor .bar{flex:1;height:8px;background:var(--soft);border-radius:4px;overflow:hidden}
+.floor .bar span{display:block;height:100%}
+.floor .lab{font-size:11px;font-family:'Geist Mono',monospace;white-space:nowrap}
+.floor.base{border-width:2px}
+@media (max-width:420px){.floor .nm{width:96px;font-size:14px}}
+
+/* people */
+.person{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;background:var(--card);width:100%;text-align:left;min-height:52px}
+.person .nm{font-weight:500}
+.chk{display:flex;align-items:flex-start;gap:10px;padding:8px 4px;border-bottom:1px solid var(--soft);cursor:pointer}
+.chk:last-child{border-bottom:none}
+.chk input{width:20px;height:20px;flex:0 0 20px;margin-top:2px;accent-color:var(--accent)}
+.cat{font-size:12px;font-family:'Geist Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:14px 0 2px}
+.cat:first-child{margin-top:0}
+.scorebar{display:flex;align-items:center;gap:8px;font-size:13px;margin:3px 0}
+.scorebar .nm{width:110px}
+.scorebar .bar{flex:1;height:6px;background:var(--soft);border-radius:3px;overflow:hidden}
+.scorebar .bar span{display:block;height:100%}
+.scorebar .v{width:22px;text-align:right;font-family:'Geist Mono',monospace;color:var(--muted)}
+.talk{border-left:3px solid var(--accent);padding:4px 0 4px 12px;margin:8px 0}
+.ep{border-top:1px solid var(--soft);padding:8px 0;font-size:14px}
+.ord{display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:8px;padding:6px 8px;margin-bottom:4px;background:var(--bg)}
+.ord .nm{flex:1;font-weight:500}
+.ord button{min-width:40px;height:36px;border:1px solid var(--border);border-radius:8px;background:var(--card)}
+.typecard{cursor:pointer}
+.typecard .head{display:flex;align-items:center;gap:10px}
+.typecard .body{display:none;margin-top:12px}
+.typecard.open .body{display:block}
+.dot{width:10px;height:10px;border-radius:50%;flex:0 0 10px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 14px;border-radius:10px;font-size:14px;z-index:200;display:none;align-items:center;gap:12px;max-width:calc(100% - 32px)}
+.toast button{background:none;border:none;color:var(--accent);font-weight:500;padding:4px}
+.footer{text-align:center;font-size:12px;color:var(--muted);font-family:'Geist Mono',monospace;margin-top:20px}
+.hidden{display:none !important}
+@media (max-width:520px){
+  .brand .long{display:none}
+  .header{padding:10px 12px;gap:6px}
+  .tab{padding:12px 8px;font-size:14px}
+}
+</style>
+</head>
+<body>
+<div id="boot">Chargement… / Loading… — si ce message reste affiché, JavaScript ne s’exécute pas : ouvre le fichier dans Chrome ou Safari. / If this stays, JavaScript is not running: open the file in Chrome or Safari.</div>
+<div id="boot-err"></div>
+
+<div class="header">
+  <div class="brand">pcm001<small>app <span class="ver">v1.0</span></small><span class="long" data-i18n="app.long"></span></div>
+  <button class="sync" id="sync-st" onclick="syncClick()"></button>
+  <button class="iconbtn" id="theme-btn" onclick="toggleTheme()" data-i18n-aria="a.theme">☀︎</button>
+</div>
+<div class="tabs" id="tabs">
+  <button class="tab active" data-tab="me" onclick="go('me')" data-i18n="tab.me"></button>
+  <button class="tab" data-tab="people" onclick="go('people')" data-i18n="tab.people"></button>
+  <button class="tab" data-tab="stress" onclick="go('stress')" data-i18n="tab.stress"></button>
+  <button class="tab" data-tab="guide" onclick="go('guide')" data-i18n="tab.guide"></button>
+  <button class="tab" data-tab="settings" onclick="go('settings')" data-i18n-aria="tab.settings">⚙︎</button>
+</div>
+
+<div class="page">
+  <div id="tab-me" class="section active"></div>
+  <div id="tab-people" class="section"></div>
+  <div id="tab-stress" class="section"></div>
+  <div id="tab-guide" class="section"></div>
+  <div id="tab-settings" class="section">
+    <div class="card">
+      <h2>🌐 Langue / Language</h2>
+      <div class="row">
+        <button class="btn grow" id="lang-fr" onclick="setLang('fr')">Français</button>
+        <button class="btn grow" id="lang-en" onclick="setLang('en')">English</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2 data-i18n="s.drive"></h2>
+      <p class="lede" id="drive-info"></p>
+      <div class="row">
+        <button class="btn primary grow" id="drive-btn" onclick="driveConnect()"></button>
+        <button class="btn grow" id="drive-sync-btn" onclick="syncNow(false)" data-i18n="s.syncNow"></button>
+      </div>
+    </div>
+    <div class="card">
+      <h2 data-i18n="s.display"></h2>
+      <div class="row" style="margin-bottom:10px">
+        <span class="grow" data-i18n="s.theme"></span>
+        <button class="btn" onclick="toggleTheme()" id="theme-name"></button>
+      </div>
+      <div class="row">
+        <span class="grow" data-i18n="s.fontsize"></span>
+        <button class="btn" onclick="stepFont(-1)">A−</button>
+        <span id="font-size-label" class="mono small" style="min-width:44px;text-align:center">100%</span>
+        <button class="btn" onclick="stepFont(1)">A+</button>
+        <button class="btn ghost" onclick="applyFontSize(2)" data-i18n="s.reset"></button>
+      </div>
+    </div>
+    <div class="card">
+      <h2 data-i18n="s.data"></h2>
+      <div class="row">
+        <button class="btn grow" onclick="exportJson()" data-i18n="s.export"></button>
+        <button class="btn grow" onclick="document.getElementById('imp').click()" data-i18n="s.import"></button>
+        <input type="file" id="imp" accept="application/json,.json" class="hidden" onchange="importJson(this)">
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn danger grow" onclick="resetAll()" data-i18n="s.wipe"></button>
+      </div>
+    </div>
+    <div class="card">
+      <h2 data-i18n="s.about"></h2>
+      <p class="small muted" data-i18n-html="s.aboutTxt"></p>
+    </div>
+    <div class="footer">pcm001 · v1.0 · 2026-10-02</div>
+  </div>
+</div>
+<div class="toast" id="toast"><span id="toast-msg"></span><button id="toast-btn" class="hidden"></button></div>
+
+<script>
+'use strict';
+/* =========================================================
+   pcm001 — Process Communication companion (personal use)
+   ========================================================= */
+var APP = 'pcm001';
+var SK = 'td_v4_pcm001', TK = 'td_theme_pcm001', FS_KEY = 'td_fs_pcm001', LANG_KEY = 'td_lang_pcm001', TOK_KEY = 'td_tok_pcm001', FID_KEY = 'td_fid_pcm001';
+var CLIENT_ID = '962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com';
+var SCOPE = 'https://www.googleapis.com/auth/drive.file';
+var DRIVE_NAME = 'pcm001.json';
+var TT = ['emp', 'tra', 'per', 'rev', 'pro', 'reb'];
+
+/* ---------------- I18N (UI) ---------------- */
+var I18N = {
+  en: {
+    'app.long': '· Process Comm',
+    'tab.me': 'Me', 'tab.people': 'People', 'tab.stress': 'Stress', 'tab.guide': 'Guide', 'tab.settings': 'Settings',
+    'a.theme': 'Change theme',
+    'sync.local': '⚫ Local', 'sync.pending': '🟡 Pending', 'sync.ok': '🟢 Sync ✓', 'sync.err': '🔴 Error',
+    'sync.gisErr': 'Could not load Google sign-in.', 'sync.wait': 'Google sign-in is still loading, try again in a second.',
+    'sync.reauth': 'Drive session expired — tap to reconnect.', 'sync.pulled': 'Updated from Drive',
+    'me.introT': 'Your PCM profile', 'me.intro': 'Two short questionnaires: your <b>base</b> (how you have always perceived the world) then your <b>phase</b> (what drives you and wears you down right now). About 5 minutes.',
+    'me.start': 'Start the test', 'me.manual': 'I know my official profile', 'me.retake': 'Retake the test', 'me.edit': 'Edit manually',
+    'me.stageB': 'Base · {i} / {n}', 'me.stageP': 'Phase · {i} / {n}',
+    'me.hintB': 'Tap your 1st choice, then optionally a 2nd. Tap again to clear.', 'me.hintP': 'One answer: what is truest for you right now.',
+    'me.prev': 'Back', 'me.next': 'Next', 'me.finish': 'See my profile', 'me.quit': 'Quit',
+    'me.building': 'Your building', 'me.bldHint': 'Floor 1 is your base. The longer the bar, the more available that type is to you.',
+    'me.base': 'Base', 'me.phase': 'Phase', 'me.yourBase': 'Your base: {x}', 'me.yourPhase': 'Your phase: {x}',
+    'me.tie': 'Close scores: your phase is uncertain between {x}. Check with the guide which one rings truest.',
+    'me.week': 'Feed your need this week', 'me.alert': 'Your warning signals',
+    'me.l1': 'Light stress (driver)', 'me.l2': 'Heavier stress (mask)',
+    'me.history': 'History', 'me.manualT': 'Enter my profile', 'me.manualHint': 'Order the six types from top (floor 6) to bottom (floor 1 = base), then choose the phase.',
+    'me.save': 'Save', 'me.cancel': 'Cancel', 'me.manualTag': 'manual', 'me.del': 'Delete', 'me.deleted': 'Result deleted', 'me.undo': 'Undo',
+    'me.talk': 'How to talk to you', 'me.date': 'on {x}',
+    'p.title': 'People', 'p.intro': 'Profile the people you deal with: observe their words, tone and gestures, then get a “how to talk to them” card.',
+    'p.namePh': 'Name', 'p.relPh': 'Relationship (manager, client…)', 'p.add': 'Add', 'p.empty': 'Nobody yet.',
+    'p.back': '← People', 'p.obs': 'Observation grid', 'p.obsHint': 'Tick what you have actually observed several times, not once.',
+    'p.est': 'Estimated profile', 'p.estNone': 'Tick a few cues to get an estimate.', 'p.estOut': 'Probable base: {x} ({n} cues)',
+    'p.confirm': 'Confirmed profile', 'p.baseSel': 'Base', 'p.phaseSel': 'Phase', 'p.unknown': '— unknown —', 'p.useEst': 'Use estimate',
+    'p.talk': 'How to talk to them', 'p.talkNone': 'Set at least the base to get the card.', 'p.phaseAssumed': 'Phase unknown: assumed equal to the base.',
+    'p.notes': 'Notes', 'p.notesPh': 'Context, what works, what to avoid…', 'p.eps': 'Stress episodes', 'p.epsNone': 'None logged.',
+    'p.del': 'Delete this person', 'p.deleted': '{x} deleted', 'p.cues': '{n} cues',
+    'c.channel': 'Channel', 'c.perc': 'Speak in terms of', 'c.motiv': 'To motivate', 'c.feed': 'Concretely', 'c.avoid': 'Avoid',
+    'c.sig1': 'First stress signal', 'c.sig2': 'If it gets worse', 'c.example': 'e.g. {x}',
+    's.title': 'Stress decoder', 's.intro': 'Tick what you observe. The app identifies the probable stress pattern and the response that works.',
+    's.who': 'About whom?', 's.nobody': '— nobody in particular —', 's.me': 'Me',
+    's.d1': 'Light signals', 's.d2': 'Strong signals', 's.result': 'Reading', 's.none': 'Tick at least one behaviour.',
+    's.what': 'What is happening', 's.do': 'What to do', 's.whatTxt': 'Their need ({x}) is not being met. They are moving into the stress sequence of the {y} type.',
+    's.consistent': 'Consistent with the known phase.', 's.check': 'Known phase is {x}: check whether the phase has changed.',
+    's.log': 'Log this episode', 's.notePh': 'Context (optional)', 's.logged': 'Episode logged', 's.clear': 'Clear',
+    's.deg2': 'level 2', 's.deg1': 'level 1',
+    'g.title': 'The six types', 'g.intro': 'Tap a type to open its card.',
+    'g.perc': 'Perception', 'g.str': 'Strengths', 'g.need': 'Psychological need', 'g.channel': 'Preferred channel', 'g.env': 'Environment',
+    'g.drv': 'Driver (1st degree)', 'g.mask': 'Mask (2nd degree)', 'g.feed': 'Feeding the need', 'g.words': 'Typical words',
+    'g.chT': 'The four channels',
+    's.drive': 'Google Drive', 's.syncNow': 'Sync now', 's.connect': 'Connect Drive', 's.reconnect': 'Reconnect Drive',
+    's.driveOn': 'Connected. Changes are saved to pcm001.json in your Drive two seconds after each edit, and pulled every minute.',
+    's.driveOff': 'Not connected: data stays in this browser only. Connect to sync between your phone and your computer.',
+    's.display': 'Display', 's.theme': 'Theme', 's.fontsize': 'Text size', 's.reset': 'Reset',
+    's.data': 'Data', 's.export': 'Export JSON', 's.import': 'Import JSON', 's.wipe': 'Erase all data',
+    's.wipeQ': 'Erase all pcm001 data on this device? (The Drive copy is kept.)', 's.wiped': 'Data erased',
+    's.imported': 'Import done', 's.badFile': 'Invalid file', 's.about': 'About',
+    's.aboutTxt': 'Indicative tool based on the published concepts of the Process Communication Model® (Taibi Kahler). It is <b>not</b> the official Personality Pattern Inventory, which only a certified trainer can administer. Use it to reflect, not to label people.',
+    'th.light': 'Light', 'th.sand': 'Sand', 'th.navy': 'Navy', 'th.dark': 'Dark',
+    'd.date': 'date'
+  },
+  fr: {
+    'app.long': '· Process Comm',
+    'tab.me': 'Moi', 'tab.people': 'Personnes', 'tab.stress': 'Stress', 'tab.guide': 'Guide', 'tab.settings': 'Réglages',
+    'a.theme': 'Changer de thème',
+    'sync.local': '⚫ Local', 'sync.pending': '🟡 En attente', 'sync.ok': '🟢 Sync ✓', 'sync.err': '🔴 Erreur',
+    'sync.gisErr': 'Impossible de charger la connexion Google.', 'sync.wait': 'La connexion Google se charge, réessaie dans une seconde.',
+    'sync.reauth': 'Session Drive expirée — touche pour te reconnecter.', 'sync.pulled': 'Mis à jour depuis Drive',
+    'me.introT': 'Ton profil PCM', 'me.intro': 'Deux questionnaires courts : ta <b>base</b> (ta façon de percevoir le monde depuis toujours) puis ta <b>phase</b> (ce qui te motive et t’use en ce moment). Environ 5 minutes.',
+    'me.start': 'Commencer le test', 'me.manual': 'Je connais mon profil officiel', 'me.retake': 'Refaire le test', 'me.edit': 'Saisir manuellement',
+    'me.stageB': 'Base · {i} / {n}', 'me.stageP': 'Phase · {i} / {n}',
+    'me.hintB': 'Touche ton 1er choix, puis éventuellement un 2e. Touche à nouveau pour effacer.', 'me.hintP': 'Une seule réponse : ce qui est le plus vrai pour toi en ce moment.',
+    'me.prev': 'Retour', 'me.next': 'Suivant', 'me.finish': 'Voir mon profil', 'me.quit': 'Quitter',
+    'me.building': 'Ton immeuble', 'me.bldHint': 'L’étage 1 est ta base. Plus la barre est longue, plus ce type t’est accessible.',
+    'me.base': 'Base', 'me.phase': 'Phase', 'me.yourBase': 'Ta base : {x}', 'me.yourPhase': 'Ta phase : {x}',
+    'me.tie': 'Scores serrés : ta phase hésite entre {x}. Vérifie dans le guide laquelle te parle le plus.',
+    'me.week': 'Nourrir ton besoin cette semaine', 'me.alert': 'Tes signaux d’alerte',
+    'me.l1': 'Stress léger (driver)', 'me.l2': 'Stress plus fort (masque)',
+    'me.history': 'Historique', 'me.manualT': 'Saisir mon profil', 'me.manualHint': 'Classe les six types du haut (étage 6) vers le bas (étage 1 = base), puis choisis la phase.',
+    'me.save': 'Enregistrer', 'me.cancel': 'Annuler', 'me.manualTag': 'manuel', 'me.del': 'Supprimer', 'me.deleted': 'Résultat supprimé', 'me.undo': 'Annuler',
+    'me.talk': 'Comment te parler', 'me.date': 'le {x}',
+    'p.title': 'Personnes', 'p.intro': 'Profile les personnes avec qui tu interagis : observe leurs mots, leur ton, leurs gestes, puis obtiens une fiche « comment lui parler ».',
+    'p.namePh': 'Nom', 'p.relPh': 'Relation (manager, client…)', 'p.add': 'Ajouter', 'p.empty': 'Personne pour l’instant.',
+    'p.back': '← Personnes', 'p.obs': 'Grille d’observation', 'p.obsHint': 'Coche ce que tu as réellement observé à plusieurs reprises, pas une seule fois.',
+    'p.est': 'Profil estimé', 'p.estNone': 'Coche quelques indices pour obtenir une estimation.', 'p.estOut': 'Base probable : {x} ({n} indices)',
+    'p.confirm': 'Profil retenu', 'p.baseSel': 'Base', 'p.phaseSel': 'Phase', 'p.unknown': '— inconnue —', 'p.useEst': 'Reprendre l’estimation',
+    'p.talk': 'Comment lui parler', 'p.talkNone': 'Renseigne au moins la base pour obtenir la fiche.', 'p.phaseAssumed': 'Phase inconnue : supposée identique à la base.',
+    'p.notes': 'Notes', 'p.notesPh': 'Contexte, ce qui marche, ce qu’il faut éviter…', 'p.eps': 'Épisodes de stress', 'p.epsNone': 'Aucun enregistré.',
+    'p.del': 'Supprimer cette personne', 'p.deleted': '{x} supprimé(e)', 'p.cues': '{n} indices',
+    'c.channel': 'Canal', 'c.perc': 'Parle en termes de', 'c.motiv': 'Pour motiver', 'c.feed': 'Concrètement', 'c.avoid': 'À éviter',
+    'c.sig1': 'Premier signal de stress', 'c.sig2': 'Si ça s’aggrave', 'c.example': 'ex. {x}',
+    's.title': 'Décodeur de stress', 's.intro': 'Coche ce que tu observes. L’app identifie la séquence de stress probable et la réponse qui fonctionne.',
+    's.who': 'À propos de qui ?', 's.nobody': '— personne en particulier —', 's.me': 'Moi',
+    's.d1': 'Signaux légers', 's.d2': 'Signaux forts', 's.result': 'Lecture', 's.none': 'Coche au moins un comportement.',
+    's.what': 'Ce qui se passe', 's.do': 'Que faire', 's.whatTxt': 'Son besoin ({x}) n’est pas nourri. Il ou elle entre dans la séquence de stress du type {y}.',
+    's.consistent': 'Cohérent avec la phase connue.', 's.check': 'La phase connue est {x} : vérifie s’il y a eu un changement de phase.',
+    's.log': 'Enregistrer l’épisode', 's.notePh': 'Contexte (facultatif)', 's.logged': 'Épisode enregistré', 's.clear': 'Effacer',
+    's.deg2': 'niveau 2', 's.deg1': 'niveau 1',
+    'g.title': 'Les six types', 'g.intro': 'Touche un type pour ouvrir sa fiche.',
+    'g.perc': 'Perception', 'g.str': 'Points forts', 'g.need': 'Besoin psychologique', 'g.channel': 'Canal préféré', 'g.env': 'Environnement',
+    'g.drv': 'Driver (1er degré)', 'g.mask': 'Masque (2e degré)', 'g.feed': 'Nourrir le besoin', 'g.words': 'Mots typiques',
+    'g.chT': 'Les quatre canaux',
+    's.drive': 'Google Drive', 's.syncNow': 'Synchroniser', 's.connect': 'Connecter Drive', 's.reconnect': 'Reconnecter Drive',
+    's.driveOn': 'Connecté. Les changements sont enregistrés dans pcm001.json sur ton Drive deux secondes après chaque modification, et récupérés chaque minute.',
+    's.driveOff': 'Non connecté : les données restent dans ce navigateur. Connecte-toi pour synchroniser ton téléphone et ton ordinateur.',
+    's.display': 'Affichage', 's.theme': 'Thème', 's.fontsize': 'Taille du texte', 's.reset': 'Réinitialiser',
+    's.data': 'Données', 's.export': 'Exporter JSON', 's.import': 'Importer JSON', 's.wipe': 'Effacer toutes les données',
+    's.wipeQ': 'Effacer toutes les données pcm001 de cet appareil ? (La copie Drive est conservée.)', 's.wiped': 'Données effacées',
+    's.imported': 'Import terminé', 's.badFile': 'Fichier invalide', 's.about': 'À propos',
+    's.aboutTxt': 'Outil indicatif fondé sur les concepts publiés du Process Communication Model® (Taibi Kahler). Ce n’est <b>pas</b> l’Inventaire de Personnalité officiel, que seul un formateur certifié peut administrer. À utiliser pour réfléchir, pas pour étiqueter les gens.',
+    'th.light': 'Clair', 'th.sand': 'Sable', 'th.navy': 'Marine', 'th.dark': 'Sombre',
+    'd.date': 'date'
+  }
+};
+var LANG = 'fr';
+function t(k, v) {
+  var s = (I18N[LANG] && I18N[LANG][k] !== undefined) ? I18N[LANG][k] : (I18N.en[k] !== undefined ? I18N.en[k] : k);
+  if (typeof s === 'string' && v) s = s.replace(/\{(\w+)\}/g, function (m, n) { return v[n] !== undefined ? v[n] : m; });
+  return s;
+}
+function L(o) { if (!o) return ''; return o[LANG] !== undefined ? o[LANG] : o.en; }
+function LOC() { return LANG === 'fr' ? 'fr-FR' : 'en-GB'; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+/* ---------------- PCM CONTENT ---------------- */
+var CH = {
+  dir: { name: { fr: 'Directif', en: 'Directive' }, how: { fr: 'Consignes courtes, claires, à l’impératif.', en: 'Short, clear instructions, in the imperative.' }, ex: { fr: '« Envoie-moi le fichier avant midi. »', en: '“Send me the file before noon.”' } },
+  int: { name: { fr: 'Interrogatif / informatif', en: 'Requestive / informative' }, how: { fr: 'Questions ouvertes, faits, données, échange d’égal à égal.', en: 'Open questions, facts, data, peer-to-peer exchange.' }, ex: { fr: '« Qu’en penses-tu ? Quelles options vois-tu ? »', en: '“What do you think? Which options do you see?”' } },
+  nur: { name: { fr: 'Bienveillant', en: 'Nurturative' }, how: { fr: 'Chaleur, attention à la personne, ton doux.', en: 'Warmth, attention to the person, gentle tone.' }, ex: { fr: '« Content de te voir. Comment tu te sens avec ce dossier ? »', en: '“Good to see you. How do you feel about this file?”' } },
+  emo: { name: { fr: 'Ludique', en: 'Emotive' }, how: { fr: 'Énergie, humour, réactions, un peu de jeu.', en: 'Energy, humour, reactions, a bit of play.' }, ex: { fr: '« Allez, on s’attaque à ce monstre ? Ça va être fun ! »', en: '“Shall we tackle this beast? It’s going to be fun!”' } }
+};
+
+var TYPES = {
+  emp: {
+    name: { fr: 'Empathique', en: 'Harmonizer' }, ch: 'nur',
+    perc: { fr: 'les émotions — « je ressens »', en: 'emotions — “I feel”' },
+    percShort: { fr: 'ressenti, confort, relation', en: 'feelings, comfort, relationship' },
+    str: { fr: 'compatissant, sensible, chaleureux', en: 'compassionate, sensitive, warm' },
+    need: { fr: 'reconnaissance de la personne et besoins sensoriels', en: 'recognition of the person and sensory needs' },
+    env: { fr: 'en groupe, dans un cadre agréable', en: 'in a group, in a pleasant setting' },
+    drv: { fr: '« Fais plaisir » : dit oui à tout, s’excuse, n’ose pas demander', en: '“Please others”: says yes to everything, apologises, does not dare ask' },
+    mask: { fr: 'Fait des erreurs inhabituelles, se dévalorise, rit de façon forcée', en: 'Makes unusual mistakes, puts themselves down, forced laughter' },
+    feed: { fr: ['Un compliment sur la personne, pas seulement sur le travail', 'Un moment chaleureux : café, déjeuner, appel', 'Un environnement agréable : lumière, musique, plante', 'Prendre des nouvelles avant d’entrer dans le sujet'], en: ['A compliment on the person, not only on the work', 'A warm moment: coffee, lunch, a call', 'A pleasant setting: light, music, a plant', 'Ask how they are before getting to the point'] },
+    avoid: { fr: 'La froideur, le ton sec, les reproches publics', en: 'Coldness, curt tone, public criticism' },
+    words: { fr: 'je ressens, je me sens, confortable, ça me touche', en: 'I feel, comfortable, it touches me' }
+  },
+  tra: {
+    name: { fr: 'Travaillomane', en: 'Thinker' }, ch: 'int',
+    perc: { fr: 'les pensées — « je pense »', en: 'thoughts — “I think”' },
+    percShort: { fr: 'faits, données, logique', en: 'facts, data, logic' },
+    str: { fr: 'logique, responsable, organisé', en: 'logical, responsible, organised' },
+    need: { fr: 'reconnaissance du travail et structuration du temps', en: 'recognition for work and time structure' },
+    env: { fr: 'en tête-à-tête ou seul, avec un cadre clair', en: 'one-to-one or alone, with a clear frame' },
+    drv: { fr: '« Sois parfait » : sur-détaille, ne délègue pas, explique tout', en: '“Be perfect”: over-details, won’t delegate, explains everything' },
+    mask: { fr: 'Sur-contrôle, critique sur l’organisation, le temps, l’argent', en: 'Over-controls, criticises organisation, time, money' },
+    feed: { fr: ['Reconnaître un résultat précis, chiffres à l’appui', 'Un planning, des échéances et des objectifs clairs', 'Lui demander son analyse avant de décider', 'Des réunions qui démarrent et finissent à l’heure'], en: ['Acknowledge a specific result, with figures', 'A schedule, deadlines and clear objectives', 'Ask for their analysis before deciding', 'Meetings that start and end on time'] },
+    avoid: { fr: 'Le flou, l’improvisation, les retards non annoncés', en: 'Vagueness, improvisation, unannounced delays' },
+    words: { fr: 'je pense, options, données, quelles sont les étapes', en: 'I think, options, data, what are the steps' }
+  },
+  per: {
+    name: { fr: 'Persévérant', en: 'Persister' }, ch: 'int',
+    perc: { fr: 'les opinions — « à mon avis »', en: 'opinions — “in my opinion”' },
+    percShort: { fr: 'valeurs, convictions, engagement', en: 'values, beliefs, commitment' },
+    str: { fr: 'engagé, consciencieux, observateur', en: 'dedicated, conscientious, observant' },
+    need: { fr: 'reconnaissance du travail et des convictions', en: 'recognition for work and convictions' },
+    env: { fr: 'en tête-à-tête ou en petit comité', en: 'one-to-one or small group' },
+    drv: { fr: '« Sois parfait » pour les autres : corrige, exige, relève les détails', en: '“Be perfect” for others: corrects, demands, points out details' },
+    mask: { fr: 'Impose ses opinions, fait la morale, traque les erreurs, se méfie', en: 'Imposes opinions, preaches, hunts mistakes, becomes suspicious' },
+    feed: { fr: ['Lui demander son avis, et en tenir compte', 'Reconnaître son engagement et la qualité de son travail', 'Expliquer le sens et les valeurs derrière une décision', 'Respecter les engagements pris'], en: ['Ask for their opinion, and use it', 'Recognise their commitment and quality of work', 'Explain the purpose and values behind a decision', 'Keep the commitments made'] },
+    avoid: { fr: 'Le manque de parole, l’incohérence, l’hypocrisie', en: 'Broken promises, inconsistency, hypocrisy' },
+    words: { fr: 'à mon avis, je crois, il faut, ce n’est pas normal', en: 'in my opinion, I believe, we should, that’s not right' }
+  },
+  rev: {
+    name: { fr: 'Rêveur', en: 'Imaginer' }, ch: 'dir',
+    perc: { fr: 'les inactions — « j’imagine »', en: 'inactions — “I imagine”' },
+    percShort: { fr: 'réflexion, recul, imagination', en: 'reflection, distance, imagination' },
+    str: { fr: 'imaginatif, réfléchi, calme', en: 'imaginative, reflective, calm' },
+    need: { fr: 'solitude, du temps et de l’espace à soi', en: 'solitude, time and space alone' },
+    env: { fr: 'seul, au calme', en: 'alone, in a calm place' },
+    drv: { fr: '« Sois fort » : attend, ne demande rien, se met en retrait', en: '“Be strong”: waits, asks for nothing, withdraws' },
+    mask: { fr: 'Se replie, laisse les tâches inachevées, attend passivement', en: 'Withdraws, leaves tasks unfinished, waits passively' },
+    feed: { fr: ['Des consignes claires, puis le laisser faire seul', 'Des plages sans interruption', 'Du temps pour répondre, pas de pression à parler', 'Un lieu calme pour travailler'], en: ['Clear instructions, then let them work alone', 'Uninterrupted time blocks', 'Time to answer, no pressure to talk', 'A quiet place to work'] },
+    avoid: { fr: 'Les sollicitations permanentes, le brouhaha, le flou des consignes', en: 'Constant interruptions, noise, vague instructions' },
+    words: { fr: 'j’imagine, peut-être, il faudrait voir, (silences)', en: 'I imagine, maybe, we’d need to see, (silences)' }
+  },
+  pro: {
+    name: { fr: 'Promoteur', en: 'Promoter' }, ch: 'dir',
+    perc: { fr: 'les actions — « allons-y »', en: 'actions — “let’s go”' },
+    percShort: { fr: 'action, résultat immédiat, défi', en: 'action, immediate result, challenge' },
+    str: { fr: 'adaptable, persuasif, charmeur', en: 'adaptable, persuasive, charming' },
+    need: { fr: 'excitation : action, défis, intensité', en: 'incidence: action, challenge, intensity' },
+    env: { fr: 'en groupe, en mouvement, avec des enjeux', en: 'in a group, on the move, with stakes' },
+    drv: { fr: '« Sois fort » pour les autres : « débrouille-toi », attend que les autres assurent', en: '“Be strong” for others: “sort it out yourself”, expects others to cope' },
+    mask: { fr: 'Prend des risques excessifs, contourne les règles, manipule, monte les gens les uns contre les autres', en: 'Takes excessive risks, bends rules, manipulates, sets people against each other' },
+    feed: { fr: ['Un défi concret avec un enjeu', 'Aller droit au but, décider vite', 'De la marge de manœuvre et du mouvement', 'Des résultats visibles rapidement'], en: ['A concrete challenge with stakes', 'Get to the point, decide fast', 'Room to manoeuvre and movement', 'Results visible quickly'] },
+    avoid: { fr: 'Le blabla, la lenteur, les procédures sans fin', en: 'Waffle, slowness, endless procedures' },
+    words: { fr: 'allez, concrètement, on y va, le deal', en: 'come on, concretely, let’s go, the deal' }
+  },
+  reb: {
+    name: { fr: 'Rebelle', en: 'Rebel' }, ch: 'emo',
+    perc: { fr: 'les réactions — « j’aime / j’aime pas »', en: 'reactions — “I like / I don’t like”' },
+    percShort: { fr: 'envies, réactions, plaisir', en: 'likes, reactions, fun' },
+    str: { fr: 'spontané, créatif, ludique', en: 'spontaneous, creative, playful' },
+    need: { fr: 'contact ludique, stimulation, fun', en: 'playful contact, stimulation, fun' },
+    env: { fr: 'en groupe, dans une ambiance animée', en: 'in a group, in a lively atmosphere' },
+    drv: { fr: '« Fais effort » : « je vais essayer », trouve tout compliqué, répond à côté', en: '“Try hard”: “I’ll try”, finds everything complicated, answers off-topic' },
+    mask: { fr: 'Blâme les autres, « c’est pas ma faute », râle, se venge', en: 'Blames others, “not my fault”, complains, gets back at people' },
+    feed: { fr: ['De l’humour et de la légèreté dans l’échange', 'Varier les activités, casser la routine', 'Des moments de contact informel', 'Laisser une part de créativité'], en: ['Humour and lightness in the exchange', 'Vary activities, break routine', 'Moments of informal contact', 'Leave room for creativity'] },
+    avoid: { fr: 'L’ennui, le sérieux excessif, les leçons de morale', en: 'Boredom, excessive seriousness, lectures' },
+    words: { fr: 'waouh, j’adore, c’est nul, trop bien', en: 'wow, I love it, that sucks, awesome' }
+  }
+};
+
+/* Base questionnaire: 12 forced-choice questions */
+function O(emp, tra, per, rev, pro, reb) { return { emp: emp, tra: tra, per: per, rev: rev, pro: pro, reb: reb }; }
+function B(fr, en) { return { fr: fr, en: en }; }
+var QB = [
+  { id: 'b1', q: B('Face à une situation nouvelle, j’ai d’abord tendance à…', 'Faced with a new situation, I first tend to…'), o: O(
+    B('sentir l’ambiance et l’état des personnes', 'sense the mood and how people are'), B('analyser les faits et organiser l’information', 'analyse the facts and organise the information'),
+    B('me faire une opinion sur ce qui est juste', 'form an opinion on what is right'), B('prendre du recul et réfléchir seul', 'step back and think alone'),
+    B('passer à l’action rapidement', 'take action quickly'), B('réagir spontanément : j’aime ou j’aime pas', 'react spontaneously: I like it or I don’t')) },
+  { id: 'b2', q: B('Ce que mes proches apprécient le plus chez moi :', 'What people close to me value most in me:'), o: O(
+    B('ma chaleur et mon attention aux autres', 'my warmth and care for others'), B('ma fiabilité et mon sens de l’organisation', 'my reliability and organisation'),
+    B('mon engagement et ma loyauté à mes valeurs', 'my commitment and loyalty to my values'), B('mon calme et mon imagination', 'my calm and imagination'),
+    B('ma débrouillardise et mon charme', 'my resourcefulness and charm'), B('mon humour et ma créativité', 'my humour and creativity')) },
+  { id: 'b3', q: B('Une phrase qui me ressemble :', 'A phrase that sounds like me:'), o: O(
+    B('« Je sens que… »', '“I feel that…”'), B('« Je pense que… »', '“I think that…”'),
+    B('« À mon avis… »', '“In my opinion…”'), B('« J’imagine que… »', '“I imagine that…”'),
+    B('« Allez, on y va. »', '“Come on, let’s go.”'), B('« Trop bien ! » ou « Bof… »', '“Awesome!” or “Meh…”')) },
+  { id: 'b4', q: B('Mon environnement idéal :', 'My ideal environment:'), o: O(
+    B('chaleureux, entouré de gens que j’aime', 'warm, surrounded by people I like'), B('structuré, avec un planning clair', 'structured, with a clear schedule'),
+    B('un lieu où mes convictions comptent', 'a place where my beliefs matter'), B('calme, seul, sans interruptions', 'quiet, alone, no interruptions'),
+    B('en mouvement, avec des défis', 'on the move, with challenges'), B('animé, ludique, plein de gens sympas', 'lively, playful, full of fun people')) },
+  { id: 'b5', q: B('Ce qui me fait le plus plaisir :', 'What pleases me most:'), o: O(
+    B('qu’on m’apprécie pour ce que je suis', 'being liked for who I am'), B('qu’on reconnaisse la qualité de mon travail', 'recognition for the quality of my work'),
+    B('qu’on me demande mon avis et respecte mes valeurs', 'being asked my opinion and having my values respected'), B('qu’on me laisse du temps pour moi', 'being left time for myself'),
+    B('relever un défi, réussir un coup', 'winning a challenge, pulling off a move'), B('m’amuser, rire, découvrir', 'having fun, laughing, discovering')) },
+  { id: 'b6', q: B('Enfant, j’étais plutôt…', 'As a child, I was rather…'), o: O(
+    B('sensible et câlin', 'sensitive and affectionate'), B('sérieux et appliqué', 'serious and diligent'),
+    B('consciencieux, avec des idées arrêtées', 'conscientious, with firm ideas'), B('rêveur, dans ma bulle', 'dreamy, in my own bubble'),
+    B('débrouillard et aventurier', 'resourceful and adventurous'), B('joueur et espiègle', 'playful and mischievous')) },
+  { id: 'b7', q: B('Dans un projet, je suis naturellement celui qui…', 'In a project, I am naturally the one who…'), o: O(
+    B('prend soin de la cohésion du groupe', 'looks after team cohesion'), B('planifie et structure', 'plans and structures'),
+    B('défend la qualité et le sens', 'defends quality and purpose'), B('imagine des pistes originales', 'imagines original ideas'),
+    B('fait bouger les choses et négocie', 'gets things moving and negotiates'), B('apporte l’énergie et les idées neuves', 'brings energy and fresh ideas')) },
+  { id: 'b8', q: B('Quand on me confie une tâche, je préfère…', 'When given a task, I prefer…'), o: O(
+    B('qu’on me la confie avec gentillesse', 'that it’s asked kindly'), B('avoir les infos et organiser moi-même', 'getting the information and organising it myself'),
+    B('qu’on me demande ce que j’en pense', 'being asked what I think of it'), B('des consignes précises, puis du calme', 'precise instructions, then quiet'),
+    B('aller droit au but', 'going straight to the point'), B('que ce soit fun, sinon je décroche', 'that it’s fun, otherwise I switch off')) },
+  { id: 'b9', q: B('Ce qui m’agace le plus :', 'What annoys me most:'), o: O(
+    B('la froideur et les conflits', 'coldness and conflict'), B('la désorganisation et l’imprécision', 'disorganisation and imprecision'),
+    B('le manque d’engagement et l’hypocrisie', 'lack of commitment and hypocrisy'), B('être bousculé, pressé de parler', 'being rushed, pushed to talk'),
+    B('la lenteur et le blabla', 'slowness and waffle'), B('l’ennui et la routine', 'boredom and routine')) },
+  { id: 'b10', q: B('Mon temps libre idéal :', 'My ideal free time:'), o: O(
+    B('avec mes proches, des moments chaleureux', 'with loved ones, warm moments'), B('un projet perso bien mené, une lecture instructive', 'a well-run personal project, an instructive read'),
+    B('une cause, une activité qui a du sens', 'a cause, a meaningful activity'), B('seul, rêverie, nature', 'alone, daydreaming, nature'),
+    B('sensations, sport, sortie', 'thrills, sport, going out'), B('fête, jeux, nouveautés', 'parties, games, new things')) },
+  { id: 'b11', q: B('On me décrit souvent comme…', 'People often describe me as…'), o: O(
+    B('attentionné et chaleureux', 'caring and warm'), B('logique et responsable', 'logical and responsible'),
+    B('engagé et consciencieux', 'committed and conscientious'), B('réfléchi et imaginatif', 'thoughtful and imaginative'),
+    B('adaptable et persuasif', 'adaptable and persuasive'), B('spontané et créatif', 'spontaneous and creative')) },
+  { id: 'b12', q: B('Pour décider, je m’appuie surtout sur…', 'To decide, I rely mostly on…'), o: O(
+    B('ce que je ressens et l’impact sur les gens', 'what I feel and the impact on people'), B('les données et la logique', 'data and logic'),
+    B('mes valeurs et convictions', 'my values and beliefs'), B('une réflexion intérieure, sans pression', 'inner reflection, without pressure'),
+    B('l’opportunité du moment', 'the opportunity of the moment'), B('mon envie du moment', 'what I feel like at the moment')) }
+];
+var QP = [
+  { id: 'p1', q: B('En ce moment, ce qui me recharge le plus :', 'Right now, what recharges me most:'), o: O(
+    B('être avec des gens que j’aime, dans un cadre agréable', 'being with people I like, in a pleasant setting'), B('voir mes résultats reconnus, un planning maîtrisé', 'seeing my results recognised, a schedule under control'),
+    B('qu’on reconnaisse mon engagement et mes convictions', 'having my commitment and beliefs recognised'), B('du temps seul, au calme', 'time alone, in peace'),
+    B('de l’action, des défis, de l’intensité', 'action, challenges, intensity'), B('du fun, du contact, de la légèreté', 'fun, contact, lightness')) },
+  { id: 'p2', q: B('En ce moment, sous pression, je me surprends à…', 'Right now, under pressure, I catch myself…'), o: O(
+    B('dire oui à tout, m’excuser, me dévaloriser', 'saying yes to everything, apologising, putting myself down'), B('tout contrôler, critiquer l’organisation des autres', 'controlling everything, criticising others’ organisation'),
+    B('imposer mon point de vue, relever les erreurs', 'imposing my view, pointing out mistakes'), B('me replier, laisser des choses en plan', 'withdrawing, leaving things unfinished'),
+    B('prendre des risques, contourner les règles', 'taking risks, bending the rules'), B('râler, blâmer les autres', 'complaining, blaming others')) },
+  { id: 'p3', q: B('Ma motivation actuelle vient surtout…', 'My motivation right now comes mostly from…'), o: O(
+    B('des relations', 'relationships'), B('d’accomplir et d’atteindre mes objectifs', 'achieving my goals'),
+    B('de mes convictions', 'my beliefs'), B('de mon espace intérieur', 'my inner space'),
+    B('de la stimulation', 'stimulation'), B('du plaisir', 'enjoyment')) },
+  { id: 'p4', q: B('Ce qui me manque le plus en ce moment :', 'What I miss most right now:'), o: O(
+    B('de la chaleur et de l’attention', 'warmth and attention'), B('qu’on reconnaisse mon travail, de la structure', 'recognition for my work, structure'),
+    B('qu’on m’écoute sur ce qui compte', 'being listened to on what matters'), B('de la solitude', 'solitude'),
+    B('de l’excitation', 'excitement'), B('du jeu et du contact', 'play and contact')) },
+  { id: 'p5', q: B('Ce qui m’use le plus aujourd’hui :', 'What wears me down most today:'), o: O(
+    B('les tensions relationnelles', 'relational tension'), B('le flou et les retards', 'vagueness and delays'),
+    B('le manque d’intégrité', 'lack of integrity'), B('les sollicitations permanentes', 'constant demands'),
+    B('l’ennui, la lenteur', 'boredom, slowness'), B('la rigidité, le sérieux excessif', 'rigidity, excessive seriousness')) },
+  { id: 'p6', q: B('Si je pouvais m’offrir une chose cette semaine :', 'If I could treat myself to one thing this week:'), o: O(
+    B('un moment chaleureux avec des proches', 'a warm moment with loved ones'), B('une victoire tangible sur un objectif', 'a tangible win on a goal'),
+    B('défendre une cause qui me tient à cœur', 'standing up for a cause I care about'), B('une journée seul, sans rien prévoir', 'a day alone, with nothing planned'),
+    B('un défi ou une prise de risque', 'a challenge or a risk'), B('une sortie fun et imprévue', 'a fun, unplanned outing')) }
+];
+
+/* Observation cues for others */
+var CUES = [
+  { cat: B('Mots', 'Words'), o: O(
+    B('Parle de ressenti : « je me sens », « confortable »', 'Talks about feelings: “I feel”, “comfortable”'), B('Parle de faits et de logique : « je pense », chiffres, options', 'Talks facts and logic: “I think”, figures, options'),
+    B('Donne son avis : « à mon avis », « il faut », valeurs', 'Gives opinions: “in my opinion”, “we should”, values'), B('Parle peu, « j’imagine », « peut-être », longs silences', 'Says little, “I imagine”, “maybe”, long silences'),
+    B('Va droit au but : « concrètement », « on y va »', 'Gets to the point: “concretely”, “let’s go”'), B('Réagit : « waouh », « trop bien », « c’est nul »', 'Reacts: “wow”, “awesome”, “that sucks”')) },
+  { cat: B('Ton', 'Tone'), o: O(
+    B('Doux, chaleureux', 'Soft, warm'), B('Neutre, posé, précis', 'Neutral, calm, precise'),
+    B('Assuré, ferme, convaincu', 'Assured, firm, convinced'), B('Lent, monocorde', 'Slow, monotone'),
+    B('Direct, sûr de lui, charmeur', 'Direct, confident, charming'), B('Animé, très expressif', 'Lively, very expressive')) },
+  { cat: B('Gestes', 'Gestures'), o: O(
+    B('Gestes ouverts, touche le bras', 'Open gestures, touches your arm'), B('Gestes précis, compte sur ses doigts', 'Precise gestures, counts on fingers'),
+    B('Doigt pointé, gestes d’emphase', 'Pointing finger, emphatic gestures'), B('Très peu de gestes', 'Very few gestures'),
+    B('Gestes amples, prend de la place', 'Broad gestures, takes up space'), B('Beaucoup de gestes et de mimiques', 'Lots of gestures and faces')) },
+  { cat: B('Posture', 'Posture'), o: O(
+    B('Détendue, tournée vers l’autre', 'Relaxed, turned towards you'), B('Droite, stable', 'Upright, steady'),
+    B('Penchée en avant, engagée', 'Leaning forward, engaged'), B('Immobile, en retrait', 'Still, withdrawn'),
+    B('Décontractée, sûre d’elle', 'Casual, self-assured'), B('Mobile, ne tient pas en place', 'Restless, can’t sit still')) },
+  { cat: B('Visage', 'Face'), o: O(
+    B('Sourire doux, regard bienveillant', 'Gentle smile, kind look'), B('Regard concentré, sourcils pensifs', 'Focused look, thoughtful brow'),
+    B('Sourcils froncés, regard qui évalue', 'Frowning, evaluating look'), B('Peu expressif, regard dans le vague', 'Little expression, gaze far away'),
+    B('Sourire en coin, regard qui jauge', 'Half-smile, sizing you up'), B('Expressions marquées, clins d’œil', 'Big expressions, winks')) }
+];
+
+/* Stress decoder items */
+var STRESS = [
+  { id: 'd1a', d: 1, t: ['emp'], x: B('S’excuse beaucoup, dit oui à tout pour faire plaisir', 'Apologises a lot, says yes to everything to please') },
+  { id: 'd1b', d: 1, t: ['emp'], x: B('Demandes très enrobées, n’ose pas dire non', 'Very wrapped-up requests, can’t say no') },
+  { id: 'd1c', d: 1, t: ['tra', 'per'], x: B('Sur-détaille, ajoute des précisions et des parenthèses', 'Over-details, adds clarifications and asides') },
+  { id: 'd1d', d: 1, t: ['tra', 'per'], x: B('Corrige les détails, ne laisse pas les autres finir', 'Corrects details, doesn’t let others finish') },
+  { id: 'd1e', d: 1, t: ['rev'], x: B('Attend sans rien demander, se met en retrait', 'Waits without asking anything, withdraws') },
+  { id: 'd1f', d: 1, t: ['pro'], x: B('Laisse les autres se débrouiller : « à toi de jouer »', 'Leaves others to cope: “your move”') },
+  { id: 'd1g', d: 1, t: ['reb'], x: B('« Je vais essayer », trouve tout compliqué', '“I’ll try”, finds everything complicated') },
+  { id: 'd1h', d: 1, t: ['reb'], x: B('Répond à côté, demande de répéter', 'Answers off-topic, asks you to repeat') },
+  { id: 'd2a', d: 2, t: ['emp'], x: B('Fait des erreurs inhabituelles', 'Makes unusual mistakes') },
+  { id: 'd2b', d: 2, t: ['emp'], x: B('Se dévalorise, rit de façon forcée', 'Puts themselves down, forced laughter') },
+  { id: 'd2c', d: 2, t: ['tra'], x: B('Sur-contrôle, ne délègue plus rien', 'Over-controls, delegates nothing') },
+  { id: 'd2d', d: 2, t: ['tra'], x: B('Critique l’organisation, le temps, l’argent', 'Criticises organisation, time, money') },
+  { id: 'd2e', d: 2, t: ['per'], x: B('Impose ses opinions, fait la morale', 'Imposes opinions, lectures people') },
+  { id: 'd2f', d: 2, t: ['per'], x: B('Traque les erreurs, devient méfiant', 'Hunts for mistakes, becomes suspicious') },
+  { id: 'd2g', d: 2, t: ['rev'], x: B('Se replie, devient injoignable', 'Withdraws, becomes unreachable') },
+  { id: 'd2h', d: 2, t: ['rev'], x: B('Laisse des tâches inachevées, attend passivement', 'Leaves tasks unfinished, waits passively') },
+  { id: 'd2i', d: 2, t: ['pro'], x: B('Prend des risques excessifs, contourne les règles', 'Takes excessive risks, bends the rules') },
+  { id: 'd2j', d: 2, t: ['pro'], x: B('Manipule, monte les gens les uns contre les autres', 'Manipulates, sets people against each other') },
+  { id: 'd2k', d: 2, t: ['reb'], x: B('Blâme les autres : « c’est pas ma faute »', 'Blames others: “not my fault”') },
+  { id: 'd2l', d: 2, t: ['reb'], x: B('Râle, se plaint, cherche à se venger', 'Complains, moans, wants revenge') }
+];
+
+/* deterministic shuffle so options never appear in the same type order */
+function hsh(s) { var x = 7; for (var i = 0; i < s.length; i++) x = (x * 31 + s.charCodeAt(i)) | 0; return x; }
+function mix(seed) { return TT.slice().sort(function (a, b) { return hsh(seed + a) - hsh(seed + b); }); }
+function tName(k) { return k && TYPES[k] ? L(TYPES[k].name) : '?'; }
+function tColor(k) { return 'var(--t-' + k + ')'; }
+function tPill(k) { return '<span class="pill" style="color:' + tColor(k) + '">' + esc(tName(k)) + '</span>'; }
+
+/* ---------------- STATE ---------------- */
+var S = null;
+function blank() { return { v: 1, updatedAt: 0, self: { draft: { b: {}, p: {} }, results: [] }, people: [] }; }
+function ensureState() {
+  if (!S || typeof S !== 'object') S = blank();
+  if (!S.self || typeof S.self !== 'object') S.self = { draft: { b: {}, p: {} }, results: [] };
+  if (!S.self.draft) S.self.draft = { b: {}, p: {} };
+  if (!S.self.draft.b) S.self.draft.b = {};
+  if (!S.self.draft.p) S.self.draft.p = {};
+  if (!Array.isArray(S.self.results)) S.self.results = [];
+  S.self.results = S.self.results.filter(function (r) { return r && Array.isArray(r.order) && r.order.length === 6; });
+  if (!Array.isArray(S.people)) S.people = [];
+  S.people = S.people.filter(function (p) { return p && p.id; });
+  S.people.forEach(function (p) {
+    if (!p.obs || typeof p.obs !== 'object') p.obs = {};
+    if (!Array.isArray(p.episodes)) p.episodes = [];
+    if (typeof p.notes !== 'string') p.notes = '';
+    if (typeof p.name !== 'string') p.name = '?';
+    if (typeof p.rel !== 'string') p.rel = '';
+    if (TT.indexOf(p.base) < 0) p.base = '';
+    if (TT.indexOf(p.phase) < 0) p.phase = '';
+  });
+  if (typeof S.updatedAt !== 'number') S.updatedAt = 0;
+}
+function saveLocal() { try { localStorage.setItem(SK, JSON.stringify(S)); } catch (e) {} }
+function loadLocal() { try { S = JSON.parse(localStorage.getItem(SK) || 'null'); } catch (e) { S = null; } ensureState(); }
+var pushTimer = null;
+function autoSave() {
+  S.updatedAt = Date.now();
+  saveLocal();
+  if (tokValid()) {
+    setSync('pending');
+    if (pushTimer) clearTimeout(pushTimer);
+    pushTimer = setTimeout(function () { pushTimer = null; syncNow(true); }, 2000);
+  } else setSync(tok ? 'err' : 'local');
+}
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function today() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+function fmtDate(iso) {
+  if (!iso) return '';
+  var p = iso.split('-');
+  var d = new Date(+p[0], +p[1] - 1, +p[2]);
+  return d.toLocaleDateString(LOC(), { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+/* ---------------- UI STATE ---------------- */
+var UI = { tab: 'me', test: null, manual: null, person: null, stressSel: {}, stressWho: '', stressNote: '', open: {} };
+
+/* ---------------- TOAST ---------------- */
+var toastTimer = null, toastAction = null;
+function toast(msg, btnLabel, action) {
+  var el = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  var b = document.getElementById('toast-btn');
+  toastAction = action || null;
+  if (btnLabel) { b.textContent = btnLabel; b.className = ''; b.onclick = function () { if (toastAction) toastAction(); el.style.display = 'none'; }; }
+  else b.className = 'hidden';
+  el.style.display = 'flex';
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { el.style.display = 'none'; }, btnLabel ? 6000 : 2600);
+}
+
+/* ---------------- NAV ---------------- */
+function go(tab) {
+  UI.tab = tab;
+  var tabs = document.querySelectorAll('.tab');
+  for (var i = 0; i < tabs.length; i++) tabs[i].className = 'tab' + (tabs[i].getAttribute('data-tab') === tab ? ' active' : '');
+  var secs = document.querySelectorAll('.section');
+  for (var j = 0; j < secs.length; j++) secs[j].className = 'section' + (secs[j].id === 'tab-' + tab ? ' active' : '');
+  renderAll();
+  window.scrollTo(0, 0);
+}
+
+/* =========================================================
+   ME TAB
+   ========================================================= */
+function computeResult() {
+  var bs = {}, firsts = {}, ps = {};
+  TT.forEach(function (k) { bs[k] = 0; firsts[k] = 0; ps[k] = 0; });
+  QB.forEach(function (q) {
+    var a = S.self.draft.b[q.id] || [];
+    if (a[0]) { bs[a[0]] += 2; firsts[a[0]]++; }
+    if (a[1]) bs[a[1]] += 1;
+  });
+  QP.forEach(function (q) { var a = S.self.draft.p[q.id]; if (a) ps[a]++; });
+  var order = TT.slice().sort(function (a, b) { return (bs[b] - bs[a]) || (firsts[b] - firsts[a]) || (TT.indexOf(a) - TT.indexOf(b)); });
+  var max = 0; TT.forEach(function (k) { if (ps[k] > max) max = ps[k]; });
+  var tied = order.filter(function (k) { return ps[k] === max; });
+  var phase = tied[0];
+  return { id: uid(), date: today(), order: order, bs: bs, ps: ps, base: order[0], phase: phase, tie: tied.length > 1 ? tied : null, manual: false };
+}
+function startTest() {
+  S.self.draft = { b: {}, p: {} };
+  UI.test = { stage: 'b', i: 0 };
+  saveLocal();
+  renderMe();
+}
+function quitTest() { UI.test = null; renderMe(); }
+function pickB(qid, k) {
+  var a = (S.self.draft.b[qid] || []).slice();
+  var at = a.indexOf(k);
+  if (at >= 0) a.splice(at, 1);
+  else if (a.length < 2) a.push(k);
+  else a[1] = k;
+  S.self.draft.b[qid] = a;
+  saveLocal();
+  renderMe();
+}
+function pickP(qid, k) { S.self.draft.p[qid] = k; saveLocal(); renderMe(); }
+function testNav(d) {
+  var T = UI.test;
+  var list = T.stage === 'b' ? QB : QP;
+  var ni = T.i + d;
+  if (ni < 0) { if (T.stage === 'p') { T.stage = 'b'; T.i = QB.length - 1; } }
+  else if (ni >= list.length) {
+    if (T.stage === 'b') { T.stage = 'p'; T.i = 0; }
+    else {
+      var r = computeResult();
+      S.self.results.unshift(r);
+      S.self.draft = { b: {}, p: {} };
+      UI.test = null;
+      autoSave();
+    }
+  } else T.i = ni;
+  renderMe();
+  window.scrollTo(0, 0);
+}
+function renderTest() {
+  var T = UI.test, isB = T.stage === 'b';
+  var list = isB ? QB : QP, q = list[T.i];
+  var total = QB.length + QP.length, done = (isB ? 0 : QB.length) + T.i;
+  var sel = isB ? (S.self.draft.b[q.id] || []) : S.self.draft.p[q.id];
+  var h = '<div class="card">';
+  h += '<div class="row"><span class="small muted mono grow">' + esc(t(isB ? 'me.stageB' : 'me.stageP', { i: T.i + 1, n: list.length })) + '</span><button class="btn ghost small" onclick="quitTest()">' + esc(t('me.quit')) + '</button></div>';
+  h += '<div class="progress"><span style="width:' + Math.round(done / total * 100) + '%"></span></div>';
+  h += '<div class="q">' + esc(L(q.q)) + '</div>';
+  h += '<p class="small muted" style="margin-bottom:10px">' + esc(t(isB ? 'me.hintB' : 'me.hintP')) + '</p>';
+  mix(q.id).forEach(function (k) {
+    var cls = 'opt', rk = '';
+    if (isB) { var at = sel.indexOf(k); if (at === 0) { cls += ' r1'; rk = '1'; } else if (at === 1) { cls += ' r2'; rk = '2'; } }
+    else if (sel === k) { cls += ' r1'; rk = '✓'; }
+    h += '<button class="' + cls + '" onclick="' + (isB ? 'pickB' : 'pickP') + '(\'' + q.id + '\',\'' + k + '\')"><span class="rank">' + rk + '</span><span>' + esc(L(q.o[k])) + '</span></button>';
+  });
+  var ok = isB ? sel.length > 0 : !!sel;
+  var last = !isB && T.i === QP.length - 1;
+  h += '<div class="row" style="margin-top:10px">';
+  h += '<button class="btn grow" onclick="testNav(-1)" ' + (isB && T.i === 0 ? 'disabled' : '') + '>' + esc(t('me.prev')) + '</button>';
+  h += '<button class="btn primary grow" onclick="testNav(1)" ' + (ok ? '' : 'disabled') + '>' + esc(t(last ? 'me.finish' : 'me.next')) + '</button>';
+  h += '</div></div>';
+  return h;
+}
+function buildingHtml(r) {
+  var max = 1;
+  if (r.bs) TT.forEach(function (k) { if (r.bs[k] > max) max = r.bs[k]; });
+  var h = '<div class="bld">';
+  for (var f = 5; f >= 0; f--) {
+    var k = r.order[f];
+    var w = r.bs ? Math.max(4, Math.round(r.bs[k] / max * 100)) : Math.round((6 - f) / 6 * 100);
+    var lab = '';
+    if (f === 0) lab += '<span class="lab" style="color:' + tColor(k) + '">' + esc(t('me.base')) + '</span>';
+    if (k === r.phase) lab += '<span class="lab" style="color:var(--accent)">' + (f === 0 ? ' · ' : '') + esc(t('me.phase')) + '</span>';
+    h += '<div class="floor' + (f === 0 ? ' base' : '') + '" style="' + (f === 0 ? 'border-color:' + tColor(k) : '') + '"><span class="n">' + (f + 1) + '</span><span class="nm" style="color:' + tColor(k) + '">' + esc(tName(k)) + '</span><span class="bar"><span style="width:' + w + '%;background:' + tColor(k) + '"></span></span>' + lab + '</div>';
+  }
+  return h + '</div>';
+}
+function talkHtml(b, p) {
+  var tb = TYPES[b], tp = TYPES[p], ch = CH[tb.ch];
+  var h = '<dl class="kv">';
+  h += '<dt>' + esc(t('c.channel')) + '</dt><dd><b>' + esc(L(ch.name)) + '</b> — ' + esc(L(ch.how)) + '<br><span class="muted small">' + esc(t('c.example', { x: L(ch.ex) })) + '</span></dd>';
+  h += '<dt>' + esc(t('c.perc')) + '</dt><dd>' + esc(L(tb.percShort)) + '</dd>';
+  h += '<dt>' + esc(t('c.motiv')) + '</dt><dd>' + esc(L(tp.need)) + '</dd>';
+  h += '<dt>' + esc(t('c.feed')) + '</dt><dd><ul class="clean">' + L(tp.feed).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></dd>';
+  h += '<dt>' + esc(t('c.avoid')) + '</dt><dd>' + esc(L(tp.avoid)) + '</dd>';
+  h += '<dt>' + esc(t('c.sig1')) + '</dt><dd>' + esc(L(tb.drv)) + '</dd>';
+  h += '<dt>' + esc(t('c.sig2')) + '</dt><dd>' + esc(L(tp.mask)) + '</dd>';
+  return h + '</dl>';
+}
+function openManual() {
+  var r = S.self.results[0];
+  UI.manual = { order: r ? r.order.slice() : TT.slice(), phase: r ? r.phase : TT[0] };
+  renderMe();
+}
+function manMove(i, d) {
+  var o = UI.manual.order, j = i + d;
+  if (j < 0 || j > 5) return;
+  var x = o[i]; o[i] = o[j]; o[j] = x;
+  renderMe();
+}
+function manPhase(v) { UI.manual.phase = v; }
+function manSave() {
+  var m = UI.manual;
+  S.self.results.unshift({ id: uid(), date: today(), order: m.order.slice(), bs: null, ps: null, base: m.order[0], phase: m.phase, tie: null, manual: true });
+  UI.manual = null;
+  autoSave();
+  renderMe();
+}
+function renderManual() {
+  var m = UI.manual;
+  var h = '<div class="card"><h2>' + esc(t('me.manualT')) + '</h2><p class="lede">' + esc(t('me.manualHint')) + '</p>';
+  for (var f = 5; f >= 0; f--) {
+    var k = m.order[f];
+    h += '<div class="ord"><span class="mono small muted">' + (f + 1) + '</span><span class="nm" style="color:' + tColor(k) + '">' + esc(tName(k)) + (f === 0 ? ' <span class="tag">' + esc(t('me.base')) + '</span>' : '') + '</span>';
+    h += '<button onclick="manMove(' + f + ',1)" ' + (f === 5 ? 'disabled' : '') + ' aria-label="up">↑</button><button onclick="manMove(' + f + ',-1)" ' + (f === 0 ? 'disabled' : '') + ' aria-label="down">↓</button></div>';
+  }
+  h += '<h3>' + esc(t('me.phase')) + '</h3><select onchange="manPhase(this.value)">' + TT.map(function (k) { return '<option value="' + k + '"' + (k === m.phase ? ' selected' : '') + '>' + esc(tName(k)) + '</option>'; }).join('') + '</select>';
+  h += '<div class="row" style="margin-top:12px"><button class="btn grow" onclick="UI.manual=null;renderMe()">' + esc(t('me.cancel')) + '</button><button class="btn primary grow" onclick="manSave()">' + esc(t('me.save')) + '</button></div></div>';
+  return h;
+}
+function delResult(id) {
+  var idx = -1;
+  S.self.results.forEach(function (r, i) { if (r.id === id) idx = i; });
+  if (idx < 0) return;
+  var removed = S.self.results.splice(idx, 1)[0];
+  autoSave(); renderMe();
+  toast(t('me.deleted'), t('me.undo'), function () { S.self.results.splice(idx, 0, removed); autoSave(); renderMe(); });
+}
+function renderMe() {
+  var el = document.getElementById('tab-me');
+  if (UI.test) { el.innerHTML = renderTest(); return; }
+  if (UI.manual) { el.innerHTML = renderManual(); return; }
+  var r = S.self.results[0];
+  var h = '';
+  if (!r) {
+    h += '<div class="card"><h2>' + esc(t('me.introT')) + '</h2><p class="lede">' + t('me.intro') + '</p>';
+    h += '<div class="row"><button class="btn primary grow" onclick="startTest()">' + esc(t('me.start')) + '</button><button class="btn grow" onclick="openManual()">' + esc(t('me.manual')) + '</button></div></div>';
+    el.innerHTML = h; return;
+  }
+  var tb = TYPES[r.base], tp = TYPES[r.phase];
+  h += '<div class="card"><div class="row"><h2 class="grow">' + esc(t('me.building')) + '</h2><span class="small muted">' + esc(t('me.date', { x: fmtDate(r.date) })) + (r.manual ? '<span class="tag">' + esc(t('me.manualTag')) + '</span>' : '') + '</span></div>';
+  h += buildingHtml(r) + '<p class="small muted">' + esc(t('me.bldHint')) + '</p>';
+  if (r.tie) h += '<p class="small" style="margin-top:8px">' + esc(t('me.tie', { x: r.tie.map(tName).join(' / ') })) + '</p>';
+  h += '</div>';
+  h += '<div class="card"><h2>' + t('me.yourBase', { x: tPill(r.base) }) + '</h2>';
+  h += '<dl class="kv"><dt>' + esc(t('g.perc')) + '</dt><dd>' + esc(L(tb.perc)) + '</dd><dt>' + esc(t('g.str')) + '</dt><dd>' + esc(L(tb.str)) + '</dd><dt>' + esc(t('g.channel')) + '</dt><dd>' + esc(L(CH[tb.ch].name)) + '</dd></dl></div>';
+  h += '<div class="card"><h2>' + t('me.yourPhase', { x: tPill(r.phase) }) + '</h2><p style="margin-bottom:6px">' + esc(L(tp.need)) + '</p>';
+  h += '<h3>' + esc(t('me.week')) + '</h3><ul class="clean">' + L(tp.feed).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>';
+  h += '<h3>' + esc(t('me.alert')) + '</h3><dl class="kv"><dt>' + esc(t('me.l1')) + '</dt><dd>' + esc(L(tb.drv)) + '</dd><dt>' + esc(t('me.l2')) + '</dt><dd>' + esc(L(tp.mask)) + '</dd></dl></div>';
+  h += '<div class="row" style="margin-bottom:14px"><button class="btn grow" onclick="startTest()">' + esc(t('me.retake')) + '</button><button class="btn grow" onclick="openManual()">' + esc(t('me.edit')) + '</button></div>';
+  if (S.self.results.length > 1) {
+    h += '<div class="card"><h2>' + esc(t('me.history')) + '</h2>';
+    S.self.results.forEach(function (x) {
+      h += '<div class="ep row"><span class="grow">' + esc(fmtDate(x.date)) + (x.manual ? '<span class="tag">' + esc(t('me.manualTag')) + '</span>' : '') + '<br>' + esc(t('me.base')) + ' ' + tPill(x.base) + ' · ' + esc(t('me.phase')) + ' ' + tPill(x.phase) + '</span><button class="btn ghost small" onclick="delResult(\'' + x.id + '\')">' + esc(t('me.del')) + '</button></div>';
+    });
+    h += '</div>';
+  }
+  el.innerHTML = h;
+}
+
+/* =========================================================
+   PEOPLE TAB
+   ========================================================= */
+function findP(id) { for (var i = 0; i < S.people.length; i++) if (S.people[i].id === id) return S.people[i]; return null; }
+function estimate(p) {
+  var c = {}, n = 0; TT.forEach(function (k) { c[k] = 0; });
+  Object.keys(p.obs).forEach(function (key) { if (p.obs[key]) { var k = key.split('_')[1]; if (c[k] !== undefined) { c[k]++; n++; } } });
+  var top = null; TT.forEach(function (k) { if (c[k] > 0 && (!top || c[k] > c[top])) top = k; });
+  return { c: c, n: n, top: top };
+}
+function addPerson() {
+  var n = document.getElementById('p-name'), r = document.getElementById('p-rel');
+  var name = (n.value || '').trim();
+  if (!name) { n.focus(); return; }
+  var p = { id: uid(), name: name, rel: (r.value || '').trim(), obs: {}, base: '', phase: '', notes: '', episodes: [], created: today() };
+  S.people.unshift(p);
+  autoSave();
+  UI.person = p.id;
+  renderPeople();
+}
+function openPerson(id) { UI.person = id; renderPeople(); window.scrollTo(0, 0); }
+function toggleCue(key) {
+  var p = findP(UI.person); if (!p) return;
+  p.obs[key] = !p.obs[key];
+  if (!p.obs[key]) delete p.obs[key];
+  autoSave();
+  renderPersonEst();
+}
+function setPField(f, v) { var p = findP(UI.person); if (!p) return; p[f] = v; autoSave(); renderPeople(); }
+function useEst() { var p = findP(UI.person); if (!p) return; var e = estimate(p); if (e.top) { p.base = e.top; autoSave(); renderPeople(); } }
+var notesTimer = null;
+function notesInput(v) {
+  var p = findP(UI.person); if (!p) return;
+  p.notes = v;
+  if (notesTimer) clearTimeout(notesTimer);
+  notesTimer = setTimeout(autoSave, 600);
+}
+function delPerson() {
+  var idx = -1;
+  S.people.forEach(function (x, i) { if (x.id === UI.person) idx = i; });
+  if (idx < 0) return;
+  var removed = S.people.splice(idx, 1)[0];
+  UI.person = null;
+  autoSave(); renderPeople();
+  toast(t('p.deleted', { x: removed.name }), t('me.undo'), function () { S.people.splice(idx, 0, removed); autoSave(); renderPeople(); });
+}
+function delEpisode(pid, eid) {
+  var p = findP(pid); if (!p) return;
+  p.episodes = p.episodes.filter(function (e) { return e.id !== eid; });
+  autoSave(); renderPeople();
+}
+function renderPersonEst() {
+  var p = findP(UI.person); if (!p) return;
+  var box = document.getElementById('p-est'); if (!box) return;
+  var e = estimate(p), h = '';
+  if (!e.n) h = '<p class="small muted">' + esc(t('p.estNone')) + '</p>';
+  else {
+    var max = 1; TT.forEach(function (k) { if (e.c[k] > max) max = e.c[k]; });
+    TT.slice().sort(function (a, b) { return e.c[b] - e.c[a]; }).forEach(function (k) {
+      h += '<div class="scorebar"><span class="nm" style="color:' + tColor(k) + '">' + esc(tName(k)) + '</span><span class="bar"><span style="width:' + Math.round(e.c[k] / max * 100) + '%;background:' + tColor(k) + '"></span></span><span class="v">' + e.c[k] + '</span></div>';
+    });
+    h += '<div class="row" style="margin-top:8px"><span class="grow small">' + t('p.estOut', { x: tPill(e.top), n: e.n }) + '</span>' + (p.base !== e.top ? '<button class="btn small" onclick="useEst()">' + esc(t('p.useEst')) + '</button>' : '') + '</div>';
+  }
+  box.innerHTML = h;
+}
+function renderPeople() {
+  var el = document.getElementById('tab-people');
+  if (document.activeElement && document.activeElement.id === 'p-notes') return;
+  var p = UI.person ? findP(UI.person) : null;
+  var h = '';
+  if (!p) {
+    UI.person = null;
+    h += '<div class="card"><h2>' + esc(t('p.title')) + '</h2><p class="lede">' + esc(t('p.intro')) + '</p>';
+    h += '<input id="p-name" placeholder="' + esc(t('p.namePh')) + '" style="margin-bottom:8px" onkeydown="if(event.key===\'Enter\')addPerson()">';
+    h += '<div class="row"><input id="p-rel" class="grow" placeholder="' + esc(t('p.relPh')) + '" style="width:auto" onkeydown="if(event.key===\'Enter\')addPerson()"><button class="btn primary" onclick="addPerson()">' + esc(t('p.add')) + '</button></div></div>';
+    if (!S.people.length) h += '<p class="muted small" style="text-align:center">' + esc(t('p.empty')) + '</p>';
+    S.people.forEach(function (x) {
+      var e = estimate(x);
+      h += '<button class="person" onclick="openPerson(\'' + x.id + '\')"><span class="grow"><span class="nm">' + esc(x.name) + '</span>' + (x.rel ? ' <span class="muted small">· ' + esc(x.rel) + '</span>' : '') + '<br><span class="small muted">' + esc(t('p.cues', { n: e.n })) + '</span></span>';
+      if (x.base) h += tPill(x.base);
+      h += '</button>';
+    });
+    el.innerHTML = h; return;
+  }
+  h += '<button class="btn ghost" onclick="UI.person=null;renderPeople()" style="margin-bottom:10px">' + esc(t('p.back')) + '</button>';
+  h += '<div class="card"><input value="' + esc(p.name) + '" onchange="setPField(\'name\',this.value)" style="font-size:18px;font-weight:500;margin-bottom:8px"><input value="' + esc(p.rel) + '" placeholder="' + esc(t('p.relPh')) + '" onchange="setPField(\'rel\',this.value)"></div>';
+  // talk card first if available
+  h += '<div class="card"><h2>' + esc(t('p.talk')) + '</h2>';
+  if (!p.base) h += '<p class="small muted">' + esc(t('p.talkNone')) + '</p>';
+  else {
+    if (!p.phase) h += '<p class="small muted" style="margin-bottom:8px">' + esc(t('p.phaseAssumed')) + '</p>';
+    h += talkHtml(p.base, p.phase || p.base);
+  }
+  h += '</div>';
+  // confirmed profile
+  function sel(f) {
+    return '<select onchange="setPField(\'' + f + '\',this.value)"><option value="">' + esc(t('p.unknown')) + '</option>' + TT.map(function (k) { return '<option value="' + k + '"' + (p[f] === k ? ' selected' : '') + '>' + esc(tName(k)) + '</option>'; }).join('') + '</select>';
+  }
+  h += '<div class="card"><h2>' + esc(t('p.confirm')) + '</h2><div class="row"><div class="grow"><div class="small muted">' + esc(t('p.baseSel')) + '</div>' + sel('base') + '</div><div class="grow"><div class="small muted">' + esc(t('p.phaseSel')) + '</div>' + sel('phase') + '</div></div></div>';
+  // observation
+  h += '<div class="card"><h2>' + esc(t('p.obs')) + '</h2><p class="lede">' + esc(t('p.obsHint')) + '</p>';
+  CUES.forEach(function (c, ci) {
+    h += '<div class="cat">' + esc(L(c.cat)) + '</div>';
+    mix('cue' + ci).forEach(function (k) {
+      var key = 'c' + ci + '_' + k;
+      h += '<label class="chk"><input type="checkbox" ' + (p.obs[key] ? 'checked' : '') + ' onchange="toggleCue(\'' + key + '\')"><span>' + esc(L(c.o[k])) + '</span></label>';
+    });
+  });
+  h += '<h3>' + esc(t('p.est')) + '</h3><div id="p-est"></div></div>';
+  // notes
+  h += '<div class="card"><h2>' + esc(t('p.notes')) + '</h2><textarea id="p-notes" placeholder="' + esc(t('p.notesPh')) + '" oninput="notesInput(this.value)" onblur="renderPeople()">' + esc(p.notes) + '</textarea></div>';
+  // episodes
+  h += '<div class="card"><h2>' + esc(t('p.eps')) + '</h2>';
+  if (!p.episodes.length) h += '<p class="small muted">' + esc(t('p.epsNone')) + '</p>';
+  p.episodes.forEach(function (e) {
+    h += '<div class="ep"><div class="row"><span class="grow small muted">' + esc(fmtDate(e.date)) + '</span>' + (e.types || []).map(tPill).join(' ') + '<button class="btn ghost small" onclick="delEpisode(\'' + p.id + '\',\'' + e.id + '\')">✕</button></div>';
+    if (e.note) h += '<div>' + esc(e.note) + '</div>';
+    h += '<div class="small muted">' + (e.items || []).map(function (id) { var it = STRESS.filter(function (s) { return s.id === id; })[0]; return it ? esc(L(it.x)) : ''; }).filter(Boolean).join(' · ') + '</div></div>';
+  });
+  h += '</div>';
+  h += '<button class="btn danger" style="width:100%" onclick="delPerson()">' + esc(t('p.del')) + '</button>';
+  el.innerHTML = h;
+  renderPersonEst();
+}
+
+/* =========================================================
+   STRESS TAB
+   ========================================================= */
+function stToggle(id) { UI.stressSel[id] = !UI.stressSel[id]; if (!UI.stressSel[id]) delete UI.stressSel[id]; renderStressResult(); }
+function stWho(v) { UI.stressWho = v; renderStressResult(); }
+function stClear() { UI.stressSel = {}; UI.stressNote = ''; renderStress(); }
+function stScores() {
+  var sc = {}; TT.forEach(function (k) { sc[k] = 0; });
+  Object.keys(UI.stressSel).forEach(function (id) {
+    var it = STRESS.filter(function (s) { return s.id === id; })[0];
+    if (!it) return;
+    it.t.forEach(function (k) { sc[k] += it.d === 2 ? 2 : 1; });
+  });
+  return sc;
+}
+function knownPhaseFor(who) {
+  if (who === 'me') { var r = S.self.results[0]; return r ? r.phase : ''; }
+  var p = findP(who); return p ? (p.phase || p.base) : '';
+}
+function stLog() {
+  var sc = stScores(), top = TT.filter(function (k) { return sc[k] > 0; }).sort(function (a, b) { return sc[b] - sc[a]; });
+  if (!top.length) return;
+  var best = sc[top[0]];
+  var types = top.filter(function (k) { return sc[k] === best; });
+  var p = findP(UI.stressWho); if (!p) return;
+  var noteEl = document.getElementById('st-note');
+  p.episodes.unshift({ id: uid(), date: today(), types: types, items: Object.keys(UI.stressSel), note: noteEl ? noteEl.value.trim() : '' });
+  autoSave();
+  UI.stressSel = {};
+  toast(t('s.logged'));
+  renderStress();
+}
+function renderStressResult() {
+  var box = document.getElementById('st-res'); if (!box) return;
+  var sc = stScores();
+  var top = TT.filter(function (k) { return sc[k] > 0; }).sort(function (a, b) { return sc[b] - sc[a]; });
+  if (!top.length) { box.innerHTML = '<p class="small muted">' + esc(t('s.none')) + '</p>'; return; }
+  var best = sc[top[0]];
+  var show = top.filter(function (k) { return sc[k] >= best - 1; }).slice(0, 2);
+  var known = UI.stressWho ? knownPhaseFor(UI.stressWho) : '';
+  var h = '';
+  show.forEach(function (k) {
+    var ty = TYPES[k], ch = CH[ty.ch];
+    h += '<div class="talk" style="border-left-color:' + tColor(k) + '"><div style="margin-bottom:6px">' + tPill(k) + '</div>';
+    h += '<h3>' + esc(t('s.what')) + '</h3><p>' + t('s.whatTxt', { x: esc(L(ty.need)), y: esc(tName(k)) }) + '</p>';
+    h += '<h3>' + esc(t('s.do')) + '</h3><ul class="clean"><li><b>' + esc(L(ch.name)) + '</b> — ' + esc(L(ch.how)) + '</li>' + L(ty.feed).slice(0, 2).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>';
+    h += '<p class="small muted" style="margin-top:6px">' + esc(t('c.avoid')) + ' : ' + esc(L(ty.avoid)) + '</p></div>';
+  });
+  if (known) {
+    if (show.indexOf(known) >= 0) h += '<p class="small" style="color:var(--green)">' + esc(t('s.consistent')) + '</p>';
+    else h += '<p class="small">' + t('s.check', { x: tPill(known) }) + '</p>';
+  }
+  if (UI.stressWho && UI.stressWho !== 'me') {
+    h += '<input id="st-note" placeholder="' + esc(t('s.notePh')) + '" style="margin-top:10px">';
+    h += '<button class="btn primary" style="width:100%;margin-top:8px" onclick="stLog()">' + esc(t('s.log')) + '</button>';
+  }
+  box.innerHTML = h;
+}
+function renderStress() {
+  var el = document.getElementById('tab-stress');
+  if (UI.stressWho && UI.stressWho !== 'me' && !findP(UI.stressWho)) UI.stressWho = '';
+  var h = '<div class="card"><h2>' + esc(t('s.title')) + '</h2><p class="lede">' + esc(t('s.intro')) + '</p>';
+  h += '<div class="small muted">' + esc(t('s.who')) + '</div><select onchange="stWho(this.value)"><option value="">' + esc(t('s.nobody')) + '</option><option value="me"' + (UI.stressWho === 'me' ? ' selected' : '') + '>' + esc(t('s.me')) + '</option>';
+  S.people.forEach(function (p) { h += '<option value="' + p.id + '"' + (UI.stressWho === p.id ? ' selected' : '') + '>' + esc(p.name) + '</option>'; });
+  h += '</select></div>';
+  [1, 2].forEach(function (d) {
+    h += '<div class="card"><h2>' + esc(t(d === 1 ? 's.d1' : 's.d2')) + '</h2>';
+    var items = STRESS.filter(function (s) { return s.d === d; }).sort(function (a, b) { return hsh('s' + a.id) - hsh('s' + b.id); });
+    items.forEach(function (s) {
+      h += '<label class="chk"><input type="checkbox" ' + (UI.stressSel[s.id] ? 'checked' : '') + ' onchange="stToggle(\'' + s.id + '\')"><span>' + esc(L(s.x)) + '</span></label>';
+    });
+    h += '</div>';
+  });
+  h += '<div class="card"><div class="row"><h2 class="grow">' + esc(t('s.result')) + '</h2><button class="btn ghost small" onclick="stClear()">' + esc(t('s.clear')) + '</button></div><div id="st-res"></div></div>';
+  el.innerHTML = h;
+  renderStressResult();
+}
+
+/* =========================================================
+   GUIDE TAB
+   ========================================================= */
+function toggleType(k) { UI.open[k] = !UI.open[k]; renderGuide(); }
+function renderGuide() {
+  var el = document.getElementById('tab-guide');
+  var h = '<div class="card"><h2>' + esc(t('g.title')) + '</h2><p class="small muted">' + esc(t('g.intro')) + '</p></div>';
+  TT.forEach(function (k) {
+    var ty = TYPES[k];
+    h += '<div class="card typecard' + (UI.open[k] ? ' open' : '') + '" onclick="toggleType(\'' + k + '\')"><div class="head"><span class="dot" style="background:' + tColor(k) + '"></span><span class="grow" style="font-weight:500">' + esc(tName(k)) + '</span><span class="small muted">' + esc(L(ty.str)) + '</span></div>';
+    h += '<div class="body"><dl class="kv">';
+    [['g.perc', ty.perc], ['g.need', ty.need], ['g.channel', CH[ty.ch].name], ['g.env', ty.env], ['g.words', ty.words], ['g.drv', ty.drv], ['g.mask', ty.mask]].forEach(function (r) {
+      h += '<dt>' + esc(t(r[0])) + '</dt><dd>' + esc(L(r[1])) + '</dd>';
+    });
+    h += '<dt>' + esc(t('g.feed')) + '</dt><dd><ul class="clean">' + L(ty.feed).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></dd>';
+    h += '<dt>' + esc(t('c.avoid')) + '</dt><dd>' + esc(L(ty.avoid)) + '</dd></dl></div></div>';
+  });
+  h += '<div class="card"><h2>' + esc(t('g.chT')) + '</h2>';
+  ['dir', 'int', 'nur', 'emo'].forEach(function (c) {
+    var users = TT.filter(function (k) { return TYPES[k].ch === c; });
+    h += '<div class="ep"><div class="row"><b class="grow">' + esc(L(CH[c].name)) + '</b>' + users.map(tPill).join(' ') + '</div><div class="small">' + esc(L(CH[c].how)) + '</div><div class="small muted">' + esc(L(CH[c].ex)) + '</div></div>';
+  });
+  h += '</div>';
+  el.innerHTML = h;
+}
+
+/* =========================================================
+   SETTINGS
+   ========================================================= */
+function renderSettings() {
+  var on = tokValid();
+  document.getElementById('drive-info').textContent = t(on ? 's.driveOn' : 's.driveOff');
+  var b = document.getElementById('drive-btn');
+  b.textContent = t(on ? 's.reconnect' : 's.connect');
+  b.className = 'btn grow' + (on ? '' : ' primary');
+  document.getElementById('drive-sync-btn').disabled = !on;
+  var cur = localStorage.getItem(TK) || 'light';
+  document.getElementById('theme-name').textContent = THEME_ICONS[cur] + ' ' + t('th.' + cur);
+}
+function exportJson() {
+  var blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'pcm001-' + today() + '.json';
+  document.body.appendChild(a); a.click();
+  setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function importJson(inp) {
+  var f = inp.files && inp.files[0]; if (!f) return;
+  var rd = new FileReader();
+  rd.onload = function () {
+    try {
+      var d = JSON.parse(rd.result);
+      if (!d || typeof d !== 'object' || (!d.self && !d.people)) throw new Error('bad');
+      S = d; ensureState(); autoSave(); renderAll(); toast(t('s.imported'));
+    } catch (e) { toast(t('s.badFile')); }
+    inp.value = '';
+  };
+  rd.readAsText(f);
+}
+function resetAll() {
+  if (!confirm(t('s.wipeQ'))) return;
+  S = blank(); ensureState(); saveLocal();
+  UI.person = null; UI.test = null; UI.manual = null; UI.stressSel = {};
+  renderAll(); toast(t('s.wiped'));
+}
+
+/* ---------------- THEME / FONT ---------------- */
+var THEMES = ['light', 'sand', 'navy', 'dark'];
+var THEME_ICONS = { light: '☀︎', sand: '○', navy: '◑', dark: '☾' };
+function applyTheme(x) {
+  document.documentElement.setAttribute('data-theme', x === 'light' ? '' : x);
+  document.getElementById('theme-btn').textContent = THEME_ICONS[x] || '☀︎';
+  localStorage.setItem(TK, x);
+}
+function toggleTheme() {
+  var cur = localStorage.getItem(TK) || 'light';
+  applyTheme(THEMES[(THEMES.indexOf(cur) + 1) % THEMES.length]);
+  renderAll();
+}
+var FS_STEPS = [0.8, 0.9, 1.0, 1.1, 1.2, 1.35, 1.5];
+function applyFontSize(idx) {
+  idx = Math.max(0, Math.min(FS_STEPS.length - 1, idx));
+  var scale = FS_STEPS[idx];
+  var page = document.querySelector('.page');
+  if (CSS.supports && CSS.supports('zoom', '1')) page.style.zoom = scale;
+  else { page.style.transformOrigin = 'top center'; page.style.transform = 'scale(' + scale + ')'; }
+  localStorage.setItem(FS_KEY, idx);
+  document.getElementById('font-size-label').textContent = Math.round(scale * 100) + '%';
+}
+function stepFont(d) { applyFontSize(parseInt(localStorage.getItem(FS_KEY) || '2', 10) + d); }
+
+/* ---------------- I18N STATIC ---------------- */
+function applyStatic() {
+  document.documentElement.lang = LANG;
+  var els = document.querySelectorAll('[data-i18n]');
+  for (var i = 0; i < els.length; i++) els[i].textContent = t(els[i].getAttribute('data-i18n'));
+  els = document.querySelectorAll('[data-i18n-html]');
+  for (i = 0; i < els.length; i++) els[i].innerHTML = t(els[i].getAttribute('data-i18n-html'));
+  els = document.querySelectorAll('[data-i18n-aria]');
+  for (i = 0; i < els.length; i++) { els[i].setAttribute('aria-label', t(els[i].getAttribute('data-i18n-aria'))); els[i].setAttribute('title', t(els[i].getAttribute('data-i18n-aria'))); }
+  document.getElementById('lang-fr').className = 'btn grow' + (LANG === 'fr' ? ' primary' : '');
+  document.getElementById('lang-en').className = 'btn grow' + (LANG === 'en' ? ' primary' : '');
+}
+function setLang(l) { LANG = l; localStorage.setItem(LANG_KEY, l); applyStatic(); renderAll(); }
+
+/* =========================================================
+   GOOGLE DRIVE SYNC
+   ========================================================= */
+var tok = null;
+try { tok = JSON.parse(sessionStorage.getItem(TOK_KEY) || 'null'); } catch (e) { tok = null; }
+var tokenClient = null, fileId = '', syncCode = 'local', syncAt = null, syncing = false;
+try { fileId = localStorage.getItem(FID_KEY) || ''; } catch (e) {}
+function tokValid() { return !!(tok && tok.t && tok.exp > Date.now() + 30000); }
+function setSync(code) {
+  syncCode = code;
+  if (code === 'ok') syncAt = new Date();
+  var el = document.getElementById('sync-st');
+  var txt = t('sync.' + code);
+  if (code === 'ok' && syncAt) txt += ' ' + syncAt.toLocaleTimeString(LOC(), { hour: '2-digit', minute: '2-digit' });
+  if (window.innerWidth < 520) txt = txt.split(' ')[0] + (code === 'ok' && syncAt ? ' ' + syncAt.toLocaleTimeString(LOC(), { hour: '2-digit', minute: '2-digit' }) : '');
+  el.textContent = txt;
+  el.title = code === 'err' ? t('sync.reauth') : t('sync.' + code);
+}
+function syncClick() { if (syncCode === 'err' || !tokValid()) go('settings'); else syncNow(false); }
+function initGis() {
+  var s = document.createElement('script');
+  s.src = 'https://accounts.google.com/gsi/client';
+  s.async = true;
+  s.onload = function () {
+    try {
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID, scope: SCOPE,
+        callback: function (resp) {
+          if (!resp || resp.error || !resp.access_token) { setSync('err'); return; }
+          tok = { t: resp.access_token, exp: Date.now() + (parseInt(resp.expires_in, 10) || 3600) * 1000 };
+          try { sessionStorage.setItem(TOK_KEY, JSON.stringify(tok)); } catch (e) {}
+          renderSettings();
+          syncNow(false);
+        }
+      });
+    } catch (e) { /* GIS unavailable */ }
+  };
+  s.onerror = function () { tokenClient = null; };
+  document.head.appendChild(s);
+}
+function driveConnect() {
+  if (!tokenClient) { toast(t('sync.wait')); return; }
+  tokenClient.requestAccessToken({ prompt: '' });
+}
+function gfetch(url, opt) {
+  opt = opt || {};
+  opt.headers = opt.headers || {};
+  opt.headers.Authorization = 'Bearer ' + tok.t;
+  return fetch(url, opt).then(function (r) {
+    if (r.status === 401) { tok = null; try { sessionStorage.removeItem(TOK_KEY); } catch (e) {} throw new Error('auth'); }
+    if (r.status === 404) { fileId = ''; try { localStorage.removeItem(FID_KEY); } catch (e) {} throw new Error('404'); }
+    if (!r.ok) throw new Error('http ' + r.status);
+    return r;
+  });
+}
+function findFile() {
+  if (fileId) return Promise.resolve(fileId);
+  var q = encodeURIComponent("name='" + DRIVE_NAME + "' and trashed=false");
+  return gfetch('https://www.googleapis.com/drive/v3/files?q=' + q + '&spaces=drive&orderBy=modifiedTime%20desc&fields=files(id,modifiedTime)')
+    .then(function (r) { return r.json(); })
+    .then(function (j) { if (j.files && j.files.length) { fileId = j.files[0].id; try { localStorage.setItem(FID_KEY, fileId); } catch (e) {} } return fileId; });
+}
+function readRemote() { return gfetch('https://www.googleapis.com/drive/v3/files/' + fileId + '?alt=media').then(function (r) { return r.json(); }); }
+function pushRemote() {
+  var body = JSON.stringify(S);
+  if (fileId) {
+    return gfetch('https://www.googleapis.com/upload/drive/v3/files/' + fileId + '?uploadType=media&fields=id', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: body });
+  }
+  var bd = 'pcm001b' + Date.now();
+  var multi = '--' + bd + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' + JSON.stringify({ name: DRIVE_NAME, mimeType: 'application/json' }) +
+    '\r\n--' + bd + '\r\nContent-Type: application/json\r\n\r\n' + body + '\r\n--' + bd + '--';
+  return gfetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', { method: 'POST', headers: { 'Content-Type': 'multipart/related; boundary=' + bd }, body: multi })
+    .then(function (r) { return r.json(); })
+    .then(function (j) { if (j && j.id) { fileId = j.id; try { localStorage.setItem(FID_KEY, fileId); } catch (e) {} } });
+}
+function adoptRemote(remote) {
+  S = remote; ensureState(); saveLocal();
+  renderAll();
+}
+function syncNow(quiet) {
+  if (!tokValid()) { setSync(tok ? 'err' : 'local'); if (!quiet && !tok) go('settings'); return; }
+  if (syncing) return;
+  syncing = true;
+  setSync('pending');
+  findFile()
+    .then(function (id) {
+      if (!id) return pushRemote();
+      return readRemote().then(function (remote) {
+        var ru = remote && typeof remote.updatedAt === 'number' ? remote.updatedAt : 0;
+        if (ru > (S.updatedAt || 0)) { adoptRemote(remote); if (!quiet) toast(t('sync.pulled')); return null; }
+        if (ru < (S.updatedAt || 0)) return pushRemote();
+        return null;
+      });
+    })
+    .then(function () { syncing = false; setSync('ok'); renderSettings(); })
+    .catch(function (e) {
+      syncing = false;
+      if (e && e.message === '404') { syncNow(quiet); return; }
+      setSync('err'); renderSettings();
+    });
+}
+function poll() {
+  if (!tokValid() || pushTimer || syncing) return;
+  if (document.visibilityState && document.visibilityState !== 'visible') return;
+  if (UI.test || UI.manual) return;
+  syncNow(true);
+}
+
+/* ---------------- RENDER ALL ---------------- */
+function renderAll() {
+  renderMe(); renderPeople(); renderStress(); renderGuide(); renderSettings();
+  setSync(syncCode);
+}
+
+/* ---------------- INIT ---------------- */
+(function init() {
+  var saved = null;
+  try { saved = localStorage.getItem(LANG_KEY); } catch (e) {}
+  LANG = saved || ((navigator.language || 'en').toLowerCase().indexOf('fr') === 0 ? 'fr' : 'en');
+  loadLocal();
+  applyTheme(localStorage.getItem(TK) || 'light');
+  applyStatic();
+  applyFontSize(parseInt(localStorage.getItem(FS_KEY) || '2', 10));
+  setSync(tokValid() ? 'pending' : (tok ? 'err' : 'local'));
+  renderAll();
+  initGis();
+  if (tokValid()) syncNow(true);
+  setInterval(poll, 60000);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') poll(); });
+  window.addEventListener('resize', function () { setSync(syncCode); });
+  document.getElementById('boot').style.display = 'none';
+})();
+</script>
+</body>
+</html>
