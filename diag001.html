@@ -96,7 +96,7 @@ td.mono{white-space:nowrap}.tab .ts{display:none}
 <body>
 <div id="boot">Chargement… / Loading… — si ce message reste affiché, JavaScript ne s'exécute pas : ouvrez le fichier dans Chrome ou Safari, pas dans un aperçu.</div>
 <div class="header">
-  <h1>diag001 <span class="sub">· <span data-i18n="app.sub">Assessments RGPD & IA Act</span></span> <small class="ver">v3.0</small></h1>
+  <h1>diag001 <span class="sub">· <span data-i18n="app.sub">Assessments RGPD & IA Act</span></span> <small class="ver">v3.1</small></h1>
   <span id="sync" class="small muted" data-i18n-title="h.sync">⚫ Local</span>
   <button class="btn sm ghost" id="drive-btn" onclick="driveConnect()" data-i18n="h.drive">Drive</button>
   <button class="btn sm ghost" id="theme-btn" onclick="toggleTheme()" data-i18n-title="h.theme">☀︎</button>
@@ -375,7 +375,7 @@ fr:{'app.sub':'Assessments RGPD & IA Act','h.drive':'Drive','h.sync':'État de s
 'b.rep':'Positionnement par rapport à la baseline','b.repN':'Baseline : {n} organisations comparables ({t}{s}).',
 'h.h':'Historique par client','h.p':'Évolution des scores entre audits du même type. Le delta compare chaque audit au précédent du même type.','h.date':'Date','h.type':'Type','h.scope':'Périmètre',
 'p.custom':'Proposition personnalisée pour <b>{c}</b> à partir de l’audit ouvert.','p.generic':'Proposition type générique — ouvrez un audit pour la personnaliser.','p.hint':'Charges et TJM modifiables dans les réglages.','p.copy':'Copier (Markdown)','p.dl':'Télécharger .md',
-'s.lang':'🌐 Langue / Language','s.offer':'Offre commerciale','s.vendor':'Société émettrice','s.tjm':'TJM moyen (€ HT) — hypothèse à ajuster','s.days':'Charge (jours)','s.daysNote':'Valeurs par défaut indicatives : à caler sur votre grille tarifaire.',
+'s.lang':'🌐 Langue / Language','s.offer':'Offre commerciale','s.vendor':'Société émettrice','s.vendorPh':'[Votre cabinet]','s.tjm':'TJM moyen (€ HT) — hypothèse à ajuster','s.days':'Charge (jours)','s.daysNote':'Valeurs par défaut indicatives : à caler sur votre grille tarifaire.',
 's.disp':'Affichage','s.reset':'Réinitialiser','s.data':'Données','s.exp':'Exporter JSON','s.imp':'Importer JSON','s.wipe':'Tout effacer','s.wipeQ':'Effacer tous les audits ?',
 's.demo':'Données de démonstration','s.demoP':'Charge 40 audits fictifs (20 flash, 20 fin), clôturés et marqués « démo », pour tester la baseline. Ils sont exclus des archives Drive.','s.demoLoad':'Charger la démonstration','s.demoDel':'Supprimer la démonstration','s.demoN':'{n} audit(s) de démonstration présents.',
 's.drive':'Google Drive','s.cid':'Client ID OAuth (prérempli avec celui de vos autres apps)','s.driveP':'Synchronisation de travail : {f}. Archives d’audit : dossier {d}. Portée {s} : l’app ne voit que les fichiers qu’elle a créés.','s.conn':'Connecter Drive','s.reconn':'Reconnecter Drive',
@@ -429,7 +429,7 @@ en:{'app.sub':'GDPR & AI Act assessments','h.drive':'Drive','h.sync':'Sync statu
 'b.rep':'Positioning against the baseline','b.repN':'Baseline: {n} comparable organisations ({t}{s}).',
 'h.h':'History by client','h.p':'Score changes between audits of the same type. The delta compares each audit with the previous one of the same type.','h.date':'Date','h.type':'Type','h.scope':'Scope',
 'p.custom':'Proposal tailored for <b>{c}</b> from the open audit.','p.generic':'Generic proposal template — open an audit to tailor it.','p.hint':'Effort and day rate can be changed in settings.','p.copy':'Copy (Markdown)','p.dl':'Download .md',
-'s.lang':'🌐 Langue / Language','s.offer':'Commercial offer','s.vendor':'Issuing company','s.tjm':'Average day rate (€ excl. VAT) — assumption to adjust','s.days':'Effort (days)','s.daysNote':'Indicative defaults: align them with your rate card.',
+'s.lang':'🌐 Langue / Language','s.offer':'Commercial offer','s.vendor':'Issuing company','s.vendorPh':'[Your firm]','s.tjm':'Average day rate (€ excl. VAT) — assumption to adjust','s.days':'Effort (days)','s.daysNote':'Indicative defaults: align them with your rate card.',
 's.disp':'Display','s.reset':'Reset','s.data':'Data','s.exp':'Export JSON','s.imp':'Import JSON','s.wipe':'Delete all','s.wipeQ':'Delete all audits?',
 's.demo':'Demo data','s.demoP':'Loads 40 fictitious audits (20 flash, 20 detailed), closed and tagged "demo", to try the baseline. They are excluded from Drive archives.','s.demoLoad':'Load demo','s.demoDel':'Remove demo','s.demoN':'{n} demo audit(s) present.',
 's.drive':'Google Drive','s.cid':'OAuth Client ID (prefilled with your other apps’ ID)','s.driveP':'Working sync: {f}. Audit archives: folder {d}. Scope {s}: the app only sees files it created.','s.conn':'Connect Drive','s.reconn':'Reconnect Drive',
@@ -453,7 +453,7 @@ const stepL=i=>LANG==='en'?AIPD_STEPS_EN[i]:AIPD_STEPS[i][1];
 const promptOf=k=>(LANG==='en'?PROMPTS_EN:PROMPTS)[k];
 
 /* ============ ÉTAT ============ */
-const APP='diag001',VER='v3.0',VDATE='2026-10-01',LK='td_v4_'+APP,TK='td_theme_'+APP,FK='td_fs_'+APP,TOKK='td_tok_'+APP,CIDK='td_cid_'+APP,LANG_KEY='td_lang_'+APP;
+const APP='diag001',VER='v3.1',VDATE='2026-10-02',LK='td_v4_'+APP,TK='td_theme_'+APP,FK='td_fs_'+APP,TOKK='td_tok_'+APP,CIDK='td_cid_'+APP,LANG_KEY='td_lang_'+APP;
 const DEF_CID='962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com',FOLDER=APP+'-audits',MINB=5,MINB_RES=3;
 const cidGet=()=>localStorage.getItem(CIDK)||DEF_CID;
 let S={},cur=null,qFilter='all',lastDel=null,tab='dossiers',BF={type:'flash',size:'all',sector:'all',open:false,cmp:''};
@@ -468,7 +468,7 @@ function ensureState(){
     if(!d.steps||typeof d.steps!=='object')d.steps={};if(!d.drive||typeof d.drive!=='object')d.drive={};if(!d.date)d.date=Date.now();
     if(d.scale!==3){if(d.type==='flash'){const M=[0,1,1,2,3];Object.keys(d.answers).forEach(k=>{const a=d.answers[k];if(a&&a.i!=null&&M[a.i]!==undefined)a.i=M[a.i];});}d.scale=3;}});
   const st=S.settings=S.settings&&typeof S.settings==='object'?S.settings:{};
-  if(!st.vendor)st.vendor='Sogeti';
+  if(st.vendorV!==2){st.vendor='';st.vendorV=2;}if(typeof st.vendor!=='string')st.vendor='';
   if(typeof st.tjm!=='number')st.tjm=1000;
   if(!st.days)st.days={};
   if(!st.days.flash)st.days.flash={P:1,M:2,G:3};
@@ -722,7 +722,7 @@ const eur=n=>Math.round(n).toLocaleString(LOC())+(LANG==='fr'?' € HT':' € ex
 function buildProposal(d){return LANG==='en'?buildProposalEN(d):buildProposalFR(d);}
 function propCtx(d){if(!d||d.type==='aipd')return null;const r=score(d,byReg('RGPD')).pct,i=score(d,byReg('IA')).pct;if(r==null&&i==null)return null;
   return {r:r,i:i,g:gaps(d).filter(x=>x.p===1).slice(0,5),bf:baseFor(d)};}
-function buildProposalFR(d){const st=S.settings,sz=d?d.size:'M',cl=d?d.client:'[Client]',V=st.vendor,df=st.days.flash[sz],dn=st.days.fin[sz];
+function buildProposalFR(d){const st=S.settings,sz=d?d.size:'M',cl=d?d.client:'[Client]',V=st.vendor||t('s.vendorPh'),df=st.days.flash[sz],dn=st.days.fin[sz];
   const plan={P:'2 à 3 semaines',M:'4 à 6 semaines',G:'8 à 10 semaines'}[sz],itw={P:'4 à 6',M:'8 à 12',G:'15 à 25'}[sz];
   const c=propCtx(d);let ctx='';
   if(c){ctx=`\n## 2. Ce que révèle le ${d.type==='fin'?'diagnostic':'diagnostic flash'} déjà réalisé\n\n- Score RGPD : **${c.r==null?'n/c':c.r+' %'}** (${level(d,c.r)})\n- Score IA Act : **${c.i==null?'n/c':c.i+' %'}** (${level(d,c.i)})\n`;
@@ -738,7 +738,7 @@ function buildProposalFR(d){const st=S.settings,sz=d?d.size:'M',cl=d?d.client:'[
 ## ${n(6)}. Prérequis côté ${cl}\n\n- Un sponsor et un interlocuteur unique (DPO, RSSI ou juridique)\n- Mise à disposition des documents existants sous 5 jours ouvrés\n- Disponibilité des interlocuteurs pour les entretiens\n
 ## ${n(7)}. Pourquoi ${V}\n\n- Une grille unique RGPD + IA Act, calibrée par taille d'entreprise : pas de sur-qualité pour une PME, pas d'angle mort pour un groupe\n- Un résultat actionnable : chaque écart reçoit une priorité et une action graduée (mise en place ou mise à niveau)\n- Un positionnement par rapport aux organisations comparables déjà évaluées\n- La capacité d'enchaîner sur la remédiation technique (sécurité, data, IA) sans changer d'interlocuteur\n
 ## ${n(8)}. Prochaines étapes\n\n- Échange de 30 minutes pour valider le périmètre\n- Signature et planification de l'atelier flash sous 2 semaines\n- Restitution et décision sur le palier 2\n`;}
-function buildProposalEN(d){const st=S.settings,sz=d?d.size:'M',cl=d?d.client:'[Client]',V=st.vendor,df=st.days.flash[sz],dn=st.days.fin[sz];
+function buildProposalEN(d){const st=S.settings,sz=d?d.size:'M',cl=d?d.client:'[Client]',V=st.vendor||t('s.vendorPh'),df=st.days.flash[sz],dn=st.days.fin[sz];
   const plan={P:'2 to 3 weeks',M:'4 to 6 weeks',G:'8 to 10 weeks'}[sz],itw={P:'4 to 6',M:'8 to 12',G:'15 to 25'}[sz];
   const c=propCtx(d);let ctx='';
   if(c){ctx=`\n## 2. What the ${d.type==='fin'?'assessment':'flash assessment'} already shows\n\n- GDPR score: **${c.r==null?'n/a':c.r+'%'}** (${level(d,c.r)})\n- AI Act score: **${c.i==null?'n/a':c.i+'%'}** (${level(d,c.i)})\n`;
@@ -771,7 +771,7 @@ function applyFS(i){i=Math.max(0,Math.min(FS.length-1,i));const pg=document.quer
 const fsIdx=()=>{const v=parseInt(localStorage.getItem(FK)||'2',10);return isNaN(v)?2:v;};
 function renderSet(){const st=S.settings,num=(k,z)=>`<input type="number" min="0" step="0.5" value="${st.days[k][z]}" onchange="S.settings.days.${k}.${z}=parseFloat(this.value)||0;autoSave()">`,dn=S.diags.filter(d=>d.demo).length;
   $('tab-set').innerHTML=`<div class="card"><h3>${t('s.lang')}</h3><div class="row"><button id="lang-fr" class="btn grow ${LANG==='fr'?'primary':''}" onclick="setLang('fr')">Français</button><button id="lang-en" class="btn grow ${LANG==='en'?'primary':''}" onclick="setLang('en')">English</button></div></div>
-  <h2>${t('s.offer')}</h2><div class="card"><div class="row"><label class="small">${t('s.vendor')}<input value="${esc(st.vendor)}" onchange="S.settings.vendor=this.value.trim()||'Sogeti';autoSave()"></label>
+  <h2>${t('s.offer')}</h2><div class="card"><div class="row"><label class="small">${t('s.vendor')}<input value="${esc(st.vendor)}" placeholder="${esc(t('s.vendorPh'))}" onchange="S.settings.vendor=this.value.trim();autoSave()"></label>
   <label class="small">${t('s.tjm')}<input type="number" min="0" step="50" value="${st.tjm}" onchange="S.settings.tjm=parseFloat(this.value)||0;autoSave()"></label></div>
   <div class="tw" style="margin-top:10px"><table><thead><tr><th>${t('s.days')}</th>${Object.keys(SIZES).map(k=>`<th>${sizeL(k)}</th>`).join('')}</tr></thead><tbody>
   <tr><td>${typeL('flash')}</td><td>${num('flash','P')}</td><td>${num('flash','M')}</td><td>${num('flash','G')}</td></tr>
@@ -786,7 +786,7 @@ function renderSet(){const st=S.settings,num=(k,z)=>`<input type="number" min="0
   <h2>${t('s.drive')}</h2><div class="card"><label class="small">${t('s.cid')}<input id="cid" placeholder="xxxxxxxx.apps.googleusercontent.com" value="${esc(cidGet())}" onchange="localStorage.setItem(CIDK,this.value.trim())"></label>
   <p class="small muted" style="margin-top:6px">${t('s.driveP',{f:'<span class="mono">'+APP+'.json</span>',d:'<span class="mono">'+FOLDER+'</span>',s:'<span class="mono">drive.file</span>'})}</p>
   <div class="row" style="margin-top:8px"><button class="btn" onclick="driveConnect()">${tok?t('s.reconn'):t('s.conn')}</button></div></div>
-  <p class="small muted" style="text-align:center;margin-top:18px">${APP} · <span class="ver">v3.0</span> · ${VDATE}</p>`;}
+  <p class="small muted" style="text-align:center;margin-top:18px">${APP} · <span class="ver">v3.1</span> · ${VDATE}</p>`;}
 function impJSON(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{S=JSON.parse(r.result);ensureState();autoSave();go('dossiers');toast(t('t.imp'));}catch(e){toast(t('t.badFile'));}};r.readAsText(f);}
 
 /* ============ DÉMONSTRATION ============ */
