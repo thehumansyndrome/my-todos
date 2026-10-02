@@ -96,7 +96,7 @@ td.mono{white-space:nowrap}.tab .ts{display:none}
 <body>
 <div id="boot">Chargement… / Loading… — si ce message reste affiché, JavaScript ne s'exécute pas : ouvrez le fichier dans Chrome ou Safari, pas dans un aperçu.</div>
 <div class="header">
-  <h1>diag001 <span class="sub">· <span data-i18n="app.sub">Assessments RGPD & IA Act</span></span> <small class="ver">v3.1</small></h1>
+  <h1>diag001 <span class="sub">· <span data-i18n="app.sub">Assessments RGPD & IA Act</span></span> <small class="ver">v3.2</small></h1>
   <span id="sync" class="small muted" data-i18n-title="h.sync">⚫ Local</span>
   <button class="btn sm ghost" id="drive-btn" onclick="driveConnect()" data-i18n="h.drive">Drive</button>
   <button class="btn sm ghost" id="theme-btn" onclick="toggleTheme()" data-i18n-title="h.theme">☀︎</button>
@@ -329,7 +329,12 @@ const TBADGE={flash:'b-rgpd',fin:'b-ia',aipd:'b-aipd'};
 
 /* ============ I18N ============ */
 const I18N={
-fr:{'app.sub':'Assessments RGPD & IA Act','h.drive':'Drive','h.sync':'État de synchronisation','h.theme':'Thème',
+fr:{'dc.h':'Collecte documentaire','dc.cnt':'socle : {d}/{t} traités','dc.p':'Socle à demander avant l’audit ; le reste est fourni s’il existe ou consulté en séance. Aucun document n’est à créer : ce qui n’existe pas est un constat.',
+'dc.copy':'Copier la demande','dc.dl':'Télécharger la demande (.md)','dc.socle':'Socle à transmettre','dc.opt':'À fournir s’ils existent','dc.seen_h':'Consultés en séance — rien à préparer','dc.status':'Statut',
+'dc.req':'Demandé','dc.ok':'Reçu','dc.seen':'Vu en séance','dc.none':'N’existe pas','dc.nc':'Non communicable',
+'dc.rq.t':'Audit de conformité RGPD & IA Act — documents à préparer ({c})','dc.rq.intro':'Merci de nous transmettre les éléments du socle sous 5 jours ouvrés, par le canal de votre choix. Les éléments sensibles peuvent être consultés sur place plutôt que transmis.',
+'dc.rq.reassure':'Aucun document n’est à créer pour l’audit. Ce qui n’existe pas est un constat, pas un manque de votre part.','dc.rq.end':'Les documents transmis sont utilisés pour les seuls besoins de l’audit et restitués ou supprimés à son issue.',
+'app.sub':'Assessments RGPD & IA Act','h.drive':'Drive','h.sync':'État de synchronisation','h.theme':'Thème',
 'sync.loc':'⚫ Local','sync.pend':'🟡 En attente','sync.ok':'🟢 Sync ✓','sync.err':'🔴 Erreur',
 'tab.audits':'Audits','tab.quest':'Questionnaire','tab.res':'Résultats','tab.bench':'Baseline','tab.hist':'Historique','tab.prop':'Proposition','tab.set':'⚙︎','tab.auditsS':'Audits','tab.questS':'Quest.','tab.resS':'Résult.','tab.benchS':'Base','tab.histS':'Hist.','tab.propS':'Propal','tab.setS':'⚙︎',
 'type.flash':'Diagnostic flash','type.fin':'Diagnostic fin','type.aipd':'Qualification AIPD / AI Act',
@@ -383,7 +388,12 @@ fr:{'app.sub':'Assessments RGPD & IA Act','h.drive':'Drive','h.sync':'État de s
 't.deleted':'Audit supprimé (l’archive Drive est conservée)','t.undo':'Annuler','t.locked':'Audit clôturé — rouvrez-le pour le modifier','t.domNA':'Domaine marqué non applicable','t.copied':'Copié',
 't.archived':'Audit archivé dans {f}','t.archFail':'Archivage impossible ({e})','t.archN':'{n} audit(s) archivé(s)','t.restored':'Audit restauré : {c}','t.restFail':'Restauration impossible ({e})','t.badArch':'Archive invalide',
 't.imp':'Import réussi','t.badFile':'Fichier invalide','t.cid':'Renseignez le Client ID OAuth','t.gis':'Librairie Google non chargée','t.demoOk':'{n} audits de démonstration chargés','t.demoDel':'Démonstration supprimée','t.demoArch':'Les audits de démonstration ne sont pas archivés'},
-en:{'app.sub':'GDPR & AI Act assessments','h.drive':'Drive','h.sync':'Sync status','h.theme':'Theme',
+en:{'dc.h':'Document collection','dc.cnt':'core: {d}/{t} handled','dc.p':'Core set to request before the audit; the rest is provided if it exists or reviewed in session. No document needs to be created: what does not exist is a finding.',
+'dc.copy':'Copy request','dc.dl':'Download request (.md)','dc.socle':'Core documents to send','dc.opt':'To provide if they exist','dc.seen_h':'Reviewed in session — nothing to prepare','dc.status':'Status',
+'dc.req':'Requested','dc.ok':'Received','dc.seen':'Seen in session','dc.none':'Does not exist','dc.nc':'Not shareable',
+'dc.rq.t':'GDPR & AI Act compliance audit — documents to prepare ({c})','dc.rq.intro':'Please send us the core documents within 5 working days, through the channel of your choice. Sensitive items can be reviewed on site rather than sent.',
+'dc.rq.reassure':'No document needs to be created for the audit. What does not exist is a finding, not a shortcoming on your part.','dc.rq.end':'Documents provided are used solely for the audit and returned or deleted at its end.',
+'app.sub':'GDPR & AI Act assessments','h.drive':'Drive','h.sync':'Sync status','h.theme':'Theme',
 'sync.loc':'⚫ Local','sync.pend':'🟡 Pending','sync.ok':'🟢 Sync ✓','sync.err':'🔴 Error',
 'tab.audits':'Audits','tab.quest':'Questionnaire','tab.res':'Results','tab.bench':'Baseline','tab.hist':'History','tab.prop':'Proposal','tab.set':'⚙︎','tab.auditsS':'Audits','tab.questS':'Quest.','tab.resS':'Results','tab.benchS':'Base','tab.histS':'Hist.','tab.propS':'Prop.','tab.setS':'⚙︎',
 'type.flash':'Flash assessment','type.fin':'Detailed assessment','type.aipd':'DPIA / AI Act qualification',
@@ -453,7 +463,7 @@ const stepL=i=>LANG==='en'?AIPD_STEPS_EN[i]:AIPD_STEPS[i][1];
 const promptOf=k=>(LANG==='en'?PROMPTS_EN:PROMPTS)[k];
 
 /* ============ ÉTAT ============ */
-const APP='diag001',VER='v3.1',VDATE='2026-10-02',LK='td_v4_'+APP,TK='td_theme_'+APP,FK='td_fs_'+APP,TOKK='td_tok_'+APP,CIDK='td_cid_'+APP,LANG_KEY='td_lang_'+APP;
+const APP='diag001',VER='v3.2',VDATE='2026-10-02',LK='td_v4_'+APP,TK='td_theme_'+APP,FK='td_fs_'+APP,TOKK='td_tok_'+APP,CIDK='td_cid_'+APP,LANG_KEY='td_lang_'+APP;
 const DEF_CID='962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com',FOLDER=APP+'-audits',MINB=5,MINB_RES=3;
 const cidGet=()=>localStorage.getItem(CIDK)||DEF_CID;
 let S={},cur=null,qFilter='all',lastDel=null,tab='dossiers',BF={type:'flash',size:'all',sector:'all',open:false,cmp:''};
@@ -465,7 +475,7 @@ function ensureState(){
   if(!Array.isArray(S.diags))S.diags=[];
   S.diags.forEach(d=>{if(!d.answers||typeof d.answers!=='object')d.answers={};if(!SIZES[d.size])d.size='M';if(!OPTS[d.type])d.type='flash';if(!d.id)d.id=uid();
     if(d.status!=='closed')d.status='open';if(typeof d.auditor!=='string')d.auditor='';if(typeof d.scope!=='string')d.scope='';if(typeof d.sector!=='string')d.sector='';if(typeof d.client!=='string')d.client='?';
-    if(!d.steps||typeof d.steps!=='object')d.steps={};if(!d.drive||typeof d.drive!=='object')d.drive={};if(!d.date)d.date=Date.now();
+    if(!d.steps||typeof d.steps!=='object')d.steps={};if(!d.docs||typeof d.docs!=='object')d.docs={};if(!d.drive||typeof d.drive!=='object')d.drive={};if(!d.date)d.date=Date.now();
     if(d.scale!==3){if(d.type==='flash'){const M=[0,1,1,2,3];Object.keys(d.answers).forEach(k=>{const a=d.answers[k];if(a&&a.i!=null&&M[a.i]!==undefined)a.i=M[a.i];});}d.scale=3;}});
   const st=S.settings=S.settings&&typeof S.settings==='object'?S.settings:{};
   if(st.vendorV!==2){st.vendor='';st.vendorV=2;}if(typeof st.vendor!=='string')st.vendor='';
@@ -563,7 +573,7 @@ function renderDossiers(){const vis=S.diags.filter(d=>S.settings.showDemo||!d.de
     ${list||`<div class="empty">${t('a.none')}</div>`}
     <h2>${t('arch.h')}</h2><div class="card"><p class="small muted">${t('arch.p',{f:'<span class="mono">'+FOLDER+'</span>'})}</p>
     <div class="row" style="margin-top:8px"><button class="btn" onclick="listArchives()">${tok?t('arch.list'):t('arch.listC')}</button><button class="btn" onclick="archiveAll()">${t('arch.all')}</button></div><div id="arch" style="margin-top:10px"></div></div>`;}
-function newD(o){return {id:uid(),client:o.client,sector:o.sector||'',size:o.size,type:o.type,date:Date.now(),answers:{},scale:3,status:'open',auditor:o.auditor||'',scope:o.scope||'',steps:{},drive:{}};}
+function newD(o){return {id:uid(),client:o.client,sector:o.sector||'',size:o.size,type:o.type,date:Date.now(),answers:{},scale:3,status:'open',auditor:o.auditor||'',scope:o.scope||'',steps:{},drive:{},docs:{}};}
 function addD(){const c=$('n-client').value.trim();if(!c){toast(t('t.cliReq'));return;}
   const au=$('n-auditor').value.trim();S.settings.auditor=au;
   const d=newD({client:c,sector:$('n-sector').value.trim(),size:$('n-size').value,type:$('n-type').value,auditor:au,scope:$('n-scope').value.trim()});
@@ -591,6 +601,50 @@ function renderHist(){const by={};S.diags.forEach(d=>{if(d.demo&&!S.settings.sho
       return `<tr><td class="mono">${fdate(d.date)}</td><td><span class="badge ${TBADGE[d.type]}">${typeL(d.type)}</span></td><td>${d.type==='aipd'?esc(aipdQual(d).verdict):fmt(r,pv.r)}</td><td>${d.type==='aipd'?'':fmt(i,pv.i)}</td><td class="w small">${esc(d.scope||'')}</td><td><button class="btn sm" onclick="openD('${d.id}')">${t('a.open')}</button></td></tr>`;}).join('');
     return `<div class="card"><h3>${esc(L[0].client)}</h3><div class="tw"><table class="hist"><thead><tr><th>${t('h.date')}</th><th>${t('h.type')}</th><th>${regL('RGPD')}</th><th>${regL('IA')}</th><th>${t('h.scope')}</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></div>`;}).join('');}
 
+
+/* ============ COLLECTE DOCUMENTAIRE (audit fin) ============ */
+/* [id, niveau s=socle / o=si existant / v=vu en séance, tailles socle, FR, EN, note FR, note EN] */
+const DOCS=[
+['d1','s','PMG','Registre des activités de traitement','Record of processing activities','',''],
+['d2','s','PMG','Politique de protection des données','Data protection policy','Souvent publiée sur le site internet','Often published on the website'],
+['d3','s','PMG','Désignation du DPO et organigramme de la fonction','DPO appointment and function organisation chart','',''],
+['d4','s','PMG','Liste des sous-traitants et un contrat type (DPA)','List of processors and a standard contract (DPA)','',''],
+['d5','s','MG','Procédure de gestion des demandes de droits','Data subject request procedure','',''],
+['d6','s','PMG','Procédure de gestion des violations de données','Data breach management procedure','Le registre des violations est consulté sur place, jamais transmis','The breach register is reviewed on site, never sent'],
+['d7','s','MG','Liste des AIPD réalisées','List of DPIAs carried out','',''],
+['d8','s','MG','Politique de sécurité ou analyse de risques (une synthèse suffit)','Security policy or risk analysis (a summary is enough)','',''],
+['d9','s','PMG','Inventaire des systèmes d’IA et charte d’usage de l’IA générative','AI system inventory and generative AI usage charter','',''],
+['o1','o','','Organisation de la conformité (RACI, relais)','Compliance organisation (RACI, relays)','',''],
+['o2','o','','Bilan annuel du DPO','DPO annual report','',''],
+['o3','o','','Référentiel des durées de conservation','Retention schedule','',''],
+['o4','o','','Tests de mise en balance (intérêt légitime)','Legitimate interest assessments','',''],
+['o5','o','','Clauses contractuelles types et analyses d’impact des transferts','Standard contractual clauses and transfer impact assessments','',''],
+['o6','o','','Derniers rapports d’audit sécurité ou de pentest','Latest security audit or pentest reports','',''],
+['o7','o','','Notices et contrats des fournisseurs d’IA','AI vendor instructions and contracts','',''],
+['o8','o','','Politique IA, FRIA, AIPD intégrant l’IA','AI policy, FRIAs, AI-aware DPIAs','',''],
+['v1','v','','Registre des violations de données','Data breach register','',''],
+['v2','v','','Registre des demandes de droits','Data subject request log','',''],
+['v3','v','','Preuves de purge et d’archivage','Evidence of purging and archiving','',''],
+['v4','v','','Revues des habilitations','Access reviews','',''],
+['v5','v','','Journalisation des accès aux données','Data access logging','',''],
+['v6','v','','Mentions d’information et bandeau cookies','Privacy notices and cookie banner','Souvent consultables en ligne','Often available online']];
+const DSTAT=['req','ok','seen','none','nc'];
+const docL=x=>LANG==='en'?x[4]:x[3],docN=x=>LANG==='en'?x[6]:x[5];
+const docsFor=d=>DOCS.filter(x=>x[1]!=='s'||x[2].indexOf(d.size)>=0).concat(DOCS.filter(x=>x[1]==='s'&&x[2].indexOf(d.size)<0).map(x=>[x[0],'o',x[2],x[3],x[4],x[5],x[6]]));
+function docStats(d){if(!d.docs)d.docs={};const L=docsFor(d).filter(x=>x[1]==='s');const done=L.filter(x=>['ok','seen','none','nc'].indexOf(d.docs[x[0]])>=0).length;return {done:done,tot:L.length};}
+function setDoc(id,st){const d=getD();if(!d||locked(d))return;d.docs[id]=d.docs[id]===st?'':st;autoSave();const b=$('docs-body');if(b)b.outerHTML=docsBody(d);const c=$('docs-cnt');if(c){const s=docStats(d);c.textContent=t('dc.cnt',{d:s.done,t:s.tot});}}
+function docsBody(d){if(!d.docs)d.docs={};const grp=k=>docsFor(d).filter(x=>x[1]===k);
+  const row=x=>{const st=d.docs[x[0]]||'';return `<div class="step"><span class="n">${esc(docL(x))}${docN(x)?`<br><span class="small muted">${esc(docN(x))}</span>`:''}</span>${(x[1]==='v'?['seen','none']:DSTAT).map(o=>`<button class="st ${o==='ok'||o==='seen'?'done':o==='req'?'doing':'todo'} ${st===o?'on':''}" onclick="setDoc('${x[0]}','${o}')">${t('dc.'+o)}</button>`).join('')}</div>`;};
+  return `<div id="docs-body">${[['s','dc.socle'],['o','dc.opt'],['v','dc.seen_h']].map(g=>`<h3 style="margin-top:12px">${t(g[1])}</h3><div class="steps">${grp(g[0]).map(row).join('')}</div>`).join('')}</div>`;}
+function docsCard(d){const s=docStats(d);
+  return `<details class="card" style="margin-top:12px"${s.done<s.tot&&d.status!=='closed'?' open':''}><summary style="cursor:pointer;min-height:32px"><b>${t('dc.h')}</b> · <span id="docs-cnt" class="small muted">${t('dc.cnt',{d:s.done,t:s.tot})}</span></summary>
+  <p class="small muted" style="margin-top:8px">${t('dc.p')}</p>
+  <div class="row noprint" style="margin-top:8px"><button class="btn sm" onclick="copyTxt(buildDocRequest(getD()))">${t('dc.copy')}</button><button class="btn sm" onclick="dl('${APP}-documents-'+LANG+'.md',buildDocRequest(getD()))">${t('dc.dl')}</button></div>${docsBody(d)}</details>`;}
+function buildDocRequest(d){const g=k=>docsFor(d).filter(x=>x[1]===k),li=x=>`- ${docL(x)}${docN(x)?' — '+docN(x):''}`;
+  return `# ${t('dc.rq.t',{c:d.client})}\n\n${t('dc.rq.intro')}\n\n**${t('dc.rq.reassure')}**\n\n## ${t('dc.socle')}\n\n${g('s').map(li).join('\n')}\n\n## ${t('dc.opt')}\n\n${g('o').map(li).join('\n')}\n\n## ${t('dc.seen_h')}\n\n${g('v').map(li).join('\n')}\n\n${t('dc.rq.end')}\n`;}
+function docsReport(d){if(d.type!=='fin')return '';const L=docsFor(d).filter(x=>d.docs[x[0]]);if(!L.length)return '';
+  return `\n## ${t('dc.h')}\n\n| Document | ${t('dc.status')} |\n|---|---|\n`+L.map(x=>`| ${docL(x)} | ${t('dc.'+d.docs[x[0]])} |`).join('\n')+'\n';}
+
 /* ============ QUESTIONNAIRE ============ */
 function renderQuest(){const d=getD();if(!d){$('tab-quest').innerHTML=noDossier();return;}
   const all=qs(d),show=all.filter(q=>qFilter==='all'||(qFilter==='todo'?!(d.answers[q[0]]&&d.answers[q[0]].i!=null):DOMS[q[1]][0]===qFilter));
@@ -598,6 +652,7 @@ function renderQuest(){const d=getD();if(!d){$('tab-quest').innerHTML=noDossier(
   let html=`<h2>${esc(d.client)}</h2><span class="badge b-size">${sizeL(d.size)}</span><span class="badge ${TBADGE[d.type]}">${typeL(d.type)}</span><span class="badge ${d.status==='closed'?'b-closed':'b-open'}">${t('st.'+d.status)}</span>
   ${d.status==='closed'?`<div class="poc" style="margin-top:10px">${t('q.closedBan',{d:fdate(d.closedAt||d.date)})} <button class="btn sm" onclick="reopenD('${d.id}')">${t('a.reopen')}</button></div>`:''}
   <div class="row" style="margin-top:10px"><label class="small">${t('a.auditor')}<input value="${esc(d.auditor)}" onchange="setMeta('auditor',this.value)"></label><label class="small">${t('h.scope')}<input value="${esc(d.scope)}" onchange="setMeta('scope',this.value)"></label></div>
+  ${d.type==='fin'?docsCard(d):''}
   <div class="progress"><div id="pg"></div></div><div class="small muted" id="pg-t"></div>
   <div class="pills">${pills.map(p=>`<button class="pill ${qFilter===p[0]?'on':''}" onclick="qFilter='${p[0]}';renderQuest()">${t(p[1])}</button>`).join('')}</div>`;
   let last='';show.forEach(q=>{if(q[1]!==last){last=q[1];const r=DOMS[last][0];
@@ -713,6 +768,7 @@ function buildReport(d){const fr=LANG==='fr',st=t('st.'+d.status);
   m+=`| ${regL('RGPD')} | ${r.pct==null?'—':r.pct+' %'} | ${level(d,r.pct)} |\n| ${regL('IA')} | ${i.pct==null?'—':i.pct+' %'} | ${level(d,i.pct)} |\n\n## ${fr?'Scores par domaine':'Scores by domain'}\n\n| ${t('b.dom')} | Score |\n|---|---|\n`;
   Object.keys(DOMS).forEach(k=>{if(qs(d).some(byDom(k))){const p=score(d,byDom(k)).pct;m+=`| ${regL(DOMS[k][0])} — ${domN(k)} | ${p==null?'n/a':p+' %'} |\n`;}});
   m+=baseReport(d);
+  m+=docsReport(d);
   m+=`\n## ${fr?'Plan d’action priorisé':'Prioritised action plan'}\n\n| Prio | ${fr?'Référence':'Reference'} | ${t('r.gap')} | Type | Action |\n|---|---|---|---|---|\n`;gaps(d).forEach(x=>{m+=`| P${x.p} | ${qRef(x.q)} | ${qText(x.q)} | ${x.k} | ${x.a} |\n`;});
   const notes=qs(d).filter(q=>d.answers[q[0]]&&d.answers[q[0]].n);if(notes.length){m+=`\n## ${fr?'Constats et preuves':'Findings and evidence'}\n\n`;notes.forEach(q=>{m+=`- **${qRef(q)}** — ${d.answers[q[0]].n.replace(/\n/g,' ')}\n`;});}
   return m;}
@@ -735,7 +791,7 @@ function buildProposalFR(d){const st=S.settings,sz=d?d.size:'M',cl=d?d.client:'[
 ## ${n(3)}. Démarche\n\n| Étape | Contenu | Résultat |\n|---|---|---|\n| Cadrage | Périmètre, interlocuteurs, collecte documentaire | Plan d'intervention |\n| Analyse | Entretiens, revue des preuves, cotation | Grille de contrôles renseignée |\n| Consolidation | Scoring, priorisation, chiffrage | Plan d'action |\n| Restitution | Comité de pilotage + synthèse direction | Décision de lancement |\n
 ## ${n(4)}. Budget\n\n| Palier | Charge | Montant |\n|---|---|---|\n| 1 — Diagnostic flash | ${df} j | ${eur(df*st.tjm)} |\n| 2 — Diagnostic fin | ${dn} j | ${eur(dn*st.tjm)} |\n| 3 — Remédiation | selon plan d'action | sur devis |\n\nLe palier 1 est déduit du palier 2 en cas d'enchaînement sous 3 mois.\n
 ## ${n(5)}. Équipe\n\n- Un directeur de mission, expert protection des données et gouvernance de l'IA\n- Un ou deux consultants conformité (RGPD / IA Act)\n- Un expert cybersécurité mobilisé sur le domaine sécurité\n
-## ${n(6)}. Prérequis côté ${cl}\n\n- Un sponsor et un interlocuteur unique (DPO, RSSI ou juridique)\n- Mise à disposition des documents existants sous 5 jours ouvrés\n- Disponibilité des interlocuteurs pour les entretiens\n
+## ${n(6)}. Prérequis côté ${cl}\n\n- Un sponsor et un interlocuteur unique (DPO, RSSI ou juridique)\n- Transmission des documents du socle (liste fournie, 6 à 9 éléments selon la taille) sous 5 jours ouvrés ; aucun document n\u2019est à créer pour l\u2019audit\n- Disponibilité des interlocuteurs pour les entretiens\n
 ## ${n(7)}. Pourquoi ${V}\n\n- Une grille unique RGPD + IA Act, calibrée par taille d'entreprise : pas de sur-qualité pour une PME, pas d'angle mort pour un groupe\n- Un résultat actionnable : chaque écart reçoit une priorité et une action graduée (mise en place ou mise à niveau)\n- Un positionnement par rapport aux organisations comparables déjà évaluées\n- La capacité d'enchaîner sur la remédiation technique (sécurité, data, IA) sans changer d'interlocuteur\n
 ## ${n(8)}. Prochaines étapes\n\n- Échange de 30 minutes pour valider le périmètre\n- Signature et planification de l'atelier flash sous 2 semaines\n- Restitution et décision sur le palier 2\n`;}
 function buildProposalEN(d){const st=S.settings,sz=d?d.size:'M',cl=d?d.client:'[Client]',V=st.vendor||t('s.vendorPh'),df=st.days.flash[sz],dn=st.days.fin[sz];
@@ -751,7 +807,7 @@ function buildProposalEN(d){const st=S.settings,sz=d?d.size:'M',cl=d?d.client:'[
 ## ${n(3)}. Approach\n\n| Step | Content | Outcome |\n|---|---|---|\n| Scoping | Scope, contacts, document collection | Engagement plan |\n| Analysis | Interviews, evidence review, scoring | Completed control grid |\n| Consolidation | Scoring, prioritisation, costing | Action plan |\n| Debrief | Steering committee + executive summary | Go decision |\n
 ## ${n(4)}. Budget\n\n| Tier | Effort | Amount |\n|---|---|---|\n| 1 — Flash assessment | ${df} d | ${eur(df*st.tjm)} |\n| 2 — Detailed assessment | ${dn} d | ${eur(dn*st.tjm)} |\n| 3 — Remediation | per action plan | on quote |\n\nTier 1 is deducted from tier 2 if ordered within 3 months.\n
 ## ${n(5)}. Team\n\n- An engagement director, expert in data protection and AI governance\n- One or two compliance consultants (GDPR / AI Act)\n- A cybersecurity expert for the security domain\n
-## ${n(6)}. Prerequisites for ${cl}\n\n- A sponsor and a single point of contact (DPO, CISO or legal)\n- Existing documents shared within 5 working days\n- Availability of interviewees\n
+## ${n(6)}. Prerequisites for ${cl}\n\n- A sponsor and a single point of contact (DPO, CISO or legal)\n- Core documents shared within 5 working days (list provided, 6 to 9 items depending on size); no document needs to be created for the audit\n- Availability of interviewees\n
 ## ${n(7)}. Why ${V}\n\n- A single GDPR + AI Act grid, calibrated by company size: no over-engineering for an SME, no blind spot for a group\n- An actionable result: each gap gets a priority and a graded action (implement or upgrade)\n- Positioning against comparable organisations already assessed\n- The ability to move on to technical remediation (security, data, AI) with the same team\n
 ## ${n(8)}. Next steps\n\n- 30-minute call to validate the scope\n- Signature and scheduling of the flash workshop within 2 weeks\n- Debrief and decision on tier 2\n`;}
 function md2html(m){const Ls=m.split('\n');let h='',ul=false,tb=false;const inl=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\*(.+?)\*/g,'<i>$1</i>');
@@ -786,7 +842,7 @@ function renderSet(){const st=S.settings,num=(k,z)=>`<input type="number" min="0
   <h2>${t('s.drive')}</h2><div class="card"><label class="small">${t('s.cid')}<input id="cid" placeholder="xxxxxxxx.apps.googleusercontent.com" value="${esc(cidGet())}" onchange="localStorage.setItem(CIDK,this.value.trim())"></label>
   <p class="small muted" style="margin-top:6px">${t('s.driveP',{f:'<span class="mono">'+APP+'.json</span>',d:'<span class="mono">'+FOLDER+'</span>',s:'<span class="mono">drive.file</span>'})}</p>
   <div class="row" style="margin-top:8px"><button class="btn" onclick="driveConnect()">${tok?t('s.reconn'):t('s.conn')}</button></div></div>
-  <p class="small muted" style="text-align:center;margin-top:18px">${APP} · <span class="ver">v3.1</span> · ${VDATE}</p>`;}
+  <p class="small muted" style="text-align:center;margin-top:18px">${APP} · <span class="ver">v3.2</span> · ${VDATE}</p>`;}
 function impJSON(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{S=JSON.parse(r.result);ensureState();autoSave();go('dossiers');toast(t('t.imp'));}catch(e){toast(t('t.badFile'));}};r.readAsText(f);}
 
 /* ============ DÉMONSTRATION ============ */
