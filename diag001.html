@@ -97,7 +97,7 @@ td.mono{white-space:nowrap}.tab .ts{display:none}
 <body>
 <div id="boot">Chargement… / Loading… — si ce message reste affiché, JavaScript ne s'exécute pas : ouvrez le fichier dans Chrome ou Safari, pas dans un aperçu.</div>
 <div class="header">
-  <h1>diag001 <span class="sub">· <span data-i18n="app.sub">Assessments RGPD & IA Act</span></span> <small class="ver">v3.15</small></h1>
+  <h1>diag001 <span class="sub">· <span data-i18n="app.sub">Assessments RGPD & IA Act</span></span> <small class="ver">v3.16</small></h1>
   <span id="sync" class="small muted" data-i18n-title="h.sync">⚫ Local</span>
   <button class="btn sm ghost" id="drive-btn" onclick="driveConnect()" data-i18n="h.drive">Drive</button>
   <button class="btn sm ghost" id="theme-btn" onclick="toggleTheme()" data-i18n-title="h.theme">☀︎</button>
@@ -245,7 +245,7 @@ fr:{'lx.gdpr':'Ouvrir l\u2019article du RGPD sur EUR-Lex','lx.aia':'Ouvrir l\u20
 'arch.h':'Archives Google Drive','arch.p':'Chaque audit archivé est stocké dans le dossier {f} de votre Drive : un fichier JSON (données complètes, réimportables) et un rapport Markdown.',
 'arch.list':'Lister les archives','arch.listC':'Connecter Drive et lister','arch.all':'☁ Archiver tous les audits','arch.reading':'Lecture du dossier…','arch.file':'Fichier','arch.mod':'Modifié','arch.present':'présent','arch.restore':'Restaurer','arch.none':'Aucune archive pour l’instant.','arch.fail':'Lecture impossible ({e}).',
 'q.none':'Aucun audit ouvert.','q.goto':'Créer ou ouvrir un audit','q.closedBan':'Audit clôturé le {d} : lecture seule.','q.all':'Tout','q.todo':'Non répondus','q.domNA':'Domaine N/A','q.crit':' · critique',
-'q.note':'+ note / preuve','q.bp':'Bonne pratique','q.bpT':'Recommandation : non exigée par le texte réglementaire','q.bpNote':'Les contrôles marqués « Bonne pratique » et les mentions « (bonne pratique) » signalent des recommandations, non exigées par le texte réglementaire.','rep.bp':'bonne pratique','q.att':'📎 Joindre un fichier','q.attLink':'🔗 Ajouter un lien','q.attLinkQ':'Lien vers la preuve (https://…), par ex. un document dans l’espace du client :','q.attLinkBad':'Lien invalide : il doit commencer par https://','q.attUp':'Envoi de {n} fichier(s) vers Drive…','q.attOk':'{n} pièce(s) jointe(s) ajoutée(s)','q.attFail':'Échec de l’envoi de {f} : {e}','q.attBig':'{f} dépasse {m} Mo : ajoutez plutôt un lien','q.attDelQ':'Retirer cette pièce jointe ? Le fichier est placé dans la corbeille Drive s’il n’est utilisé par aucun autre audit.','q.attWarn':'Les fichiers sont déposés sur votre Google Drive (dossier {f}). Outil POC : ne déposez pas de preuves confidentielles d’un client sans son accord ; privilégiez un lien vers son espace documentaire. Continuer ?','q.attT':'Pièces jointes','r.att':'{n} pièce(s) jointe(s) sur {q} contrôle(s)','rep.att':'Pièces justificatives','q.noteE':'Note ✎','q.notePh':'Constat, preuve, commentaire…','q.empty':'Rien à afficher avec ce filtre.','q.toRes':'Voir les résultats →','q.toAipd':'Voir la qualification et le kit AIPD →','q.prog':'{a} / {t} réponses',
+'q.note':'+ note / preuve','q.bp':'Bonne pratique','q.bpT':'Recommandation : non exigée par le texte réglementaire','q.bpNote':'Les contrôles marqués « Bonne pratique » et les mentions « (bonne pratique) » signalent des recommandations, non exigées par le texte réglementaire.','r.bpW':'Les contrôles « Bonne pratique » comptent pour moitié dans le score et leurs écarts sont rétrogradés d’un niveau de priorité.','rep.bp':'bonne pratique','q.att':'📎 Joindre un fichier','q.attLink':'🔗 Ajouter un lien','q.attLinkQ':'Lien vers la preuve (https://…), par ex. un document dans l’espace du client :','q.attLinkBad':'Lien invalide : il doit commencer par https://','q.attUp':'Envoi de {n} fichier(s) vers Drive…','q.attOk':'{n} pièce(s) jointe(s) ajoutée(s)','q.attFail':'Échec de l’envoi de {f} : {e}','q.attBig':'{f} dépasse {m} Mo : ajoutez plutôt un lien','q.attDelQ':'Retirer cette pièce jointe ? Le fichier est placé dans la corbeille Drive s’il n’est utilisé par aucun autre audit.','q.attWarn':'Les fichiers sont déposés sur votre Google Drive (dossier {f}). Outil POC : ne déposez pas de preuves confidentielles d’un client sans son accord ; privilégiez un lien vers son espace documentaire. Continuer ?','q.attT':'Pièces jointes','r.att':'{n} pièce(s) jointe(s) sur {q} contrôle(s)','rep.att':'Pièces justificatives','q.noteE':'Note ✎','q.notePh':'Constat, preuve, commentaire…','q.empty':'Rien à afficher avec ce filtre.','q.toRes':'Voir les résultats →','q.toAipd':'Voir la qualification et le kit AIPD →','q.prog':'{a} / {t} réponses',
 'r.h':'{c} — {t}','r.hFlash':'maturité flash','r.hFin':'conformité détaillée','r.answers':'{a}/{t} réponses','r.plan':'Plan d’action priorisé ({n} écart(s))',
 'r.planHint':'P1 = contrôle critique non couvert · P2 = critique partiel ou important non couvert · P3 = amélioration. L’action dépend de la réponse : « Non » appelle une mise en place, « Partiel » une mise à niveau.',
 'r.prio':'Prio','r.text':'Texte','r.gap':'Écart constaté','r.action':'Action recommandée','r.noGap':'Aucun écart identifié à ce stade.',
@@ -304,7 +304,7 @@ en:{'lx.gdpr':'Open the GDPR article on EUR-Lex','lx.aia':'Open the AI Act artic
 'arch.h':'Google Drive archives','arch.p':'Each archived audit is stored in the {f} folder of your Drive: a JSON file (complete, re-importable data) and a Markdown report.',
 'arch.list':'List archives','arch.listC':'Connect Drive and list','arch.all':'☁ Archive all audits','arch.reading':'Reading folder…','arch.file':'File','arch.mod':'Modified','arch.present':'present','arch.restore':'Restore','arch.none':'No archives yet.','arch.fail':'Could not read ({e}).',
 'q.none':'No audit open.','q.goto':'Create or open an audit','q.closedBan':'Audit closed on {d}: read-only.','q.all':'All','q.todo':'Unanswered','q.domNA':'Domain N/A','q.crit':' · critical',
-'q.note':'+ note / evidence','q.bp':'Good practice','q.bpT':'Recommendation: not required by the regulatory text','q.bpNote':'Controls tagged “Good practice” and “(good practice)” mentions flag recommendations that are not required by the regulatory text.','rep.bp':'good practice','q.att':'📎 Attach a file','q.attLink':'🔗 Add a link','q.attLinkQ':'Link to the evidence (https://…), e.g. a document in the client’s workspace:','q.attLinkBad':'Invalid link: it must start with https://','q.attUp':'Uploading {n} file(s) to Drive…','q.attOk':'{n} attachment(s) added','q.attFail':'Upload of {f} failed: {e}','q.attBig':'{f} exceeds {m} MB: add a link instead','q.attDelQ':'Remove this attachment? The file is moved to the Drive trash if no other audit uses it.','q.attWarn':'Files are stored in your Google Drive ({f} folder). POC tool: do not upload confidential client evidence without the client’s consent; prefer a link to the client’s document space. Continue?','q.attT':'Attachments','r.att':'{n} attachment(s) on {q} control(s)','rep.att':'Supporting evidence','q.noteE':'Note ✎','q.notePh':'Finding, evidence, comment…','q.empty':'Nothing to show with this filter.','q.toRes':'See results →','q.toAipd':'See qualification and DPIA kit →','q.prog':'{a} / {t} answers',
+'q.note':'+ note / evidence','q.bp':'Good practice','q.bpT':'Recommendation: not required by the regulatory text','q.bpNote':'Controls tagged “Good practice” and “(good practice)” mentions flag recommendations that are not required by the regulatory text.','r.bpW':'“Good practice” controls count for half in the score and their gaps are downgraded by one priority level.','rep.bp':'good practice','q.att':'📎 Attach a file','q.attLink':'🔗 Add a link','q.attLinkQ':'Link to the evidence (https://…), e.g. a document in the client’s workspace:','q.attLinkBad':'Invalid link: it must start with https://','q.attUp':'Uploading {n} file(s) to Drive…','q.attOk':'{n} attachment(s) added','q.attFail':'Upload of {f} failed: {e}','q.attBig':'{f} exceeds {m} MB: add a link instead','q.attDelQ':'Remove this attachment? The file is moved to the Drive trash if no other audit uses it.','q.attWarn':'Files are stored in your Google Drive ({f} folder). POC tool: do not upload confidential client evidence without the client’s consent; prefer a link to the client’s document space. Continue?','q.attT':'Attachments','r.att':'{n} attachment(s) on {q} control(s)','rep.att':'Supporting evidence','q.noteE':'Note ✎','q.notePh':'Finding, evidence, comment…','q.empty':'Nothing to show with this filter.','q.toRes':'See results →','q.toAipd':'See qualification and DPIA kit →','q.prog':'{a} / {t} answers',
 'r.h':'{c} — {t}','r.hFlash':'flash maturity','r.hFin':'detailed compliance','r.answers':'{a}/{t} answers','r.plan':'Prioritised action plan ({n} gap(s))',
 'r.planHint':'P1 = critical control not covered · P2 = critical partially covered or important not covered · P3 = improvement. The action depends on the answer: "No" calls for implementation, "Partial" for an upgrade.',
 'r.prio':'Prio','r.text':'Law','r.gap':'Gap found','r.action':'Recommended action','r.noGap':'No gap identified so far.',
@@ -356,7 +356,7 @@ const stepL=i=>LANG==='en'?AIPD_STEPS_EN[i]:AIPD_STEPS[i][1];
 const promptOf=k=>(LANG==='en'?PROMPTS_EN:PROMPTS)[k];
 
 /* ============ ÉTAT ============ */
-const APP='diag001',VER='v3.15',VDATE='2026-10-02',LK='td_v4_'+APP,TK='td_theme_'+APP,FK='td_fs_'+APP,TOKK='td_tok_'+APP,CIDK='td_cid_'+APP,LANG_KEY='td_lang_'+APP;
+const APP='diag001',VER='v3.16',VDATE='2026-10-02',LK='td_v4_'+APP,TK='td_theme_'+APP,FK='td_fs_'+APP,TOKK='td_tok_'+APP,CIDK='td_cid_'+APP,LANG_KEY='td_lang_'+APP;
 const DEF_CID='962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com',FOLDER=APP+'-audits',MINB=5,MINB_RES=3;
 const cidGet=()=>localStorage.getItem(CIDK)||DEF_CID;
 let S={},cur=null,qFilter='all',lastDel=null,tab='dossiers',BF={type:'flash',size:'all',sector:'all',open:false,cmp:''};
@@ -392,8 +392,9 @@ const optL=(d,i)=>t(OPTS[d.type][i][0]);
 
 /* ============ SCORING ============ */
 function val(d,q){const a=d.answers[q[0]];if(!a||a.i==null)return undefined;const o=OPTS[d.type][a.i];return o?o[1]:undefined;}
+const BPW=0.5;function wq(q){return q[3]*(isBP(q)?BPW:1);}
 function score(d,filter){let num=0,den=0,ans=0,tot=0;
-  qs(d).filter(filter).forEach(q=>{tot++;const v=val(d,q);if(v===undefined)return;ans++;if(v===null)return;num+=v*q[3];den+=q[3];});
+  qs(d).filter(filter).forEach(q=>{tot++;const v=val(d,q);if(v===undefined)return;ans++;if(v===null)return;num+=v*wq(q);den+=wq(q);});
   return {pct:den?Math.round(num/den*100):null,ans:ans,tot:tot};}
 const byReg=r=>q=>DOMS[q[1]][0]===r, byDom=k=>q=>q[1]===k;
 function level(d,p){if(p==null)return '—';
@@ -401,7 +402,7 @@ function level(d,p){if(p==null)return '—';
   return t(p<50?'lvl.n1':p<75?'lvl.n2':p<90?'lvl.n3':'lvl.n4');}
 function col(p){return p==null?'var(--muted)':p<40?'var(--red)':p<70?'var(--amber)':'var(--green)'}
 function gaps(d){return qs(d).map(q=>{const v=val(d,q);if(v==null||v>=1)return null;
-  const w=q[3],p=(w===3&&v===0)?1:((w===3)||(w===2&&v===0))?2:3;return {q:q,v:v,p:p,g:w*(1-v),a:qAct(q,v),k:t(v===0?'r.kind0':'r.kind1')};}).filter(Boolean).sort((a,b)=>a.p-b.p||b.g-a.g);}
+  const w=q[3];let p=(w===3&&v===0)?1:((w===3)||(w===2&&v===0))?2:3;if(isBP(q))p=Math.min(3,p+1);return {q:q,v:v,p:p,g:wq(q)*(1-v),a:qAct(q,v),k:t(v===0?'r.kind0':'r.kind1')};}).filter(Boolean).sort((a,b)=>a.p-b.p||b.g-a.g);}
 const domsOf=(d,reg)=>Object.keys(DOMS).filter(k=>DOMS[k][0]===reg&&qs(d).some(byDom(k)));
 
 
@@ -660,7 +661,7 @@ function renderRes(){const d=getD();if(!d){$('tab-res').innerHTML=noDossier();re
   const gp=gaps(d),rows=gp.slice(0,d.type==='flash'?15:99).map(x=>`<tr><td><span class="badge b-p${x.p}">P${x.p}</span></td><td>${esc(regL(DOMS[x.q[1]][0]))}</td><td>${esc(qText(x.q))}<div class="mono muted">${refShow(x.q)} ${bpTag(x.q)}${attN(d,x.q[0])?`<span class="att-n">📎 ${attN(d,x.q[0])}</span>`:''}</div></td><td><span class="small muted">${x.k}</span><br>${esc(x.a)}</td></tr>`).join('');
   $('tab-res').innerHTML=`<h2>${t('r.h',{c:esc(d.client),t:t(d.type==='fin'?'r.hFin':d.type==='trt'?'r.hTrt':'r.hFlash')})}</h2>
   <div class="scores">${blk('RGPD')}${blk('IA')}</div>
-  <div class="card"><h3>${t('r.plan',{n:gp.length})}</h3><p class="small muted">${t('r.planHint')} ${t('q.bpNote')}${attStats(d).n?' · 📎 '+t('r.att',attStats(d)):''}</p>
+  <div class="card"><h3>${t('r.plan',{n:gp.length})}</h3><p class="small muted">${t('r.planHint')} ${t('q.bpNote')} ${t('r.bpW')}${attStats(d).n?' · 📎 '+t('r.att',attStats(d)):''}</p>
   <div class="tw"><table><thead><tr><th>${t('r.prio')}</th><th>${t('r.text')}</th><th>${t('r.gap')}</th><th>${t('r.action')}</th></tr></thead><tbody>${rows||`<tr><td colspan="4" class="muted">${t('r.noGap')}</td></tr>`}</tbody></table></div></div>
   <div class="card"><h3>${t('r.cal')}</h3><div class="tw"><table><tbody>${CAL.map(c=>`<tr><td class="mono">${fdate(c[0])}</td><td>${esc(c[1][LANG==='en'?1:0])}</td><td><span class="badge ${c[2]==='in'?'b-p1':'b-p2'}">${t(c[2]==='in'?'r.calIn':'r.calNext')}</span></td></tr>`).join('')}</tbody></table></div>
   <p class="small muted" style="margin-top:6px">${t('r.calNote')}</p></div>
@@ -736,7 +737,7 @@ function buildReport(d){const fr=LANG==='fr',st=t('st.'+d.status);
   Object.keys(DOMS).forEach(k=>{if(qs(d).some(byDom(k))){const p=score(d,byDom(k)).pct;m+=`| ${regL(DOMS[k][0])} — ${domN(k)} | ${p==null?'n/a':p+' %'} |\n`;}});
   m+=baseReport(d);
   m+=docsReport(d);
-  m+=`\n## ${fr?'Plan d’action priorisé':'Prioritised action plan'}\n\n| Prio | ${fr?'Référence':'Reference'} | ${t('r.gap')} | Type | Action |\n|---|---|---|---|---|\n`;gaps(d).forEach(x=>{m+=`| P${x.p} | ${qRef(x.q)}${isBP(x.q)?' — *'+t('rep.bp')+'*':''} | ${qText(x.q)} | ${x.k} | ${x.a} |\n`;});
+  m+=`\n## ${fr?'Plan d’action priorisé':'Prioritised action plan'}\n\n${t('q.bpNote')} ${t('r.bpW')}\n\n| Prio | ${fr?'Référence':'Reference'} | ${t('r.gap')} | Type | Action |\n|---|---|---|---|---|\n`;gaps(d).forEach(x=>{m+=`| P${x.p} | ${qRef(x.q)}${isBP(x.q)?' — *'+t('rep.bp')+'*':''} | ${qText(x.q)} | ${x.k} | ${x.a} |\n`;});
   const notes=qs(d).filter(q=>d.answers[q[0]]&&d.answers[q[0]].n);if(notes.length){m+=`\n## ${fr?'Constats et preuves':'Findings and evidence'}\n\n`;notes.forEach(q=>{m+=`- **${qRef(q)}** — ${d.answers[q[0]].n.replace(/\n/g,' ')}\n`;});}
   m+=attReport(d);return m;}
 
@@ -809,7 +810,7 @@ function renderSet(){const st=S.settings,num=(k,z)=>`<input type="number" min="0
   <h2>${t('s.drive')}</h2><div class="card"><label class="small">${t('s.cid')}<input id="cid" placeholder="xxxxxxxx.apps.googleusercontent.com" value="${esc(cidGet())}" onchange="localStorage.setItem(CIDK,this.value.trim())"></label>
   <p class="small muted" style="margin-top:6px">${t('s.driveP',{f:'<span class="mono">'+APP+'.json</span>',d:'<span class="mono">'+FOLDER+'</span>',s:'<span class="mono">drive.file</span>'})}</p>
   <div class="row" style="margin-top:8px"><button class="btn" onclick="driveConnect()">${tok?t('s.reconn'):t('s.conn')}</button></div></div>
-  <p class="small muted" style="text-align:center;margin-top:18px">${APP} · <span class="ver">v3.15</span> · ${VDATE}</p>`;}
+  <p class="small muted" style="text-align:center;margin-top:18px">${APP} · <span class="ver">v3.16</span> · ${VDATE}</p>`;}
 function impJSON(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{S=JSON.parse(r.result);ensureState();autoSave();go('dossiers');toast(t('t.imp'));}catch(e){toast(t('t.badFile'));}};r.readAsText(f);}
 
 /* ============ DÉMONSTRATION ============ */
