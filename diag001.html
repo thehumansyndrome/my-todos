@@ -97,7 +97,7 @@ td.mono{white-space:nowrap}.tab .ts{display:none}
 <body>
 <div id="boot">Chargement… / Loading… — si ce message reste affiché, JavaScript ne s'exécute pas : ouvrez le fichier dans Chrome ou Safari, pas dans un aperçu.</div>
 <div class="header">
-  <h1>diag001 <span class="sub">· <span data-i18n="app.sub">Assessments RGPD & IA Act</span></span> <small class="ver">v3.26</small></h1>
+  <h1>diag001 <span class="sub">· <span data-i18n="app.sub">Assessments RGPD & IA Act</span></span> <small class="ver">v3.27</small></h1>
   <span id="sync" class="small muted" data-i18n-title="h.sync">⚫ Local</span>
   <button class="btn sm ghost" id="drive-btn" onclick="driveConnect()" data-i18n="h.drive">Drive</button>
   <button class="btn sm ghost" id="theme-btn" onclick="toggleTheme()" data-i18n-title="h.theme">☀︎</button>
@@ -358,7 +358,7 @@ const stepL=i=>LANG==='en'?AIPD_STEPS_EN[i]:AIPD_STEPS[i][1];
 const promptOf=k=>(LANG==='en'?PROMPTS_EN:PROMPTS)[k];
 
 /* ============ ÉTAT ============ */
-const APP='diag001',VER='v3.26',VDATE='2026-10-02',LK='td_v4_'+APP,TK='td_theme_'+APP,FK='td_fs_'+APP,TOKK='td_tok_'+APP,CIDK='td_cid_'+APP,LANG_KEY='td_lang_'+APP;
+const APP='diag001',VER='v3.27',VDATE='2026-10-02',LK='td_v4_'+APP,TK='td_theme_'+APP,FK='td_fs_'+APP,TOKK='td_tok_'+APP,CIDK='td_cid_'+APP,LANG_KEY='td_lang_'+APP;
 const DEF_CID='962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com',FOLDER=APP+'-audits',MINB=5,MINB_RES=3;
 const cidGet=()=>localStorage.getItem(CIDK)||DEF_CID;
 let S={},cur=null,qFilter='all',lastDel=null,tab='dossiers',BF={type:'flash',size:'all',sector:'all',open:false,cmp:''};
@@ -682,7 +682,7 @@ function renderRes(){const d=getD();if(!d){$('tab-res').innerHTML=noDossier();re
   const blk=reg=>{const s=score(d,byReg(reg));const bars=domsOf(d,reg).map(k=>{const p=score(d,byDom(k)).pct;
     return `<div class="bar"><span class="l">${esc(domN(k))}</span><span class="t"><div style="width:${p||0}%;background:${col(p)}"></div></span><span class="v mono">${p==null?'n/a':p+'%'}</span></div>`}).join('');
     return `<div class="card"><h3>${regL(reg)}</h3><div class="big" style="color:${col(s.pct)}">${s.pct==null?'—':s.pct+' %'}</div><div class="small muted">${level(d,s.pct)} · ${t('r.answers',{a:s.ans,t:s.tot})}</div>${d.type==='trt'?'':baseLine(d,reg,s.pct)}${radar(d,reg)}${bars}</div>`};
-  const gp=gaps(d),rows=gp.slice(0,d.type==='flash'?15:99).map(x=>`<tr><td><span class="badge b-p${x.p}">P${x.p}</span></td><td>${esc(regL(DOMS[x.q[1]][0]))}</td><td>${esc(qText(x.q))}<div class="mono muted">${refShow(x.q)} ${bpTag(x.q)}${attN(d,x.q[0])?`<span class="att-n">📎 ${attN(d,x.q[0])}</span>`:''}</div></td><td><span class="small muted">${x.k}</span><br>${esc(x.a)}${x.r?`<div class="mono muted small">${refStrHTML(x.r,x.q[1])}</div>`:''}</td></tr>`).join('');
+  const gp=gaps(d),rows=gp.map(x=>`<tr><td><span class="badge b-p${x.p}">P${x.p}</span></td><td>${esc(regL(DOMS[x.q[1]][0]))}</td><td>${esc(qText(x.q))}<div class="mono muted">${refShow(x.q)} ${bpTag(x.q)}${attN(d,x.q[0])?`<span class="att-n">📎 ${attN(d,x.q[0])}</span>`:''}</div></td><td><span class="small muted">${x.k}</span><br>${esc(x.a)}${x.r?`<div class="mono muted small">${refStrHTML(x.r,x.q[1])}</div>`:''}</td></tr>`).join('');
   $('tab-res').innerHTML=`<h2>${t('r.h',{c:esc(d.client),t:t(d.type==='fin'?'r.hFin':d.type==='trt'?'r.hTrt':'r.hFlash')})}</h2>
   ${aiOff(d)?`<div class="poc" style="margin-top:10px">${t('ai.useNoRes')}</div>`:''}${gateNo(d)?`<div class="poc" style="margin-top:10px">${t('ai.gateW')}</div>`:''}
   <div class="scores">${blk('RGPD')}${blk('IA')}</div>
@@ -836,7 +836,7 @@ function renderSet(){const st=S.settings,num=(k,z)=>`<input type="number" min="0
   <h2>${t('s.drive')}</h2><div class="card"><label class="small">${t('s.cid')}<input id="cid" placeholder="xxxxxxxx.apps.googleusercontent.com" value="${esc(cidGet())}" onchange="localStorage.setItem(CIDK,this.value.trim())"></label>
   <p class="small muted" style="margin-top:6px">${t('s.driveP',{f:'<span class="mono">'+APP+'.json</span>',d:'<span class="mono">'+FOLDER+'</span>',s:'<span class="mono">drive.file</span>'})}</p>
   <div class="row" style="margin-top:8px"><button class="btn" onclick="driveConnect()">${tok?t('s.reconn'):t('s.conn')}</button></div></div>
-  <p class="small muted" style="text-align:center;margin-top:18px">${APP} · <span class="ver">v3.26</span> · ${VDATE}</p>`;}
+  <p class="small muted" style="text-align:center;margin-top:18px">${APP} · <span class="ver">v3.27</span> · ${VDATE}</p>`;}
 function impJSON(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{S=JSON.parse(r.result);ensureState();autoSave();go('dossiers');toast(t('t.imp'));}catch(e){toast(t('t.badFile'));}};r.readAsText(f);}
 
 /* ============ DÉMONSTRATION ============ */
