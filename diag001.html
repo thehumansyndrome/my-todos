@@ -38,7 +38,7 @@ textarea{resize:vertical;min-height:60px}
 .btn.danger{color:var(--red);border-color:var(--red);background:transparent}
 .btn.sm{min-height:36px;padding:4px 10px;font-size:13px}
 .badge{display:inline-block;background:transparent;border:1px solid currentColor;border-radius:20px;padding:1px 9px;font-size:12px;margin-right:4px}
-.b-rgpd{color:var(--blue)}.evs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}.evs .small{margin-right:4px}.nat-o{color:var(--red)}.nat-r{color:var(--amber)}.nat-p{color:var(--muted);border-style:dashed}tr.natrow td{background:var(--bg2,transparent);padding-top:14px;border-bottom:1px solid var(--line,#8884)}.b-ia{color:var(--violet)}abbr[title]{text-decoration:underline dotted;text-underline-offset:2px;cursor:help}.gloss summary{cursor:pointer}.b-bp{color:var(--muted);border-style:dashed;font-size:11px}.b-size{color:var(--muted)}.b-p1{color:var(--red)}.b-p2{color:var(--amber)}.b-p3{color:var(--muted)}
+.b-rgpd{color:var(--blue)}.qid{display:inline-block;font-size:11px;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:0 5px;margin-right:6px;vertical-align:1px}.evs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}.evs .small{margin-right:4px}.nat-o{color:var(--red)}.nat-r{color:var(--amber)}.nat-p{color:var(--muted);border-style:dashed}tr.natrow td{background:var(--bg2,transparent);padding-top:14px;border-bottom:1px solid var(--line,#8884)}.b-ia{color:var(--violet)}abbr[title]{text-decoration:underline dotted;text-underline-offset:2px;cursor:help}.gloss summary{cursor:pointer}.b-bp{color:var(--muted);border-style:dashed;font-size:11px}.b-size{color:var(--muted)}.b-p1{color:var(--red)}.b-p2{color:var(--amber)}.b-p3{color:var(--muted)}
 .pills{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
 .pill{border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:20px;padding:6px 14px;font:inherit;font-size:13px;cursor:pointer;min-height:36px}
 .pill.on{background:var(--text);color:var(--bg);border-color:var(--text)}
@@ -97,7 +97,7 @@ td.mono{white-space:nowrap}.tab .ts{display:none}
 <body>
 <div id="boot">Chargement… / Loading… — si ce message reste affiché, JavaScript ne s'exécute pas : ouvrez le fichier dans Chrome ou Safari, pas dans un aperçu.</div>
 <div class="header">
-  <h1>diag001 <span class="sub">· <span data-i18n="app.sub">Assessments RGPD & IA Act</span></span> <small class="ver">v3.59</small></h1>
+  <h1>diag001 <span class="sub">· <span data-i18n="app.sub">Assessments RGPD & IA Act</span></span> <small class="ver">v3.60</small></h1>
   <span id="sync" class="small muted" data-i18n-title="h.sync">⚫ Local</span>
   <button class="btn sm ghost" id="drive-btn" onclick="driveConnect()" data-i18n="h.drive">Drive</button>
   <button class="btn sm ghost" id="theme-btn" onclick="toggleTheme()" data-i18n-title="h.theme">☀︎</button>
@@ -358,7 +358,7 @@ const stepL=i=>LANG==='en'?AIPD_STEPS_EN[i]:AIPD_STEPS[i][1];
 const promptOf=k=>(LANG==='en'?PROMPTS_EN:PROMPTS)[k];
 
 /* ============ ÉTAT ============ */
-const APP='diag001',VER='v3.59',VDATE='2026-10-02',LK='td_v4_'+APP,TK='td_theme_'+APP,FK='td_fs_'+APP,TOKK='td_tok_'+APP,CIDK='td_cid_'+APP,LANG_KEY='td_lang_'+APP;
+const APP='diag001',VER='v3.60',VDATE='2026-10-02',LK='td_v4_'+APP,TK='td_theme_'+APP,FK='td_fs_'+APP,TOKK='td_tok_'+APP,CIDK='td_cid_'+APP,LANG_KEY='td_lang_'+APP;
 const DEF_CID='962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com',FOLDER=APP+'-audits',MINB=5,MINB_RES=3;
 const cidGet=()=>localStorage.getItem(CIDK)||DEF_CID;
 let S={},cur=null,qFilter='all',lastDel=null,tab='dossiers',BF={type:'flash',size:'all',sector:'all',open:false,cmp:''};
@@ -416,12 +416,12 @@ const SUBA={"f1": {"N": [["o", "Désigner un DPO lorsqu’il est obligatoire (ar
 const NATS=['o','r','p'];
 function qNat(q){return isPP(q)?'p':isBP(q)?'r':'o';}
 function untag(x){return String(x||'').replace(/\s*\((recommandé|recommended|pratique de place|industry practice)\)/gi,'');}
-function subActs(q,v){const S=SUBA[q[0]]&&SUBA[q[0]][v===0?'N':'P'];if(S)return S.map(z=>({n:z[0],a:LANG==='en'?z[2]:z[1],r:LANG==='en'?refEN(z[3]):z[3]}));return [{n:qNat(q),a:untag(qAct(q,v)),r:aRef(q,v).replace(/^\s*(Recommandé|Recommended|Pratique de place|Industry practice)\s*;\s*(?=\S)/,'')}];}
+function subActs(q,v){const K=v===0?'N':'P',S=SUBA[q[0]]&&SUBA[q[0]][K];if(S)return S.map((z,i)=>({id:q[0]+'-'+K+(i+1),n:z[0],a:LANG==='en'?z[2]:z[1],r:LANG==='en'?refEN(z[3]):z[3]}));return [{id:q[0]+'-'+K+'1',n:qNat(q),a:untag(qAct(q,v)),r:aRef(q,v).replace(/^\s*(Recommandé|Recommended|Pratique de place|Industry practice)\s*;\s*(?=\S)/,'')}];}
 function natL(n){return t('nat.'+n);}
 function natB(n){return `<span class="badge nat-${n}" title="${esc(t('nat.'+n+'T'))}">${natL(n)}</span>`;}
 function planOf(d){const R={o:[],r:[],p:[]};gaps(d).forEach(x=>x.s.forEach(z=>R[z.n].push({x:x,z:z})));NATS.forEach(n=>R[n].sort((a,b)=>a.z.p-b.z.p||b.x.g-a.x.g));return R;}
 function gaps(d){return qs(d).map(q=>{const v=val(d,q);if(v==null||v>=1)return null;
-  const w=q[3];const p0=(w===3&&v===0)?1:((w===3)||(w===2&&v===0))?2:3;let p=p0;if(isBP(q)&&!GATE[q[0]])p=Math.min(3,p+1);const sa=subActs(q,v).map(z=>({n:z.n,a:z.a,r:z.r,p:Math.min(3,p0+(z.n!=='o'&&!GATE[q[0]]?1:0))}));return {q:q,v:v,p:p,g:wq(q)*(1-v),a:qAct(q,v),r:aRef(q,v),s:sa,k:t(v===0?'r.kind0':'r.kind1')};}).filter(Boolean).sort((a,b)=>a.p-b.p||b.g-a.g);}
+  const w=q[3];const p0=(w===3&&v===0)?1:((w===3)||(w===2&&v===0))?2:3;let p=p0;if(isBP(q)&&!GATE[q[0]])p=Math.min(3,p+1);const sa=subActs(q,v).map(z=>({id:z.id,n:z.n,a:z.a,r:z.r,p:Math.min(3,p0+(z.n!=='o'&&!GATE[q[0]]?1:0))}));return {q:q,v:v,p:p,g:wq(q)*(1-v),a:qAct(q,v),r:aRef(q,v),s:sa,k:t(v===0?'r.kind0':'r.kind1')};}).filter(Boolean).sort((a,b)=>a.p-b.p||b.g-a.g);}
 const domsOf=(d,reg)=>Object.keys(DOMS).filter(k=>DOMS[k][0]===reg&&qs(d).some(byDom(k)));
 
 
@@ -581,7 +581,7 @@ function docsCard(d){const s=docStats(d);
   <p class="small muted" style="margin-top:8px">${t('dc.p')}</p>
   <div class="row noprint" style="margin-top:8px"><button class="btn sm" onclick="copyTxt(buildDocRequest(getD(),'init'))">${t('dc.copy')}</button><button class="btn sm" onclick="dl('${APP}-documents-'+LANG+'.md',buildDocRequest(getD(),'init'))">${t('dc.dl')}</button><button class="btn sm" onclick="copyTxt(buildDocRequest(getD(),'comp'))">${t('dc.copy2')}</button><button class="btn sm" onclick="dl('${APP}-complements-'+LANG+'.md',buildDocRequest(getD(),'comp'))">${t('dc.dl2')}</button></div>${docsBody(d)}</details>`;}
 function inputsCard(d){if(d.type!=='flash'&&d.type!=='aipd')return '';return `<div class="card" style="margin-top:12px"><b>${t('in.h')}</b><p class="small muted" style="margin-top:6px">${t('in.'+d.type)}</p></div>`;}
-function buildDocRequest(d,k){const g=c=>docsFor(d).filter(x=>x[1]===c),li=x=>`- ${docL(x)}${docN(x)?' — '+docN(x):''}`;
+function buildDocRequest(d,k){const g=c=>docsFor(d).filter(x=>x[1]===c),li=x=>`- ${docL(x)}${docN(x)?' — '+docN(x):''}${x[1]!=='s'&&x[2]?' ('+x[2].split(',').join(', ')+')':''}`;
   if(k==='comp'){const C=g('c'),V=g('v');return `# ${t(d.type==='trt'?'dc.rq.tT2':'dc.rq.t2',{c:d.client})}\n\n${t('dc.rq.intro2')}\n\n**${t('dc.rq.reassure')}**\n\n## ${t('dc.cond')}\n\n${C.length?C.map(li).join('\n'):t('dc.cond0')}\n\n${V.length?`## ${t('dc.seen_h')}\n\n${V.map(li).join('\n')}\n\n`:''}${t('dc.rq.end')}\n`;}
   const isAI=x=>x[2]==='ai'||x[2].split(',').every(i=>/^(a|t7)/.test(i)),A=c=>(d.type==='trt'?DOCS_T:DOCS).filter(x=>x[1]===c&&!(d.aiUse==='no'&&isAI(x))),S=A('s'),C=A('c'),V=A('v');
   return `# ${t(d.type==='trt'?'dc.rq.tT':'dc.rq.t',{c:d.client})}\n\n${t(d.type==='trt'?'dc.rq.introT':'dc.rq.intro')}\n\n**${t('dc.rq.reassure')}**\n\n## ${t(d.type==='trt'?'dc.socleT':'dc.socle')}\n\n${S.map(li).join('\n')}\n\n${C.length?`## ${t('dc.rq.opt')}\n\n${C.map(li).join('\n')}\n\n`:''}${V.length?`## ${t('dc.rq.hand')}\n\n${V.map(li).join('\n')}\n\n`:''}${t('dc.rq.next')}\n\n${t('dc.rq.end')}\n`;}
@@ -621,7 +621,7 @@ function renderQuest(){const d=getD();if(!d){$('tab-quest').innerHTML=noDossier(
   const glSeen={};let last='';show.forEach(q=>{if(q[1]!==last){last=q[1];const r=DOMS[last][0];
     html+=`<div class="dom"><h3><span class="badge ${r==='IA'?'b-ia':r==='AIPD'?'b-aipd':'b-rgpd'}">${regL(r)}</span>${esc(domN(last))}</h3>${d.type==='aipd'?'':`<button class="btn sm ghost" onclick="domNA('${last}')">${t('q.domNA')}</button>`}</div>`;}
     const a=d.answers[q[0]]||{};
-    html+=`<div class="card q ${a.i!=null?'done':''}" id="q-${q[0]}" style="margin-top:8px"><p>${glossify(esc(qText(q)),glSeen)}</p><span class="mono muted">${refShow(q)}${q[3]===3&&d.type!=='aipd'?t('q.crit'):''}</span> ${bpTag(q)}
+    html+=`<div class="card q ${a.i!=null?'done':''}" id="q-${q[0]}" style="margin-top:8px"><p><span class="qid mono">${q[0]}</span>${glossify(esc(qText(q)),glSeen)}</p><span class="mono muted">${refShow(q)}${q[3]===3&&d.type!=='aipd'?t('q.crit'):''}</span> ${bpTag(q)}
     <div class="opts">${OPTS[d.type].map((o,i)=>`<button class="opt ${a.i===i?'sel '+o[2]:''}" data-c="${o[2]}" onclick="setAns('${q[0]}',${i})">${t(o[0])}</button>`).join('')}</div>${d.type==='aipd'?'':evHTML(d,q)}
     <button class="link" onclick="this.nextElementSibling.classList.toggle('open')">${a.n?t('q.noteE'):t('q.note')}</button>
     <textarea class="note-t ${a.n?'open':''}" placeholder="${esc(t('q.notePh'))}" oninput="setNote('${q[0]}',this.value)">${esc(a.n||'')}</textarea>
@@ -669,7 +669,7 @@ function delAtt(id,k){const d=getD();if(!d||locked(d))return;const L=attOf(d,id)
     dfetch('https://www.googleapis.com/drive/v3/files/'+f.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({trashed:true})}).catch(function(){});}
 function attStats(d){let n=0,q=0;qs(d).forEach(x=>{const c=attN(d,x[0]);if(c){n+=c;q++;}});return {n:n,q:q};}
 function attReport(d){const L=qs(d).filter(q=>attN(d,q[0]));if(!L.length)return '';let m=`\n## ${t('rep.att')}\n\n`;
-  L.forEach(q=>{m+=`- **${qRef(q)}** — ${attOf(d,q[0]).map(f=>`[${f.name.replace(/[\[\]]/g,'')}](${f.link})`).join(', ')}\n`;});return m;}
+  L.forEach(q=>{m+=`- **${q[0]}** · ${qRef(q)} — ${attOf(d,q[0]).map(f=>`[${f.name.replace(/[\[\]]/g,'')}](${f.link})`).join(', ')}\n`;});return m;}
 function setNote(id,v){const d=getD();if(!d||locked(d))return;(d.answers[id]=d.answers[id]||{}).n=v;autoSave();}
 function domNA(k){const d=getD();if(!d||locked(d))return;const na=OPTS[d.type].length-1;qs(d).filter(byDom(k)).forEach(q=>{(d.answers[q[0]]=d.answers[q[0]]||{}).i=na;});autoSave();renderQuest();toast(t('t.domNA'));}
 
@@ -690,7 +690,7 @@ function renderRes(){const d=getD();if(!d){$('tab-res').innerHTML=noDossier();re
   const blk=reg=>{const s=score(d,byReg(reg));const bars=domsOf(d,reg).map(k=>{const p=score(d,byDom(k)).pct;
     return `<div class="bar"><span class="l">${esc(domN(k))}</span><span class="t"><div style="width:${p||0}%;background:${col(p)}"></div></span><span class="v mono">${p==null?'n/a':p+'%'}</span></div>`}).join('');
     return `<div class="card"><h3>${regL(reg)}</h3><div class="big" style="color:${col(s.pct)}">${s.pct==null?'—':s.pct+' %'}</div><div class="small muted">${level(d,s.pct)} · ${t('r.answers',{a:s.ans,t:s.tot})}</div>${s.pct?`<div class="small muted">${t('ev.share',{p:evShare(d,byReg(reg))})}</div>`:''}${d.type==='trt'?'':baseLine(d,reg,s.pct)}${radar(d,reg)}${bars}</div>`};
-  const glR={},gp=gaps(d),PL=planOf(d),row=e=>{const x=e.x,z=e.z;return `<tr><td><span class="badge b-p${z.p}">P${z.p}</span></td><td>${esc(regL(DOMS[x.q[1]][0]))}</td><td>${glossify(esc(qText(x.q)),glR)}<div class="mono muted">${refShow(x.q)} ${bpTag(x.q)}${attN(d,x.q[0])?`<span class="att-n">📎 ${attN(d,x.q[0])}</span>`:''}</div></td><td><span class="small muted">${x.k}</span><br>${glossify(esc(z.a),glR)}${z.r?`<div class="mono muted small">${refStrHTML(z.r,x.q[1])}</div>`:''}</td></tr>`;},rows=NATS.filter(n=>PL[n].length).map(n=>`<tr class="natrow"><td colspan="4">${natB(n)} <b>${t('nat.'+n+'H',{n:PL[n].length})}</b> <span class="small muted">— ${t('nat.'+n+'T')}</span></td></tr>`+PL[n].map(row).join('')).join('');
+  const glR={},gp=gaps(d),PL=planOf(d),row=e=>{const x=e.x,z=e.z;return `<tr><td><span class="badge b-p${z.p}">P${z.p}</span></td><td>${esc(regL(DOMS[x.q[1]][0]))}</td><td><span class="qid mono">${x.q[0]}</span>${glossify(esc(qText(x.q)),glR)}<div class="mono muted">${refShow(x.q)} ${bpTag(x.q)}${attN(d,x.q[0])?`<span class="att-n">📎 ${attN(d,x.q[0])}</span>`:''}</div></td><td><span class="small muted"><span class="mono">${z.id}</span> · ${x.k}</span><br>${glossify(esc(z.a),glR)}${z.r?`<div class="mono muted small">${refStrHTML(z.r,x.q[1])}</div>`:''}</td></tr>`;},rows=NATS.filter(n=>PL[n].length).map(n=>`<tr class="natrow"><td colspan="4">${natB(n)} <b>${t('nat.'+n+'H',{n:PL[n].length})}</b> <span class="small muted">— ${t('nat.'+n+'T')}</span></td></tr>`+PL[n].map(row).join('')).join('');
   $('tab-res').innerHTML=`<h2>${t('r.h',{c:esc(d.client),t:t(d.type==='fin'?'r.hFin':d.type==='trt'?'r.hTrt':'r.hFlash')})}</h2>
   ${aiOff(d)?`<div class="poc" style="margin-top:10px">${t('ai.useNoRes')}</div>`:''}${gateNo(d)?`<div class="poc" style="margin-top:10px">${t('ai.gateW')}</div>`:''}
   <div class="scores">${blk('RGPD')}${blk('IA')}</div>
@@ -773,8 +773,8 @@ function buildReport(d){const fr=LANG==='fr',st=t('st.'+d.status);
   m+=baseReport(d);
   m+=evReport(d);
   m+=docsReport(d);
-  m+=`\n## ${fr?'Plan d’action priorisé':'Prioritised action plan'}\n\n${t('nat.note')} ${t('r.bpW')}\n`;const glM={},PL=planOf(d);NATS.forEach(n=>{if(!PL[n].length)return;m+=`\n### ${t('nat.'+n+'H',{n:PL[n].length})}\n\n*${t('nat.'+n+'T')}*\n\n| Prio | ${fr?'Référence':'Reference'} | ${t('r.gap')} | Type | Action | ${fr?'Réf. action':'Action ref.'} |\n|---|---|---|---|---|---|\n`;PL[n].forEach(e=>{const x=e.x,z=e.z;m+=`| P${z.p} | ${qRef(x.q)} | ${glossPlain(qText(x.q),glM)} | ${x.k} | ${glossPlain(z.a,glM)} | ${z.r||''} |\n`;});});
-  const notes=qs(d).filter(q=>d.answers[q[0]]&&d.answers[q[0]].n);if(notes.length){m+=`\n## ${fr?'Constats et preuves':'Findings and evidence'}\n\n`;notes.forEach(q=>{m+=`- **${qRef(q)}** — ${d.answers[q[0]].n.replace(/\n/g,' ')}\n`;});}
+  m+=`\n## ${fr?'Plan d’action priorisé':'Prioritised action plan'}\n\n${t('nat.note')} ${t('r.bpW')}\n`;const glM={},PL=planOf(d);NATS.forEach(n=>{if(!PL[n].length)return;m+=`\n### ${t('nat.'+n+'H',{n:PL[n].length})}\n\n*${t('nat.'+n+'T')}*\n\n| ${fr?'ID action':'Action ID'} | Prio | ${fr?'Contrôle':'Control'} | ${fr?'Référence':'Reference'} | ${t('r.gap')} | Type | Action | ${fr?'Réf. action':'Action ref.'} |\n|---|---|---|---|---|---|---|---|\n`;PL[n].forEach(e=>{const x=e.x,z=e.z;m+=`| ${z.id} | P${z.p} | ${x.q[0]} | ${qRef(x.q)} | ${glossPlain(qText(x.q),glM)} | ${x.k} | ${glossPlain(z.a,glM)} | ${z.r||''} |\n`;});});
+  const notes=qs(d).filter(q=>d.answers[q[0]]&&d.answers[q[0]].n);if(notes.length){m+=`\n## ${fr?'Constats et preuves':'Findings and evidence'}\n\n`;notes.forEach(q=>{m+=`- **${q[0]}** · ${qRef(q)} — ${d.answers[q[0]].n.replace(/\n/g,' ')}\n`;});}
   m+=attReport(d);m+=glossReport(glM);return m;}
 
 /* ============ PROPOSITION ============ */
@@ -846,7 +846,7 @@ function renderSet(){const st=S.settings,num=(k,z)=>`<input type="number" min="0
   <h2>${t('s.drive')}</h2><div class="card"><label class="small">${t('s.cid')}<input id="cid" placeholder="xxxxxxxx.apps.googleusercontent.com" value="${esc(cidGet())}" onchange="localStorage.setItem(CIDK,this.value.trim())"></label>
   <p class="small muted" style="margin-top:6px">${t('s.driveP',{f:'<span class="mono">'+APP+'.json</span>',d:'<span class="mono">'+FOLDER+'</span>',s:'<span class="mono">drive.file</span>'})}</p>
   <div class="row" style="margin-top:8px"><button class="btn" onclick="driveConnect()">${tok?t('s.reconn'):t('s.conn')}</button></div></div>
-  <p class="small muted" style="text-align:center;margin-top:18px">${APP} · <span class="ver">v3.59</span> · ${VDATE}</p>`;}
+  <p class="small muted" style="text-align:center;margin-top:18px">${APP} · <span class="ver">v3.60</span> · ${VDATE}</p>`;}
 function impJSON(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{S=JSON.parse(r.result);ensureState();autoSave();go('dossiers');toast(t('t.imp'));}catch(e){toast(t('t.badFile'));}};r.readAsText(f);}
 
 /* ============ DÉMONSTRATION ============ */
@@ -902,7 +902,7 @@ function auditPayload(d){const o={schema:'diag001-audit/1',app:APP,version:VER,l
     Object.keys(DOMS).forEach(k=>{if(qs(d).some(byDom(k)))o.scores.domaines[k]=score(d,byDom(k)).pct;});
     const bf=baseFor(d);if(bf)o.baseline={n:bf.b.n,memeTaille:bf.same,rgpd:bf.b.g.RGPD?bf.b.g.RGPD.mean:null,ia:bf.b.g.IA?bf.b.g.IA.mean:null};
     o.usageIA=d.aiUse||null;o.niveauPreuve={rgpd:evShare(d,byReg('RGPD')),ia:evShare(d,byReg('IA')),controles:qs(d).filter(q=>d.answers[q[0]]&&d.answers[q[0]].i!=null).reduce((a,q)=>(a[q[0]]={d:'declare',s:'vu_en_seance',v:'echantillon_verifie'}[evOf(d,q[0])],a),{})};o.inventaireIAManquant=gateNo(d);o.piecesJointes=qs(d).filter(q=>attN(d,q[0])).map(q=>({id:q[0],reference:q[5],fichiers:attOf(d,q[0]).map(f=>({nom:f.name,type:f.kind,lien:f.link,taille:f.size||null}))}));
-    o.ecarts=gaps(d).map(x=>({id:x.q[0],nature:isPP(x.q)?'pratique_de_place':isBP(x.q)?'recommande':'obligatoire',actions:x.s.map(z=>({nature:{o:'obligatoire',r:'recommande',p:'pratique_de_place'}[z.n],priorite:'P'+z.p,action:z.a,reference:z.r})),priorite:'P'+x.p,reference:x.q[5],ecart:x.q[4],reponse:x.v===0?'non':'partiel',type:x.v===0?'mise_en_place':'mise_a_niveau',action:x.v===0?x.q[6]:x.q[7],referenceAction:x.v===0?x.q[8]:x.q[9]}));}
+    o.ecarts=gaps(d).map(x=>({id:x.q[0],nature:isPP(x.q)?'pratique_de_place':isBP(x.q)?'recommande':'obligatoire',actions:x.s.map(z=>({id:z.id,nature:{o:'obligatoire',r:'recommande',p:'pratique_de_place'}[z.n],priorite:'P'+z.p,action:z.a,reference:z.r})),priorite:'P'+x.p,reference:x.q[5],ecart:x.q[4],reponse:x.v===0?'non':'partiel',type:x.v===0?'mise_en_place':'mise_a_niveau',action:x.v===0?x.q[6]:x.q[7],referenceAction:x.v===0?x.q[8]:x.q[9]}));}
   return o;}
 async function archiveD(id,silent){const d=S.diags.find(x=>x.id===id);if(!d)return;if(d.demo){if(!silent)toast(t('t.demoArch'));return false;}if(!tok){driveConnect(function(){archiveD(id);});return;}
   try{setSync('pend');const base='audit-'+slug(d.client)+'-'+d.type+'-'+new Date(d.date).toISOString().slice(0,10)+'-'+d.id;
