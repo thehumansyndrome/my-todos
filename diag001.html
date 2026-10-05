@@ -94,7 +94,7 @@ td.mono{white-space:nowrap}.tab .ts{display:none}
 <body>
 <div id="boot">Chargement… / Loading… — si ce message reste affiché, JavaScript ne s'exécute pas : ouvrez le fichier dans Chrome ou Safari, pas dans un aperçu.</div>
 <div class="header">
-  <h1>diag001 <span class="sub">· <span data-i18n="app.sub">Diagnostics RGPD</span></span> <small class="ver">v3.70</small></h1>
+  <h1>diag001 <span class="sub">· <span data-i18n="app.sub">Diagnostics RGPD</span></span> <small class="ver">v3.74</small></h1>
   <span id="store" class="small muted"></span>
   <span id="sync" class="small muted" data-i18n-title="h.sync" style="display:none">⚫ Local</span>
   <button class="btn sm ghost" id="drive-btn" onclick="driveConnect()" data-i18n="h.drive" style="display:none">Drive</button>
@@ -383,7 +383,7 @@ const stepL=i=>LANG==='en'?AIPD_STEPS_EN[i]:AIPD_STEPS[i][1];
 const promptOf=k=>(LANG==='en'?PROMPTS_EN:PROMPTS)[k];
 
 /* ============ ÉTAT ============ */
-const APP='diag001',VER='v3.74',VDATE='2026-10-04',LK='td_v4_'+APP,TK='td_theme_'+APP,FK='td_fs_'+APP,TOKK='td_tok_'+APP,CIDK='td_cid_'+APP,LANG_KEY='td_lang_'+APP;
+const APP='diag001',VER='v3.74',VDATE='2026-10-05',LK='td_v4_'+APP,TK='td_theme_'+APP,FK='td_fs_'+APP,TOKK='td_tok_'+APP,CIDK='td_cid_'+APP,LANG_KEY='td_lang_'+APP;
 const DEF_CID='962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com',FOLDER=APP+'-audits',MINB=5,MINB_RES=3;
 const cidGet=()=>localStorage.getItem(CIDK)||DEF_CID;
 let S={},cur=null,qFilter='all',lastDel=null,tab='dossiers',BF={type:'flash',size:'all',sector:'all',open:false,cmp:''};
@@ -1153,7 +1153,7 @@ function renderSet(){const st=S.settings,num=(k,z)=>`<input type="number" min="0
   <h2>${t('s.drive')}</h2><div class="card"><label class="small" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" style="width:auto;margin-top:3px" ${st.drive?'checked':''} onchange="setDrive(this.checked)"><span><b>${t('s.driveOn')}</b><br><span class="muted">${t('s.driveOnP')}</span></span></label>${st.drive?`<div style="margin-top:10px"><label class="small">${t('s.cid')}<input id="cid" placeholder="xxxxxxxx.apps.googleusercontent.com" value="${esc(cidGet())}" onchange="localStorage.setItem(CIDK,this.value.trim())"></label>
   <p class="small muted" style="margin-top:6px">${t('s.driveP',{f:'<span class="mono">'+APP+'.json</span>',d:'<span class="mono">'+FOLDER+'</span>',s:'<span class="mono">drive.file</span>'})}</p>
   <div class="row" style="margin-top:8px"><button class="btn" onclick="driveConnect()">${tok?t('s.reconn'):t('s.conn')}</button></div></div>`:''}</div>
-  <p class="small muted" style="text-align:center;margin-top:18px">${APP} · <span class="ver">v3.70</span> · ${VDATE}</p>`;}
+  <p class="small muted" style="text-align:center;margin-top:18px">${APP} · <span class="ver">${VER}</span> · ${VDATE}</p>`;}
 function impJSON(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{S=JSON.parse(r.result);ensureState();applyRef();autoSave();go('dossiers');toast(t('t.imp'));}catch(e){toast(t('t.badFile'));}};r.readAsText(f);}
 
 /* ============ DÉMONSTRATION ============ */
@@ -1375,6 +1375,7 @@ function unsavedBanner(){const U=unsaved();if(!U.length)return '';
   return `<div class="card" style="margin-top:10px;border-color:var(--red)"><p class="small"><b>${t('bk.warnH',{n:U.length})}</b> ${t('bk.warnP')}</p><p class="small muted" style="margin-top:4px">${esc(U.slice(0,6).map(d=>d.client+' · '+typeL(d.type)).join(' — '))}${U.length>6?' …':''}</p>
   <div class="row" style="margin-top:8px">${FSA?`<button class="btn primary" onclick="${dirH&&dirSt==='re'?'dirReconnect()':'dirPick()'}">${t(dirH&&dirSt==='re'?'s.dirRe':'s.dirPick')}</button>`:''}<button class="btn ${FSA?'':'primary'}" onclick="fullBackup()">${t('bk.btn')}</button></div></div>`;}
 
+try{document.querySelectorAll('small.ver').forEach(function(e){e.textContent=VER;});}catch(e){}
 /* ============ INIT ============ */
 LANG=localStorage.getItem(LANG_KEY)||((navigator.language||'fr').toLowerCase().indexOf('fr')===0?'fr':'en');
 load();applyRef();applyTheme(localStorage.getItem(TK)||'light');applyStatic();applyFS(fsIdx());go('dossiers');if(tok&&S.settings.drive)drivePull();showStore();dirInit();
