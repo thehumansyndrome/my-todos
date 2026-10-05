@@ -383,7 +383,7 @@ const stepL=i=>LANG==='en'?AIPD_STEPS_EN[i]:AIPD_STEPS[i][1];
 const promptOf=k=>(LANG==='en'?PROMPTS_EN:PROMPTS)[k];
 
 /* ============ ÉTAT ============ */
-const APP='diag001',VER='v3.77',VDATE='2026-10-05',LK='td_v4_'+APP,TK='td_theme_'+APP,FK='td_fs_'+APP,TOKK='td_tok_'+APP,CIDK='td_cid_'+APP,LANG_KEY='td_lang_'+APP;
+const APP='diag001',VER='v3.78',VDATE='2026-10-05',LK='td_v4_'+APP,TK='td_theme_'+APP,FK='td_fs_'+APP,TOKK='td_tok_'+APP,CIDK='td_cid_'+APP,LANG_KEY='td_lang_'+APP;
 const DEF_CID='962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com',FOLDER=APP+'-audits',MINB=5,MINB_RES=3;
 const cidGet=()=>localStorage.getItem(CIDK)||DEF_CID;
 let S={},cur=null,qFilter='all',lastDel=null,tab='dossiers',BF={type:'flash',size:'all',sector:'all',open:false,cmp:''};
@@ -1285,6 +1285,7 @@ function setDrive(on){S.settings.drive=!!on;if(!on){tok=null;try{sessionStorage.
 
 /* ============ PARAMÉTRAGE DU RÉFÉRENTIEL ============ */
 const GRIDS={flash:['FLASH','RGPD'],fin:['FIN','RGPD'],trt:['TRT','RGPD'],ia:['FIN','IA']},SETS={FLASH:FLASH,FIN:FIN,TRT:TRT};
+const OFF0=[];
 const BASE={FLASH:JSON.parse(JSON.stringify(FLASH)),FIN:JSON.parse(JSON.stringify(FIN)),TRT:JSON.parse(JSON.stringify(TRT)),EN:JSON.parse(JSON.stringify(EN_Q)),SUBA:JSON.parse(JSON.stringify(SUBA))};
 let OFF={},RF={g:'fin',q:'',mod:false,ed:null,dr:null};
 const refBlank=()=>({ver:0,date:0,q:{},src:{},log:[]});
@@ -1293,10 +1294,10 @@ const stripNat=r=>String(r||'').replace(/^\s*(Recommandé|Recommended|Pratique d
 function withNat(r,n,en){r=stripNat(r);if(n==='p')return (en?'Industry practice':'Pratique de place')+(r?' ; '+r:'');if(n==='r')return /^iso/i.test(r)?r:(en?'Recommended':'Recommandé')+(r?' ; '+r:'');return r;}
 function applyRef(){['FLASH','FIN','TRT'].forEach(k=>{const A=SETS[k];A.length=0;BASE[k].forEach(r=>A.push(r.slice()));});
   Object.keys(EN_Q).forEach(k=>delete EN_Q[k]);Object.keys(BASE.EN).forEach(k=>{EN_Q[k]=BASE.EN[k].slice();});
-  Object.keys(SUBA).forEach(k=>delete SUBA[k]);Object.keys(BASE.SUBA).forEach(k=>{SUBA[k]=JSON.parse(JSON.stringify(BASE.SUBA[k]));});OFF={};
+  Object.keys(SUBA).forEach(k=>delete SUBA[k]);Object.keys(BASE.SUBA).forEach(k=>{SUBA[k]=JSON.parse(JSON.stringify(BASE.SUBA[k]));});OFF={};OFF0.forEach(k=>{OFF[k]=1;});
   const R=(S&&S.ref&&S.ref.q)||{};Object.keys(R).forEach(id=>{const o=R[id],A=SETS[o.set];if(!A||!o.row)return;const i=A.findIndex(r=>r[0]===id);
     if(i>=0)A[i]=o.row.slice();else{let j=-1;A.forEach((r,k)=>{if(r[1]===o.row[1])j=k;});A.splice(j<0?A.length:j+1,0,o.row.slice());}
-    if(o.en)EN_Q[id]=o.en.slice();if(o.sub)SUBA[id]=JSON.parse(JSON.stringify(o.sub));else if(o.noSub)delete SUBA[id];if(o.off)OFF[id]=1;});}
+    if(o.en)EN_Q[id]=o.en.slice();if(o.sub)SUBA[id]=JSON.parse(JSON.stringify(o.sub));else if(o.noSub)delete SUBA[id];if(o.off)OFF[id]=1;else delete OFF[id];});}
 function subNorm(x){if(!x)return null;const f=L=>(L||[]).map(z=>[z[0]||'o',String(z[1]||'').trim(),String(z[2]||'').trim(),String(z[3]||'').trim()]).filter(z=>z[1]||z[2]);const N=f(x.N),P=f(x.P);if(!N.length&&!P.length)return null;const o={};if(N.length)o.N=N;if(P.length)o.P=P;return o;}
 function subDraft(id){const R=S.ref.q[id]||{},x=id&&SUBA[id]&&!R.noSub?JSON.parse(JSON.stringify(SUBA[id])):{};return {N:x.N||[],P:x.P||[]};}
 function refSub(K,i,j,v){const d=RF.dr;if(!d||!d.sub[K][i])return;d.sub[K][i][j]=v;d.subT=true;}
@@ -1328,7 +1329,7 @@ function refSave(){const d=RF.dr;if(!d)return;const E=refCheck(d);if(E.length){t
   const bSub=subNorm(BASE.SUBA[d.id]);let sb=subNorm(d.sub);if(actChg&&!d.subT&&sb&&JSON.stringify(sb)===JSON.stringify(d.sub0))sb=null;
   const o={set:d.set,row:row,en:en,off:!!d.off,noSub:!sb&&!!bSub,added:d.isNew||!!prev.added};if(sb&&JSON.stringify(sb)!==JSON.stringify(bSub))o.sub=sb;
   const b=baseRow(d.set,d.id),be=BASE.EN[d.id];
-  const same=b&&!o.off&&!o.noSub&&!o.sub&&JSON.stringify(b)===JSON.stringify(row)&&be&&JSON.stringify(be.slice(0,3))===JSON.stringify(en.slice(0,3))&&stripNat(be[3]||'')===stripNat(en[3]);
+  const same=b&&!!o.off===(OFF0.indexOf(d.id)>=0)&&!o.noSub&&!o.sub&&JSON.stringify(b)===JSON.stringify(row)&&be&&JSON.stringify(be.slice(0,3))===JSON.stringify(en.slice(0,3))&&stripNat(be[3]||'')===stripNat(en[3]);
   const ch=[];const F=[['txt',4],['ref',5],['actN',6],['actP',7],['w',3],['sz',2]];F.forEach(f=>{const a=old?String(old[f[1]]):'',z=String(row[f[1]]);if(a!==z)ch.push(f[0]);});
   if(old&&!!OFF[d.id]!==o.off)ch.push(o.off?'off':'on');if(JSON.stringify(sb)!==JSON.stringify(d.sub0))ch.push('sub');if(d.isNew)ch.unshift('add');if(!ch.length&&prev.en&&JSON.stringify(prev.en)===JSON.stringify(en)){RF.ed=null;RF.dr=null;renderRef();toast(t('pr.noChg'));return;}
   if(same)delete R.q[d.id];else R.q[d.id]=o;
