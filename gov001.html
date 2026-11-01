@@ -71,6 +71,13 @@ label.fl{display:block;font-size:12px;color:var(--muted);margin:12px 0 4px;font-
 .result{border:1px solid var(--border);border-radius:10px;padding:12px;margin-top:12px}
 .result ul{margin:6px 0 0;padding-left:18px}
 .warn{color:var(--amber);font-size:13px;margin-top:6px}
+.opt{display:block;width:100%;text-align:left;background:transparent;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:12px;margin:8px 0;min-height:44px;cursor:pointer;line-height:1.4}
+.opt.ok{border-color:var(--green);color:var(--green)}
+.opt.ko{border-color:var(--red);color:var(--red)}
+.opt[disabled]{cursor:default}
+.pt{margin:14px 0 0}.pt b{display:block;font-weight:500;margin-bottom:2px}
+.src a{color:var(--blue);word-break:break-word}
+.fb{margin-top:10px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);font-size:14px}
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 14px;border-radius:8px;display:none;z-index:300;font-size:14px;max-width:92vw}
 #toast button{background:transparent;border:0;color:inherit;text-decoration:underline;margin-left:10px;cursor:pointer}
 @media (max-width:520px){.header h1 .long{display:none}.page{padding:12px 12px 80px}.tab{font-size:13px}}
@@ -80,12 +87,13 @@ label.fl{display:block;font-size:12px;color:var(--muted);margin:12px 0 4px;font-
 <div id="boot">Chargement… / Loading… — si ce message reste, JavaScript ne s’exécute pas : ouvrez le fichier dans Chrome/Safari. / if this stays, JavaScript is not running: open the file in Chrome/Safari.</div>
 
 <div class="header">
-  <h1>gov001<span class="long"> · <span data-i18n="app.sub"></span></span><small>app <span class="ver">v1.0</span></small></h1>
+  <h1>gov001<span class="long"> · <span data-i18n="app.sub"></span></span><small>app <span class="ver">v1.1</span></small></h1>
   <span class="syncs" id="sync-st"></span>
   <button class="iconbtn" id="theme-btn" data-act="theme" aria-label="theme">☀︎</button>
 </div>
 <div class="tabs">
   <button class="tab active" data-tab="plan" data-i18n="tab.plan"></button>
+  <button class="tab" data-tab="learn" data-i18n="tab.learn"></button>
   <button class="tab" data-tab="cases" data-i18n="tab.cases"></button>
   <button class="tab" data-tab="train" data-i18n="tab.train"></button>
   <button class="tab" data-tab="set" style="flex:0 0 52px" aria-label="settings">⚙︎</button>
@@ -93,6 +101,7 @@ label.fl{display:block;font-size:12px;color:var(--muted);margin:12px 0 4px;font-
 
 <div class="page">
   <div id="tab-plan" class="section active"></div>
+  <div id="tab-learn" class="section"></div>
   <div id="tab-cases" class="section"></div>
   <div id="tab-train" class="section"></div>
   <div id="tab-set" class="section">
@@ -129,7 +138,7 @@ label.fl{display:block;font-size:12px;color:var(--muted);margin:12px 0 4px;font-
       </div>
       <input type="file" id="imp-file" accept="application/json" style="display:none">
     </div>
-    <p class="muted" style="text-align:center">gov001 · v1.0 · 2026-11-01</p>
+    <p class="muted" style="text-align:center">gov001 · v1.1 · 2026-11-01</p>
   </div>
 </div>
 
@@ -149,7 +158,7 @@ var FILE_NAME = 'gov001.json';
 /* ---------- i18n ---------- */
 var I18N = {
 en: {
- 'app.sub': 'AI governance', 'tab.plan': 'Plan', 'tab.cases': 'Use cases', 'tab.train': 'Training',
+ 'app.sub': 'AI governance', 'tab.plan': 'Plan', 'tab.learn': 'Learn', 'tab.cases': 'Cases', 'tab.train': 'Certs',
  'sync.local': 'Local', 'sync.pending': 'Pending', 'sync.ok': 'Synced', 'sync.error': 'Error',
  'b.save': 'Save', 'b.cancel': 'Cancel', 'b.delete': 'Delete', 'b.reset': 'Reset', 'b.export': 'Export', 'b.import': 'Import', 'b.resetplan': 'Reset plan',
  'plan.progress': '{x} of {y} done', 'plan.deliv': 'Deliverable', 'plan.month': 'Month {x}',
@@ -182,6 +191,18 @@ en: {
  'drive.info': 'Optional sync of your data in a private JSON file on your Google Drive. Data always stays in this browser first.',
  'drive.connect': 'Connect', 'drive.sync': 'Sync now', 'drive.off': 'Disconnect', 'drive.on': 'Connected', 'drive.offst': 'Not connected',
  'edit': 'Edit', 'new': 'New use case',
+ 'l.intro': 'Short lessons with sources, then a quiz to check what sticks. Quiz pass mark: 75%.',
+ 'l.progress': '{x} of {y} modules read', 'l.avg': 'Quiz average: {z}%', 'l.best': 'Best: {x}%', 'l.read': 'Read', 'l.linked': 'Plan month {x}',
+ 'l.mark': 'Mark as read', 'l.unmark': 'Mark as unread', 'l.start': 'Start the quiz', 'l.back': '← Modules', 'l.lesson': 'Back to the lesson',
+ 'l.sources': 'Sources', 'l.nosrc': 'General knowledge, not re-checked by search on this date. Confirm against official documents before relying on it.',
+ 'l.srcnote': 'Summary written from these pages. For legal use, check the official text.',
+ 'l.q': 'Question {x} of {y}', 'l.next': 'Next', 'l.finish': 'See the result', 'l.right': 'Correct.', 'l.wrong': 'Not quite.',
+ 'l.score': 'Score: {x}/{y} ({z}%)', 'l.retry': 'Try again', 'l.review': 'To review', 'l.answer': 'Answer', 'l.good': 'Solid. Move on to the next module.', 'l.low': 'Re-read the lesson, then try again.',
+ 'l.gaptag': 'Skill {x}', 'l.gap1': 'Technical culture of the AI lifecycle', 'l.gap2': 'Risk frameworks and regulation', 'l.gap3': 'Implementation and leadership',
+ 'l.bridge': 'From your GDPR base', 'l.action': '30-minute application', 'l.note': 'Your notes: apply it to your own context',
+ 'l.notePh': 'Kept in your own data only, never in the app file.',
+ 'l.nextstep': 'Next step', 'l.doRead': 'Read: {x}', 'l.doQuizFirst': 'Take the quiz: {x}', 'l.doQuiz': 'Redo the quiz: {x}',
+ 'l.alldone': 'All modules done. Apply them to a real use case in the Cases tab.',
  'p.m1': 'ML and LLM foundations', 'p.m1a': 'Learn core concepts: supervised learning, neural networks, transformers', 'p.m1b': 'Understand RAG and agents', 'p.m1c': 'Follow one free introductory course', 'p.m1d': 'One-page lifecycle diagram annotated with risk points',
  'p.m2': 'Data and evaluation', 'p.m2a': 'Study data provenance, quality and bias', 'p.m2b': 'Learn evaluation metrics, hallucinations, model cards', 'p.m2c': 'Run a simple notebook to see a model fail', 'p.m2d': 'Evaluation sheet for a model or LLM on a simple case',
  'p.m3': 'Risks and controls', 'p.m3a': 'Read the NIST AI RMF', 'p.m3b': 'Review OWASP Top 10 for LLM and shadow AI', 'p.m3c': 'Start AIGP exam preparation', 'p.m3d': 'Risk register for a real use case',
@@ -190,7 +211,7 @@ en: {
  'p.m6': 'Consolidation', 'p.m6a': 'Run a full assessment of one use case with the data teams', 'p.m6b': 'Record the findings in the Use cases tab', 'p.m6c': 'Present to a sponsor', 'p.m6d': 'Reusable demonstration file'
 },
 fr: {
- 'app.sub': 'Gouvernance IA', 'tab.plan': 'Plan', 'tab.cases': 'Cas d’usage', 'tab.train': 'Formations',
+ 'app.sub': 'Gouvernance IA', 'tab.plan': 'Plan', 'tab.learn': 'Cours', 'tab.cases': 'Cas', 'tab.train': 'Certifs',
  'sync.local': 'Local', 'sync.pending': 'En attente', 'sync.ok': 'Synchronisé', 'sync.error': 'Erreur',
  'b.save': 'Enregistrer', 'b.cancel': 'Annuler', 'b.delete': 'Supprimer', 'b.reset': 'Réinit.', 'b.export': 'Exporter', 'b.import': 'Importer', 'b.resetplan': 'Réinitialiser le plan',
  'plan.progress': '{x} sur {y} faits', 'plan.deliv': 'Livrable', 'plan.month': 'Mois {x}',
@@ -223,6 +244,18 @@ fr: {
  'drive.info': 'Synchronisation facultative de vos données dans un fichier JSON privé de votre Google Drive. Les données restent d’abord dans ce navigateur.',
  'drive.connect': 'Connecter', 'drive.sync': 'Synchroniser', 'drive.off': 'Déconnecter', 'drive.on': 'Connecté', 'drive.offst': 'Non connecté',
  'edit': 'Modifier', 'new': 'Nouveau cas d’usage',
+ 'l.intro': 'Leçons courtes avec sources, puis un quiz pour vérifier ce qui reste. Seuil de réussite : 75 %.',
+ 'l.progress': '{x} sur {y} modules lus', 'l.avg': 'Moyenne des quiz : {z} %', 'l.best': 'Meilleur : {x} %', 'l.read': 'Lu', 'l.linked': 'Mois {x} du plan',
+ 'l.mark': 'Marquer comme lu', 'l.unmark': 'Marquer non lu', 'l.start': 'Lancer le quiz', 'l.back': '← Modules', 'l.lesson': 'Retour à la leçon',
+ 'l.sources': 'Sources', 'l.nosrc': 'Connaissances générales, non revérifiées par recherche à cette date. À confirmer sur les documents officiels avant de vous y fier.',
+ 'l.srcnote': 'Synthèse rédigée à partir de ces pages. Pour un usage juridique, vérifiez le texte officiel.',
+ 'l.q': 'Question {x} sur {y}', 'l.next': 'Suivant', 'l.finish': 'Voir le résultat', 'l.right': 'Exact.', 'l.wrong': 'Pas tout à fait.',
+ 'l.score': 'Score : {x}/{y} ({z} %)', 'l.retry': 'Refaire', 'l.review': 'À revoir', 'l.answer': 'Réponse', 'l.good': 'Solide. Passez au module suivant.', 'l.low': 'Relisez la leçon, puis refaites le quiz.',
+ 'l.gaptag': 'Compétence {x}', 'l.gap1': 'Culture technique du cycle de vie IA', 'l.gap2': 'Cadres de risque et réglementation', 'l.gap3': 'Mise en œuvre et leadership',
+ 'l.bridge': 'Depuis votre socle RGPD', 'l.action': 'Application en 30 minutes', 'l.note': 'Vos notes : application à votre contexte',
+ 'l.notePh': 'Conservé dans vos seules données, jamais dans le fichier de l’app.',
+ 'l.nextstep': 'Prochaine étape', 'l.doRead': 'Lire : {x}', 'l.doQuizFirst': 'Passer le quiz : {x}', 'l.doQuiz': 'Refaire le quiz : {x}',
+ 'l.alldone': 'Tous les modules sont faits. Appliquez-les à un cas d’usage réel dans l’onglet Cas.',
  'p.m1': 'Fondations ML et LLM', 'p.m1a': 'Apprendre les bases : apprentissage supervisé, réseaux de neurones, transformers', 'p.m1b': 'Comprendre RAG et agents', 'p.m1c': 'Suivre un cours d’introduction gratuit', 'p.m1d': 'Schéma d’une page du cycle de vie, annoté des points de risque',
  'p.m2': 'Données et évaluation', 'p.m2a': 'Étudier provenance, qualité et biais des données', 'p.m2b': 'Apprendre métriques d’évaluation, hallucinations, model cards', 'p.m2c': 'Faire tourner un notebook simple pour voir un modèle se tromper', 'p.m2d': 'Fiche d’évaluation d’un modèle ou d’un LLM sur un cas simple',
  'p.m3': 'Risques et contrôles', 'p.m3a': 'Lire le NIST AI RMF', 'p.m3b': 'Revoir l’OWASP Top 10 for LLM et le shadow AI', 'p.m3c': 'Démarrer la préparation à l’examen AIGP', 'p.m3d': 'Registre de risques pour un cas d’usage réel',
@@ -268,6 +301,7 @@ function ensureState() {
   if (!S.plan.done || typeof S.plan.done !== 'object') S.plan.done = {};
   if (!Array.isArray(S.cases)) S.cases = [];
   if (!Array.isArray(S.trainings)) S.trainings = [];
+  if (!S.learn || typeof S.learn !== 'object' || Array.isArray(S.learn)) S.learn = {};
   S.cases = S.cases.filter(function (c) { return c && c.id; });
   S.trainings = S.trainings.filter(function (c) { return c && c.id; });
   if (!S.seeded) { S.seeded = true; var have = {}; S.trainings.forEach(function (x) { have[x.id] = 1; }); seedTrainings().forEach(function (x) { if (!have[x.id]) S.trainings.push(x); }); }
@@ -297,6 +331,12 @@ function mergeState(a, b) {
   });
   r.cases = mergeList(a && a.cases, b && b.cases);
   r.trainings = mergeList(a && a.trainings, b && b.trainings);
+  r.learn = {};
+  var la = (a && a.learn) || {}, lb = (b && b.learn) || {};
+  Object.keys(la).concat(Object.keys(lb)).forEach(function (k) {
+    var x = la[k], y = lb[k];
+    r.learn[k] = (!y || (x && (x.upd || 0) >= (y.upd || 0))) ? x : y;
+  });
   return r;
 }
 
@@ -470,7 +510,318 @@ function renderSettings() {
   $('fs-label').textContent = Math.round(FS_STEPS[fsi] * 100) + '%';
   $('drive-st').textContent = tokenValid() ? t('drive.on') : t('drive.offst');
 }
-function renderAll() { renderHeader(); renderPlan(); renderCases(); renderTrain(); renderSettings(); }
+function renderAll() { renderHeader(); renderPlan(); renderLearn(); renderCases(); renderTrain(); renderSettings(); }
+
+/* ---------- learn: modules, lessons, quizzes ---------- */
+var LEARN = [
+{ id: 'l1', plan: 1, gap: 1, src: [],
+ fr: { title: "Fondations : ML, LLM, RAG et agents",
+  intro: "Comprendre comment ces systèmes produisent leurs résultats, pour repérer où le risque se loge.",
+  bridge: "Vous savez déjà évaluer un traitement de données. Ici, vous apprenez à lire un modèle : ses entrées (données), son comportement probabiliste et ses sorties (décisions), pour poser les bonnes questions aux data scientists.",
+  action: "Choisissez un outil d’IA utilisé autour de vous. En cinq lignes : quel modèle, quelles données entrent et sortent, RAG ou agent ?",
+  pts: [["Apprentissage supervisé", "Le modèle apprend à partir d’exemples étiquetés (une entrée, la réponse attendue) puis généralise à de nouveaux cas. Sa qualité dépend donc surtout des données d’exemple, pas seulement de l’algorithme."],
+   ["LLM", "Un grand modèle de langage (architecture transformer) est entraîné à prédire la suite d’un texte. Il produit un texte plausible, sans vérifier les faits : c’est l’origine des hallucinations."],
+   ["RAG", "La génération augmentée par récupération ajoute à la question des extraits d’une base documentaire. Elle réduit les erreurs sans les supprimer, et crée d’autres risques : fuite de documents, base de connaissances empoisonnée."],
+   ["Agents", "Un agent combine un LLM, des outils et une boucle de décision pour agir (envoyer un message, modifier une base). Plus son autonomie et ses droits d’accès sont larges, plus l’impact d’une erreur l’est aussi."]],
+  quiz: [
+   { q: "Pourquoi un LLM peut-il affirmer une information fausse avec assurance ?", o: ["Il consulte en temps réel une source erronée", "Il génère un texte statistiquement plausible sans vérifier les faits", "Il a été conçu pour induire en erreur", "Il ne reconnaît pas la langue de la question"], a: 1, e: "Un LLM prédit la suite la plus plausible d’un texte. Plausible n’est pas vrai, d’où le besoin de contrôles." },
+   { q: "Que fait un RAG ?", o: ["Il réentraîne le modèle à chaque question", "Il remplace le modèle par une base de données", "Il ajoute à la question des extraits issus d’une base documentaire", "Il supprime tout risque d’hallucination"], a: 2, e: "Le RAG enrichit la requête avec des documents récupérés. Il réduit les erreurs sans les éliminer et introduit des risques propres (accès aux documents, contenu empoisonné)." },
+   { q: "Qu’est-ce qui augmente le plus l’impact potentiel d’une erreur d’un agent ?", o: ["Ses droits d’accès aux outils et son niveau d’autonomie", "La longueur de ses instructions", "Le nom du modèle utilisé", "La langue de l’interface"], a: 0, e: "Un agent agit. Ses permissions et son autonomie déterminent ce qu’une erreur peut provoquer." },
+   { q: "En apprentissage supervisé, de quoi dépend d’abord la qualité des résultats ?", o: ["De la puissance de l’ordinateur", "De la qualité et de la représentativité des données d’exemple", "De la couleur de l’interface", "Du nombre de personnes qui utilisent le système"], a: 1, e: "Le modèle généralise à partir des exemples vus : des données biaisées ou peu représentatives donnent un modèle qui échoue ailleurs." }] },
+ en: { title: "Foundations: ML, LLMs, RAG and agents",
+  intro: "Understand how these systems produce their output, so you can see where risk sits.",
+  bridge: "You already assess data processing. Here you learn to read a model: its inputs (data), its probabilistic behaviour and its outputs (decisions), so you can ask data scientists the right questions.",
+  action: "Pick an AI tool used around you. In five lines: which model, what data goes in and out, RAG or agent?",
+  pts: [["Supervised learning", "The model learns from labelled examples (an input and the expected answer) and generalises to new cases. Its quality depends mostly on the example data, not only on the algorithm."],
+   ["LLMs", "A large language model (transformer architecture) is trained to predict what comes next in a text. It produces plausible text without checking facts, which is the source of hallucinations."],
+   ["RAG", "Retrieval-augmented generation adds excerpts from a document base to the question. It reduces errors without removing them, and creates other risks: document leakage, a poisoned knowledge base."],
+   ["Agents", "An agent combines an LLM, tools and a decision loop to act (send a message, change a database). The wider its autonomy and access rights, the bigger the impact of a mistake."]],
+  quiz: [
+   { q: "Why can an LLM state something false with confidence?", o: ["It reads a wrong source in real time", "It generates statistically plausible text without checking facts", "It was designed to mislead", "It does not recognise the language of the question"], a: 1, e: "An LLM predicts the most plausible continuation of a text. Plausible is not true, hence the need for controls." },
+   { q: "What does a RAG do?", o: ["It retrains the model for every question", "It replaces the model with a database", "It adds excerpts from a document base to the question", "It removes every risk of hallucination"], a: 2, e: "RAG enriches the request with retrieved documents. It reduces errors without eliminating them and brings its own risks (document access, poisoned content)." },
+   { q: "What most increases the potential impact of an agent’s mistake?", o: ["Its access rights to tools and its level of autonomy", "The length of its instructions", "The name of the model used", "The interface language"], a: 0, e: "An agent acts. Its permissions and autonomy set what a mistake can cause." },
+   { q: "In supervised learning, what does result quality depend on first?", o: ["The computer’s power", "The quality and representativeness of the example data", "The colour of the interface", "The number of people using the system"], a: 1, e: "The model generalises from the examples it saw: biased or unrepresentative data gives a model that fails elsewhere." }] } },
+
+{ id: 'l2', plan: 1, gap: 1, src: [],
+ fr: { title: "Le cycle de vie d’un système IA",
+  intro: "Cartographier les étapes pour savoir où chaque risque peut apparaître et qui en répond.",
+  bridge: "Le cycle de vie d’un système IA ressemble à celui d’un traitement : finalité, collecte, usage, conservation. Votre pratique de la protection dès la conception (art. 25 du RGPD) s’applique à chaque étape.",
+  action: "Dessinez le cycle de vie d’un cas d’usage réel et marquez les trois points où le risque est le plus élevé.",
+  pts: [["Cadrage et conception", "On fixe la finalité, les données nécessaires et les personnes concernées. C’est ici que se décident la plupart des risques structurants : finalité floue, données inadaptées, impact mal anticipé."],
+   ["Données et entraînement", "Collecte, nettoyage, étiquetage, entraînement ou réglage fin. Provenance, base légale, qualité et biais se traitent à cette étape."],
+   ["Évaluation et déploiement", "Tests avant mise en service (performance, robustesse, biais), puis intégration, supervision humaine et information des utilisateurs."],
+   ["Exploitation et fin de vie", "Suivi de la dérive, journalisation, gestion des incidents, mises à jour, retrait. Un modèle performant peut se dégrader quand les données réelles s’éloignent de celles de l’entraînement."]],
+  quiz: [
+   { q: "À quelle étape se décident la plupart des risques structurants ?", o: ["L’exploitation", "Le cadrage et la conception", "Le retrait du système", "La rédaction du manuel utilisateur"], a: 1, e: "La finalité, les données et les personnes concernées sont fixées dès le cadrage : une erreur ici se propage à toute la suite." },
+   { q: "Qu’appelle-t-on dérive (drift) ?", o: ["Un changement de fournisseur", "Une panne du serveur", "Une mise à jour de la documentation", "La dégradation des performances quand les données réelles s’éloignent de celles d’entraînement"], a: 3, e: "Le monde change : un modèle correct au lancement peut devenir moins fiable. D’où le suivi en exploitation." },
+   { q: "Lequel de ces éléments relève de la phase d’exploitation ?", o: ["La définition de la finalité", "Le choix du jeu d’entraînement", "La journalisation et le suivi des incidents", "Le premier cahier des charges"], a: 2, e: "L’exploitation couvre le suivi, la journalisation et la gestion des incidents une fois le système en service." },
+   { q: "Pourquoi cartographier le cycle de vie avant d’évaluer un système ?", o: ["Pour localiser où chaque risque peut apparaître et qui en est responsable", "Pour allonger le projet", "Parce que la loi impose cette forme exacte", "Pour choisir le nom du modèle"], a: 0, e: "La cartographie relie chaque risque à une étape et à un responsable, ce qui structure l’évaluation." }] },
+ en: { title: "The lifecycle of an AI system",
+  intro: "Map the stages to see where each risk can appear and who answers for it.",
+  bridge: "The AI lifecycle resembles a processing lifecycle: purpose, collection, use, retention. Your privacy-by-design practice (GDPR Art. 25) applies at every stage.",
+  action: "Draw the lifecycle of a real use case and mark the three points where risk is highest.",
+  pts: [["Scoping and design", "Purpose, required data and affected people are set here. Most structural risks are decided at this stage: vague purpose, unsuitable data, impact not anticipated."],
+   ["Data and training", "Collection, cleaning, labelling, training or fine-tuning. Provenance, legal basis, quality and bias are handled at this stage."],
+   ["Evaluation and deployment", "Pre-release testing (performance, robustness, bias), then integration, human oversight and user information."],
+   ["Operation and end of life", "Drift monitoring, logging, incident handling, updates, retirement. A model that performs well can degrade when real-world data moves away from the training data."]],
+  quiz: [
+   { q: "At which stage are most structural risks decided?", o: ["Operation", "Scoping and design", "System retirement", "Writing the user manual"], a: 1, e: "Purpose, data and affected people are set at scoping: a mistake here spreads to everything after." },
+   { q: "What is drift?", o: ["A change of supplier", "A server outage", "A documentation update", "Performance degrading as real-world data moves away from the training data"], a: 3, e: "The world changes: a model that was fine at launch can become less reliable. Hence monitoring in operation." },
+   { q: "Which of these belongs to the operation phase?", o: ["Defining the purpose", "Choosing the training set", "Logging and incident follow-up", "The first requirements document"], a: 2, e: "Operation covers monitoring, logging and incident handling once the system is in use." },
+   { q: "Why map the lifecycle before assessing a system?", o: ["To see where each risk can appear and who is responsible", "To make the project longer", "Because the law requires this exact form", "To pick the model name"], a: 0, e: "The map ties each risk to a stage and an owner, which structures the assessment." }] } },
+
+{ id: 'l3', plan: 2, gap: 1, src: [],
+ fr: { title: "Données, biais et évaluation",
+  intro: "Savoir d’où viennent les données et vérifier ce que vaut réellement un modèle.",
+  bridge: "L’exactitude et la minimisation (art. 5 du RGPD) deviennent ici des tests mesurables. Le biais est le pendant technique de la non-discrimination.",
+  action: "Prenez un modèle ou un outil et cherchez sa fiche (model card) : usage prévu, données, limites. Notez ce qui manque.",
+  pts: [["Provenance et qualité", "Savoir d’où viennent les données, avec quels droits et quelles lacunes. Un jeu non représentatif donne un modèle qui échoue sur les groupes absents."],
+   ["Biais", "Un biais peut venir des données (historique discriminant), du choix des variables ou de l’usage du système. Il faut mesurer la performance par sous-groupe, pas seulement en moyenne."],
+   ["Évaluer", "Séparer les données d’entraînement et de test, choisir des métriques adaptées au coût des erreurs, tester la robustesse et les cas limites. Pour un LLM, évaluer aussi l’exactitude factuelle et la sensibilité à la formulation."],
+   ["Documenter", "Les fiches de modèle (model cards) et de jeux de données décrivent l’usage prévu, les données, les limites et les résultats d’évaluation. Elles servent aussi de preuve de conformité."]],
+  quiz: [
+   { q: "Un modèle affiche 95 % de précision globale mais échoue sur un sous-groupe. Que conclure ?", o: ["Le modèle est fiable pour tous", "La moyenne masque un écart : il faut mesurer par sous-groupe", "Le sous-groupe doit être exclu des tests", "Il suffit d’augmenter la précision globale"], a: 1, e: "Une moyenne peut cacher une performance très faible sur une population donnée. L’évaluation par sous-groupe révèle ces écarts." },
+   { q: "Pourquoi séparer données d’entraînement et données de test ?", o: ["Pour estimer la performance sur des données que le modèle n’a pas vues", "Pour réduire le coût de stockage", "Pour accélérer l’entraînement", "Pour éviter de documenter le modèle"], a: 0, e: "Un modèle évalué sur ses propres données d’entraînement paraît meilleur qu’il ne l’est. Des données mises de côté donnent une estimation réaliste." },
+   { q: "Comment choisir la métrique d’évaluation ?", o: ["Toujours prendre la précision globale", "Prendre la métrique la plus répandue", "Selon le coût des différents types d’erreur dans l’usage visé", "Laisser le fournisseur choisir sans vérifier"], a: 2, e: "Selon l’usage, un faux négatif et un faux positif n’ont pas le même coût : la métrique doit refléter ce risque." },
+   { q: "À quoi sert une fiche de modèle (model card) ?", o: ["À faire la promotion du modèle", "À remplacer les tests", "À stocker les accès", "À décrire l’usage prévu, les données, les limites et les résultats d’évaluation"], a: 3, e: "Une fiche de modèle explicite le périmètre et les limites du modèle, pour les utilisateurs comme pour les audits." }] },
+ en: { title: "Data, bias and evaluation",
+  intro: "Know where the data comes from and check what a model is really worth.",
+  bridge: "Accuracy and minimisation (GDPR Art. 5) become measurable tests here. Bias is the technical counterpart of non-discrimination.",
+  action: "Take a model or tool and look for its model card: intended use, data, limits. Note what is missing.",
+  pts: [["Provenance and quality", "Know where the data comes from, under what rights and with what gaps. An unrepresentative set gives a model that fails on the missing groups."],
+   ["Bias", "Bias can come from the data (a discriminatory history), from the choice of variables or from how the system is used. Measure performance by subgroup, not only on average."],
+   ["Evaluating", "Separate training and test data, choose metrics that fit the cost of errors, test robustness and edge cases. For an LLM, also evaluate factual accuracy and sensitivity to wording."],
+   ["Documenting", "Model cards and dataset sheets describe intended use, data, limits and evaluation results. They also serve as compliance evidence."]],
+  quiz: [
+   { q: "A model shows 95% overall accuracy but fails on one subgroup. What follows?", o: ["The model is reliable for everyone", "The average hides a gap: measure by subgroup", "The subgroup should be left out of testing", "Raising overall accuracy is enough"], a: 1, e: "An average can hide very poor performance on a given population. Subgroup evaluation reveals such gaps." },
+   { q: "Why separate training data from test data?", o: ["To estimate performance on data the model has not seen", "To cut storage costs", "To speed up training", "To avoid documenting the model"], a: 0, e: "A model tested on its own training data looks better than it is. Held-out data gives a realistic estimate." },
+   { q: "How should the evaluation metric be chosen?", o: ["Always use overall accuracy", "Use the most common metric", "According to the cost of each type of error in the intended use", "Let the supplier choose without checking"], a: 2, e: "Depending on the use, a false negative and a false positive do not cost the same: the metric must reflect that risk." },
+   { q: "What is a model card for?", o: ["Promoting the model", "Replacing tests", "Storing access credentials", "Describing intended use, data, limits and evaluation results"], a: 3, e: "A model card makes the model’s scope and limits explicit, for users and for audits." }] } },
+
+{ id: 'l4', plan: 3, gap: 1,
+ src: [["HackerOne, OWASP Top 10 for LLMs 2025", "https://www.hackerone.com/blog/owasp-top-10-llms-2025-how-genai-risks-are-evolving"]],
+ fr: { title: "Risques propres aux LLM (OWASP Top 10 2025)",
+  intro: "Le référentiel OWASP classe les dix principaux risques des applications fondées sur des LLM.",
+  bridge: "Les fuites (LLM02) recoupent votre expertise sur la sécurité du traitement (art. 32 du RGPD). L’injection de prompt est le risque nouveau à apprendre.",
+  action: "Sur un outil que vous êtes autorisé à tester, essayez une injection de prompt simple cachée dans un document fictif, et notez ce qui se passe.",
+  pts: [["Injection de prompt (LLM01)", "Des instructions glissées dans l’entrée ou dans un contenu externe détournent le comportement du modèle. À traiter comme un risque permanent, pas comme un bogue ponctuel."],
+   ["Fuites (LLM02 et LLM07)", "Divulgation d’informations sensibles ou personnelles (LLM02) et fuite du prompt système (LLM07). Aucun secret ne doit figurer dans un prompt."],
+   ["Actions et sorties (LLM05 et LLM06)", "Sortie du modèle transmise sans validation à d’autres systèmes (LLM05), et excès de fonctions, de droits ou d’autonomie (LLM06) : une erreur de texte devient une action."],
+   ["Le reste de la liste", "LLM03 chaîne d’approvisionnement, LLM04 empoisonnement des données et du modèle, LLM08 faiblesses des vecteurs et embeddings, LLM09 désinformation, LLM10 consommation non maîtrisée. LLM07 à LLM10 sont signalées comme nouvelles dans la version 2025."]],
+  quiz: [
+   { q: "Quelle entrée occupe la première place (LLM01) de l’OWASP Top 10 for LLM 2025 ?", o: ["Prompt Injection", "Unbounded Consumption", "Misinformation", "Supply Chain"], a: 0, e: "Prompt Injection est LLM01 : des entrées conçues, directes ou via un contenu externe, manipulent le comportement du modèle." },
+   { q: "Laquelle de ces entrées est signalée comme nouvelle en 2025 ?", o: ["Prompt Injection", "Sensitive Information Disclosure", "System Prompt Leakage", "Excessive Agency"], a: 2, e: "System Prompt Leakage (LLM07) fait partie des entrées signalées comme nouvelles, avec LLM08, LLM09 et LLM10." },
+   { q: "Un agent dispose d’un droit de suppression alors que sa tâche est seulement de lire des fichiers. Quel risque est illustré ?", o: ["Misinformation", "Excessive Agency", "Prompt Injection", "Unbounded Consumption"], a: 1, e: "Excessive Agency (LLM06) : trop de fonctions, de droits ou d’autonomie transforment une sortie inattendue en dommage." },
+   { q: "Pourquoi ne faut-il pas mettre de secret dans le prompt système ?", o: ["Il ralentit le modèle", "Il est supprimé après chaque réponse", "Il est chiffré automatiquement", "Il peut être extrait par un attaquant (fuite du prompt système)"], a: 3, e: "Un prompt système peut être extrait : identifiants ou logique sensible qui s’y trouvent peuvent être exposés." }] },
+ en: { title: "LLM-specific risks (OWASP Top 10 2025)",
+  intro: "The OWASP list ranks the ten main risks of applications built on LLMs.",
+  bridge: "Leaks (LLM02) overlap with your expertise on security of processing (GDPR Art. 32). Prompt injection is the new risk to learn.",
+  action: "On a tool you are allowed to test, try a simple prompt injection hidden in a fictional document, and note what happens.",
+  pts: [["Prompt injection (LLM01)", "Instructions slipped into the input or into external content hijack the model’s behaviour. Treat it as a permanent risk, not a one-off bug."],
+   ["Leaks (LLM02 and LLM07)", "Disclosure of sensitive or personal information (LLM02) and leakage of the system prompt (LLM07). No secret should appear in a prompt."],
+   ["Actions and outputs (LLM05 and LLM06)", "Model output passed to other systems without validation (LLM05), and excess functions, permissions or autonomy (LLM06): a text error becomes an action."],
+   ["The rest of the list", "LLM03 supply chain, LLM04 data and model poisoning, LLM08 vector and embedding weaknesses, LLM09 misinformation, LLM10 unbounded consumption. LLM07 to LLM10 are flagged as new in the 2025 version."]],
+  quiz: [
+   { q: "Which entry holds first place (LLM01) in the OWASP Top 10 for LLM 2025?", o: ["Prompt Injection", "Unbounded Consumption", "Misinformation", "Supply Chain"], a: 0, e: "Prompt Injection is LLM01: crafted inputs, direct or through external content, manipulate the model’s behaviour." },
+   { q: "Which of these is flagged as new in 2025?", o: ["Prompt Injection", "Sensitive Information Disclosure", "System Prompt Leakage", "Excessive Agency"], a: 2, e: "System Prompt Leakage (LLM07) is among the entries flagged as new, with LLM08, LLM09 and LLM10." },
+   { q: "An agent has delete rights while its task is only to read files. Which risk is this?", o: ["Misinformation", "Excessive Agency", "Prompt Injection", "Unbounded Consumption"], a: 1, e: "Excessive Agency (LLM06): too much functionality, permission or autonomy turns an unexpected output into damage." },
+   { q: "Why keep secrets out of the system prompt?", o: ["It slows the model down", "It is deleted after each reply", "It is encrypted automatically", "It can be extracted by an attacker (system prompt leakage)"], a: 3, e: "System prompts can be extracted, so credentials or sensitive logic placed there can be exposed." }] } },
+
+{ id: 'l5', plan: 3, gap: 2,
+ src: [["CASRAI, NIST Govern-Map-Measure-Manage", "https://casrai.org/guides/nist-govern-map-measure-manage-framework"], ["URM Consulting, structure of ISO 42001", "https://urmconsulting.com/faq/how-is-iso-42001-structured"]],
+ fr: { title: "NIST AI RMF et ISO/IEC 42001",
+  intro: "Deux cadres complémentaires : l’un pour gérer le risque, l’autre pour un système de management auditable.",
+  bridge: "Le NIST AI RMF et l’AIPD (art. 35 du RGPD) partagent une même logique : contexte, risques, mesures, suivi. L’ISO 42001 suit le modèle de système de management que vous connaissez avec l’ISO 27001.",
+  action: "Associez Govern, Map, Measure et Manage aux étapes de votre processus actuel d’AIPD. Que vous manque-t-il ?",
+  pts: [["Les quatre fonctions du NIST AI RMF", "Govern (transversale : politiques, responsabilités, culture, tiers), Map (contexte du système), Measure (évaluation avec méthodes et métriques) et Manage (priorisation, traitement, suivi, incidents)."],
+   ["Comment les utiliser", "Map, Measure et Manage s’appliquent système par système ; Govern les rend reproductibles dans l’organisation. Le profil IA générative NIST AI 600-1 (juillet 2024) décline le cadre pour les risques de l’IA générative."],
+   ["ISO/IEC 42001", "Norme de système de management de l’IA, bâtie sur la structure harmonisée ISO (comme l’ISO 27001). Les exigences obligatoires figurent aux articles 4 à 10."],
+   ["Les annexes", "Annexe A : mesures de référence, non obligatoires, appliquées selon leur pertinence. Annexe B : guide de mise en œuvre de ces mesures. Annexe C : objectifs et sources de risque. Annexe D : usage selon les domaines ou secteurs."]],
+  quiz: [
+   { q: "Quelle fonction du NIST AI RMF est transversale ?", o: ["Map", "Measure", "Manage", "Govern"], a: 3, e: "Govern traverse les trois autres : politiques, responsabilités, culture et supervision des tiers." },
+   { q: "Où figurent les exigences obligatoires de l’ISO/IEC 42001 ?", o: ["Dans l’annexe A", "Dans les articles 4 à 10", "Dans l’annexe D", "Dans le profil NIST AI 600-1"], a: 1, e: "Comme dans les autres normes ISO de management, les exigences figurent aux articles 4 à 10 ; les annexes les accompagnent." },
+   { q: "Les mesures de l’annexe A de l’ISO/IEC 42001 sont…", o: ["Toutes obligatoires", "Réservées aux grandes entreprises", "Appliquées selon leur pertinence, sans être toutes obligatoires", "Remplacées par l’annexe D"], a: 2, e: "L’annexe A fournit des mesures de référence ; l’organisation les applique selon leur pertinence et peut définir les siennes." },
+   { q: "Quelle fonction du NIST produit les preuves sur lesquelles s’appuie Manage ?", o: ["Measure", "Govern", "Map", "Aucune"], a: 0, e: "Measure évalue le système au regard des caractéristiques de fiabilité et produit les preuves que Manage utilise pour prioriser et traiter les risques." }] },
+ en: { title: "NIST AI RMF and ISO/IEC 42001",
+  intro: "Two complementary frameworks: one to manage risk, one for an auditable management system.",
+  bridge: "NIST AI RMF and the DPIA (GDPR Art. 35) share one logic: context, risks, measures, follow-up. ISO 42001 follows the management-system model you know from ISO 27001.",
+  action: "Match Govern, Map, Measure and Manage to the steps of your current DPIA process. What is missing?",
+  pts: [["The four NIST AI RMF functions", "Govern (cross-cutting: policies, accountability, culture, third parties), Map (system context), Measure (evaluation with methods and metrics) and Manage (prioritising, treating, monitoring, incidents)."],
+   ["How to use them", "Map, Measure and Manage apply system by system; Govern makes them repeatable across the organisation. The Generative AI Profile NIST AI 600-1 (July 2024) adapts the framework to generative AI risks."],
+   ["ISO/IEC 42001", "An AI management system standard built on the ISO harmonised structure (like ISO 27001). The mandatory requirements sit in clauses 4 to 10."],
+   ["The annexes", "Annex A: reference controls, not mandatory, applied according to relevance. Annex B: implementation guidance for those controls. Annex C: objectives and risk sources. Annex D: use across domains or sectors."]],
+  quiz: [
+   { q: "Which NIST AI RMF function is cross-cutting?", o: ["Map", "Measure", "Manage", "Govern"], a: 3, e: "Govern runs underneath the other three: policies, accountability, culture and third-party oversight." },
+   { q: "Where are the mandatory requirements of ISO/IEC 42001?", o: ["In Annex A", "In clauses 4 to 10", "In Annex D", "In the NIST AI 600-1 profile"], a: 1, e: "As in other ISO management system standards, the requirements are in clauses 4 to 10; the annexes support them." },
+   { q: "The controls in Annex A of ISO/IEC 42001 are…", o: ["All mandatory", "Reserved for large companies", "Applied according to relevance, not all mandatory", "Replaced by Annex D"], a: 2, e: "Annex A gives reference controls; organisations apply them according to relevance and may define their own." },
+   { q: "Which NIST function produces the evidence Manage acts on?", o: ["Measure", "Govern", "Map", "None"], a: 0, e: "Measure evaluates the system against trustworthiness characteristics and produces the evidence Manage uses to prioritise and treat risks." }] } },
+
+{ id: 'l6', plan: 4, gap: 2,
+ src: [["European Commission, GPAI obligations under the AI Act", "https://digital-strategy.ec.europa.eu/en/factpages/general-purpose-ai-obligations-under-ai-act"], ["Spicy Advisory, Digital Omnibus : ce qui change", "https://spicyadvisory.com/fr/blog/digital-omnibus-ai-act-2026-what-changed"], ["Tech Insider, report de l’AI Act", "https://tech-insider.org/fr/ai-act-report-2026/"]],
+ fr: { title: "GPAI, fournisseurs et calendrier de l’AI Act",
+  intro: "Savoir ce que doit un fournisseur de modèle à usage général, et ce que le déployeur doit lui demander.",
+  bridge: "Comme pour la sous-traitance RGPD, le déployeur doit obtenir de son fournisseur la documentation et des garanties contractuelles, et qualifier le rôle de chaque partie.",
+  action: "Pour un fournisseur d’IA réel, listez les documents à lui demander et vérifiez ce qu’il publie déjà.",
+  pts: [["Obligations de base des fournisseurs de GPAI", "Documentation technique, politique de respect du droit d’auteur et résumé public des données d’entraînement (selon un modèle publié par la Commission). Elles s’appliquent depuis le 2 août 2025."],
+   ["Risque systémique", "Un modèle est présumé à risque systémique au-delà de 10^25 FLOP de calcul d’entraînement (seuil en cours de révision selon la Commission). S’ajoutent : notification à la Commission, évaluation et atténuation des risques, signalement des incidents, cybersécurité."],
+   ["Code de bonnes pratiques", "Outil volontaire jugé adéquat par la Commission et les États membres pour démontrer la conformité. Les chapitres Transparence et Droit d’auteur concernent tous les fournisseurs ; le chapitre Sécurité concerne le risque systémique."],
+   ["Calendrier après le Digital Omnibus", "Le règlement (UE) 2026/1744 reporte le haut risque de l’annexe III au 2 décembre 2027 et celui de l’annexe I au 2 août 2028. Il ne reporte ni l’article 50 (transparence, 2 août 2026) ni le régime GPAI."],
+   ["Côté déployeur", "Qualifier son rôle (fournisseur ou déployeur), demander la documentation du fournisseur, contractualiser les engagements et surveiller l’usage réel."]],
+  quiz: [
+   { q: "Au-delà de quel calcul d’entraînement un modèle est-il présumé à risque systémique ?", o: ["10^20 FLOP", "10^23 FLOP", "10^25 FLOP", "10^30 FLOP"], a: 2, e: "L’AI Act fixe la présomption à 10^25 FLOP ; 10^23 FLOP sert, dans les lignes directrices de la Commission, à qualifier un modèle de GPAI. Le seuil de risque systémique est en cours de révision." },
+   { q: "Quelle obligation s’impose à tout fournisseur de GPAI ?", o: ["Notifier la Commission avant chaque mise à jour", "Publier un résumé des données d’entraînement", "Obtenir une certification ISO 42001", "Fournir le code source du modèle"], a: 1, e: "Obligations de base : documentation technique, politique de droit d’auteur et résumé public des données d’entraînement." },
+   { q: "Le Digital Omnibus a-t-il reporté l’article 50 (transparence) ?", o: ["Oui, au 2 décembre 2027", "Oui, au 2 août 2028", "Non, il reste applicable au 2 août 2026", "Il l’a supprimé"], a: 2, e: "Le report concerne les obligations du haut risque. La transparence de l’article 50 s’applique toujours le 2 août 2026." },
+   { q: "Le code de bonnes pratiques GPAI est…", o: ["Obligatoire pour tous", "Réservé aux déployeurs", "Abrogé par le Digital Omnibus", "Un outil volontaire pour démontrer la conformité"], a: 3, e: "Il est volontaire, mais la Commission et les États membres l’ont jugé adéquat pour démontrer la conformité." }] },
+ en: { title: "GPAI, suppliers and the AI Act timeline",
+  intro: "Know what a general-purpose model provider owes, and what the deployer should ask for.",
+  bridge: "As with GDPR subcontracting, the deployer must obtain documentation and contractual guarantees from the supplier, and qualify each party’s role.",
+  action: "For a real AI supplier, list the documents to request from them and check what they already publish.",
+  pts: [["Baseline obligations for GPAI providers", "Technical documentation, a copyright compliance policy and a public summary of training data (using a template published by the Commission). They apply from 2 August 2025."],
+   ["Systemic risk", "A model is presumed to pose systemic risk above 10^25 FLOP of training compute (threshold under review, per the Commission). Added duties: notify the Commission, assess and mitigate risks, report incidents, ensure cybersecurity."],
+   ["Code of Practice", "A voluntary tool the Commission and Member States found adequate to show compliance. The Transparency and Copyright chapters concern all providers; the Safety and Security chapter concerns systemic risk."],
+   ["Timeline after the Digital Omnibus", "Regulation (EU) 2026/1744 postpones Annex III high-risk to 2 December 2027 and Annex I to 2 August 2028. It postpones neither Article 50 (transparency, 2 August 2026) nor the GPAI regime."],
+   ["On the deployer side", "Qualify your role (provider or deployer), request the supplier’s documentation, contract for commitments and monitor real use."]],
+  quiz: [
+   { q: "Above what training compute is a model presumed to pose systemic risk?", o: ["10^20 FLOP", "10^23 FLOP", "10^25 FLOP", "10^30 FLOP"], a: 2, e: "The AI Act sets the presumption at 10^25 FLOP; 10^23 FLOP is used in the Commission’s guidelines to qualify a model as GPAI. The systemic-risk threshold is under review." },
+   { q: "Which obligation applies to every GPAI provider?", o: ["Notify the Commission before each update", "Publish a summary of the training data", "Obtain ISO 42001 certification", "Supply the model’s source code"], a: 1, e: "Baseline duties: technical documentation, copyright policy and a public training-data summary." },
+   { q: "Did the Digital Omnibus postpone Article 50 (transparency)?", o: ["Yes, to 2 December 2027", "Yes, to 2 August 2028", "No, it still applies on 2 August 2026", "It removed it"], a: 2, e: "The postponement concerns high-risk obligations. Article 50 transparency still applies on 2 August 2026." },
+   { q: "The GPAI Code of Practice is…", o: ["Mandatory for everyone", "Reserved for deployers", "Repealed by the Digital Omnibus", "A voluntary tool to show compliance"], a: 3, e: "It is voluntary, but the Commission and Member States found it an adequate way to demonstrate compliance." }] } },
+
+{ id: 'l7', plan: 6, gap: 3, src: [],
+ fr: { title: "Mettre en place le dispositif de gouvernance IA",
+  intro: "Passer de l’expertise au dispositif en fonctionnement : c’est ce qui distingue un poste de direction.",
+  bridge: "Vous avez déjà construit un registre des traitements et un comité de pilotage. Un registre des systèmes IA et un comité de gouvernance IA suivent le même principe, avec une classification de risque en plus.",
+  action: "Saisissez un premier cas d’usage réel dans l’onglet Cas et classez-le.",
+  pts: [["Inventaire des systèmes IA", "Point de départ de tout dispositif : on ne gouverne pas ce que l’on ne voit pas. L’inventaire recense chaque cas d’usage, son porteur, son fournisseur, ses données et sa classification (onglet Cas de cette app). Il inclut les usages non déclarés (shadow AI)."],
+   ["Admission et validation", "Un cas d’usage passe par une fiche d’intake, une classification, puis une validation proportionnée au risque : déclaration pour le risque minimal, comité pour le haut risque."],
+   ["Rôles et comité", "Définir qui décide, qui conseille et qui contrôle : sponsor exécutif, responsable de la gouvernance IA, juridique et DPO, sécurité, métiers. Un comité au mandat clair évite de tout bloquer comme de tout laisser passer."],
+   ["Piloter et convaincre", "Quelques indicateurs suffisent : part des systèmes inventoriés, délai de validation, incidents, actions en retard. Le discours à la direction relie la conformité à la confiance, à la vitesse d’adoption et à la réduction du risque."]],
+  quiz: [
+   { q: "Quel est le point de départ d’un dispositif de gouvernance IA ?", o: ["Rédiger la charte éthique", "Inventorier les systèmes et cas d’usage IA, y compris non déclarés", "Acheter un outil de conformité", "Former le comité de direction"], a: 1, e: "On ne gouverne pas ce que l’on ne voit pas : l’inventaire passe en premier, y compris le shadow AI." },
+   { q: "Comment proportionner la validation d’un cas d’usage ?", o: ["Même comité pour tous", "Selon le budget du projet", "Selon la classification de risque : simple déclaration pour le risque minimal, comité pour le haut risque", "Selon l’ancienneté du porteur"], a: 2, e: "Une validation proportionnée garde les usages à faible risque rapides et concentre l’examen là où le préjudice est le plus grand." },
+   { q: "Qu’est-ce que le shadow AI ?", o: ["Un type de modèle propriétaire", "Un audit externe", "Une IA de cybersécurité", "Des outils d’IA adoptés par des équipes en dehors de tout cadre validé"], a: 3, e: "Le shadow AI est l’usage d’outils d’IA hors de tout cadre validé ; l’inventaire et des règles claires le réduisent." },
+   { q: "Quel indicateur est pertinent pour piloter le dispositif ?", o: ["Part des systèmes IA inventoriés et classés", "Nombre de pages de politique rédigées", "Nombre de réunions tenues", "Taille de l’équipe"], a: 0, e: "La couverture de l’inventaire et de la classification montre quelle part du parc IA est réellement gouvernée." }] },
+ en: { title: "Setting up the AI governance system",
+  intro: "Moving from expertise to a working system is what distinguishes a leadership role.",
+  bridge: "You have already built a record of processing and a steering committee. An AI system register and an AI governance committee follow the same principle, with a risk classification on top.",
+  action: "Enter a first real use case in the Cases tab and classify it.",
+  pts: [["AI system inventory", "The starting point of any system: you cannot govern what you cannot see. The inventory lists each use case, its owner, supplier, data and classification (the Cases tab of this app). It includes undeclared use (shadow AI)."],
+   ["Intake and approval", "A use case goes through an intake form, a classification, then an approval proportionate to risk: a declaration for minimal risk, a committee for high risk."],
+   ["Roles and committee", "Define who decides, who advises and who checks: executive sponsor, AI governance lead, legal and DPO, security, business owners. A committee with a clear mandate avoids blocking everything as well as letting everything through."],
+   ["Steering and persuading", "A few indicators are enough: share of systems inventoried, approval lead time, incidents, overdue actions. The message to management ties compliance to trust, adoption speed and risk reduction."]],
+  quiz: [
+   { q: "What is the starting point of an AI governance system?", o: ["Writing the ethics charter", "Inventorying AI systems and use cases, including undeclared ones", "Buying a compliance tool", "Training the executive committee"], a: 1, e: "You cannot govern what you cannot see: the inventory comes first, including shadow AI." },
+   { q: "How should approval be proportioned?", o: ["Same committee for everything", "By project budget", "By risk classification: a simple declaration for minimal risk, a committee for high risk", "By the owner’s seniority"], a: 2, e: "Proportionate approval keeps low-risk uses fast and concentrates scrutiny where harm is greatest." },
+   { q: "What is shadow AI?", o: ["A proprietary model type", "An external audit", "A cybersecurity AI", "AI tools adopted by teams outside any approved framework"], a: 3, e: "Shadow AI is use of AI tools outside any validated framework; the inventory and clear rules reduce it." },
+   { q: "Which indicator is relevant for steering the system?", o: ["Share of AI systems inventoried and classified", "Pages of policy written", "Number of meetings held", "Size of the team"], a: 0, e: "Coverage of the inventory and classification shows how much of the AI estate is actually under governance." }] } }
+];
+
+var LV = null;
+function modById(id) { var i; for (i = 0; i < LEARN.length; i++) if (LEARN[i].id === id) return LEARN[i]; return null; }
+function lrec(id) { var r = S.learn[id]; return r ? r : { read: false, best: -1, last: -1, n: 0, note: '', upd: 0 }; }
+function saveL(id, patch) {
+  var r = JSON.parse(JSON.stringify(lrec(id))), k;
+  for (k in patch) r[k] = patch[k];
+  r.upd = Date.now(); S.learn[id] = r; autoSave();
+}
+function toggleRead(id) { saveL(id, { read: !lrec(id).read }); renderLearn(); }
+function quizScore(m) {
+  var qs = m[LANG].quiz, i, ok = 0;
+  for (i = 0; i < qs.length; i++) if (LV.answers[i] === qs[i].a) ok++;
+  return ok;
+}
+function pickAnswer(j) {
+  if (!LV || LV.mode !== 'quiz' || LV.sel >= 0 || isNaN(j)) return;
+  LV.sel = j; LV.answers[LV.i] = j; renderLearn();
+}
+function nextQuestion() {
+  if (!LV || LV.mode !== 'quiz' || LV.sel < 0) return;
+  var m = modById(LV.mod), n = m[LANG].quiz.length;
+  LV.i++; LV.sel = -1;
+  if (LV.i >= n) {
+    var pct = Math.round(quizScore(m) / n * 100), r = lrec(LV.mod);
+    saveL(LV.mod, { best: Math.max(r.best, pct), last: pct, n: (r.n || 0) + 1 });
+  }
+  renderLearn(); window.scrollTo(0, 0);
+}
+function nextStep() {
+  var i, r;
+  for (i = 0; i < LEARN.length; i++) { r = lrec(LEARN[i].id); if (!r.read) return { id: LEARN[i].id, k: 'l.doRead' }; }
+  for (i = 0; i < LEARN.length; i++) { r = lrec(LEARN[i].id); if (r.best < 0) return { id: LEARN[i].id, k: 'l.doQuizFirst' }; }
+  for (i = 0; i < LEARN.length; i++) { r = lrec(LEARN[i].id); if (r.best < 75) return { id: LEARN[i].id, k: 'l.doQuiz' }; }
+  return null;
+}
+function renderLearn() {
+  var ae = document.activeElement;
+  if (ae && ae.id === 'l-note') return;
+  var h = '', i, j, g, m, c, r;
+  if (!LV) {
+    var rd = 0, sum = 0, cnt = 0;
+    for (i = 0; i < LEARN.length; i++) { r = lrec(LEARN[i].id); if (r.read) rd++; if (r.best >= 0) { sum += r.best; cnt++; } }
+    h += '<div class="card"><p class="muted" style="margin:0 0 8px">' + esc(t('l.intro')) + '</p><h3>' + esc(t('l.progress', { x: rd, y: LEARN.length })) + (cnt ? ' · ' + esc(t('l.avg', { z: Math.round(sum / cnt) })) : '') + '</h3><div class="bar"><i style="width:' + Math.round(rd / LEARN.length * 100) + '%"></i></div>';
+    for (g = 1; g <= 3; g++) {
+      var tot = 0, rdg = 0;
+      for (i = 0; i < LEARN.length; i++) if (LEARN[i].gap === g) { tot++; if (lrec(LEARN[i].id).read) rdg++; }
+      h += '<div class="muted" style="margin-top:6px">' + esc(t('l.gaptag', { x: g })) + ' · ' + esc(t('l.gap' + g)) + ' : ' + rdg + '/' + tot + '</div>';
+    }
+    h += '</div>';
+    var ns = nextStep();
+    if (ns) {
+      var nm = modById(ns.id);
+      h += '<div class="card item" data-act="l-open" data-id="' + ns.id + '"><div style="min-width:0"><div class="muted">' + esc(t('l.nextstep')) + '</div><h3 style="margin:2px 0 0">' + esc(t(ns.k, { x: nm[LANG].title })) + '</h3></div><span>→</span></div>';
+    } else h += '<div class="card"><h3>' + esc(t('l.nextstep')) + '</h3><p class="muted" style="margin:0">' + esc(t('l.alldone')) + '</p></div>';
+    for (i = 0; i < LEARN.length; i++) {
+      m = LEARN[i]; r = lrec(m.id); c = m[LANG];
+      h += '<div class="card item" data-act="l-open" data-id="' + m.id + '"><div style="min-width:0"><h3>' + (i + 1) + '. ' + esc(c.title) + '</h3><div class="muted">' + esc(t('l.gaptag', { x: m.gap })) + ' · ' + esc(t('l.linked', { x: m.plan })) + '</div></div><div style="text-align:right;white-space:nowrap">' + (r.read ? '<span class="badge c-minimal" style="border-color:currentColor">' + esc(t('l.read')) + '</span>' : '') + (r.best >= 0 ? '<div class="muted" style="margin-top:4px">' + esc(t('l.best', { x: r.best })) + '</div>' : '') + '</div></div>';
+    }
+  } else {
+    m = modById(LV.mod);
+    if (!m) { LV = null; renderLearn(); return; }
+    c = m[LANG]; r = lrec(m.id);
+    h += '<button class="btn" data-act="l-back" style="margin-bottom:10px">' + esc(t('l.back')) + '</button>';
+    if (LV.mode === 'lesson') {
+      h += '<div class="card"><div class="muted">' + esc(t('l.gaptag', { x: m.gap })) + ' · ' + esc(t('l.gap' + m.gap)) + ' · ' + esc(t('l.linked', { x: m.plan })) + '</div><h3 style="margin-top:6px">' + esc(c.title) + '</h3><p class="muted" style="margin:0">' + esc(c.intro) + '</p>';
+      for (j = 0; j < c.pts.length; j++) h += '<div class="pt"><b>' + esc(c.pts[j][0]) + '</b><span>' + esc(c.pts[j][1]) + '</span></div>';
+      h += '</div>';
+      h += '<div class="card"><h3>' + esc(t('l.bridge')) + '</h3><p style="margin:0">' + esc(c.bridge) + '</p></div>';
+      h += '<div class="card"><h3>' + esc(t('l.action')) + '</h3><p style="margin:0 0 10px">' + esc(c.action) + '</p><label class="fl" for="l-note">' + esc(t('l.note')) + '</label><textarea id="l-note" data-act="l-note" data-id="' + m.id + '" placeholder="' + esc(t('l.notePh')) + '">' + esc(r.note || '') + '</textarea></div>';
+      h += '<div class="card src"><h3>' + esc(t('l.sources')) + '</h3>';
+      if (m.src.length) {
+        for (j = 0; j < m.src.length; j++) h += '<div><a href="' + esc(m.src[j][1]) + '" target="_blank" rel="noopener">' + esc(m.src[j][0]) + '</a></div>';
+        h += '<p class="muted" style="margin:8px 0 0">' + esc(t('l.srcnote')) + '</p>';
+      } else h += '<p class="muted" style="margin:0">' + esc(t('l.nosrc')) + '</p>';
+      h += '</div>';
+      h += '<div class="row"><button class="btn primary grow" data-act="l-start" data-id="' + m.id + '">' + esc(t('l.start')) + '</button><button class="btn grow" data-act="l-read" data-id="' + m.id + '">' + esc(r.read ? t('l.unmark') : t('l.mark')) + '</button></div>';
+    } else {
+      var qs = c.quiz, n = qs.length;
+      if (LV.i < n) {
+        var q = qs[LV.i];
+        h += '<div class="card"><div class="muted">' + esc(t('l.q', { x: LV.i + 1, y: n })) + '</div><div class="bar"><i style="width:' + Math.round(LV.i / n * 100) + '%"></i></div><h3>' + esc(q.q) + '</h3>';
+        for (j = 0; j < q.o.length; j++) {
+          var cl = '';
+          if (LV.sel >= 0) { if (j === q.a) cl = ' ok'; else if (j === LV.sel) cl = ' ko'; }
+          h += '<button class="opt' + cl + '" data-act="l-pick" data-v="' + j + '"' + (LV.sel >= 0 ? ' disabled' : '') + '>' + esc(q.o[j]) + '</button>';
+        }
+        if (LV.sel >= 0) {
+          h += '<div class="fb"><b>' + esc(LV.sel === q.a ? t('l.right') : t('l.wrong')) + '</b> ' + esc(q.e) + '</div>';
+          h += '<div class="row" style="margin-top:12px"><button class="btn primary grow" data-act="l-next">' + esc(LV.i + 1 >= n ? t('l.finish') : t('l.next')) + '</button></div>';
+        }
+        h += '</div>';
+      } else {
+        var ok = quizScore(m), pct2 = Math.round(ok / n * 100);
+        h += '<div class="card"><h3>' + esc(t('l.score', { x: ok, y: n, z: pct2 })) + '</h3><p class="muted" style="margin:0">' + esc(pct2 >= 75 ? t('l.good') : t('l.low')) + '</p>';
+        var missed = 0;
+        for (j = 0; j < n; j++) if (LV.answers[j] !== qs[j].a) {
+          if (!missed) h += '<h3 style="margin-top:14px">' + esc(t('l.review')) + '</h3>';
+          missed++;
+          h += '<div class="pt"><b>' + esc(qs[j].q) + '</b><span>' + esc(t('l.answer')) + ' : ' + esc(qs[j].o[qs[j].a]) + '. ' + esc(qs[j].e) + '</span></div>';
+        }
+        h += '</div><div class="row"><button class="btn primary grow" data-act="l-start" data-id="' + m.id + '">' + esc(t('l.retry')) + '</button><button class="btn grow" data-act="l-open" data-id="' + m.id + '">' + esc(t('l.lesson')) + '</button></div>';
+      }
+    }
+  }
+  $('tab-learn').innerHTML = h;
+}
 
 /* ---------- modal forms ---------- */
 function ynRow(id, key, val) { return '<div class="yn"><span>' + esc(t(key)) + '</span><input type="checkbox" id="' + id + '"' + (val ? ' checked' : '') + '></div>'; }
@@ -600,6 +951,12 @@ document.addEventListener('click', function (e) {
   else if (act === 'theme') toggleTheme();
   else if (act === 'fs') { var cur = parseInt(localStorage.getItem(K.fs) || '2', 10); applyFontSize(v === '0' ? 2 : cur + parseInt(v, 10)); }
   else if (act === 'filter') { filterCls = v; renderCases(); }
+  else if (act === 'l-open') { LV = { mod: id, mode: 'lesson' }; renderLearn(); window.scrollTo(0, 0); }
+  else if (act === 'l-back') { LV = null; renderLearn(); window.scrollTo(0, 0); }
+  else if (act === 'l-read') toggleRead(id);
+  else if (act === 'l-start') { LV = { mod: id, mode: 'quiz', i: 0, answers: [], sel: -1 }; renderLearn(); window.scrollTo(0, 0); }
+  else if (act === 'l-pick') pickAnswer(parseInt(v, 10));
+  else if (act === 'l-next') nextQuestion();
   else if (act === 'case-new') openCase('');
   else if (act === 'case-edit') openCase(id);
   else if (act === 'case-save') saveCase(id);
@@ -622,6 +979,9 @@ document.addEventListener('change', function (e) {
   if (el.getAttribute && el.getAttribute('data-act') === 'plan') {
     S.plan.done[el.getAttribute('data-id')] = { d: !!el.checked, t: Date.now() };
     autoSave(); renderPlan(); return;
+  }
+  if (el.getAttribute && el.getAttribute('data-act') === 'l-note') {
+    saveL(el.getAttribute('data-id'), { note: el.value }); return;
   }
   if (modalOpen() && el.id && (el.id.indexOf('q-') === 0 || el.id === 'f-autonomy')) refreshResult();
 });
