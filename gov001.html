@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>gov001</title>
+<script>
+window.addEventListener('error', function (e) {
+  var b = document.getElementById('boot');
+  if (b) { b.style.display = 'block'; b.style.background = '#b3261e'; b.style.color = '#fff'; b.textContent = 'JS error: ' + e.message + ' (line ' + e.lineno + ')'; }
+});
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F7F6F3;--card:#FFFFFF;--text:#1f1d1a;--muted:#6f6b64;--border:#e2dfd8;--accent:#c4552d;--accent-text:#fff;--green:#2e7d4f;--red:#b3261e;--amber:#9a6700;--blue:#2563EB;--card-fade:#FFFFFF}
+[data-theme="sand"]{--bg:#F8F7FF;--card:#FFFFFF;--text:#1d1b2e;--muted:#6b6880;--border:#e1def2;--accent:#5b4bd1;--card-fade:#FFFFFF}
+[data-theme="navy"]{--bg:#161925;--card:#1e2233;--text:#e8eaf2;--muted:#9aa0b8;--border:#2c3148;--accent:#e08a5f;--accent-text:#161925;--green:#5fbf86;--red:#e57373;--amber:#e0b04a;--blue:#60A5FA;--card-fade:#1e2233}
+[data-theme="dark"]{--bg:#111113;--card:#1a1a1d;--text:#ececec;--muted:#9b9b9f;--border:#2b2b30;--accent:#e08a5f;--accent-text:#111113;--green:#5fbf86;--red:#e57373;--amber:#e0b04a;--blue:#60A5FA;--card-fade:#1a1a1d}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Geist',-apple-system,Segoe UI,Roboto,sans-serif;font-weight:400;font-size:15px;line-height:1.5}
+button,input,select,textarea{font-family:inherit;font-size:inherit}
+input,textarea,select{background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px 12px;width:100%;color-scheme:light}
+[data-theme="navy"] input,[data-theme="navy"] textarea,[data-theme="navy"] select,[data-theme="dark"] input,[data-theme="dark"] textarea,[data-theme="dark"] select{color-scheme:dark}
+input[type="search"]{-webkit-appearance:none;appearance:none}
+textarea{resize:vertical;min-height:64px}
+label.fl{display:block;font-size:12px;color:var(--muted);margin:12px 0 4px;font-family:'Geist Mono',monospace;letter-spacing:.02em}
+#boot{display:block;padding:8px 14px;background:var(--amber);color:#fff;font-size:13px}
+.header{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--border);height:52px}
+.header h1{font-size:16px;font-weight:500;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.header small{color:var(--muted);font-family:'Geist Mono',monospace;font-size:11px;font-weight:400;margin-left:6px}
+.syncs{font-family:'Geist Mono',monospace;font-size:12px;color:var(--muted);white-space:nowrap}
+.iconbtn{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;width:40px;height:36px;cursor:pointer}
+.tabs{position:sticky;top:52px;z-index:99;display:flex;background:var(--bg);border-bottom:1px solid var(--border)}
+.tab{flex:1;min-height:44px;background:transparent;border:0;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;padding:0 6px;font-weight:500;white-space:nowrap}
+.tab.active{color:var(--text);border-bottom-color:var(--accent)}
+.page{max-width:760px;margin:0 auto;padding:14px 14px 80px}
+.section{display:none}.section.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
+.card h3{margin:0 0 6px;font-size:15px;font-weight:500}
+.muted{color:var(--muted);font-size:13px}
+.btn{min-height:44px;padding:0 16px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer;font-weight:500}
+.btn.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+.btn.danger{color:var(--red);border-color:var(--red)}
+.btn.grow{flex:1}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.bar{height:8px;border-radius:4px;background:var(--border);overflow:hidden;margin:8px 0}
+.bar>i{display:block;height:100%;background:var(--accent)}
+.chk{display:flex;gap:10px;align-items:flex-start;padding:8px 0;min-height:44px;cursor:pointer}
+.chk input{width:22px;height:22px;margin:1px 0 0;flex:none;padding:0}
+.chk.done span{text-decoration:line-through;color:var(--muted)}
+.deliv{margin-top:6px;padding-top:8px;border-top:1px dashed var(--border);font-size:13px;color:var(--muted)}
+.deliv b{color:var(--text);font-weight:500}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;cursor:pointer;min-height:32px;line-height:26px;margin:0 6px 6px 0}
+.pill.active{color:var(--text);border-color:var(--text)}
+.badge{display:inline-block;padding:1px 9px;border-radius:999px;border:1px solid;font-size:12px;background:transparent;font-family:'Geist Mono',monospace}
+.c-prohibited{color:#B3261E}.c-high{color:#9A6700}.c-transparency{color:#2563EB}.c-minimal{color:#2E7D4F}
+[data-theme="navy"] .c-prohibited,[data-theme="dark"] .c-prohibited{color:#E57373}
+[data-theme="navy"] .c-high,[data-theme="dark"] .c-high{color:#E0B04A}
+[data-theme="navy"] .c-transparency,[data-theme="dark"] .c-transparency{color:#60A5FA}
+[data-theme="navy"] .c-minimal,[data-theme="dark"] .c-minimal{color:#5FBF86}
+.item{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;cursor:pointer}
+.item h3{margin:0 0 4px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:200;overflow:auto;padding:12px}
+.modal.open{display:block}
+.modal .card{max-width:620px;margin:20px auto}
+.yn{display:flex;align-items:center;gap:10px;padding:8px 0;min-height:44px;border-bottom:1px solid var(--border)}
+.yn span{flex:1;font-size:14px}
+.yn input{width:24px;height:24px;flex:none;padding:0}
+.result{border:1px solid var(--border);border-radius:10px;padding:12px;margin-top:12px}
+.result ul{margin:6px 0 0;padding-left:18px}
+.warn{color:var(--amber);font-size:13px;margin-top:6px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 14px;border-radius:8px;display:none;z-index:300;font-size:14px;max-width:92vw}
+#toast button{background:transparent;border:0;color:inherit;text-decoration:underline;margin-left:10px;cursor:pointer}
+@media (max-width:520px){.header h1 .long{display:none}.page{padding:12px 12px 80px}.tab{font-size:13px}}
+</style>
+</head>
+<body>
+<div id="boot">Chargement… / Loading… — si ce message reste, JavaScript ne s’exécute pas : ouvrez le fichier dans Chrome/Safari. / if this stays, JavaScript is not running: open the file in Chrome/Safari.</div>
+
+<div class="header">
+  <h1>gov001<span class="long"> · <span data-i18n="app.sub"></span></span><small>app <span class="ver">v1.0</span></small></h1>
+  <span class="syncs" id="sync-st"></span>
+  <button class="iconbtn" id="theme-btn" data-act="theme" aria-label="theme">☀︎</button>
+</div>
+<div class="tabs">
+  <button class="tab active" data-tab="plan" data-i18n="tab.plan"></button>
+  <button class="tab" data-tab="cases" data-i18n="tab.cases"></button>
+  <button class="tab" data-tab="train" data-i18n="tab.train"></button>
+  <button class="tab" data-tab="set" style="flex:0 0 52px" aria-label="settings">⚙︎</button>
+</div>
+
+<div class="page">
+  <div id="tab-plan" class="section active"></div>
+  <div id="tab-cases" class="section"></div>
+  <div id="tab-train" class="section"></div>
+  <div id="tab-set" class="section">
+    <div class="card">
+      <h3>🌐 Langue / Language</h3>
+      <div class="row"><button class="btn grow" id="lang-fr" data-act="lang" data-v="fr">Français</button><button class="btn grow" id="lang-en" data-act="lang" data-v="en">English</button></div>
+    </div>
+    <div class="card">
+      <h3 data-i18n="set.look"></h3>
+      <div class="row">
+        <button class="btn" data-act="theme" id="theme-btn2"></button>
+        <button class="btn" data-act="fs" data-v="-1">A−</button>
+        <span id="fs-label" class="muted">100%</span>
+        <button class="btn" data-act="fs" data-v="1">A+</button>
+        <button class="btn" data-act="fs" data-v="0" data-i18n="b.reset"></button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Google Drive</h3>
+      <p class="muted" data-i18n="drive.info"></p>
+      <div class="row">
+        <button class="btn primary grow" data-act="drive-connect" data-i18n="drive.connect"></button>
+        <button class="btn grow" data-act="drive-sync" data-i18n="drive.sync"></button>
+        <button class="btn grow" data-act="drive-off" data-i18n="drive.off"></button>
+      </div>
+      <p class="muted" id="drive-st"></p>
+    </div>
+    <div class="card">
+      <h3 data-i18n="set.data"></h3>
+      <div class="row">
+        <button class="btn grow" data-act="export" data-i18n="b.export"></button>
+        <button class="btn grow" data-act="import" data-i18n="b.import"></button>
+        <button class="btn danger grow" data-act="reset-plan" data-i18n="b.resetplan"></button>
+      </div>
+      <input type="file" id="imp-file" accept="application/json" style="display:none">
+    </div>
+    <p class="muted" style="text-align:center">gov001 · v1.0 · 2026-11-01</p>
+  </div>
+</div>
+
+<div class="modal" id="modal"><div class="card" id="modal-card"></div></div>
+<div id="toast"></div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+(function () {
+'use strict';
+var APP = 'gov001';
+var K = { data: 'td_v4_' + APP, theme: 'td_theme_' + APP, fs: 'td_fs_' + APP, lang: 'td_lang_' + APP, fid: 'td_fid_' + APP, tok: 'td_tok_' + APP, poll: 'td_poll_' + APP };
+var CLIENT_ID = '962903341875-aucgsp0h46olec36evehi500n2tgk32m.apps.googleusercontent.com';
+var SCOPE = 'https://www.googleapis.com/auth/drive.file';
+var FILE_NAME = 'gov001.json';
+
+/* ---------- i18n ---------- */
+var I18N = {
+en: {
+ 'app.sub': 'AI governance', 'tab.plan': 'Plan', 'tab.cases': 'Use cases', 'tab.train': 'Training',
+ 'sync.local': 'Local', 'sync.pending': 'Pending', 'sync.ok': 'Synced', 'sync.error': 'Error',
+ 'b.save': 'Save', 'b.cancel': 'Cancel', 'b.delete': 'Delete', 'b.reset': 'Reset', 'b.export': 'Export', 'b.import': 'Import', 'b.resetplan': 'Reset plan',
+ 'plan.progress': '{x} of {y} done', 'plan.deliv': 'Deliverable', 'plan.month': 'Month {x}',
+ 'cases.add': '+ New use case', 'cases.empty': 'No use case yet. Add the first one.', 'f.all': 'All',
+ 'f.name': 'Name', 'f.owner': 'Business owner', 'f.purpose': 'Purpose', 'f.system': 'AI system or supplier', 'f.status': 'Status', 'f.notes': 'Notes', 'f.autonomy': 'Autonomy level',
+ 'q.title': 'Classification questions',
+ 'q.prohibited': 'Could it fall under a prohibited practice (manipulation, social scoring, certain biometric uses)?',
+ 'q.highrisk': 'Does it support decisions in a high-risk area (hiring, credit, education, essential services, justice, regulated products)?',
+ 'q.people': 'Does it interact directly with people or generate content shown to them?',
+ 'q.gpai': 'Does it rely on a general-purpose AI model from a supplier?',
+ 'q.pdata': 'Does it process personal data?',
+ 'q.vulnerable': 'Are vulnerable people or minors concerned?',
+ 'aut.rec': 'Recommends only', 'aut.human': 'Decides with human review', 'aut.auto': 'Decides on its own',
+ 'st.idea': 'Idea', 'st.pilot': 'Pilot', 'st.prod': 'Production', 'st.stopped': 'Stopped',
+ 'res.title': 'Result', 'res.review': 'Validation', 'res.controls': 'Minimum controls',
+ 'cls.prohibited': 'Prohibited', 'cls.high': 'High risk', 'cls.transparency': 'Transparency', 'cls.minimal': 'Minimal risk',
+ 'rev.prohibited': 'Refusal, legal escalation', 'rev.high': 'Governance committee', 'rev.transparency': 'AI governance lead', 'rev.minimal': 'Declared use, recorded in the inventory',
+ 'ctl.prohibited': ['No deployment', 'Document the decision'],
+ 'ctl.high': ['Documented risk assessment', 'Testing and human oversight', 'Logging and post-deployment monitoring', 'Technical documentation'],
+ 'ctl.transparency': ['Inform users they interact with AI', 'Mark generated content', 'Incident log'],
+ 'ctl.minimal': ['Record in the inventory', 'Acceptable-use charter'],
+ 'flag.dpia': 'A data protection impact assessment is likely needed.',
+ 'flag.gpai': 'Qualify your role (provider or deployer) and request the supplier’s documentation.',
+ 'res.note': 'Triage aid only. The final classification requires a legal analysis.',
+ 't.deleted': 'Deleted', 't.undo': 'Undo', 't.saved': 'Saved', 't.imported': 'Imported', 't.badfile': 'Invalid file', 't.drive': 'Drive not ready, try again', 't.nameReq': 'Name required', 't.confirm': 'Reset all plan progress?',
+ 'tr.add': '+ Add training', 'tr.name': 'Name', 'tr.provider': 'Provider', 'tr.price': 'Price (EUR, excl. VAT)', 'tr.date': 'Date', 'tr.status': 'Status', 'tr.notes': 'Notes',
+ 'tr.empty': 'No training yet.', 'tr.budget': 'Planned budget (planned + booked)', 'tr.tip': 'Prices vary a lot by provider and format: compare quotes and check what is included (exam, support).',
+ 'tr.pick': 'Plan: Lead Implementer in month 5.',
+ 'set.look': 'Appearance', 'set.data': 'Data',
+ 'drive.info': 'Optional sync of your data in a private JSON file on your Google Drive. Data always stays in this browser first.',
+ 'drive.connect': 'Connect', 'drive.sync': 'Sync now', 'drive.off': 'Disconnect', 'drive.on': 'Connected', 'drive.offst': 'Not connected',
+ 'edit': 'Edit', 'new': 'New use case',
+ 'p.m1': 'ML and LLM foundations', 'p.m1a': 'Learn core concepts: supervised learning, neural networks, transformers', 'p.m1b': 'Understand RAG and agents', 'p.m1c': 'Follow one free introductory course', 'p.m1d': 'One-page lifecycle diagram annotated with risk points',
+ 'p.m2': 'Data and evaluation', 'p.m2a': 'Study data provenance, quality and bias', 'p.m2b': 'Learn evaluation metrics, hallucinations, model cards', 'p.m2c': 'Run a simple notebook to see a model fail', 'p.m2d': 'Evaluation sheet for a model or LLM on a simple case',
+ 'p.m3': 'Risks and controls', 'p.m3a': 'Read the NIST AI RMF', 'p.m3b': 'Review OWASP Top 10 for LLM and shadow AI', 'p.m3c': 'Start AIGP exam preparation', 'p.m3d': 'Risk register for a real use case',
+ 'p.m4': 'GPAI, agents, suppliers', 'p.m4a': 'Study GPAI provider obligations', 'p.m4b': 'Study agent-specific risks (autonomy, tool access)', 'p.m4c': 'Draft a supplier due-diligence checklist', 'p.m4d': 'AI supplier due-diligence questionnaire',
+ 'p.m5': 'ISO/IEC 42001', 'p.m5a': 'Choose a provider and book the Lead Implementer course', 'p.m5b': 'Attend the course', 'p.m5c': 'Pass the exam', 'p.m5d': 'ISO/IEC 42001 Lead Implementer certification',
+ 'p.m6': 'Consolidation', 'p.m6a': 'Run a full assessment of one use case with the data teams', 'p.m6b': 'Record the findings in the Use cases tab', 'p.m6c': 'Present to a sponsor', 'p.m6d': 'Reusable demonstration file'
+},
+fr: {
+ 'app.sub': 'Gouvernance IA', 'tab.plan': 'Plan', 'tab.cases': 'Cas d’usage', 'tab.train': 'Formations',
+ 'sync.local': 'Local', 'sync.pending': 'En attente', 'sync.ok': 'Synchronisé', 'sync.error': 'Erreur',
+ 'b.save': 'Enregistrer', 'b.cancel': 'Annuler', 'b.delete': 'Supprimer', 'b.reset': 'Réinit.', 'b.export': 'Exporter', 'b.import': 'Importer', 'b.resetplan': 'Réinitialiser le plan',
+ 'plan.progress': '{x} sur {y} faits', 'plan.deliv': 'Livrable', 'plan.month': 'Mois {x}',
+ 'cases.add': '+ Nouveau cas d’usage', 'cases.empty': 'Aucun cas d’usage. Ajoutez le premier.', 'f.all': 'Tous',
+ 'f.name': 'Nom', 'f.owner': 'Porteur métier', 'f.purpose': 'Finalité', 'f.system': 'Système ou fournisseur IA', 'f.status': 'Statut', 'f.notes': 'Notes', 'f.autonomy': 'Niveau d’autonomie',
+ 'q.title': 'Questions de classification',
+ 'q.prohibited': 'Peut-il relever d’une pratique interdite (manipulation, scoring social, certains usages biométriques) ?',
+ 'q.highrisk': 'Aide-t-il à décider dans un domaine à haut risque (recrutement, crédit, éducation, services essentiels, justice, produits réglementés) ?',
+ 'q.people': 'Interagit-il directement avec des personnes ou génère-t-il du contenu qui leur est présenté ?',
+ 'q.gpai': 'S’appuie-t-il sur un modèle d’IA à usage général d’un fournisseur ?',
+ 'q.pdata': 'Traite-t-il des données personnelles ?',
+ 'q.vulnerable': 'Des personnes vulnérables ou des mineurs sont-ils concernés ?',
+ 'aut.rec': 'Recommande seulement', 'aut.human': 'Décide avec validation humaine', 'aut.auto': 'Décide seul',
+ 'st.idea': 'Idée', 'st.pilot': 'Pilote', 'st.prod': 'Production', 'st.stopped': 'Arrêté',
+ 'res.title': 'Résultat', 'res.review': 'Validation', 'res.controls': 'Contrôles minimum',
+ 'cls.prohibited': 'Interdit', 'cls.high': 'Haut risque', 'cls.transparency': 'Transparence', 'cls.minimal': 'Risque minimal',
+ 'rev.prohibited': 'Refus, escalade juridique', 'rev.high': 'Comité de gouvernance', 'rev.transparency': 'Responsable gouvernance IA', 'rev.minimal': 'Usage déclaré, inscrit à l’inventaire',
+ 'ctl.prohibited': ['Aucun déploiement', 'Documenter la décision'],
+ 'ctl.high': ['Évaluation de risque documentée', 'Tests et supervision humaine', 'Journalisation et suivi post-déploiement', 'Documentation technique'],
+ 'ctl.transparency': ['Informer les utilisateurs qu’ils interagissent avec une IA', 'Marquer les contenus générés', 'Journal des incidents'],
+ 'ctl.minimal': ['Inscrire à l’inventaire', 'Charte d’usage acceptable'],
+ 'flag.dpia': 'Une analyse d’impact relative à la protection des données (AIPD) est probablement nécessaire.',
+ 'flag.gpai': 'Qualifiez votre rôle (fournisseur ou déployeur) et demandez la documentation du fournisseur.',
+ 'res.note': 'Aide au tri uniquement. La classification finale demande une analyse juridique.',
+ 't.deleted': 'Supprimé', 't.undo': 'Annuler', 't.saved': 'Enregistré', 't.imported': 'Importé', 't.badfile': 'Fichier invalide', 't.drive': 'Drive indisponible, réessayez', 't.nameReq': 'Nom obligatoire', 't.confirm': 'Réinitialiser toute la progression du plan ?',
+ 'tr.add': '+ Ajouter une formation', 'tr.name': 'Nom', 'tr.provider': 'Organisme', 'tr.price': 'Prix (EUR, HT)', 'tr.date': 'Date', 'tr.status': 'Statut', 'tr.notes': 'Notes',
+ 'tr.empty': 'Aucune formation.', 'tr.budget': 'Budget prévu (prévu + réservé)', 'tr.tip': 'Les prix varient beaucoup selon l’organisme et le format : comparez les devis et vérifiez ce qui est inclus (examen, support).',
+ 'tr.pick': 'Plan : Lead Implementer au mois 5.',
+ 'set.look': 'Apparence', 'set.data': 'Données',
+ 'drive.info': 'Synchronisation facultative de vos données dans un fichier JSON privé de votre Google Drive. Les données restent d’abord dans ce navigateur.',
+ 'drive.connect': 'Connecter', 'drive.sync': 'Synchroniser', 'drive.off': 'Déconnecter', 'drive.on': 'Connecté', 'drive.offst': 'Non connecté',
+ 'edit': 'Modifier', 'new': 'Nouveau cas d’usage',
+ 'p.m1': 'Fondations ML et LLM', 'p.m1a': 'Apprendre les bases : apprentissage supervisé, réseaux de neurones, transformers', 'p.m1b': 'Comprendre RAG et agents', 'p.m1c': 'Suivre un cours d’introduction gratuit', 'p.m1d': 'Schéma d’une page du cycle de vie, annoté des points de risque',
+ 'p.m2': 'Données et évaluation', 'p.m2a': 'Étudier provenance, qualité et biais des données', 'p.m2b': 'Apprendre métriques d’évaluation, hallucinations, model cards', 'p.m2c': 'Faire tourner un notebook simple pour voir un modèle se tromper', 'p.m2d': 'Fiche d’évaluation d’un modèle ou d’un LLM sur un cas simple',
+ 'p.m3': 'Risques et contrôles', 'p.m3a': 'Lire le NIST AI RMF', 'p.m3b': 'Revoir l’OWASP Top 10 for LLM et le shadow AI', 'p.m3c': 'Démarrer la préparation à l’examen AIGP', 'p.m3d': 'Registre de risques pour un cas d’usage réel',
+ 'p.m4': 'GPAI, agents, fournisseurs', 'p.m4a': 'Étudier les obligations des fournisseurs de GPAI', 'p.m4b': 'Étudier les risques propres aux agents (autonomie, accès aux outils)', 'p.m4c': 'Rédiger une liste de due diligence fournisseur', 'p.m4d': 'Questionnaire de due diligence fournisseur IA',
+ 'p.m5': 'ISO/IEC 42001', 'p.m5a': 'Choisir un organisme et réserver la formation Lead Implementer', 'p.m5b': 'Suivre la formation', 'p.m5c': 'Réussir l’examen', 'p.m5d': 'Certification ISO/IEC 42001 Lead Implementer',
+ 'p.m6': 'Consolidation', 'p.m6a': 'Mener une évaluation complète d’un cas d’usage avec les équipes data', 'p.m6b': 'Consigner les conclusions dans l’onglet Cas d’usage', 'p.m6c': 'Présenter à un sponsor', 'p.m6d': 'Dossier de démonstration réutilisable'
+}
+};
+var LANG = 'en';
+function t(k, v) {
+  var s = (I18N[LANG] && I18N[LANG][k] !== undefined) ? I18N[LANG][k] : (I18N.en[k] !== undefined ? I18N.en[k] : k);
+  if (typeof s === 'string' && v) s = s.replace(/\{(\w+)\}/g, function (m, n) { return v[n] !== undefined ? v[n] : m; });
+  return s;
+}
+function LOC() { return LANG === 'fr' ? 'fr-FR' : 'en-GB'; }
+function esc(s) { return String(s === undefined || s === null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function $(id) { return document.getElementById(id); }
+function uid() { return 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function applyStatic() {
+  document.documentElement.lang = LANG;
+  var a = document.querySelectorAll('[data-i18n]'), i;
+  for (i = 0; i < a.length; i++) a[i].textContent = t(a[i].getAttribute('data-i18n'));
+  $('lang-fr').className = 'btn grow' + (LANG === 'fr' ? ' primary' : '');
+  $('lang-en').className = 'btn grow' + (LANG === 'en' ? ' primary' : '');
+}
+
+/* ---------- state ---------- */
+var PLAN = ['m1', 'm2', 'm3', 'm4', 'm5', 'm6'];
+var CLASSES = ['prohibited', 'high', 'transparency', 'minimal'];
+var S = null;
+var undoItem = null;
+var filterCls = 'all';
+
+function seedTrainings() {
+  return [
+    { id: 'seed-li', name: 'PECB ISO/IEC 42001 Lead Implementer', provider: 'Global Knowledge', price: 3850, status: 'idea', date: '', notes: '', upd: 1 },
+    { id: 'seed-la', name: 'PECB ISO/IEC 42001 Lead Auditor', provider: 'Bilginc', price: 2920, status: 'idea', date: '', notes: '', upd: 1 }
+  ];
+}
+function ensureState() {
+  if (!S || typeof S !== 'object') S = {};
+  if (!S.plan || typeof S.plan !== 'object') S.plan = {};
+  if (!S.plan.done || typeof S.plan.done !== 'object') S.plan.done = {};
+  if (!Array.isArray(S.cases)) S.cases = [];
+  if (!Array.isArray(S.trainings)) S.trainings = [];
+  S.cases = S.cases.filter(function (c) { return c && c.id; });
+  S.trainings = S.trainings.filter(function (c) { return c && c.id; });
+  if (!S.seeded) { S.seeded = true; var have = {}; S.trainings.forEach(function (x) { have[x.id] = 1; }); seedTrainings().forEach(function (x) { if (!have[x.id]) S.trainings.push(x); }); }
+  if (!S.updated) S.updated = 0;
+}
+function load() {
+  var raw = null;
+  try { raw = JSON.parse(localStorage.getItem(K.data) || 'null'); } catch (e) { raw = null; }
+  S = raw;
+  ensureState();
+}
+function mergeList(a, b) {
+  var m = {}, out = [];
+  (a || []).concat(b || []).forEach(function (x) {
+    if (!x || !x.id) return;
+    if (!m[x.id] || (x.upd || 0) > (m[x.id].upd || 0)) m[x.id] = x;
+  });
+  Object.keys(m).forEach(function (k) { out.push(m[k]); });
+  return out;
+}
+function mergeState(a, b) {
+  var r = { plan: { done: {} }, seeded: true, updated: Math.max((a && a.updated) || 0, (b && b.updated) || 0) };
+  var da = (a && a.plan && a.plan.done) || {}, db = (b && b.plan && b.plan.done) || {};
+  Object.keys(da).concat(Object.keys(db)).forEach(function (k) {
+    var x = da[k], y = db[k];
+    r.plan.done[k] = (!y || (x && (x.t || 0) >= (y.t || 0))) ? x : y;
+  });
+  r.cases = mergeList(a && a.cases, b && b.cases);
+  r.trainings = mergeList(a && a.trainings, b && b.trainings);
+  return r;
+}
+
+/* ---------- sync status + drive ---------- */
+var syncCode = 'local', syncTimer = null, syncing = false, tokenClient = null;
+function setSync(c) { syncCode = c; renderHeader(); }
+function tokenValid() {
+  var o = null;
+  try { o = JSON.parse(sessionStorage.getItem(K.tok) || 'null'); } catch (e) { o = null; }
+  return (o && o.exp > Date.now()) ? o.tok : null;
+}
+function storeToken(tok, sec) { try { sessionStorage.setItem(K.tok, JSON.stringify({ tok: tok, exp: Date.now() + ((sec || 3600) - 60) * 1000 })); } catch (e) {} }
+function localSave() { S.updated = Date.now(); try { localStorage.setItem(K.data, JSON.stringify(S)); } catch (e) {} }
+function autoSave() {
+  localSave();
+  if (tokenValid()) { setSync('pending'); clearTimeout(syncTimer); syncTimer = setTimeout(function () { syncNow(); }, 2000); }
+  else setSync('local');
+}
+function driveReq(url, opts) {
+  var tok = tokenValid();
+  if (!tok) return Promise.reject(new Error('no token'));
+  opts = opts || {};
+  opts.headers = Object.assign({ Authorization: 'Bearer ' + tok }, opts.headers || {});
+  return fetch(url, opts).then(function (r) {
+    if (r.status === 401) { try { sessionStorage.removeItem(K.tok); } catch (e) {} throw new Error('401'); }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r;
+  });
+}
+function findFile() {
+  var id = localStorage.getItem(K.fid);
+  if (id) return Promise.resolve(id);
+  var q = encodeURIComponent("name='" + FILE_NAME + "' and trashed=false");
+  return driveReq('https://www.googleapis.com/drive/v3/files?q=' + q + '&spaces=drive&fields=files(id)').then(function (r) { return r.json(); }).then(function (j) {
+    var id2 = j.files && j.files.length ? j.files[0].id : null;
+    if (id2) localStorage.setItem(K.fid, id2);
+    return id2;
+  });
+}
+function createFile(obj) {
+  var boundary = 'gov001b';
+  var meta = JSON.stringify({ name: FILE_NAME, mimeType: 'application/json' });
+  var body = '--' + boundary + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' + meta + '\r\n--' + boundary + '\r\nContent-Type: application/json\r\n\r\n' + JSON.stringify(obj) + '\r\n--' + boundary + '--';
+  return driveReq('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', { method: 'POST', headers: { 'Content-Type': 'multipart/related; boundary=' + boundary }, body: body })
+    .then(function (r) { return r.json(); }).then(function (j) { localStorage.setItem(K.fid, j.id); return j.id; });
+}
+function updateFile(id, obj) {
+  return driveReq('https://www.googleapis.com/upload/drive/v3/files/' + id + '?uploadType=media', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(obj) });
+}
+function syncNow() {
+  if (syncing) return Promise.resolve();
+  if (!tokenValid()) { setSync('local'); return Promise.resolve(); }
+  syncing = true;
+  return findFile().then(function (id) {
+    if (!id) return createFile(S);
+    return driveReq('https://www.googleapis.com/drive/v3/files/' + id + '?alt=media').then(function (r) { return r.json(); }).then(function (remote) {
+      var merged = mergeState(S, remote);
+      S = merged; ensureState(); localSave();
+      return updateFile(id, S);
+    });
+  }).then(function () { setSync('ok'); if (!modalOpen()) renderAll(); })
+    .catch(function (e) { if (String(e.message) === 'HTTP 404') { localStorage.removeItem(K.fid); } setSync('error'); })
+    .then(function () { syncing = false; });
+}
+function connectDrive() {
+  if (!window.google || !google.accounts || !google.accounts.oauth2) { toast(t('t.drive')); return; }
+  if (!tokenClient) {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID, scope: SCOPE,
+      callback: function (resp) { if (resp && resp.access_token) { storeToken(resp.access_token, resp.expires_in); syncNow(); renderSettings(); } else setSync('error'); }
+    });
+  }
+  tokenClient.requestAccessToken({ prompt: '' });
+}
+function disconnectDrive() { try { sessionStorage.removeItem(K.tok); } catch (e) {} localStorage.removeItem(K.fid); setSync('local'); renderSettings(); }
+
+/* ---------- toast ---------- */
+var toastTimer = null;
+function toast(msg, undoFn) {
+  var el = $('toast');
+  el.innerHTML = esc(msg) + (undoFn ? '<button data-act="undo">' + esc(t('t.undo')) + '</button>' : '');
+  el.style.display = 'block';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { el.style.display = 'none'; undoItem = null; }, 5000);
+}
+
+/* ---------- classification ---------- */
+function classify(a) {
+  if (a.prohibited) return 'prohibited';
+  if (a.highrisk) return 'high';
+  if (a.people) return 'transparency';
+  return 'minimal';
+}
+function flagsFor(a, cls) {
+  var f = [];
+  if (a.pdata && (cls === 'high' || a.vulnerable || a.autonomy === 'auto')) f.push(t('flag.dpia'));
+  if (a.gpai) f.push(t('flag.gpai'));
+  return f;
+}
+function resultHtml(a) {
+  var cls = classify(a), ctl = t('ctl.' + cls), fl = flagsFor(a, cls), i, h;
+  h = '<div class="result"><div class="row" style="justify-content:space-between"><b>' + esc(t('res.title')) + '</b><span class="badge c-' + cls + '" style="border-color:currentColor">' + esc(t('cls.' + cls)) + '</span></div>';
+  h += '<div class="muted" style="margin-top:6px">' + esc(t('res.review')) + ' : ' + esc(t('rev.' + cls)) + '</div>';
+  h += '<div class="muted" style="margin-top:8px">' + esc(t('res.controls')) + '</div><ul>';
+  for (i = 0; i < ctl.length; i++) h += '<li>' + esc(ctl[i]) + '</li>';
+  h += '</ul>';
+  for (i = 0; i < fl.length; i++) h += '<div class="warn">• ' + esc(fl[i]) + '</div>';
+  h += '<div class="muted" style="margin-top:8px;font-size:12px">' + esc(t('res.note')) + '</div></div>';
+  return h;
+}
+
+/* ---------- render ---------- */
+function modalOpen() { return $('modal').className.indexOf('open') >= 0; }
+function renderHeader() {
+  var map = { local: '⚫', pending: '🟡', ok: '🟢', error: '🔴' };
+  var d = new Date();
+  $('sync-st').textContent = map[syncCode] + ' ' + t('sync.' + syncCode) + (syncCode === 'ok' ? ' ' + d.toLocaleTimeString(LOC(), { hour: '2-digit', minute: '2-digit' }) : '');
+}
+function planCounts() {
+  var total = 0, done = 0;
+  PLAN.forEach(function (m) { ['a', 'b', 'c', 'd'].forEach(function (s) { total++; var x = S.plan.done[m + s]; if (x && x.d) done++; }); });
+  return { total: total, done: done };
+}
+function renderPlan() {
+  var c = planCounts(), pct = Math.round(c.done / c.total * 100), h = '';
+  h += '<div class="card"><h3>' + esc(t('plan.progress', { x: c.done, y: c.total })) + ' · ' + pct + '%</h3><div class="bar"><i style="width:' + pct + '%"></i></div></div>';
+  PLAN.forEach(function (m, idx) {
+    h += '<div class="card"><h3>' + esc(t('plan.month', { x: idx + 1 })) + ' · ' + esc(t('p.' + m)) + '</h3>';
+    ['a', 'b', 'c'].forEach(function (s) {
+      var id = m + s, x = S.plan.done[id], dn = !!(x && x.d);
+      h += '<label class="chk' + (dn ? ' done' : '') + '"><input type="checkbox" data-act="plan" data-id="' + id + '"' + (dn ? ' checked' : '') + '><span>' + esc(t('p.' + id)) + '</span></label>';
+    });
+    var did = m + 'd', dx = S.plan.done[did], ddn = !!(dx && dx.d);
+    h += '<div class="deliv"><label class="chk' + (ddn ? ' done' : '') + '"><input type="checkbox" data-act="plan" data-id="' + did + '"' + (ddn ? ' checked' : '') + '><span><b>' + esc(t('plan.deliv')) + ' :</b> ' + esc(t('p.' + did)) + '</span></label></div></div>';
+  });
+  $('tab-plan').innerHTML = h;
+}
+function renderCases() {
+  var h = '<div class="row" style="margin-bottom:10px"><button class="btn primary grow" data-act="case-new">' + esc(t('cases.add')) + '</button></div>';
+  h += '<div>';
+  h += '<button class="pill' + (filterCls === 'all' ? ' active' : '') + '" data-act="filter" data-v="all">' + esc(t('f.all')) + '</button>';
+  CLASSES.forEach(function (c) { h += '<button class="pill' + (filterCls === c ? ' active' : '') + '" data-act="filter" data-v="' + c + '">' + esc(t('cls.' + c)) + '</button>'; });
+  h += '</div>';
+  var list = S.cases.filter(function (c) { return !c.del && (filterCls === 'all' || classify(c.a || {}) === filterCls); }).sort(function (x, y) { return (y.upd || 0) - (x.upd || 0); });
+  if (!list.length) h += '<p class="muted">' + esc(t('cases.empty')) + '</p>';
+  list.forEach(function (c) {
+    var cls = classify(c.a || {});
+    h += '<div class="card item" data-act="case-edit" data-id="' + c.id + '"><div style="min-width:0"><h3>' + esc(c.name) + '</h3><div class="muted">' + esc(c.owner || '') + (c.owner && c.system ? ' · ' : '') + esc(c.system || '') + '</div><div class="muted">' + esc(t('st.' + (c.status || 'idea'))) + ' · ' + esc(new Date(c.upd || Date.now()).toLocaleDateString(LOC(), { day: 'numeric', month: 'long' })) + '</div></div><span class="badge c-' + cls + '" style="border-color:currentColor;white-space:nowrap">' + esc(t('cls.' + cls)) + '</span></div>';
+  });
+  $('tab-cases').innerHTML = h;
+}
+function renderTrain() {
+  var h = '<div class="row" style="margin-bottom:10px"><button class="btn primary grow" data-act="tr-new">' + esc(t('tr.add')) + '</button></div>';
+  var list = S.trainings.filter(function (x) { return !x.del; });
+  var budget = 0;
+  list.forEach(function (x) { if (x.status === 'planned' || x.status === 'booked') budget += Number(x.price) || 0; });
+  h += '<div class="card"><h3>' + esc(t('tr.budget')) + ' : ' + budget.toLocaleString(LOC()) + ' €</h3><p class="muted">' + esc(t('tr.pick')) + ' ' + esc(t('tr.tip')) + '</p></div>';
+  if (!list.length) h += '<p class="muted">' + esc(t('tr.empty')) + '</p>';
+  list.sort(function (x, y) { return (x.upd || 0) - (y.upd || 0); }).forEach(function (x) {
+    h += '<div class="card item" data-act="tr-edit" data-id="' + x.id + '"><div style="min-width:0"><h3>' + esc(x.name) + '</h3><div class="muted">' + esc(x.provider || '') + (x.price ? ' · ' + Number(x.price).toLocaleString(LOC()) + ' €' : '') + (x.date ? ' · ' + esc(x.date) : '') + '</div></div><span class="badge" style="border-color:var(--border);color:var(--muted);white-space:nowrap">' + esc(trLabel(x.status || 'idea')) + '</span></div>';
+  });
+  $('tab-train').innerHTML = h;
+}
+var TRST = ['idea', 'planned', 'booked', 'done'];
+var TRLBL = { en: { idea: 'Idea', planned: 'Planned', booked: 'Booked', done: 'Done' }, fr: { idea: 'Idée', planned: 'Prévue', booked: 'Réservée', done: 'Terminée' } };
+function trLabel(s) { return TRLBL[LANG][s] || s; }
+function renderSettings() {
+  var th = localStorage.getItem(K.theme) || 'light';
+  $('theme-btn2').textContent = THEME_ICONS[th] + ' ' + th;
+  var fsi = parseInt(localStorage.getItem(K.fs) || '2', 10);
+  $('fs-label').textContent = Math.round(FS_STEPS[fsi] * 100) + '%';
+  $('drive-st').textContent = tokenValid() ? t('drive.on') : t('drive.offst');
+}
+function renderAll() { renderHeader(); renderPlan(); renderCases(); renderTrain(); renderSettings(); }
+
+/* ---------- modal forms ---------- */
+function ynRow(id, key, val) { return '<div class="yn"><span>' + esc(t(key)) + '</span><input type="checkbox" id="' + id + '"' + (val ? ' checked' : '') + '></div>'; }
+function readAnswers() {
+  return { prohibited: $('q-prohibited').checked, highrisk: $('q-highrisk').checked, people: $('q-people').checked, gpai: $('q-gpai').checked, pdata: $('q-pdata').checked, vulnerable: $('q-vulnerable').checked, autonomy: $('f-autonomy').value };
+}
+function refreshResult() { $('res-box').innerHTML = resultHtml(readAnswers()); }
+function openModal(html) { $('modal-card').innerHTML = html; $('modal').className = 'modal open'; $('modal').scrollTop = 0; }
+function closeModal() { $('modal').className = 'modal'; $('modal-card').innerHTML = ''; renderAll(); }
+function openCase(id) {
+  var c = null, i;
+  for (i = 0; i < S.cases.length; i++) if (S.cases[i].id === id) c = S.cases[i];
+  var a = (c && c.a) || {}, h = '<h3>' + esc(c ? t('edit') : t('new')) + '</h3>';
+  h += '<label class="fl">' + esc(t('f.name')) + '</label><input id="f-name" value="' + esc(c ? c.name : '') + '">';
+  h += '<label class="fl">' + esc(t('f.owner')) + '</label><input id="f-owner" value="' + esc(c ? c.owner : '') + '">';
+  h += '<label class="fl">' + esc(t('f.system')) + '</label><input id="f-system" value="' + esc(c ? c.system : '') + '">';
+  h += '<label class="fl">' + esc(t('f.purpose')) + '</label><textarea id="f-purpose">' + esc(c ? c.purpose : '') + '</textarea>';
+  h += '<label class="fl">' + esc(t('f.status')) + '</label><select id="f-status">';
+  ['idea', 'pilot', 'prod', 'stopped'].forEach(function (s) { h += '<option value="' + s + '"' + ((c ? c.status : 'idea') === s ? ' selected' : '') + '>' + esc(t('st.' + s)) + '</option>'; });
+  h += '</select>';
+  h += '<label class="fl" style="margin-top:16px">' + esc(t('q.title')) + '</label>';
+  h += ynRow('q-prohibited', 'q.prohibited', a.prohibited) + ynRow('q-highrisk', 'q.highrisk', a.highrisk) + ynRow('q-people', 'q.people', a.people) + ynRow('q-gpai', 'q.gpai', a.gpai) + ynRow('q-pdata', 'q.pdata', a.pdata) + ynRow('q-vulnerable', 'q.vulnerable', a.vulnerable);
+  h += '<label class="fl">' + esc(t('f.autonomy')) + '</label><select id="f-autonomy">';
+  ['rec', 'human', 'auto'].forEach(function (s) { var v = s === 'rec' ? 'rec' : s; h += '<option value="' + v + '"' + ((a.autonomy || 'rec') === v ? ' selected' : '') + '>' + esc(t('aut.' + s)) + '</option>'; });
+  h += '</select>';
+  h += '<div id="res-box"></div>';
+  h += '<label class="fl">' + esc(t('f.notes')) + '</label><textarea id="f-notes">' + esc(c ? c.notes : '') + '</textarea>';
+  h += '<div class="row" style="margin-top:14px"><button class="btn primary grow" data-act="case-save" data-id="' + (c ? c.id : '') + '">' + esc(t('b.save')) + '</button><button class="btn grow" data-act="modal-close">' + esc(t('b.cancel')) + '</button>' + (c ? '<button class="btn danger" data-act="case-del" data-id="' + c.id + '">' + esc(t('b.delete')) + '</button>' : '') + '</div>';
+  openModal(h);
+  refreshResult();
+}
+function saveCase(id) {
+  var name = $('f-name').value.replace(/^\s+|\s+$/g, '');
+  if (!name) { toast(t('t.nameReq')); return; }
+  var rec = { id: id || uid(), name: name, owner: $('f-owner').value, system: $('f-system').value, purpose: $('f-purpose').value, status: $('f-status').value, notes: $('f-notes').value, a: readAnswers(), upd: Date.now() }, i, found = false;
+  for (i = 0; i < S.cases.length; i++) if (S.cases[i].id === rec.id) { S.cases[i] = rec; found = true; }
+  if (!found) S.cases.push(rec);
+  autoSave(); closeModal(); toast(t('t.saved'));
+}
+function delCase(id) {
+  var i;
+  for (i = 0; i < S.cases.length; i++) if (S.cases[i].id === id) {
+    var old = JSON.parse(JSON.stringify(S.cases[i]));
+    S.cases[i].del = true; S.cases[i].upd = Date.now();
+    undoItem = { kind: 'case', rec: old };
+  }
+  autoSave(); closeModal(); toast(t('t.deleted'), true);
+}
+function openTrain(id) {
+  var x = null, i;
+  for (i = 0; i < S.trainings.length; i++) if (S.trainings[i].id === id) x = S.trainings[i];
+  var h = '<h3>' + esc(x ? t('edit') : t('tr.add')) + '</h3>';
+  h += '<label class="fl">' + esc(t('tr.name')) + '</label><input id="t-name" value="' + esc(x ? x.name : '') + '">';
+  h += '<label class="fl">' + esc(t('tr.provider')) + '</label><input id="t-provider" value="' + esc(x ? x.provider : '') + '">';
+  h += '<label class="fl">' + esc(t('tr.price')) + '</label><input id="t-price" type="number" inputmode="decimal" value="' + esc(x ? x.price : '') + '">';
+  h += '<label class="fl">' + esc(t('tr.date')) + '</label><input id="t-date" type="date" value="' + esc(x ? x.date : '') + '">';
+  h += '<label class="fl">' + esc(t('tr.status')) + '</label><select id="t-status">';
+  TRST.forEach(function (s) { h += '<option value="' + s + '"' + ((x ? x.status : 'idea') === s ? ' selected' : '') + '>' + esc(trLabel(s)) + '</option>'; });
+  h += '</select>';
+  h += '<label class="fl">' + esc(t('tr.notes')) + '</label><textarea id="t-notes">' + esc(x ? x.notes : '') + '</textarea>';
+  h += '<div class="row" style="margin-top:14px"><button class="btn primary grow" data-act="tr-save" data-id="' + (x ? x.id : '') + '">' + esc(t('b.save')) + '</button><button class="btn grow" data-act="modal-close">' + esc(t('b.cancel')) + '</button>' + (x ? '<button class="btn danger" data-act="tr-del" data-id="' + x.id + '">' + esc(t('b.delete')) + '</button>' : '') + '</div>';
+  openModal(h);
+}
+function saveTrain(id) {
+  var name = $('t-name').value.replace(/^\s+|\s+$/g, '');
+  if (!name) { toast(t('t.nameReq')); return; }
+  var rec = { id: id || uid(), name: name, provider: $('t-provider').value, price: parseFloat($('t-price').value) || 0, date: $('t-date').value, status: $('t-status').value, notes: $('t-notes').value, upd: Date.now() }, i, found = false;
+  for (i = 0; i < S.trainings.length; i++) if (S.trainings[i].id === rec.id) { S.trainings[i] = rec; found = true; }
+  if (!found) S.trainings.push(rec);
+  autoSave(); closeModal(); toast(t('t.saved'));
+}
+function delTrain(id) {
+  var i;
+  for (i = 0; i < S.trainings.length; i++) if (S.trainings[i].id === id) {
+    undoItem = { kind: 'train', rec: JSON.parse(JSON.stringify(S.trainings[i])) };
+    S.trainings[i].del = true; S.trainings[i].upd = Date.now();
+  }
+  autoSave(); closeModal(); toast(t('t.deleted'), true);
+}
+function doUndo() {
+  if (!undoItem) return;
+  var list = undoItem.kind === 'case' ? S.cases : S.trainings, i;
+  for (i = 0; i < list.length; i++) if (list[i].id === undoItem.rec.id) { list[i] = undoItem.rec; list[i].upd = Date.now(); list[i].del = false; }
+  undoItem = null; $('toast').style.display = 'none'; autoSave(); renderAll();
+}
+
+/* ---------- theme, font size ---------- */
+var THEMES = ['light', 'sand', 'navy', 'dark'];
+var THEME_ICONS = { light: '☀︎', sand: '○', navy: '◑', dark: '☾' };
+var FS_STEPS = [0.8, 0.9, 1.0, 1.1, 1.2, 1.35, 1.5];
+function applyTheme(th) {
+  document.documentElement.setAttribute('data-theme', th === 'light' ? '' : th);
+  $('theme-btn').textContent = THEME_ICONS[th] || '☀︎';
+  localStorage.setItem(K.theme, th);
+  renderSettings();
+}
+function toggleTheme() { var cur = localStorage.getItem(K.theme) || 'light'; applyTheme(THEMES[(THEMES.indexOf(cur) + 1) % THEMES.length]); }
+function applyFontSize(idx) {
+  idx = Math.max(0, Math.min(FS_STEPS.length - 1, idx));
+  var page = document.querySelector('.page'), sc = FS_STEPS[idx];
+  if (window.CSS && CSS.supports && CSS.supports('zoom', '1')) page.style.zoom = sc;
+  localStorage.setItem(K.fs, String(idx));
+  renderSettings();
+}
+
+/* ---------- events ---------- */
+function showTab(name) {
+  var tabs = document.querySelectorAll('.tab'), secs = document.querySelectorAll('.section'), i;
+  for (i = 0; i < tabs.length; i++) tabs[i].className = 'tab' + (tabs[i].getAttribute('data-tab') === name ? ' active' : '');
+  for (i = 0; i < secs.length; i++) secs[i].className = 'section' + (secs[i].id === 'tab-' + name ? ' active' : '');
+  window.scrollTo(0, 0);
+}
+function exportData() {
+  var blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'gov001-' + new Date().toISOString().slice(0, 10) + '.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+document.addEventListener('click', function (e) {
+  var tabBtn = e.target.closest ? e.target.closest('[data-tab]') : null;
+  if (tabBtn) { showTab(tabBtn.getAttribute('data-tab')); return; }
+  var el = e.target.closest ? e.target.closest('[data-act]') : null;
+  if (!el) return;
+  var act = el.getAttribute('data-act'), id = el.getAttribute('data-id'), v = el.getAttribute('data-v');
+  if (act === 'plan') return; // handled by change
+  if (act === 'lang') { LANG = v; localStorage.setItem(K.lang, v); applyStatic(); renderAll(); if (modalOpen()) { /* keep form closed on language switch */ closeModal(); } }
+  else if (act === 'theme') toggleTheme();
+  else if (act === 'fs') { var cur = parseInt(localStorage.getItem(K.fs) || '2', 10); applyFontSize(v === '0' ? 2 : cur + parseInt(v, 10)); }
+  else if (act === 'filter') { filterCls = v; renderCases(); }
+  else if (act === 'case-new') openCase('');
+  else if (act === 'case-edit') openCase(id);
+  else if (act === 'case-save') saveCase(id);
+  else if (act === 'case-del') delCase(id);
+  else if (act === 'tr-new') openTrain('');
+  else if (act === 'tr-edit') openTrain(id);
+  else if (act === 'tr-save') saveTrain(id);
+  else if (act === 'tr-del') delTrain(id);
+  else if (act === 'modal-close') closeModal();
+  else if (act === 'undo') doUndo();
+  else if (act === 'drive-connect') connectDrive();
+  else if (act === 'drive-sync') { syncNow(); }
+  else if (act === 'drive-off') disconnectDrive();
+  else if (act === 'export') exportData();
+  else if (act === 'import') $('imp-file').click();
+  else if (act === 'reset-plan') { if (window.confirm(t('t.confirm'))) { var k, now = Date.now(); for (k in S.plan.done) S.plan.done[k] = { d: false, t: now }; autoSave(); renderPlan(); } }
+});
+document.addEventListener('change', function (e) {
+  var el = e.target;
+  if (el.getAttribute && el.getAttribute('data-act') === 'plan') {
+    S.plan.done[el.getAttribute('data-id')] = { d: !!el.checked, t: Date.now() };
+    autoSave(); renderPlan(); return;
+  }
+  if (modalOpen() && el.id && (el.id.indexOf('q-') === 0 || el.id === 'f-autonomy')) refreshResult();
+});
+$('imp-file').addEventListener('change', function (e) {
+  var f = e.target.files && e.target.files[0];
+  if (!f) return;
+  var rd = new FileReader();
+  rd.onload = function () {
+    try { var o = JSON.parse(rd.result); S = mergeState(S, o); ensureState(); autoSave(); renderAll(); toast(t('t.imported')); }
+    catch (err) { toast(t('t.badfile')); }
+  };
+  rd.readAsText(f); e.target.value = '';
+});
+
+/* ---------- init ---------- */
+LANG = localStorage.getItem(K.lang) || ((navigator.language || 'en').toLowerCase().indexOf('fr') === 0 ? 'fr' : 'en');
+load();
+applyStatic();
+applyTheme(localStorage.getItem(K.theme) || 'light');
+applyFontSize(parseInt(localStorage.getItem(K.fs) || '2', 10));
+setSync(tokenValid() ? 'pending' : 'local');
+renderAll();
+if (tokenValid()) syncNow();
+setInterval(function () { if (!document.hidden && tokenValid() && !modalOpen()) syncNow(); }, 60000);
+$('boot').style.display = 'none';
+})();
+</script>
+</body>
+</html>
